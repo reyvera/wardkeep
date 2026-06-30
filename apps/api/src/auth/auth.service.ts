@@ -16,6 +16,7 @@ import {
   SESSION_TIMEOUT_MINUTES,
 } from '@budgetapp/shared';
 
+import { AuditService } from '../common/services/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** Cost factor for bcrypt password hashing. */
@@ -42,18 +43,23 @@ const DEFAULT_CATEGORIES: { name: string; icon: string; color: string }[] = [
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /**
    * Register a new user account.
    * @param email - User's email address (pre-validated, lowercased)
    * @param password - Plain text password to hash
+   * @param ip - Optional IP address of the request origin
    * @returns Session token and expiry timestamp
    * @throws ConflictException if email is already registered
    */
   async register(
     email: string,
     password: string,
+    ip?: string,
   ): Promise<{ token: string; expiresAt: Date }> {
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -80,6 +86,8 @@ export class AuthService {
       })),
     });
 
+    await this.auditService.log(user.id, 'auth.register', { email }, ip);
+
     return this.createSession(user.id);
   }
 
@@ -89,12 +97,14 @@ export class AuthService {
    * after MAX_FAILED_LOGINS consecutive failures.
    * @param email - User's email address
    * @param password - Plain text password to verify
+   * @param ip - Optional IP address of the request origin
    * @returns Session token and expiry timestamp
    * @throws UnauthorizedException if credentials are invalid or account is locked
    */
   async login(
     email: string,
     password: string,
+    ip?: string,
   ): Promise<{ token: string; expiresAt: Date }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
@@ -136,12 +146,25 @@ export class AuthService {
         updateData.lockedUntil = new Date(
           now.getTime() + LOCKOUT_DURATION_MINUTES * 60 * 1000,
         );
+        await this.auditService.log(
+          user.id,
+          'auth.account_locked',
+          { failedLogins, email },
+          ip,
+        );
       }
 
       await this.prisma.user.update({
         where: { id: user.id },
         data: updateData,
       });
+
+      await this.auditService.log(
+        user.id,
+        'auth.login_failed',
+        { email, failedLogins },
+        ip,
+      );
 
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -154,15 +177,23 @@ export class AuthService {
       });
     }
 
+    await this.auditService.log(user.id, 'auth.login', { email }, ip);
+
     return this.createSession(user.id);
   }
 
   /**
    * Invalidate a session by deleting it.
    * @param token - The session token to invalidate
+   * @param userId - Optional user ID for audit logging
+   * @param ip - Optional IP address for audit logging
    */
-  async logout(token: string): Promise<void> {
+  async logout(token: string, userId?: string, ip?: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { token } });
+
+    if (userId) {
+      await this.auditService.log(userId, 'auth.logout', undefined, ip);
+    }
   }
 
   /**
@@ -214,9 +245,10 @@ export class AuthService {
    * Initiate a password reset by generating a single-use, time-limited token.
    * Always returns a generic success message to prevent email enumeration.
    * @param email - The email address to send the reset link to
+   * @param ip - Optional IP address for audit logging
    * @returns Generic success message regardless of whether the email exists
    */
-  async forgotPassword(email: string): Promise<{ message: string }> {
+  async forgotPassword(email: string, ip?: string): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (user) {
@@ -247,12 +279,14 @@ export class AuthService {
    * Invalidates all existing sessions for the user on success.
    * @param token - The password reset token
    * @param newPassword - The new password to set
+   * @param ip - Optional IP address for audit logging
    * @returns Success message
    * @throws BadRequestException if the token is invalid, expired, or already used
    */
   async resetPassword(
     token: string,
     newPassword: string,
+    ip?: string,
   ): Promise<{ message: string }> {
     const resetToken = await this.prisma.passwordResetToken.findUnique({
       where: { token },
@@ -291,6 +325,13 @@ export class AuthService {
         where: { userId: resetToken.userId },
       }),
     ]);
+
+    await this.auditService.log(
+      resetToken.userId,
+      'auth.password_reset',
+      { email: 'redacted' },
+      ip,
+    );
 
     return { message: 'Password reset successful' };
   }

@@ -7,10 +7,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import {
   ForgotPasswordSchema,
   LoginSchema,
+  RATE_LIMIT_AUTH,
   RegisterSchema,
   ResetPasswordSchema,
 } from '@budgetapp/shared';
@@ -19,6 +21,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
+@Throttle({ default: { ttl: 60000, limit: RATE_LIMIT_AUTH } })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -38,7 +41,7 @@ export class AuthController {
     }
 
     const { email, password } = result.data;
-    return this.authService.register(email, password);
+    return this.authService.register(email, password, req.ip);
   }
 
   /**
@@ -57,7 +60,7 @@ export class AuthController {
     }
 
     const { email, password } = result.data;
-    return this.authService.login(email, password);
+    return this.authService.login(email, password, req.ip);
   }
 
   /**
@@ -71,7 +74,8 @@ export class AuthController {
   async logout(@Req() req: Request): Promise<void> {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '') ?? '';
-    await this.authService.logout(token);
+    const user = (req as Request & { user: { id: string } }).user;
+    await this.authService.logout(token, user?.id, req.ip);
   }
 
   /**
@@ -91,7 +95,7 @@ export class AuthController {
     }
 
     const { email } = result.data;
-    return this.authService.forgotPassword(email);
+    return this.authService.forgotPassword(email, req.ip);
   }
 
   /**
@@ -110,6 +114,6 @@ export class AuthController {
     }
 
     const { token, password } = result.data;
-    return this.authService.resetPassword(token, password);
+    return this.authService.resetPassword(token, password, req.ip);
   }
 }
