@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Update Docs After Tasks",
+  "description": "After each spec task completes, review whether the README or other documentation needs updating to reflect new features, setup steps, or configuration changes. Update docs if the completed task introduces new user-facing functionality, changes the setup process, adds environment variables, or modifies the architecture.",
+  "version": "1",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task just completed. Check if the README.md or other documentation (like CONTRIBUTING.md, docs/) needs updating based on what was just implemented. Specifically check for: new setup steps, new environment variables, new features to document, architecture changes, or new commands. If updates are needed, make them. If not, skip silently."
+  }
+}
