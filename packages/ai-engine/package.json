@@ -1,0 +1,19 @@
+{
+  "name": "@budgetapp/ai-engine",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@budgetapp/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
