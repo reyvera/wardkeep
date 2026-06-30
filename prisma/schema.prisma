@@ -1,0 +1,385 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User & Auth ────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  lastFailedAt DateTime?
+
+  accounts              Account[]
+  categories            Category[]
+  budgets               Budget[]
+  rules                 Rule[]
+  sessions              Session[]
+  chatSessions          ChatSession[]
+  backups               Backup[]
+  settings              UserSettings?
+  auditLogs             AuditLog[]
+  recurringTransactions RecurringTransaction[]
+  resetTokens           PasswordResetToken[]
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  lastActive DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─── Accounts ───────────────────────────────────────────────────────────────────
+
+model Account {
+  id             String      @id @default(uuid())
+  userId         String
+  name           String      @db.VarChar(100)
+  type           AccountType
+  currency       String      @default("USD") @db.VarChar(3)
+  initialBalance Decimal     @db.Decimal(19, 4)
+  isArchived     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user         User                   @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  recurring    RecurringTransaction[]
+
+  @@unique([userId, name])
+  @@index([userId, isArchived])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  LOAN
+  MORTGAGE
+  HELOC
+  CASH
+  MANUAL
+}
+
+
+// ─── Transactions ───────────────────────────────────────────────────────────────
+
+model Transaction {
+  id               String          @id @default(uuid())
+  userId           String
+  accountId        String
+  categoryId       String?
+  date             DateTime        @db.Date
+  amount           Decimal         @db.Decimal(19, 4)
+  type             TransactionType
+  merchant         String?         @db.VarChar(100)
+  description      String?         @db.VarChar(500)
+  notes            String?         @db.VarChar(1000)
+  isReconciliation Boolean         @default(false)
+  aiCategorized    Boolean         @default(false)
+  aiConfidence     Decimal?        @db.Decimal(3, 2)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  account  Account          @relation(fields: [accountId], references: [id])
+  category Category?        @relation(fields: [categoryId], references: [id])
+  tags     TransactionTag[]
+
+  @@index([userId, accountId, date])
+  @@index([userId, categoryId])
+  @@index([userId, merchant])
+  @@index([accountId, date, amount, merchant])
+}
+
+enum TransactionType {
+  DEBIT
+  CREDIT
+}
+
+model TransactionTag {
+  id            String @id @default(uuid())
+  transactionId String
+  tag           String @db.VarChar(50)
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, tag])
+  @@index([tag])
+}
+
+// ─── Categories ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String
+  parentId  String?
+  name      String   @db.VarChar(50)
+  icon      String?  @db.VarChar(50)
+  color     String?  @db.VarChar(7)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user         User               @relation(fields: [userId], references: [id])
+  parent       Category?          @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children     Category[]         @relation("CategoryHierarchy")
+  transactions Transaction[]
+  allocations  BudgetAllocation[]
+
+  @@unique([userId, parentId, name])
+  @@index([userId])
+}
+
+// ─── Budgets ────────────────────────────────────────────────────────────────────
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String
+  month     DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id])
+  allocations BudgetAllocation[]
+
+  @@unique([userId, month])
+}
+
+model BudgetAllocation {
+  id         String  @id @default(uuid())
+  budgetId   String
+  categoryId String
+  amount     Decimal @db.Decimal(19, 4)
+
+  budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([budgetId, categoryId])
+}
+
+
+// ─── Rules ──────────────────────────────────────────────────────────────────────
+
+model Rule {
+  id        String    @id @default(uuid())
+  userId    String
+  name      String    @db.VarChar(100)
+  priority  Int
+  isActive  Boolean   @default(true)
+  logic     RuleLogic @default(ALL)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user       User            @relation(fields: [userId], references: [id])
+  conditions RuleCondition[]
+  actions    RuleAction[]
+
+  @@index([userId, isActive, priority])
+}
+
+enum RuleLogic {
+  ALL
+  ANY
+}
+
+model RuleCondition {
+  id       String             @id @default(uuid())
+  ruleId   String
+  field    RuleConditionField
+  operator RuleOperator
+  value    String             @db.VarChar(500)
+
+  rule Rule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+}
+
+enum RuleConditionField {
+  MERCHANT
+  AMOUNT
+  DESCRIPTION
+}
+
+enum RuleOperator {
+  CONTAINS
+  EQUALS
+  STARTS_WITH
+  REGEX
+  GREATER_THAN
+  LESS_THAN
+  BETWEEN
+}
+
+model RuleAction {
+  id     String         @id @default(uuid())
+  ruleId String
+  type   RuleActionType
+  value  String         @db.VarChar(500)
+
+  rule Rule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+}
+
+enum RuleActionType {
+  SET_CATEGORY
+  ADD_TAG
+  SET_MERCHANT
+  ADD_NOTE
+}
+
+// ─── Recurring Transactions ─────────────────────────────────────────────────────
+
+model RecurringTransaction {
+  id             String              @id @default(uuid())
+  userId         String
+  accountId      String
+  merchant       String              @db.VarChar(100)
+  expectedAmount Decimal             @db.Decimal(19, 4)
+  frequency      RecurrenceFrequency
+  nextExpected   DateTime            @db.Date
+  isConfirmed    Boolean             @default(false)
+  isDismissed    Boolean             @default(false)
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@index([userId, isActive])
+}
+
+enum RecurrenceFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+}
+
+
+// ─── AI Chat ────────────────────────────────────────────────────────────────────
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  userId    String
+  createdAt DateTime      @default(now())
+  messages  ChatMessage[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  sessionId    String
+  role         String
+  content      String   @db.Text
+  verifiedData Json?
+  createdAt    DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// ─── User Settings ──────────────────────────────────────────────────────────────
+
+model UserSettings {
+  id               String          @id @default(uuid())
+  userId           String          @unique
+  aiPrivacyMode    AIPrivacyMode   @default(LOCAL)
+  openaiKey        String?
+  anthropicKey     String?
+  backupSchedule   BackupSchedule?
+  backupPassphrase String?
+  backupRetention  Int             @default(5)
+  sessionTimeout   Int             @default(30)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum AIPrivacyMode {
+  LOCAL
+  HYBRID
+  CLOUD
+}
+
+enum BackupSchedule {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+// ─── Backups ────────────────────────────────────────────────────────────────────
+
+model Backup {
+  id        String   @id @default(uuid())
+  userId    String
+  filename  String
+  size      BigInt
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+// ─── Audit Logs ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String   @db.VarChar(100)
+  details   Json?
+  ip        String?  @db.VarChar(45)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+// ─── AI Corrections ─────────────────────────────────────────────────────────────
+
+model AICorrection {
+  id         String   @id @default(uuid())
+  userId     String
+  merchant   String   @db.VarChar(100)
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, merchant])
+  @@index([userId, merchant])
+}
