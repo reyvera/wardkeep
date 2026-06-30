@@ -7,7 +7,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
 ## Tasks
 
 - [ ] 1. Set up monorepo structure, shared types, and database schema
-  - [ ] 1.1 Initialize Turborepo monorepo with workspace configuration
+  - [x] 1.1 Initialize Turborepo monorepo with workspace configuration
     - Create root `package.json` with workspaces for `apps/*` and `packages/*`
     - Create `turbo.json` with build/test/lint pipeline configuration
     - Initialize `apps/web`, `apps/api`, `apps/worker` as empty TypeScript projects
@@ -16,7 +16,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Add ESLint and Prettier configuration at root level
     - _Requirements: 14.1_
 
-  - [ ] 1.2 Define shared types and validation schemas in packages/shared
+  - [x] 1.2 Define shared types and validation schemas in packages/shared
     - Create TypeScript interfaces for all domain entities: User, Account, Transaction, Category, Budget, Rule, RecurringTransaction, ChatMessage, Backup, UserSettings
     - Create enums: AccountType, TransactionType, RuleLogic, RuleOperator, RuleConditionField, RuleActionType, RecurrenceFrequency, AIPrivacyMode, BackupSchedule
     - Create Zod validation schemas for all API request/response DTOs
@@ -24,7 +24,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Export Decimal.js utility types for currency precision
     - _Requirements: 2.1, 2.2, 3.1, 3.5, 6.1, 7.2, 7.3, 10.10, 16.1_
 
-  - [ ] 1.3 Set up Prisma schema and database migrations
+  - [x] 1.3 Set up Prisma schema and database migrations
     - Create `prisma/schema.prisma` with all models from design document
     - Configure PostgreSQL connection with NUMERIC(19,4) for currency fields
     - Create initial migration with all tables, indexes, and unique constraints
