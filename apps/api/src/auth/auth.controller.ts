@@ -8,7 +8,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { LoginSchema, RegisterSchema } from '@budgetapp/shared';
+import {
+  ForgotPasswordSchema,
+  LoginSchema,
+  RegisterSchema,
+  ResetPasswordSchema,
+} from '@budgetapp/shared';
 
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AuthService } from './auth.service';
@@ -67,5 +72,44 @@ export class AuthController {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '') ?? '';
     await this.authService.logout(token);
+  }
+
+  /**
+   * Initiate a password reset flow.
+   * Returns a generic message regardless of whether the email exists
+   * to prevent email enumeration attacks.
+   * @param req - Express request with body { email }
+   * @returns Generic success message
+   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Req() req: Request): Promise<{ message: string }> {
+    const result = ForgotPasswordSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    const { email } = result.data;
+    return this.authService.forgotPassword(email);
+  }
+
+  /**
+   * Reset a user's password using a valid reset token.
+   * Invalidates all existing sessions for the user on success.
+   * @param req - Express request with body { token, password, confirmPassword }
+   * @returns Success message
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Req() req: Request): Promise<{ message: string }> {
+    const result = ResetPasswordSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    const { token, password } = result.data;
+    return this.authService.resetPassword(token, password);
   }
 }

@@ -20,6 +20,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   failedLogins Int       @default(0)
   lockedUntil  DateTime?
+  lastFailedAt DateTime?
 
   accounts              Account[]
   categories            Category[]
@@ -31,6 +32,7 @@ model User {
   settings              UserSettings?
   auditLogs             AuditLog[]
   recurringTransactions RecurringTransaction[]
+  resetTokens           PasswordResetToken[]
 }
 
 model Session {
@@ -44,6 +46,20 @@ model Session {
 
   @@index([userId])
   @@index([token])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([token])
+  @@index([userId])
 }
 
 // ─── Accounts ───────────────────────────────────────────────────────────────────

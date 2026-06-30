@@ -1,14 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import {
+  FAILED_LOGIN_WINDOW_MINUTES,
   LOCKOUT_DURATION_MINUTES,
   MAX_FAILED_LOGINS,
+  RESET_TOKEN_EXPIRY_MINUTES,
   SESSION_TIMEOUT_MINUTES,
 } from '@budgetapp/shared';
 
@@ -36,6 +40,8 @@ const DEFAULT_CATEGORIES: { name: string; icon: string; color: string }[] = [
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -79,6 +85,8 @@ export class AuthService {
 
   /**
    * Authenticate a user with email and password.
+   * Tracks failed logins within a 10-minute window and locks account
+   * after MAX_FAILED_LOGINS consecutive failures.
    * @param email - User's email address
    * @param password - Plain text password to verify
    * @returns Session token and expiry timestamp
@@ -102,15 +110,31 @@ export class AuthService {
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordValid) {
-      const failedLogins = user.failedLogins + 1;
-      const updateData: { failedLogins: number; lockedUntil?: Date } = {
+      const now = new Date();
+      const windowStart = new Date(
+        now.getTime() - FAILED_LOGIN_WINDOW_MINUTES * 60 * 1000,
+      );
+
+      // Reset counter if the last failure was outside the 10-minute window
+      const currentFailedLogins =
+        user.lastFailedAt && user.lastFailedAt > windowStart
+          ? user.failedLogins
+          : 0;
+
+      const failedLogins = currentFailedLogins + 1;
+      const updateData: {
+        failedLogins: number;
+        lastFailedAt: Date;
+        lockedUntil?: Date;
+      } = {
         failedLogins,
+        lastFailedAt: now,
       };
 
-      // Lock account if max failed attempts reached
+      // Lock account if max failed attempts reached within window
       if (failedLogins >= MAX_FAILED_LOGINS) {
         updateData.lockedUntil = new Date(
-          Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000,
+          now.getTime() + LOCKOUT_DURATION_MINUTES * 60 * 1000,
         );
       }
 
@@ -126,7 +150,7 @@ export class AuthService {
     if (user.failedLogins > 0) {
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { failedLogins: 0, lockedUntil: null },
+        data: { failedLogins: 0, lockedUntil: null, lastFailedAt: null },
       });
     }
 
@@ -184,6 +208,91 @@ export class AuthService {
     });
 
     return session.user;
+  }
+
+  /**
+   * Initiate a password reset by generating a single-use, time-limited token.
+   * Always returns a generic success message to prevent email enumeration.
+   * @param email - The email address to send the reset link to
+   * @returns Generic success message regardless of whether the email exists
+   */
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const token = randomUUID();
+      const expiresAt = new Date(
+        Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000,
+      );
+
+      await this.prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+
+      // In production, send the token via email. For now, log it.
+      this.logger.log(
+        `Password reset token generated for ${email}: ${token}`,
+      );
+    }
+
+    return { message: 'If an account exists, a reset link has been sent' };
+  }
+
+  /**
+   * Reset a user's password using a valid, single-use reset token.
+   * Invalidates all existing sessions for the user on success.
+   * @param token - The password reset token
+   * @param newPassword - The new password to set
+   * @returns Success message
+   * @throws BadRequestException if the token is invalid, expired, or already used
+   */
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+
+    if (!resetToken) {
+      throw new BadRequestException('Reset token is invalid or expired');
+    }
+
+    if (resetToken.usedAt) {
+      throw new BadRequestException('Reset token is invalid or expired');
+    }
+
+    if (resetToken.expiresAt < new Date()) {
+      throw new BadRequestException('Reset token is invalid or expired');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST_FACTOR);
+
+    // Update password, mark token as used, and invalidate all sessions atomically
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: {
+          passwordHash,
+          failedLogins: 0,
+          lockedUntil: null,
+          lastFailedAt: null,
+        },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.session.deleteMany({
+        where: { userId: resetToken.userId },
+      }),
+    ]);
+
+    return { message: 'Password reset successful' };
   }
 
   /**
