@@ -69,6 +69,9 @@ export const RATE_LIMIT_AUTH = 10;
 /** Maximum consecutive failed login attempts before lockout. */
 export const MAX_FAILED_LOGINS = 5;
 
+/** Window in minutes during which failed login attempts are counted. */
+export const FAILED_LOGIN_WINDOW_MINUTES = 10;
+
 /** Account lockout duration in minutes after exceeding failed logins. */
 export const LOCKOUT_DURATION_MINUTES = 15;
 

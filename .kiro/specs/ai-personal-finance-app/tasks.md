@@ -32,20 +32,20 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Generate Prisma client with typed output
     - _Requirements: 5.1, 14.2, 17.5_
 
-  - [ ]* 1.4 Write property test for password validation (Property 33)
+  - [x]* 1.4 Write property test for password validation (Property 33)
     - **Property 33: Password validation enforces length constraints**
     - Generate arbitrary strings (0–200 chars); assert accepted iff length in [12, 128]
     - **Validates: Requirements 1.6**
 
 - [ ] 2. Implement authentication and session management (apps/api)
-  - [ ] 2.1 Scaffold NestJS API application with core module structure
+  - [x] 2.1 Scaffold NestJS API application with core module structure
     - Set up NestJS app with common module (guards, interceptors, exception filters)
     - Configure Prisma module as global provider
     - Set up health check endpoint at `/api/health`
     - Configure CORS and Helmet for security headers
     - _Requirements: 14.7_
 
-  - [ ] 2.2 Implement AuthModule with registration, login, and session management
+  - [x] 2.2 Implement AuthModule with registration, login, and session management
     - Create auth controller with POST /api/auth/register, /api/auth/login, /api/auth/logout
     - Implement bcrypt password hashing with cost factor 10+
     - Create session-based authentication with UUID tokens
@@ -53,30 +53,30 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Create AuthGuard for protected routes
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6_
 
-  - [ ] 2.3 Implement account lockout and password reset flow
+  - [x] 2.3 Implement account lockout and password reset flow
     - Implement failed login counter: lock account after 5 failures in 10 minutes for 15 minutes
     - Create POST /api/auth/forgot-password and /api/auth/reset-password endpoints
     - Implement single-use, 15-minute time-limited reset tokens
     - Invalidate all existing sessions on password reset/change
     - _Requirements: 1.5, 1.7, 1.8, 1.9_
 
-  - [ ] 2.4 Implement rate limiting and per-user data isolation
+  - [x] 2.4 Implement rate limiting and per-user data isolation
     - Add global rate limiter: 100 req/min per user for API, 10 req/min for auth endpoints
     - Create UserScopeInterceptor that injects userId into all queries
     - Implement audit logging for authentication events
     - _Requirements: 17.5, 17.6, 17.7, 17.8, 17.9_
 
-  - [ ]* 2.5 Write property test for rate limiting (Property 31)
+  - [x]* 2.5 Write property test for rate limiting (Property 31)
     - **Property 31: Rate limiting rejects requests beyond threshold**
     - Generate request sequences exceeding thresholds; verify rejection with wait time
     - **Validates: Requirements 17.8, 17.9**
 
-  - [ ]* 2.6 Write property test for data isolation (Property 30)
+  - [x]* 2.6 Write property test for data isolation (Property 30)
     - **Property 30: Per-user data isolation prevents cross-user access**
     - Generate multi-user data sets; verify queries never return cross-user records
     - **Validates: Requirements 17.5, 17.6**
 
-- [ ] 3. Checkpoint - Verify monorepo build and auth
+- [x] 3. Checkpoint - Verify monorepo build and auth
   - Ensure all packages build cleanly with `turbo build`
   - Ensure Prisma migrations run successfully
   - Ensure auth endpoints pass unit tests
