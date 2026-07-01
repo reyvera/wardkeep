@@ -316,21 +316,21 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
 
 - [ ] 12. Implement Worker and background job processing (apps/worker)
-  - [~] 12.1 Set up BullMQ worker with queue consumers
+  - [x] 12.1 Set up BullMQ worker with queue consumers
     - Create NestJS standalone worker application consuming BullMQ jobs
     - Define queues: ai-categorization (concurrency 1), import-processing (2), recurring-detection (1), backup (1), rules-apply (2), notifications (5)
     - Connect worker to Redis and PostgreSQL
     - Implement graceful shutdown with job completion on SIGTERM
     - _Requirements: 14.1_
 
-  - [~] 12.2 Implement AI categorization batch job
+  - [x] 12.2 Implement AI categorization batch job
     - Consume `ai-categorization` queue jobs
     - Process batches of 100 uncategorized transactions within 30 seconds (local mode)
     - Apply confidence-based routing after AI response
     - On AI service unavailable: leave as Uncategorized, retry on next cycle
     - _Requirements: 8.7, 8.8, 8.9_
 
-  - [~] 12.3 Implement recurring transaction detection job
+  - [x] 12.3 Implement recurring transaction detection job
     - Consume `recurring-detection` queue jobs
     - Analyze transaction history: amounts within 10%, matching merchants, consistent intervals ±3 days
     - Require 3+ occurrences to flag as recurring

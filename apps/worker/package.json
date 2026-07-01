@@ -4,16 +4,23 @@
   "private": true,
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
     "test": "vitest run",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "postinstall": "echo 'Run npm install from the monorepo root to install all dependencies'"
   },
   "dependencies": {
     "@budgetapp/shared": "workspace:*",
     "@budgetapp/finance-engine": "workspace:*",
     "@budgetapp/ai-engine": "workspace:*",
-    "@budgetapp/importers": "workspace:*"
+    "@budgetapp/importers": "workspace:*",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.3.0",
+    "@prisma/client": "^5.14.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   }
