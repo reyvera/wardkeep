@@ -586,6 +586,20 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Respect AI Privacy Mode — bank connection tokens stored encrypted (AES-256)
     - Provide UI for linking/unlinking accounts and managing connections
 
+- [ ] 26. Income configuration and pay schedule
+  - [ ] 26.1 Add income settings model and UI
+    - Pay frequency options: Semi-monthly (1st & 15th), Semi-monthly (15th & last), Biweekly, Monthly, Custom
+    - Expected net per paycheck amount
+    - Employment type: Salary (fixed) vs Hourly (variable — average hours × rate)
+    - Option to adjust for weekends (paid early if payday falls on Sat/Sun)
+    - Store in UserSettings or new IncomeConfig model
+  - [ ] 26.2 Update savings projection to use income configuration
+    - Projection uses: income received + expected remaining paychecks this month
+    - Salary: deterministic — knows exactly when and how much
+    - Hourly: uses average hours × rate as estimate, adjusts as actuals post
+    - Dashboard shows "Next paycheck: ~[date]" indicator
+    - Projection formula: (received + expected remaining income) - (spent + projected remaining spend)
+
 ## Task Dependency Graph
 
 ```json
