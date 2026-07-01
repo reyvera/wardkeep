@@ -61,9 +61,9 @@ packages/
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 18+
 - Docker & Docker Compose
-- pnpm (package manager)
+- pnpm 8+ (package manager)
 
 ### Development
 
@@ -77,8 +77,28 @@ docker compose up -d postgres redis ollama
 # Run database migrations
 pnpm prisma migrate dev
 
+# Seed default categories
+pnpm prisma db seed
+
 # Start all apps in development
 pnpm turbo dev
+```
+
+Services will be available at:
+- Web UI: http://localhost:3000
+- API: http://localhost:4000
+- Ollama: http://localhost:11434
+
+### Running Tests
+
+```bash
+# Run all package tests
+pnpm turbo test
+
+# Run a specific package's tests
+cd packages/finance-engine && pnpm test
+cd packages/importers && pnpm test
+cd packages/ai-engine && pnpm test
 ```
 
 ### Self-Hosted Deployment
@@ -89,23 +109,40 @@ git clone <repo-url> && cd budgetapp
 
 # Copy and configure environment
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env — at minimum, change ENCRYPTION_KEY to a secure random value
 
 # Start the full stack
 docker compose up -d
 
 # The app will be available at http://localhost:3000
+# API health check at http://localhost:4000/api/health
 ```
+
+The API service automatically runs database migrations and seeds default data on first startup.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | postgresql://...localhost | PostgreSQL connection string |
+| `REDIS_HOST` | localhost | Redis hostname |
+| `REDIS_PORT` | 6379 | Redis port |
+| `ENCRYPTION_KEY` | (dev default) | AES-256 key for encrypting API keys and sensitive data. **Change in production.** |
+| `AI_PRIVACY_MODE` | LOCAL | AI routing: LOCAL, HYBRID, or CLOUD |
+| `OLLAMA_URL` | http://localhost:11434 | Ollama endpoint for local AI |
+| `SESSION_TIMEOUT` | 30 | Session inactivity timeout in minutes |
+| `PORT` | 4000 | API server port |
 
 ### Minimum Hardware Requirements
 
-- 2 GB RAM
-- 2 CPU cores
-- 10 GB storage
+- **Without local AI:** 2 GB RAM, 2 CPU cores, 10 GB storage
+- **With local AI (Ollama):** 8 GB RAM, 4 CPU cores, 20 GB storage (model downloads)
 
 ## Project Status
 
-This project is under active development following a structured spec at `.kiro/specs/ai-personal-finance-app/`.
+Implementation is complete for the MVP feature set. Remaining work includes optional property-based tests (33 correctness properties defined in the design doc) and manual frontend verification across viewport sizes.
+
+See `.kiro/specs/ai-personal-finance-app/tasks.md` for the full task breakdown and completion status.
 
 ## License
 
