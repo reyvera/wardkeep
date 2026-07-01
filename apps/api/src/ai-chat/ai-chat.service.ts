@@ -68,11 +68,28 @@ export class AiChatService {
     const aiChat = new AIChat(provider);
 
     // Call AI chat engine
-    const aiResponse = await aiChat.chat(
-      dto.query,
-      financialContext,
-      history,
-    );
+    let aiResponse;
+    try {
+      aiResponse = await aiChat.chat(
+        dto.query,
+        financialContext,
+        history,
+      );
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'AI service unavailable';
+      // Return a friendly message instead of crashing
+      await this.prisma.chatMessage.create({
+        data: { sessionId, role: 'user', content: dto.query },
+      });
+      await this.prisma.chatMessage.create({
+        data: { sessionId, role: 'assistant', content: `Sorry, I couldn't process your request: ${msg}` },
+      });
+      return {
+        sessionId,
+        message: `Sorry, I couldn't process your request: ${msg}`,
+        verifiedData: null,
+      };
+    }
 
     // Verify numerical claims if present
     let verifiedData: Record<string, unknown> | null = null;
@@ -104,7 +121,7 @@ export class AiChatService {
 
     return {
       sessionId,
-      content: aiResponse.content,
+      message: aiResponse.content,
       numericalClaims: aiResponse.numericalClaims,
       verifiedData,
     };
