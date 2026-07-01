@@ -6,6 +6,7 @@ import { RATE_LIMIT_API } from '@budgetapp/shared';
 import { AccountsModule } from './accounts/accounts.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';
 import { AuthModule } from './auth/auth.module';
+import { BackupModule } from './backup/backup.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CashflowModule } from './cashflow/cashflow.module';
 import { CategoriesModule } from './categories/categories.module';
@@ -17,6 +18,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { RecurringModule } from './recurring/recurring.module';
 import { RulesModule } from './rules/rules.module';
+import { SettingsModule } from './settings/settings.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
@@ -35,12 +37,14 @@ import { TransactionsModule } from './transactions/transactions.module';
     AuthModule,
     AccountsModule,
     AiChatModule,
+    BackupModule,
     BudgetsModule,
     CashflowModule,
     CategoriesModule,
     DebtModule,
     RecurringModule,
     RulesModule,
+    SettingsModule,
     TransactionsModule,
     ImportModule,
   ],
