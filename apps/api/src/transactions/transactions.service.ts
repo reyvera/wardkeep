@@ -461,14 +461,20 @@ export class TransactionsService {
    * - Spending by category for the current month
    * - Top merchants for the current month
    */
-  async getSpendingStats(userId: string) {
-    const now = new Date();
+  async getSpendingStats(userId: string, selectedMonth?: string) {
+    let refDate: Date;
+    if (selectedMonth && /^\d{4}-\d{2}$/.test(selectedMonth)) {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      refDate = new Date(y!, m! - 1, 15); // mid-month to avoid timezone edge
+    } else {
+      refDate = new Date();
+    }
 
     // Last 6 months of income vs expenses
     const monthlyTrend = [];
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const date = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
+      const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() - i + 1, 1);
       const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 
       const [income, expenses] = await Promise.all([
@@ -490,8 +496,8 @@ export class TransactionsService {
     }
 
     // Current month spending by category
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const startOfMonth = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+    const startOfNext = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 1);
 
     const categorySpending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],

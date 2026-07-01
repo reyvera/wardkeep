@@ -52,9 +52,9 @@ export class TransactionsController {
    * and spending breakdown by category for the current month.
    */
   @Get('stats')
-  async getStats(@Req() req: ScopedRequest) {
+  async getStats(@Req() req: ScopedRequest, @Query('month') month?: string) {
     const userId = req.userId!;
-    return this.transactionsService.getSpendingStats(userId);
+    return this.transactionsService.getSpendingStats(userId, month);
   }
 
   /**

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -46,7 +47,21 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function navigateMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const date = new Date(y!, m! - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number);
+  const date = new Date(y!, m! - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
 export default function DashboardPage() {
+  const [month, setMonth] = useState(getCurrentMonth);
+
   const netWorthQuery = useQuery({
     queryKey: ['net-worth'],
     queryFn: () => apiClient.get<NetWorth>('/accounts/net-worth'),
@@ -58,13 +73,13 @@ export default function DashboardPage() {
   });
 
   const budgetQuery = useQuery({
-    queryKey: ['budget-summary', getCurrentMonth()],
-    queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${getCurrentMonth()}/summary`).catch(() => null),
+    queryKey: ['budget-summary', month],
+    queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${month}/summary`).catch(() => null),
   });
 
   const statsQuery = useQuery({
-    queryKey: ['spending-stats'],
-    queryFn: () => apiClient.get<SpendingStats>('/transactions/stats'),
+    queryKey: ['spending-stats', month],
+    queryFn: () => apiClient.get<SpendingStats>(`/transactions/stats?month=${month}`),
   });
 
   const assets = Number(netWorthQuery.data?.assets ?? 0);
@@ -78,7 +93,29 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMonth(navigateMonth(month, -1))}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            ←
+          </button>
+          <button
+            onClick={() => setMonth(getCurrentMonth())}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+          >
+            {formatMonth(month)}
+          </button>
+          <button
+            onClick={() => setMonth(navigateMonth(month, 1))}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            →
+          </button>
+        </div>
+      </div>
 
       {/* Net Worth Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -133,7 +170,7 @@ export default function DashboardPage() {
         {/* Budget progress this month */}
         <div className="rounded-lg bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">
-            Budget — {new Date().toLocaleDateString('en-US', { month: 'long' })}
+            Budget — {formatMonth(month)}
           </h2>
           {budgetQuery.data ? (
             <div>
