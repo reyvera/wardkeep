@@ -48,6 +48,16 @@ export class TransactionsController {
   }
 
   /**
+   * Returns spending statistics: monthly income vs expenses for last 6 months,
+   * and spending breakdown by category for the current month.
+   */
+  @Get('stats')
+  async getStats(@Req() req: ScopedRequest) {
+    const userId = req.userId!;
+    return this.transactionsService.getSpendingStats(userId);
+  }
+
+  /**
    * Lists transactions for the authenticated user with pagination and filters.
    * Supports filtering by account, category, tag, merchant, date range,
    * amount range, and free-text search.

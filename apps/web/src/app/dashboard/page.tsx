@@ -2,6 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from 'recharts';
 
 interface NetWorth {
   assets: string;
@@ -29,6 +33,14 @@ interface BudgetSummary {
   }>;
 }
 
+interface SpendingStats {
+  monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
+  spendingByCategory: Array<{ categoryId: string; name: string; amount: number }>;
+  topMerchants: Array<{ merchant: string; amount: number }>;
+}
+
+const PIE_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+
 function getCurrentMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -48,6 +60,11 @@ export default function DashboardPage() {
   const budgetQuery = useQuery({
     queryKey: ['budget-summary', getCurrentMonth()],
     queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${getCurrentMonth()}/summary`).catch(() => null),
+  });
+
+  const statsQuery = useQuery({
+    queryKey: ['spending-stats'],
+    queryFn: () => apiClient.get<SpendingStats>('/transactions/stats'),
   });
 
   const assets = Number(netWorthQuery.data?.assets ?? 0);
@@ -206,6 +223,80 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Charts Row */}
+      {statsQuery.data && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Income vs Expenses Trend */}
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">Income vs Expenses (6 months)</h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={statsQuery.data.monthlyTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" fontSize={12} />
+                <YAxis fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} />
+                <Legend />
+                <Bar dataKey="income" fill="#10b981" name="Income" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Spending by Category Pie */}
+          <div className="rounded-lg bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4">Spending by Category (This Month)</h2>
+            {statsQuery.data.spendingByCategory.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={statsQuery.data.spendingByCategory}
+                    dataKey="amount"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={90}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                    fontSize={11}
+                  >
+                    {statsQuery.data.spendingByCategory.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-400 text-sm text-center py-8">No categorized spending this month.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Top Merchants */}
+      {statsQuery.data && statsQuery.data.topMerchants.length > 0 && (
+        <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold mb-4">Top Merchants (This Month)</h2>
+          <div className="space-y-2">
+            {statsQuery.data.topMerchants.map((m, i) => {
+              const maxAmount = statsQuery.data!.topMerchants[0]!.amount;
+              const pct = maxAmount > 0 ? (m.amount / maxAmount) * 100 : 0;
+              return (
+                <div key={i}>
+                  <div className="flex justify-between text-sm mb-0.5">
+                    <span className="text-gray-700 truncate max-w-[200px]">{m.merchant}</span>
+                    <span className="font-mono text-gray-600">${m.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-100">
+                    <div className="h-2 rounded-full bg-indigo-400" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

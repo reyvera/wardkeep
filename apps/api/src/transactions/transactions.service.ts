@@ -454,4 +454,95 @@ export class TransactionsService {
       });
     }
   }
+
+  /**
+   * Returns spending statistics for the dashboard:
+   * - Monthly income vs expenses for the last 6 months
+   * - Spending by category for the current month
+   * - Top merchants for the current month
+   */
+  async getSpendingStats(userId: string) {
+    const now = new Date();
+
+    // Last 6 months of income vs expenses
+    const monthlyTrend = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+
+      const [income, expenses] = await Promise.all([
+        this.prisma.transaction.aggregate({
+          where: { userId, type: 'CREDIT', date: { gte: date, lt: nextMonth } },
+          _sum: { amount: true },
+        }),
+        this.prisma.transaction.aggregate({
+          where: { userId, type: 'DEBIT', date: { gte: date, lt: nextMonth } },
+          _sum: { amount: true },
+        }),
+      ]);
+
+      monthlyTrend.push({
+        month: label,
+        income: Number(income._sum.amount ?? 0),
+        expenses: Number(expenses._sum.amount ?? 0),
+      });
+    }
+
+    // Current month spending by category
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const categorySpending = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: 'DEBIT',
+        date: { gte: startOfMonth, lt: startOfNext },
+        categoryId: { not: null },
+      },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 10,
+    });
+
+    // Resolve category names
+    const categoryIds = categorySpending
+      .map((c) => c.categoryId)
+      .filter((id): id is string => id !== null);
+    const categories = await this.prisma.category.findMany({
+      where: { id: { in: categoryIds } },
+      select: { id: true, name: true },
+    });
+    const catMap = new Map(categories.map((c) => [c.id, c.name]));
+
+    const spendingByCategory = categorySpending.map((c) => ({
+      categoryId: c.categoryId,
+      name: catMap.get(c.categoryId ?? '') ?? 'Uncategorized',
+      amount: Number(c._sum.amount ?? 0),
+    }));
+
+    // Top merchants this month
+    const topMerchants = await this.prisma.transaction.groupBy({
+      by: ['merchant'],
+      where: {
+        userId,
+        type: 'DEBIT',
+        date: { gte: startOfMonth, lt: startOfNext },
+        merchant: { not: null },
+      },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 8,
+    });
+
+    return {
+      monthlyTrend,
+      spendingByCategory,
+      topMerchants: topMerchants.map((m) => ({
+        merchant: m.merchant ?? 'Unknown',
+        amount: Number(m._sum.amount ?? 0),
+      })),
+    };
+  }
 }
