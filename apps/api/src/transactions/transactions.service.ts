@@ -21,6 +21,7 @@ export interface TransactionFilters {
   amountMin?: string;
   amountMax?: string;
   search?: string;
+  excludeType?: string;
 }
 
 @Injectable()
@@ -86,6 +87,10 @@ export class TransactionsService {
         { merchant: { contains: filters.search, mode: 'insensitive' } },
         { description: { contains: filters.search, mode: 'insensitive' } },
       ];
+    }
+
+    if (filters.excludeType) {
+      where.type = { not: filters.excludeType };
     }
 
     const [totalItems, transactions] = await Promise.all([

@@ -129,6 +129,7 @@ model Transaction {
 enum TransactionType {
   DEBIT
   CREDIT
+  TRANSFER
 }
 
 model TransactionTag {

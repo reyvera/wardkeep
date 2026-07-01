@@ -89,6 +89,7 @@ export class TransactionsController {
     @Query('amountMin') amountMin?: string,
     @Query('amountMax') amountMax?: string,
     @Query('search') search?: string,
+    @Query('excludeType') excludeType?: string,
   ) {
     const userId = req.userId!;
 
@@ -116,6 +117,7 @@ export class TransactionsController {
       ...(amountMin && { amountMin }),
       ...(amountMax && { amountMax }),
       ...(search && { search }),
+      ...(excludeType && { excludeType }),
     };
 
     return this.transactionsService.listTransactions(userId, filters);

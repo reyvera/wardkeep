@@ -19,6 +19,12 @@ interface Category {
   name: string;
 }
 
+interface Account {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface TransactionsResponse {
   data: Transaction[];
   meta: {
@@ -37,6 +43,7 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState('');
   const [accountFilter, setAccountFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [hideTransfers, setHideTransfers] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -56,12 +63,13 @@ export default function TransactionsPage() {
   params.set('pageSize', '20');
   if (search) params.set('search', search);
   if (accountFilter) params.set('accountId', accountFilter);
-  if (categoryFilter) params.set('category', categoryFilter);
+  if (categoryFilter) params.set('categoryId', categoryFilter);
   if (dateFrom) params.set('dateFrom', dateFrom);
   if (dateTo) params.set('dateTo', dateTo);
+  if (hideTransfers) params.set('excludeType', 'TRANSFER');
 
   const txQuery = useQuery({
-    queryKey: ['transactions', page, search, accountFilter, categoryFilter, dateFrom, dateTo],
+    queryKey: ['transactions', page, search, accountFilter, categoryFilter, dateFrom, dateTo, hideTransfers],
     queryFn: () => apiClient.get<TransactionsResponse>(`/transactions?${params.toString()}`),
   });
 
@@ -70,9 +78,22 @@ export default function TransactionsPage() {
     queryFn: () => apiClient.get<Category[]>('/categories'),
   });
 
+  const accountsQuery = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => apiClient.get<Account[]>('/accounts'),
+  });
+
   const updateCategoryMutation = useMutation({
     mutationFn: ({ txId, categoryId }: { txId: string; categoryId: string | null }) =>
       apiClient.patch(`/transactions/${txId}`, { categoryId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+
+  const markTransferMutation = useMutation({
+    mutationFn: (txId: string) =>
+      apiClient.patch(`/transactions/${txId}`, { type: 'TRANSFER' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
@@ -183,18 +204,26 @@ export default function TransactionsPage() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
-        <input
-          placeholder="Account ID"
+        <select
           value={accountFilter}
           onChange={(e) => { setAccountFilter(e.target.value); setPage(1); }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
-        <input
-          placeholder="Category"
+        >
+          <option value="">All Accounts</option>
+          {(accountsQuery.data ?? []).map((acc) => (
+            <option key={acc.id} value={acc.id}>{acc.name}</option>
+          ))}
+        </select>
+        <select
           value={categoryFilter}
           onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
+        >
+          <option value="">All Categories</option>
+          {(categoriesQuery.data ?? []).map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
         <input
           type="date"
           value={dateFrom}
@@ -207,6 +236,17 @@ export default function TransactionsPage() {
           onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
+      </div>
+      <div className="mb-4 flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hideTransfers}
+            onChange={(e) => { setHideTransfers(e.target.checked); setPage(1); }}
+            className="rounded"
+          />
+          Hide transfers
+        </label>
       </div>
 
       {txQuery.isLoading && <p className="text-gray-500">Loading...</p>}
@@ -222,6 +262,7 @@ export default function TransactionsPage() {
                   <th className="px-4 py-3 font-medium text-right">Amount</th>
                   <th className="px-4 py-3 font-medium">Category</th>
                   <th className="px-4 py-3 font-medium">Type</th>
+                  <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -249,7 +290,17 @@ export default function TransactionsPage() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-4 py-3 capitalize">{tx.type}</td>
+                    <td className="px-4 py-3 capitalize">{tx.type.toLowerCase()}</td>
+                    <td className="px-4 py-3">
+                      {tx.type !== 'TRANSFER' && (
+                        <button
+                          onClick={() => markTransferMutation.mutate(tx.id)}
+                          className="text-xs text-gray-500 hover:text-blue-600 hover:underline"
+                        >
+                          Mark Transfer
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
