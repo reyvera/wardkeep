@@ -35,6 +35,19 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   /**
+   * Returns groups of potential duplicate transactions.
+   * Duplicates are identified by matching date + amount + merchant (case-insensitive)
+   * within the same account.
+   * @param req - The scoped request with userId
+   * @returns Groups of potential duplicate transactions
+   */
+  @Get('duplicates')
+  async findDuplicates(@Req() req: ScopedRequest) {
+    const userId = req.userId!;
+    return this.transactionsService.findDuplicates(userId);
+  }
+
+  /**
    * Lists transactions for the authenticated user with pagination and filters.
    * Supports filtering by account, category, tag, merchant, date range,
    * amount range, and free-text search.

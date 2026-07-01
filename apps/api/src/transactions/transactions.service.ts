@@ -269,6 +269,56 @@ export class TransactionsService {
   }
 
   /**
+   * Detects potential duplicate transactions for a user.
+   * Duplicates are identified by matching date + amount + merchant (case-insensitive, trimmed)
+   * within the same account. Only considers transactions where merchant is not null.
+   * @param userId - The authenticated user's ID
+   * @returns Groups of potential duplicate transactions
+   */
+  async findDuplicates(userId: string) {
+    const transactions = await this.prisma.transaction.findMany({
+      where: { userId, merchant: { not: null } },
+      orderBy: { date: 'desc' },
+    });
+
+    const groups = new Map<string, typeof transactions>();
+
+    for (const tx of transactions) {
+      const dateStr = tx.date.toISOString().split('T')[0];
+      const merchantKey = tx.merchant!.trim().toLowerCase();
+      const key = `${tx.accountId}|${dateStr}|${tx.amount.toString()}|${merchantKey}`;
+
+      const group = groups.get(key) ?? [];
+      group.push(tx);
+      groups.set(key, group);
+    }
+
+    const duplicateGroups = Array.from(groups.values())
+      .filter((group) => group.length > 1)
+      .map((group) => ({
+        key: {
+          accountId: group[0].accountId,
+          date: group[0].date,
+          amount: group[0].amount.toString(),
+          merchant: group[0].merchant,
+        },
+        transactions: group.map((tx) => ({
+          id: tx.id,
+          accountId: tx.accountId,
+          date: tx.date,
+          amount: tx.amount.toString(),
+          type: tx.type,
+          merchant: tx.merchant,
+          description: tx.description,
+          categoryId: tx.categoryId,
+          createdAt: tx.createdAt,
+        })),
+      }));
+
+    return duplicateGroups;
+  }
+
+  /**
    * Deletes a transaction belonging to the user.
    * Cascade delete removes associated tags automatically.
    * @param userId - The authenticated user's ID
