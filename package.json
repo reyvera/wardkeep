@@ -2,7 +2,7 @@
   "name": "budgetapp",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@8.15.9",
   "engines": {
     "node": ">=20.0.0"
   },
