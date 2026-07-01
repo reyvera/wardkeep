@@ -165,17 +165,26 @@ export class AccountsService {
           initialBalance: new Decimal(dto.initialBalance),
         }),
       },
-      include: { transactions: true },
+      include: {
+        transactions: true,
+        linkedBankAccounts: { select: { id: true } },
+      },
     });
 
-    const currentBalance = calculateBalance(
-      new Decimal(updated.initialBalance.toString()),
-      updated.transactions.map((tx) => ({
-        ...tx,
-        amount: tx.amount.toString(),
-        aiConfidence: tx.aiConfidence?.toString() ?? null,
-      })),
-    );
+    let currentBalance: string;
+    if (updated.linkedBankAccounts.length > 0) {
+      currentBalance = new Decimal(updated.initialBalance.toString()).toFixed(2);
+    } else {
+      const computed = calculateBalance(
+        new Decimal(updated.initialBalance.toString()),
+        updated.transactions.map((tx) => ({
+          ...tx,
+          amount: tx.amount.toString(),
+          aiConfidence: tx.aiConfidence?.toString() ?? null,
+        })),
+      );
+      currentBalance = computed.toFixed(2);
+    }
 
     return {
       id: updated.id,
@@ -184,7 +193,7 @@ export class AccountsService {
       type: updated.type,
       currency: updated.currency,
       initialBalance: updated.initialBalance.toString(),
-      currentBalance: currentBalance.toFixed(2),
+      currentBalance,
       isArchived: updated.isArchived,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,

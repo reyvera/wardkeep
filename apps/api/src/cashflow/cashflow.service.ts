@@ -36,23 +36,32 @@ export class CashflowService {
   async getForecast(userId: string, accountId: string) {
     const account = await this.prisma.account.findFirst({
       where: { id: accountId, userId },
-      include: { transactions: true },
+      include: {
+        transactions: true,
+        linkedBankAccounts: { select: { id: true } },
+      },
     });
 
     if (!account) {
       throw new NotFoundException('Account not found');
     }
 
-    // Compute current balance using finance engine
-    const currentBalance = calculateBalance(
-      new Decimal(account.initialBalance.toString()),
-      account.transactions.map((tx) => ({
-        ...tx,
-        amount: tx.amount.toString(),
-        type: tx.type as unknown as TransactionType,
-        aiConfidence: tx.aiConfidence?.toString() ?? null,
-      })) as Transaction[],
-    );
+    // For bank-linked accounts, use the reported balance directly
+    // For manual accounts, compute from initial + transactions
+    let currentBalance: Decimal;
+    if (account.linkedBankAccounts.length > 0) {
+      currentBalance = new Decimal(account.initialBalance.toString());
+    } else {
+      currentBalance = calculateBalance(
+        new Decimal(account.initialBalance.toString()),
+        account.transactions.map((tx) => ({
+          ...tx,
+          amount: tx.amount.toString(),
+          type: tx.type as unknown as TransactionType,
+          aiConfidence: tx.aiConfidence?.toString() ?? null,
+        })) as Transaction[],
+      );
+    }
 
     const cashFlowAccount: CashFlowAccount = {
       id: account.id,
