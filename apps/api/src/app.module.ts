@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
+import { ImportModule } from './import/import.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -33,6 +34,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CategoriesModule,
     RulesModule,
     TransactionsModule,
+    ImportModule,
   ],
   providers: [
     {

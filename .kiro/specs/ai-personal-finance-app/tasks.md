@@ -245,7 +245,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
   - Ask the user if questions arise.
 
 - [ ] 10. Implement Importers package (packages/importers)
-  - [~] 10.1 Implement CSV, OFX, and QFX parsers
+  - [x] 10.1 Implement CSV, OFX, and QFX parsers
     - Create `parse(buffer, format, mapping?)` supporting CSV, OFX, QFX formats
     - Implement column mapping for CSV (date, amount, description, category)
     - Return ParseResult with transactions array, errors array (line number + reason), totalRows
@@ -253,7 +253,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Reject files exceeding 10MB or 50,000 rows
     - _Requirements: 4.1, 4.3, 4.5, 4.7_
 
-  - [~] 10.2 Implement CSV export and round-trip support
+  - [x] 10.2 Implement CSV export and round-trip support
     - Create `export(transactions, 'csv')` producing valid CSV output
     - Ensure parse → export → re-parse produces matching data
     - _Requirements: 4.9_
@@ -264,7 +264,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Generate random valid/invalid transaction rows; verify round-trip and error isolation
     - **Validates: Requirements 4.5, 4.9**
 
-  - [~] 10.4 Implement ImportModule in apps/api
+  - [x] 10.4 Implement ImportModule in apps/api
     - Create import controller: POST /api/import/upload (preview), POST /api/import/commit
     - Present first 10 detected transactions as preview before committing
     - Apply duplicate detection during import (date, amount, description, case-insensitive)
