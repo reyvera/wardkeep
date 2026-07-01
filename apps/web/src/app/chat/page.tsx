@@ -31,8 +31,7 @@ export default function ChatPage() {
   const chatMutation = useMutation({
     mutationFn: (userMessage: string) =>
       apiClient.post<ChatResponse>('/chat', {
-        message: userMessage,
-        history: messages.slice(-10),
+        query: userMessage,
       }),
     onSuccess: (data) => {
       setMessages((prev) => [
