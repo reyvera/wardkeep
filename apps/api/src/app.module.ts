@@ -18,6 +18,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { RecurringModule } from './recurring/recurring.module';
 import { RulesModule } from './rules/rules.module';
+import { SettingsModule } from './settings/settings.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
@@ -43,6 +44,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     DebtModule,
     RecurringModule,
     RulesModule,
+    SettingsModule,
     TransactionsModule,
     ImportModule,
   ],
