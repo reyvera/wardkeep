@@ -186,7 +186,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - **Validates: Requirements 3.9, 4.4**
 
 - [ ] 7. Implement Category and Budget modules (apps/api)
-  - [~] 7.1 Implement CategoryModule with CRUD and hierarchy
+  - [x] 7.1 Implement CategoryModule with CRUD and hierarchy
     - Create category controller: GET/POST/PATCH/DELETE /api/categories
     - Support tree structure with one-level sub-categories (max depth 2)
     - Implement POST /api/categories/merge for merging categories
@@ -201,7 +201,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Generate category trees and transaction associations; verify reassignment and depth constraints
     - **Validates: Requirements 5.3, 5.4, 5.6**
 
-  - [~] 7.3 Implement BudgetModule with CRUD and progress tracking
+  - [x] 7.3 Implement BudgetModule with CRUD and progress tracking
     - Create budget controller: GET/POST/PATCH /api/budgets/:month, POST /api/budgets/copy
     - Implement GET /api/budgets/:month/summary using Finance Engine
     - Enforce one budget per user per month
@@ -209,7 +209,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Validate allocation amounts (0.01–999,999,999.99)
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.7, 6.8_
 
-  - [~] 7.4 Implement budget threshold notifications
+  - [x] 7.4 Implement budget threshold notifications
     - Create notification service for in-app notifications via WebSocket
     - Fire warning at 90% of allocation, overspent alert at 100%
     - Update budget progress within 5 seconds of new transaction
