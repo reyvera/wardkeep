@@ -4,6 +4,7 @@ import { Decimal } from 'decimal.js';
 
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RulesService } from '../rules/rules.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
@@ -27,6 +28,7 @@ export class TransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly rulesService: RulesService,
   ) {}
 
   /**
@@ -173,6 +175,47 @@ export class TransactionsService {
       date: transaction.date,
       type: transaction.type,
     });
+
+    // Apply matching rules to auto-categorize/tag the new transaction
+    const appliedActions = await this.rulesService.applyRulesToTransaction(userId, {
+      id: transaction.id,
+      merchant: transaction.merchant,
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      tags: transaction.tags.map((t) => t.tag),
+    });
+
+    // Reload if rules modified the transaction
+    if (appliedActions) {
+      const updated = await this.prisma.transaction.findUnique({
+        where: { id: transaction.id },
+        include: { tags: true },
+      });
+      if (updated) {
+        return {
+          id: updated.id,
+          userId: updated.userId,
+          accountId: updated.accountId,
+          categoryId: updated.categoryId,
+          date: updated.date,
+          amount: updated.amount.toString(),
+          type: updated.type,
+          merchant: updated.merchant,
+          description: updated.description,
+          notes: updated.notes,
+          isReconciliation: updated.isReconciliation,
+          aiCategorized: updated.aiCategorized,
+          aiConfidence: updated.aiConfidence?.toString() ?? null,
+          createdAt: updated.createdAt,
+          updatedAt: updated.updatedAt,
+          tags: updated.tags.map((t) => ({
+            id: t.id,
+            transactionId: t.transactionId,
+            tag: t.tag,
+          })),
+        };
+      }
+    }
 
     return {
       id: transaction.id,

@@ -11,6 +11,7 @@ import { CommonModule } from './common/common.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { RulesModule } from './rules/rules.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     AccountsModule,
     BudgetsModule,
     CategoriesModule,
+    RulesModule,
     TransactionsModule,
   ],
   providers: [
