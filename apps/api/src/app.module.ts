@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { TransactionsModule } from './transactions/transactions.module';
@@ -23,6 +24,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     ]),
     PrismaModule,
     CommonModule,
+    NotificationsModule,
     HealthModule,
     AuthModule,
     AccountsModule,

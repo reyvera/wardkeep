@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -23,7 +24,10 @@ export interface TransactionFilters {
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * Lists transactions for a user with pagination and filtering.
@@ -162,6 +166,12 @@ export class TransactionsService {
           : {}),
       },
       include: { tags: true },
+    });
+
+    await this.checkBudgetThreshold(userId, {
+      categoryId: transaction.categoryId,
+      date: transaction.date,
+      type: transaction.type,
     });
 
     return {
@@ -334,5 +344,71 @@ export class TransactionsService {
     }
 
     await this.prisma.transaction.delete({ where: { id: transactionId } });
+  }
+
+  /**
+   * Checks if a transaction pushes a category's spending past budget thresholds.
+   * Emits a notification at 90% (warning) and 100% (overspent) of allocation.
+   * @param userId - The authenticated user's ID
+   * @param transaction - The transaction details to check against budget
+   */
+  private async checkBudgetThreshold(
+    userId: string,
+    transaction: { categoryId: string | null; date: Date; type: string },
+  ): Promise<void> {
+    if (!transaction.categoryId || transaction.type !== 'DEBIT') return;
+
+    const txDate = transaction.date;
+    const startOfMonth = new Date(Date.UTC(txDate.getUTCFullYear(), txDate.getUTCMonth(), 1));
+    const startOfNext = new Date(
+      Date.UTC(txDate.getUTCFullYear(), txDate.getUTCMonth() + 1, 1),
+    );
+
+    // Find budget allocation for this category in this month
+    const allocation = await this.prisma.budgetAllocation.findFirst({
+      where: {
+        categoryId: transaction.categoryId,
+        budget: { userId, month: startOfMonth },
+      },
+    });
+
+    if (!allocation) return;
+
+    // Sum spending for this category in this month
+    const spending = await this.prisma.transaction.aggregate({
+      where: {
+        userId,
+        categoryId: transaction.categoryId,
+        type: 'DEBIT',
+        date: { gte: startOfMonth, lt: startOfNext },
+      },
+      _sum: { amount: true },
+    });
+
+    const spent = spending._sum.amount ?? 0;
+    const allocated = allocation.amount;
+    const ratio = Number(spent) / Number(allocated);
+
+    if (ratio >= 1.0) {
+      this.notificationsService.emitBudgetNotification({
+        userId,
+        type: 'budget_overspent',
+        categoryId: transaction.categoryId,
+        percentUsed: (ratio * 100).toFixed(2),
+        allocated: allocated.toString(),
+        spent: spent.toString(),
+        createdAt: new Date(),
+      });
+    } else if (ratio >= 0.9) {
+      this.notificationsService.emitBudgetNotification({
+        userId,
+        type: 'budget_warning',
+        categoryId: transaction.categoryId,
+        percentUsed: (ratio * 100).toFixed(2),
+        allocated: allocated.toString(),
+        spent: spent.toString(),
+        createdAt: new Date(),
+      });
+    }
   }
 }
