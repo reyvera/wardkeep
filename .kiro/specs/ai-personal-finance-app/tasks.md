@@ -470,7 +470,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 15.1, 15.5, 16.1, 16.3, 16.4_
 
 - [ ] 18. Implement PWA features (apps/web)
-  - [~] 18.1 Implement service worker with offline caching and action queue
+  - [x] 18.1 Implement service worker with offline caching and action queue
     - Create service worker for app shell caching (7-day TTL)
     - Cache previously loaded data for offline read-only access
     - Implement offline action queue (max 100 actions)
@@ -480,7 +480,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Reject queuing when at capacity (100) with clear user message
     - _Requirements: 13.2, 13.3, 13.4, 13.5, 13.9_
 
-  - [~] 18.2 Create PWA manifest and install support
+  - [x] 18.2 Create PWA manifest and install support
     - Create web app manifest for installability on iOS, Android, Windows, Mac, Linux
     - Configure icons, theme color, display mode
     - Target Lighthouse PWA score of 90+
