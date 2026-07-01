@@ -3,6 +3,10 @@ node_modules/
 
 # Build outputs
 dist/
+.next/
+
+# Auto-generated
+next-env.d.ts
 
 # Environment
 .env
