@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
-import { AIChat, OllamaProvider, ChatMessage } from '@budgetapp/ai-engine';
+import { AIChat, OllamaProvider, OpenAIProvider, AnthropicProvider, ChatMessage } from '@budgetapp/ai-engine';
+import type { AIProvider } from '@budgetapp/ai-engine';
 import {
   verifyAIClaim,
   FinancialContext,
@@ -9,6 +10,7 @@ import {
 } from '@budgetapp/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { EncryptionService } from '../common/services/encryption.service';
 import { ChatRequestDto } from './dto/chat.dto';
 
 /** Default Ollama endpoint for local AI. */
@@ -16,12 +18,10 @@ const OLLAMA_ENDPOINT = process.env['OLLAMA_URL'] ?? 'http://localhost:11434';
 
 @Injectable()
 export class AiChatService {
-  private readonly aiChat: AIChat;
-
-  constructor(private readonly prisma: PrismaService) {
-    const provider = new OllamaProvider(OLLAMA_ENDPOINT);
-    this.aiChat = new AIChat(provider);
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
+  ) {}
 
   /**
    * Processes a chat message, generating an AI response with financial context.
@@ -63,8 +63,12 @@ export class AiChatService {
     // Build financial context from user's accounts
     const financialContext = await this.buildFinancialContext(userId);
 
+    // Resolve the AI provider based on user settings
+    const provider = await this.resolveProvider(userId);
+    const aiChat = new AIChat(provider);
+
     // Call AI chat engine
-    const aiResponse = await this.aiChat.chat(
+    const aiResponse = await aiChat.chat(
       dto.query,
       financialContext,
       history,
@@ -134,6 +138,33 @@ export class AiChatService {
       verifiedData: m.verifiedData,
       createdAt: m.createdAt,
     }));
+  }
+
+  /**
+   * Resolves the AI provider based on user's stored settings.
+   * Falls back to Ollama if no cloud keys are configured.
+   */
+  private async resolveProvider(userId: string): Promise<AIProvider> {
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+    });
+
+    const mode = settings?.aiPrivacyMode ?? 'LOCAL';
+
+    if (mode === 'CLOUD' || mode === 'HYBRID') {
+      // Try OpenAI first, then Anthropic
+      if (settings?.openaiKey) {
+        const decryptedKey = this.encryption.decrypt(settings.openaiKey);
+        return new OpenAIProvider(decryptedKey);
+      }
+      if (settings?.anthropicKey) {
+        const decryptedKey = this.encryption.decrypt(settings.anthropicKey);
+        return new AnthropicProvider(decryptedKey);
+      }
+    }
+
+    // Default to Ollama (local)
+    return new OllamaProvider(OLLAMA_ENDPOINT);
   }
 
   /**
