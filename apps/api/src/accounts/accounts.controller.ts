@@ -103,4 +103,17 @@ export class AccountsController {
     const userId = req.userId!;
     await this.accountsService.archiveAccount(userId, id);
   }
+
+  /**
+   * Permanently deletes an account and all its transactions.
+   * Unlinks any connected bank accounts.
+   * @param req - The scoped request with userId
+   * @param id - The account ID from route params
+   */
+  @Delete(':id/permanent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(@Req() req: ScopedRequest, @Param('id') id: string) {
+    const userId = req.userId!;
+    await this.accountsService.deleteAccount(userId, id);
+  }
 }

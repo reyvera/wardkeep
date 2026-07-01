@@ -200,6 +200,42 @@ export class AccountsService {
   }
 
   /**
+   * Permanently deletes an account, its transactions, and unlinks any bank connections.
+   * @param userId - The authenticated user's ID
+   * @param accountId - The account ID to delete
+   * @throws NotFoundException if account does not exist or belongs to another user
+   */
+  async deleteAccount(userId: string, accountId: string): Promise<void> {
+    const account = await this.prisma.account.findFirst({
+      where: { id: accountId, userId },
+    });
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    // Unlink any bank connections pointing to this account
+    await this.prisma.linkedBankAccount.updateMany({
+      where: { accountId },
+      data: { accountId: null },
+    });
+
+    // Delete all transactions for this account
+    await this.prisma.transaction.deleteMany({
+      where: { accountId },
+    });
+
+    // Delete recurring transactions for this account
+    await this.prisma.recurringTransaction.deleteMany({
+      where: { accountId },
+    });
+
+    // Delete the account itself
+    await this.prisma.account.delete({
+      where: { id: accountId },
+    });
+  }
+
+  /**
    * Computes the user's net worth from all active (non-archived) accounts.
    * Net worth = total assets - total liabilities.
    * @param userId - The authenticated user's ID

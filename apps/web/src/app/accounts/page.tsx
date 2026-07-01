@@ -41,7 +41,12 @@ export default function AccountsPage() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/accounts/${id}`, { isArchived: true }),
+    mutationFn: (id: string) => apiClient.delete(`/accounts/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/accounts/${id}/permanent`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
   });
 
@@ -129,12 +134,24 @@ export default function AccountsPage() {
                   </td>
                   <td className="px-4 py-3">
                     {!account.isArchived && (
-                      <button
-                        onClick={() => archiveMutation.mutate(account.id)}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        Archive
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => archiveMutation.mutate(account.id)}
+                          className="text-sm text-gray-600 hover:underline"
+                        >
+                          Archive
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('Permanently delete this account and all its transactions?')) {
+                              deleteMutation.mutate(account.id);
+                            }
+                          }}
+                          className="text-sm text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

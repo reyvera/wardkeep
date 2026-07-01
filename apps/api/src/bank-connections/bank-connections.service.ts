@@ -128,17 +128,38 @@ export class BankConnectionsService {
 
   /**
    * Removes a bank connection and all linked account associations.
-   * Does NOT delete the local accounts or their transactions.
+   * Also deletes local accounts that were auto-created for this connection.
    * @param userId - The user ID
    * @param connectionId - The connection ID to remove
    */
   async removeConnection(userId: string, connectionId: string) {
     const connection = await this.prisma.bankConnection.findFirst({
       where: { id: connectionId, userId },
+      include: { linkedAccounts: true },
     });
 
     if (!connection) {
       throw new NotFoundException('Bank connection not found');
+    }
+
+    // Delete local accounts that were linked to this connection
+    for (const linked of connection.linkedAccounts) {
+      if (linked.accountId) {
+        // Delete transactions for the account
+        await this.prisma.transaction.deleteMany({
+          where: { accountId: linked.accountId },
+        });
+        // Delete recurring transactions
+        await this.prisma.recurringTransaction.deleteMany({
+          where: { accountId: linked.accountId },
+        });
+        // Delete the account
+        await this.prisma.account.delete({
+          where: { id: linked.accountId },
+        }).catch(() => {
+          // Account might have already been deleted manually
+        });
+      }
     }
 
     await this.prisma.bankConnection.delete({ where: { id: connectionId } });
