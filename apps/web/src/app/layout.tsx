@@ -5,6 +5,8 @@ import { NavSidebar } from '@/components/nav-sidebar';
 export const metadata = {
   title: 'BudgetApp - Personal Finance',
   description: 'AI-powered personal finance management',
+  manifest: '/manifest.json',
+  themeColor: '#2563eb',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
