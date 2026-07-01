@@ -384,7 +384,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
   - Ask the user if questions arise.
 
 - [ ] 15. Implement Backup Service
-  - [~] 15.1 Implement BackupModule with create, restore, and scheduling
+  - [x] 15.1 Implement BackupModule with create, restore, and scheduling
     - Create backup controller: POST /api/backup/create, POST /api/backup/restore, GET /api/backup/list, PATCH /api/backup/schedule
     - Export all user data (accounts, transactions, categories, budgets, rules, settings) to encrypted archive
     - Encrypt with AES-256-GCM using user-provided passphrase (min 12 chars)
@@ -403,7 +403,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - **Validates: Requirements 15.4, 15.6, 15.8**
 
 - [ ] 16. Implement Settings and AI Privacy Configuration
-  - [~] 16.1 Implement SettingsModule in apps/api
+  - [x] 16.1 Implement SettingsModule in apps/api
     - Create settings controller: GET/PATCH /api/settings, POST /api/settings/validate-api-key
     - Support AI privacy mode configuration (Local, Hybrid, Cloud)
     - Encrypt API keys at application layer with AES-256
@@ -412,7 +412,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Show warning and require consent for Cloud mode activation
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 16.8, 16.9_
 
-  - [~] 16.2 Implement data encryption utilities
+  - [x] 16.2 Implement data encryption utilities
     - Create encryption service for sensitive fields (API keys, chat history)
     - Store encryption keys via environment variables, never in same storage as data
     - Implement encrypted export option for data exports
