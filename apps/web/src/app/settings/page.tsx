@@ -5,19 +5,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 interface Settings {
-  aiPrivacyMode: 'local' | 'hybrid' | 'cloud';
-  openaiApiKey?: string;
-  anthropicApiKey?: string;
-  backupSchedule: 'daily' | 'weekly' | 'monthly' | 'disabled';
+  aiPrivacyMode: string;
+  openaiKey?: string | null;
+  anthropicKey?: string | null;
+  backupSchedule: string;
 }
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Settings>({
-    aiPrivacyMode: 'local',
-    openaiApiKey: '',
-    anthropicApiKey: '',
-    backupSchedule: 'daily',
+    aiPrivacyMode: 'LOCAL',
+    openaiKey: '',
+    anthropicKey: '',
+    backupSchedule: 'DAILY',
   });
 
   const settingsQuery = useQuery({
@@ -64,14 +64,14 @@ export default function SettingsPage() {
             </label>
             <select
               value={form.aiPrivacyMode}
-              onChange={(e) => setForm({ ...form, aiPrivacyMode: e.target.value as Settings['aiPrivacyMode'] })}
+              onChange={(e) => setForm({ ...form, aiPrivacyMode: e.target.value })}
               className="w-full rounded-md border border-gray-300 px-3 py-2"
             >
-              <option value="local">Local (Ollama only)</option>
-              <option value="hybrid">Hybrid (sensitive data stays local)</option>
-              <option value="cloud">Cloud (all data sent to cloud provider)</option>
+              <option value="LOCAL">Local (Ollama only)</option>
+              <option value="HYBRID">Hybrid (sensitive data stays local)</option>
+              <option value="CLOUD">Cloud (all data sent to cloud provider)</option>
             </select>
-            {form.aiPrivacyMode === 'cloud' && (
+            {form.aiPrivacyMode === 'CLOUD' && (
               <p className="mt-1 text-sm text-yellow-600">
                 ⚠️ Cloud mode sends all financial data to the configured cloud AI provider.
                 Ensure you trust the provider with your data.
@@ -86,8 +86,8 @@ export default function SettingsPage() {
             </label>
             <input
               type="password"
-              value={form.openaiApiKey ?? ''}
-              onChange={(e) => setForm({ ...form, openaiApiKey: e.target.value })}
+              value={form.openaiKey ?? ''}
+              onChange={(e) => setForm({ ...form, openaiKey: e.target.value })}
               placeholder="sk-..."
               className="w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -99,8 +99,8 @@ export default function SettingsPage() {
             </label>
             <input
               type="password"
-              value={form.anthropicApiKey ?? ''}
-              onChange={(e) => setForm({ ...form, anthropicApiKey: e.target.value })}
+              value={form.anthropicKey ?? ''}
+              onChange={(e) => setForm({ ...form, anthropicKey: e.target.value })}
               placeholder="sk-ant-..."
               className="w-full rounded-md border border-gray-300 px-3 py-2"
             />
@@ -113,13 +113,12 @@ export default function SettingsPage() {
             </label>
             <select
               value={form.backupSchedule}
-              onChange={(e) => setForm({ ...form, backupSchedule: e.target.value as Settings['backupSchedule'] })}
+              onChange={(e) => setForm({ ...form, backupSchedule: e.target.value })}
               className="w-full rounded-md border border-gray-300 px-3 py-2"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="disabled">Disabled</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
+              <option value="MONTHLY">Monthly</option>
             </select>
           </div>
 
