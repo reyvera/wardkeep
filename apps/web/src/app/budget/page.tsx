@@ -83,7 +83,7 @@ export default function BudgetPage() {
     setAllocations(allocations.filter((_, i) => i !== index));
   };
 
-  const hasBudget = budgetQuery.data && budgetQuery.data.categories.length > 0;
+  const hasBudget = budgetQuery.data?.categories && budgetQuery.data.categories.length > 0;
 
   return (
     <div>
@@ -219,10 +219,10 @@ export default function BudgetPage() {
           {/* Category progress bars */}
           <div className="rounded-lg bg-white p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-semibold">Categories</h2>
-            {budgetQuery.data.categories.length === 0 && (
+            {(!budgetQuery.data.categories || budgetQuery.data.categories.length === 0) && (
               <p className="text-gray-500">No budget categories set for this month.</p>
             )}
-            {budgetQuery.data.categories.map((cat) => {
+            {(budgetQuery.data.categories ?? []).map((cat) => {
               const pct = cat.allocated > 0 ? Math.min(100, (cat.spent / cat.allocated) * 100) : 0;
               const isOver = cat.spent > cat.allocated;
               return (
