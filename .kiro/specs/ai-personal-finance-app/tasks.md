@@ -499,14 +499,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
   - Ask the user if questions arise.
 
 - [ ] 20. Implement Docker Compose deployment
-  - [~] 20.1 Create Dockerfiles for each service
+  - [x] 20.1 Create Dockerfiles for each service
     - Create multi-stage Dockerfile for apps/web (build + production serve)
     - Create multi-stage Dockerfile for apps/api (build + production)
     - Create Dockerfile for apps/worker
     - Optimize image sizes with Alpine/distroless base images
     - _Requirements: 14.1_
 
-  - [~] 20.2 Create Docker Compose configuration
+  - [x] 20.2 Create Docker Compose configuration
     - Define services: web (port 3000), api (port 4000), worker, postgres (5432), redis (6379), ollama (11434)
     - Configure named volumes: pg_data, redis_data, ollama_models, backups
     - Add health checks for all services (respond within 5s, check every 30s)
@@ -515,7 +515,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Document minimum hardware: 2GB RAM, 2 CPU cores, 10GB storage
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.7, 14.8, 14.9_
 
-  - [~] 20.3 Implement startup migration and upgrade support
+  - [x] 20.3 Implement startup migration and upgrade support
     - Create entrypoint script that runs Prisma migrations before API accepts requests
     - Seed default categories and settings on first run
     - On upgrade: apply migrations automatically without data loss
@@ -524,14 +524,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 14.2, 14.4, 14.5, 14.6_
 
 - [ ] 21. Implement WebSocket notifications and real-time updates
-  - [~] 21.1 Implement NotificationModule with WebSocket gateway
+  - [x] 21.1 Implement NotificationModule with WebSocket gateway
     - Create WebSocket gateway in apps/api using NestJS WebSocket adapter
     - Implement notification service: budget threshold alerts, missed recurring transactions, below-zero projections, offline sync conflict notifications
     - Dispatch notifications from worker via Redis pub/sub
     - _Requirements: 6.5, 6.6, 11.4, 12.5, 13.4_
 
 - [ ] 22. Final integration and wiring
-  - [~] 22.1 Wire all modules together and verify end-to-end flows
+  - [x] 22.1 Wire all modules together and verify end-to-end flows
     - Ensure transaction creation triggers: rules engine → AI categorization queue → budget recalculation → duplicate detection
     - Ensure import flow triggers: parse → preview → commit → rules → AI categorization → notifications
     - Ensure recurring detection integrates with cash-flow projections
@@ -546,7 +546,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Test: create backup → verify encryption → restore with correct passphrase → verify data
     - _Requirements: 4.8, 9.7, 10.6, 15.3, 15.8_
 
-- [~] 23. Final checkpoint - Full system integration
+- [x] 23. Final checkpoint - Full system integration
   - Ensure Docker Compose stack starts all services within 120 seconds
   - Ensure all property-based tests pass with 100+ iterations
   - Ensure all integration tests pass
