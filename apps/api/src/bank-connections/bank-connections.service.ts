@@ -206,7 +206,7 @@ export class BankConnectionsService {
       }
 
       // Fetch accounts from the access URL
-      const accountsResponse = await fetch(`${accessUrl}/accounts`);
+      const accountsResponse = await this.simplefinFetch(`${accessUrl}/accounts`);
       if (!accountsResponse.ok) {
         throw new BadRequestException(
           `Failed to fetch accounts from SimpleFIN (HTTP ${accountsResponse.status})`,
@@ -242,7 +242,7 @@ export class BankConnectionsService {
     try {
       // Fetch transactions from last 30 days
       const since = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
-      const response = await fetch(`${accessUrl}/accounts?start-date=${since}`);
+      const response = await this.simplefinFetch(`${accessUrl}/accounts?start-date=${since}`);
 
       if (!response.ok) return { imported, skippedDuplicates };
 
@@ -301,5 +301,24 @@ export class BankConnectionsService {
     }
 
     return { imported, skippedDuplicates };
+  }
+
+  /**
+   * Fetch wrapper that handles SimpleFIN access URLs with embedded credentials.
+   * Node's fetch doesn't allow credentials in URLs, so we extract them into
+   * an Authorization header (HTTP Basic Auth).
+   */
+  private async simplefinFetch(urlString: string, options?: RequestInit): Promise<Response> {
+    const url = new URL(urlString);
+    const headers: Record<string, string> = {};
+
+    if (url.username || url.password) {
+      const credentials = Buffer.from(`${url.username}:${url.password}`).toString('base64');
+      headers['Authorization'] = `Basic ${credentials}`;
+      url.username = '';
+      url.password = '';
+    }
+
+    return fetch(url.toString(), { ...options, headers: { ...headers, ...options?.headers } });
   }
 }
