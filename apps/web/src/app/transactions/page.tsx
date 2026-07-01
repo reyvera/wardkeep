@@ -9,9 +9,14 @@ interface Transaction {
   date: string;
   merchant: string;
   amount: number;
-  category: string;
+  categoryId: string | null;
   type: string;
   accountId: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface TransactionsResponse {
@@ -53,6 +58,19 @@ export default function TransactionsPage() {
   const txQuery = useQuery({
     queryKey: ['transactions', page, search, accountFilter, categoryFilter, dateFrom, dateTo],
     queryFn: () => apiClient.get<TransactionsResponse>(`/transactions?${params.toString()}`),
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiClient.get<Category[]>('/categories'),
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ txId, categoryId }: { txId: string; categoryId: string | null }) =>
+      apiClient.patch(`/transactions/${txId}`, { categoryId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
   });
 
   const createMutation = useMutation({
@@ -209,7 +227,23 @@ export default function TransactionsPage() {
                     <td className="px-4 py-3 text-right font-mono">
                       ${Math.abs(Number(tx.amount)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-4 py-3">{tx.category}</td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={tx.categoryId ?? ''}
+                        onChange={(e) =>
+                          updateCategoryMutation.mutate({
+                            txId: tx.id,
+                            categoryId: e.target.value || null,
+                          })
+                        }
+                        className="rounded border border-gray-200 px-2 py-1 text-sm w-full"
+                      >
+                        <option value="">Uncategorized</option>
+                        {(categoriesQuery.data ?? []).map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-4 py-3 capitalize">{tx.type}</td>
                   </tr>
                 ))}
