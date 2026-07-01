@@ -2,6 +2,7 @@
   "name": "budgetapp",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@8.15.9",
   "engines": {
     "node": ">=20.0.0"

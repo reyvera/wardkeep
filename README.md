@@ -215,4 +215,4 @@ MVP feature set is complete and functional. Bank connections, AI chat, accounts,
 
 ## License
 
-TBD
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
