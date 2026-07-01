@@ -216,7 +216,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 6.5, 6.6_
 
 - [ ] 8. Implement Rules Engine (apps/api)
-  - [~] 8.1 Implement RulesModule with CRUD and evaluation logic
+  - [x] 8.1 Implement RulesModule with CRUD and evaluation logic
     - Create rules controller: GET/POST/PATCH/DELETE /api/rules
     - Implement condition evaluation: merchant (contains, equals, starts_with, regex), amount (equals, gt, lt, between), description (contains, equals, regex)
     - Implement AND/OR logic modes per rule
@@ -226,7 +226,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Validate: at least one condition and one action, valid regex, valid category references
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.8, 7.9, 7.10_
 
-  - [~] 8.2 Implement dry-run and retroactive rule application
+  - [x] 8.2 Implement dry-run and retroactive rule application
     - Create POST /api/rules/:id/dry-run returning matching transactions without modification
     - Create POST /api/rules/:id/apply for retroactive application with affected count
     - Process batch of 1000 transactions against 100 rules within 10 seconds
@@ -239,7 +239,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Generate random rule sets with conditions, priorities, and transactions; verify evaluation order and conflict resolution
     - **Validates: Requirements 7.2, 7.4, 7.5, 7.6**
 
-- [~] 9. Checkpoint - Core features complete
+- [x] 9. Checkpoint - Core features complete
   - Ensure accounts, transactions, categories, budgets, and rules modules pass all tests
   - Run integration tests with real PostgreSQL via Testcontainers
   - Ask the user if questions arise.
