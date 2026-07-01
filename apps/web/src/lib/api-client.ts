@@ -5,6 +5,13 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 class ApiClient {
   private token: string | null = null;
 
+  constructor() {
+    // Restore token from localStorage on initialization (client-side only)
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem('token');
+    }
+  }
+
   setToken(token: string | null) {
     this.token = token;
   }
