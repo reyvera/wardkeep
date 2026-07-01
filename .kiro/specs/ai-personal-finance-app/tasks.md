@@ -345,14 +345,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - **Validates: Requirements 12.1, 12.2, 12.7**
 
 - [ ] 13. Implement Recurring Transaction and Cash-Flow API modules
-  - [~] 13.1 Implement RecurringModule in apps/api
+  - [x] 13.1 Implement RecurringModule in apps/api
     - Create recurring controller: GET /api/recurring, GET /api/recurring/detected
     - Implement POST /api/recurring/confirm and POST /api/recurring/dismiss
     - Track missed occurrences (not received within 5 days of expected)
     - Support deactivation (stops monitoring, excludes from cash-flow)
     - _Requirements: 12.3, 12.4, 12.5, 12.6, 12.7, 12.8_
 
-  - [~] 13.2 Implement CashFlowModule in apps/api
+  - [x] 13.2 Implement CashFlowModule in apps/api
     - Create cashflow controller: GET /api/cashflow/forecast, POST /api/cashflow/one-time
     - Use Finance Engine `projectCashFlow` for 90-day projections
     - Incorporate confirmed recurring transactions and one-time future events
@@ -361,7 +361,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Trigger notification when projected balance falls below zero
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.8_
 
-  - [~] 13.3 Implement DebtModule in apps/api
+  - [x] 13.3 Implement DebtModule in apps/api
     - Create debt controller: POST /api/debt/calculate, POST /api/debt/compare, POST /api/debt/what-if
     - Use Finance Engine for all calculations
     - Validate debt inputs: balance > 0, APR 0–100%, minimum payment ≥ 0.01
@@ -369,7 +369,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Recalculate within 2 seconds on parameter changes
     - _Requirements: 10.1, 10.4, 10.5, 10.7, 10.9, 10.10, 10.11_
 
-  - [~] 13.4 Implement AIChatModule in apps/api
+  - [x] 13.4 Implement AIChatModule in apps/api
     - Create chat controller: POST /api/chat, GET /api/chat/history
     - Pass queries to AI Engine with financial context
     - Display underlying numerical data alongside AI explanations
@@ -377,7 +377,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Limit queries to 500 characters, maintain 10-message session context
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
 
-- [~] 14. Checkpoint - API features complete
+- [x] 14. Checkpoint - API features complete
   - Ensure all API modules pass integration tests
   - Verify rules engine performance (1000 transactions × 100 rules < 10s)
   - Verify AI categorization batch performance (100 transactions < 30s)
