@@ -419,7 +419,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 17.1, 17.2, 17.4_
 
 - [ ] 17. Implement Next.js frontend (apps/web)
-  - [~] 17.1 Set up Next.js application with core layout and routing
+  - [x] 17.1 Set up Next.js application with core layout and routing
     - Configure Next.js 14+ with App Router and TypeScript
     - Set up Tailwind CSS with responsive design tokens
     - Create layout shell with navigation (dashboard, accounts, transactions, budget, debt, chat)
@@ -428,14 +428,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Create responsive layouts for 320px–2560px screen widths
     - _Requirements: 13.1, 13.8_
 
-  - [~] 17.2 Implement authentication pages and session handling
+  - [x] 17.2 Implement authentication pages and session handling
     - Create login, register, forgot-password, and reset-password pages
     - Implement session token storage and automatic refresh
     - Handle session expiry (redirect to login)
     - Create AuthProvider context wrapping the app
     - _Requirements: 1.1, 1.2, 1.5_
 
-  - [~] 17.3 Implement dashboard, accounts, and transaction pages
+  - [x] 17.3 Implement dashboard, accounts, and transaction pages
     - Create dashboard page with net worth summary and recent transactions
     - Create accounts list and detail pages with balance display
     - Create transactions page with paginated table, search/filter controls
@@ -443,27 +443,27 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Implement duplicate resolution UI (keep, merge, delete)
     - _Requirements: 2.4, 2.5, 3.5, 3.6, 3.7, 3.9, 3.10_
 
-  - [~] 17.4 Implement budget, category, and import pages
+  - [x] 17.4 Implement budget, category, and import pages
     - Create monthly budget page with category allocations and progress bars
     - Create category management page with tree view and merge dialog
     - Create import page with file upload, column mapping, preview, and commit flow
     - Display import summary after completion
     - _Requirements: 4.2, 4.3, 4.6, 5.2, 6.1, 6.4, 6.8_
 
-  - [~] 17.5 Implement rules, debt calculator, and cash-flow pages
+  - [x] 17.5 Implement rules, debt calculator, and cash-flow pages
     - Create rules list page with create/edit forms, dry-run preview, and retroactive apply
     - Create debt calculator page with strategy selection, schedule display, and what-if mode
     - Create cash-flow page with line chart and day-by-day table
     - _Requirements: 7.1, 7.6, 10.1, 10.6, 10.9, 11.6_
 
-  - [~] 17.6 Implement AI chat page and recurring transactions page
+  - [x] 17.6 Implement AI chat page and recurring transactions page
     - Create chat interface with message history and real-time responses
     - Display verified numerical data alongside AI explanations
     - Show correction warnings when AI claims differ from Finance Engine
     - Create recurring transactions page with detected patterns, confirm/dismiss actions
     - _Requirements: 9.1, 9.3, 9.7, 12.3, 12.4_
 
-  - [~] 17.7 Implement settings and backup management pages
+  - [x] 17.7 Implement settings and backup management pages
     - Create settings page with AI privacy mode toggle, API key entry, backup schedule
     - Show Cloud mode warning and consent dialog
     - Create backup page with create, restore, and backup list
