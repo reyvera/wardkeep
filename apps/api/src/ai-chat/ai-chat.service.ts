@@ -193,10 +193,7 @@ export class AiChatService {
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
       include: {
-        transactions: {
-          orderBy: { date: 'desc' },
-          take: 20,
-        },
+        linkedBankAccounts: { select: { id: true } },
       },
     });
 
@@ -205,11 +202,8 @@ export class AiChatService {
     }
 
     const summaries = accounts.map((acc) => {
-      const balance = acc.transactions.reduce((sum, tx) => {
-        const amount = new Decimal(tx.amount.toString());
-        return tx.type === 'CREDIT' ? sum.plus(amount) : sum.minus(amount);
-      }, new Decimal(acc.initialBalance.toString()));
-
+      // For bank-linked accounts, initialBalance IS the bank-reported balance
+      const balance = new Decimal(acc.initialBalance.toString());
       return `${acc.name} (${acc.type}): $${balance.toFixed(2)}`;
     });
 
