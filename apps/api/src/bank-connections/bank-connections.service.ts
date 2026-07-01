@@ -61,15 +61,25 @@ export class BankConnectionsService {
       discoveredAccounts.map(async (acct) => {
         // Map SimpleFIN currency/type to our AccountType enum
         const accountType = this.mapExternalType(acct.name);
-        const localAccount = await this.prisma.account.create({
-          data: {
-            userId,
-            name: acct.name,
-            type: accountType,
-            currency: acct.type.length === 3 ? acct.type : 'USD',
-            initialBalance: 0,
-          },
+        const currency = acct.type.length === 3 ? acct.type : 'USD';
+
+        // Check if a local account with this name already exists for the user
+        let localAccount = await this.prisma.account.findFirst({
+          where: { userId, name: acct.name },
         });
+
+        if (!localAccount) {
+          localAccount = await this.prisma.account.create({
+            data: {
+              userId,
+              name: acct.name,
+              type: accountType,
+              currency,
+              initialBalance: 0,
+            },
+          });
+        }
+
         return { externalId: acct.externalId, localAccountId: localAccount.id, name: acct.name, externalType: acct.type };
       }),
     );

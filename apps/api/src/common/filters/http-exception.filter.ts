@@ -44,6 +44,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
 
       error = error || HttpStatus[statusCode] || 'Error';
+    } else {
+      console.error('Unhandled exception:', exception);
     }
 
     const body: ErrorResponse = {
