@@ -157,7 +157,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
   - Ask the user if questions arise.
 
 - [ ] 6. Implement Account and Transaction modules (apps/api)
-  - [ ] 6.1 Implement AccountModule with CRUD operations
+  - [x] 6.1 Implement AccountModule with CRUD operations
     - Create account controller: GET/POST/PATCH/DELETE /api/accounts
     - Implement GET /api/accounts/net-worth using Finance Engine
     - Validate account name (1-100 chars), type, currency, initial balance
@@ -165,7 +165,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Enforce unique account name per user, max 50 accounts per user
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8_
 
-  - [ ] 6.2 Implement TransactionModule with CRUD and search
+  - [x] 6.2 Implement TransactionModule with CRUD and search
     - Create transaction controller: GET/POST/PATCH/DELETE /api/transactions
     - Implement paginated list (10-200 per page, default 50, sorted by date desc)
     - Implement search/filter: date range, account, category, tag, merchant, amount range, free-text
@@ -173,7 +173,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Recalculate account balance within 1 second on create/edit/delete
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8_
 
-  - [ ] 6.3 Implement duplicate detection for transactions
+  - [x] 6.3 Implement duplicate detection for transactions
     - Create GET /api/transactions/duplicates endpoint
     - Flag transactions with matching date + amount + merchant (case-insensitive, trimmed) in same account
     - Present duplicate groups to user for resolution (keep, merge, delete)
