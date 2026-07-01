@@ -112,7 +112,7 @@ export default function BankConnectionsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                {provider === 'SIMPLEFIN' ? 'Setup Token URL' : 'Access Token'}
+                {provider === 'SIMPLEFIN' ? 'SimpleFIN Token (Base64)' : 'Access Token'}
               </label>
               <input
                 type="text"
@@ -120,7 +120,7 @@ export default function BankConnectionsPage() {
                 onChange={(e) => setSetupToken(e.target.value)}
                 placeholder={
                   provider === 'SIMPLEFIN'
-                    ? 'https://bridge.simplefin.org/simplefin/setup/...'
+                    ? 'aHR0cHM6Ly9icmlkZ2Uuc2ltcGxlZmluLm9yZy...'
                     : 'Plaid access token'
                 }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"

@@ -168,11 +168,21 @@ export class BankConnectionsService {
 
   /**
    * Exchanges a SimpleFIN setup token for an access URL.
-   * SimpleFIN setup tokens are URLs that accept a POST to return the access URL.
+   * SimpleFIN tokens are Base64-encoded URLs. Decode, then POST to claim the access URL.
    */
   private async exchangeSimplefinToken(setupToken: string) {
     try {
-      const response = await fetch(setupToken, { method: 'POST' });
+      // Decode the Base64 setup token to get the claim URL
+      const claimUrl = Buffer.from(setupToken, 'base64').toString('utf-8');
+
+      // POST to the claim URL to get the access URL
+      const response = await fetch(claimUrl, { method: 'POST' });
+
+      if (response.status === 403) {
+        throw new BadRequestException(
+          'SimpleFIN token already claimed or invalid. Generate a new token.',
+        );
+      }
 
       if (!response.ok) {
         throw new BadRequestException('Failed to exchange SimpleFIN setup token');
@@ -190,7 +200,7 @@ export class BankConnectionsService {
       const accounts = (data.accounts ?? []).map((acct: Record<string, unknown>) => ({
         externalId: String(acct['id'] ?? ''),
         name: String(acct['name'] ?? 'Unknown'),
-        type: String(acct['type'] ?? 'checking'),
+        type: String(acct['currency'] ?? 'USD'),
       }));
 
       return { accessUrl, accounts };
@@ -224,11 +234,12 @@ export class BankConnectionsService {
         if (!linked || !linked.accountId) continue;
 
         for (const tx of extAccount.transactions ?? []) {
-          // Check for duplicate (same date + amount + description in same account)
+          // SimpleFIN uses UNIX epoch timestamps for 'posted'
           const txDate = new Date(tx.posted * 1000);
           const amount = Math.abs(Number(tx.amount));
-          const merchant = String(tx.description ?? tx.payee ?? 'Unknown').substring(0, 100);
+          const merchant = String(tx.description ?? 'Unknown').substring(0, 100);
 
+          // Check for duplicate (same date + amount + description in same account)
           const existing = await this.prisma.transaction.findFirst({
             where: {
               accountId: linked.accountId,
