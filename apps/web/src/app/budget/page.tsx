@@ -20,22 +20,70 @@ interface BudgetSummary {
   categories: BudgetCategory[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface AllocationInput {
+  categoryId: string;
+  amount: string;
+}
+
 export default function BudgetPage() {
   const queryClient = useQueryClient();
   const [month, setMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [allocations, setAllocations] = useState<AllocationInput[]>([{ categoryId: '', amount: '' }]);
 
   const budgetQuery = useQuery({
     queryKey: ['budget', month],
     queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${month}/summary`),
   });
 
+  const categoriesQuery = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiClient.get<Category[]>('/categories'),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      apiClient.post('/budgets', {
+        month,
+        allocations: allocations
+          .filter((a) => a.categoryId && a.amount)
+          .map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget', month] });
+      setShowCreateForm(false);
+      setAllocations([{ categoryId: '', amount: '' }]);
+    },
+  });
+
   const copyMutation = useMutation({
-    mutationFn: () => apiClient.post(`/budgets/${month}/copy-previous`),
+    mutationFn: () => apiClient.post('/budgets/copy', { month }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budget', month] }),
   });
+
+  const addAllocationRow = () => {
+    setAllocations([...allocations, { categoryId: '', amount: '' }]);
+  };
+
+  const updateAllocation = (index: number, field: keyof AllocationInput, value: string) => {
+    const updated = [...allocations];
+    updated[index] = { ...updated[index]!, [field]: value };
+    setAllocations(updated);
+  };
+
+  const removeAllocationRow = (index: number) => {
+    setAllocations(allocations.filter((_, i) => i !== index));
+  };
+
+  const hasBudget = budgetQuery.data && budgetQuery.data.categories.length > 0;
 
   return (
     <div>
@@ -48,18 +96,95 @@ export default function BudgetPage() {
             onChange={(e) => setMonth(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
-          <button
-            onClick={() => copyMutation.mutate()}
-            disabled={copyMutation.isPending}
-            className="rounded-md bg-gray-600 px-3 py-2 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50"
-          >
-            {copyMutation.isPending ? 'Copying...' : 'Copy from Previous Month'}
-          </button>
+          {!hasBudget && (
+            <>
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm font-medium hover:bg-blue-700"
+              >
+                {showCreateForm ? 'Cancel' : 'Create Budget'}
+              </button>
+              <button
+                onClick={() => copyMutation.mutate()}
+                disabled={copyMutation.isPending}
+                className="rounded-md bg-gray-600 px-3 py-2 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-50"
+              >
+                {copyMutation.isPending ? 'Copying...' : 'Copy Previous'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
+      {createMutation.isError && (
+        <p className="mb-4 text-sm text-red-600">{createMutation.error.message}</p>
+      )}
       {copyMutation.isError && (
         <p className="mb-4 text-sm text-red-600">{copyMutation.error.message}</p>
+      )}
+
+      {showCreateForm && (
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold mb-4">Set Budget for {month}</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              createMutation.mutate();
+            }}
+            className="space-y-3"
+          >
+            {allocations.map((alloc, idx) => (
+              <div key={idx} className="flex gap-3 items-center">
+                <select
+                  value={alloc.categoryId}
+                  onChange={(e) => updateAllocation(idx, 'categoryId', e.target.value)}
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                >
+                  <option value="">Select category...</option>
+                  {(categoriesQuery.data ?? []).map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="Amount"
+                  value={alloc.amount}
+                  onChange={(e) => updateAllocation(idx, 'amount', e.target.value)}
+                  className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+                {allocations.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeAllocationRow(idx)}
+                    className="text-red-500 text-sm hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={addAllocationRow}
+                className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                + Add Category
+              </button>
+              <button
+                type="submit"
+                disabled={createMutation.isPending}
+                className="rounded-md bg-green-600 px-3 py-2 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+              >
+                {createMutation.isPending ? 'Creating...' : 'Save Budget'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {budgetQuery.isLoading && <p className="text-gray-500">Loading...</p>}
