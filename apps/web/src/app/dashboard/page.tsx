@@ -38,6 +38,12 @@ interface SpendingStats {
   monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
   spendingByCategory: Array<{ categoryId: string; name: string; amount: number }>;
   topMerchants: Array<{ merchant: string; amount: number }>;
+  monthTotals: {
+    income: number;
+    expenses: number;
+    daysElapsed: number;
+    daysInMonth: number;
+  };
 }
 
 const PIE_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
@@ -138,6 +144,62 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Savings Projection Card */}
+      {statsQuery.data?.monthTotals && (
+        (() => {
+          const { income, expenses, daysElapsed, daysInMonth } = statsQuery.data!.monthTotals;
+          const dailySpendRate = daysElapsed > 0 ? expenses / daysElapsed : 0;
+          const projectedTotalSpend = budgetAllocated > 0
+            ? Math.min(budgetAllocated, expenses + dailySpendRate * (daysInMonth - daysElapsed))
+            : dailySpendRate * daysInMonth;
+          const projectedRemainingSpend = Math.max(0, projectedTotalSpend - expenses);
+          const projectedSavings = income - expenses - projectedRemainingSpend;
+          const savingsRate = income > 0 ? (projectedSavings / income) * 100 : 0;
+
+          return (
+            <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-semibold mb-4">Projected Savings Growth</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Income this month</span>
+                  <span className="font-medium text-green-600">+${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Already spent</span>
+                  <span className="font-medium text-red-600">-${expenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Projected remaining spend</span>
+                  <span className="font-medium text-orange-500">-${projectedRemainingSpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between">
+                  <span className="font-semibold text-gray-800">Projected savings growth</span>
+                  <span className={`text-xl font-bold ${projectedSavings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {projectedSavings >= 0 ? '+' : ''}${projectedSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                {/* Savings rate bar */}
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Savings rate</span>
+                    <span>{savingsRate.toFixed(1)}% of income</span>
+                  </div>
+                  <div className="h-3 w-full rounded-full bg-gray-200">
+                    <div
+                      className={`h-3 rounded-full transition-all ${savingsRate >= 20 ? 'bg-green-500' : savingsRate >= 10 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.max(0, Math.min(100, savingsRate))}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Based on {daysElapsed} of {daysInMonth} days elapsed · ${dailySpendRate.toFixed(2)}/day spending rate
+                </p>
+              </div>
+            </div>
+          );
+        })()
+      )}
 
       {/* Accounts breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

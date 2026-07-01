@@ -547,6 +547,25 @@ export class TransactionsService {
       take: 8,
     });
 
+    // Total income and expenses for the selected month (excludes transfers)
+    const [monthIncome, monthExpenses] = await Promise.all([
+      this.prisma.transaction.aggregate({
+        where: { userId, type: 'CREDIT', date: { gte: startOfMonth, lt: startOfNext } },
+        _sum: { amount: true },
+      }),
+      this.prisma.transaction.aggregate({
+        where: { userId, type: 'DEBIT', date: { gte: startOfMonth, lt: startOfNext } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    // Days elapsed and total days in month for pace projection
+    const today = new Date();
+    const daysInMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0).getDate();
+    const dayOfMonth = today.getMonth() === refDate.getMonth() && today.getFullYear() === refDate.getFullYear()
+      ? today.getDate()
+      : daysInMonth; // if viewing past month, use full month
+
     return {
       monthlyTrend,
       spendingByCategory,
@@ -554,6 +573,12 @@ export class TransactionsService {
         merchant: m.merchant ?? 'Unknown',
         amount: Number(m._sum.amount ?? 0),
       })),
+      monthTotals: {
+        income: Number(monthIncome._sum.amount ?? 0),
+        expenses: Number(monthExpenses._sum.amount ?? 0),
+        daysElapsed: dayOfMonth,
+        daysInMonth,
+      },
     };
   }
 }
