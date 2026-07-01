@@ -1,7 +1,10 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -126,5 +129,17 @@ export class BudgetsController {
     }
 
     return this.budgetsService.updateBudget(userId, id, result.data);
+  }
+
+  /**
+   * Deletes a budget and all its allocations.
+   * @param req - The scoped request with userId
+   * @param id - The budget ID from route params
+   */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteBudget(@Req() req: ScopedRequest, @Param('id') id: string) {
+    const userId = req.userId!;
+    await this.budgetsService.deleteBudget(userId, id);
   }
 }

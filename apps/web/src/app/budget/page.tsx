@@ -59,8 +59,6 @@ export default function BudgetPage() {
   const [showForm, setShowForm] = useState(false);
   const [allocations, setAllocations] = useState<AllocationInput[]>([{ categoryId: '', amount: '' }]);
 
-  const isCurrentMonth = month === getCurrentMonth();
-
   const budgetQuery = useQuery({
     queryKey: ['budget-summary', month],
     queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${month}/summary`).catch(() => null),
@@ -79,6 +77,20 @@ export default function BudgetPage() {
   // Auto-copy from previous month if no budget exists for current month
   const copyMutation = useMutation({
     mutationFn: () => apiClient.post('/budgets/copy', { month }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
+      queryClient.invalidateQueries({ queryKey: ['budget-detail', month] });
+    },
+  });
+
+  // Overwrite: delete existing budget then copy from previous
+  const overwriteCopyMutation = useMutation({
+    mutationFn: async () => {
+      if (budgetDetailQuery.data?.id) {
+        await apiClient.delete(`/budgets/${budgetDetailQuery.data.id}`);
+      }
+      return apiClient.post('/budgets/copy', { month });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
       queryClient.invalidateQueries({ queryKey: ['budget-detail', month] });
@@ -116,9 +128,6 @@ export default function BudgetPage() {
 
   const hasBudget = !!budgetDetailQuery.data?.id;
 
-  // Auto-copy: if current month has no budget but previous month does, offer to copy
-  const showAutoCopy = isCurrentMonth && !hasBudget && !budgetDetailQuery.isLoading;
-
   useEffect(() => {
     setShowForm(false);
   }, [month]);
@@ -135,6 +144,17 @@ export default function BudgetPage() {
       setAllocations([{ categoryId: '', amount: '' }]);
     }
     setShowForm(true);
+  };
+
+  const handleCopyFromPrevious = () => {
+    if (hasBudget) {
+      if (confirm(`This will overwrite the existing budget for ${formatMonth(month)}. Continue?`)) {
+        // Delete existing then copy
+        overwriteCopyMutation.mutate();
+      }
+    } else {
+      copyMutation.mutate();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -187,47 +207,34 @@ export default function BudgetPage() {
       {/* Current month display */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-700">{formatMonth(month)}</h2>
-        {hasBudget && isCurrentMonth && (
+        <div className="flex gap-2">
+          <button
+            onClick={handleCopyFromPrevious}
+            disabled={copyMutation.isPending || overwriteCopyMutation.isPending}
+            className="rounded-md bg-gray-100 border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+          >
+            {(copyMutation.isPending || overwriteCopyMutation.isPending) ? 'Copying...' : 'Copy from Previous'}
+          </button>
           <button
             onClick={startEditing}
             className="rounded-md bg-blue-600 px-3 py-1.5 text-white text-sm font-medium hover:bg-blue-700"
           >
-            Edit Budget
+            {hasBudget ? 'Edit Budget' : 'Create Budget'}
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Auto-copy prompt */}
-      {showAutoCopy && (
-        <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
-          <p className="text-sm text-blue-800 mb-3">
-            No budget set for {formatMonth(month)}. Would you like to copy from last month or create a new one?
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => copyMutation.mutate()}
-              disabled={copyMutation.isPending}
-              className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {copyMutation.isPending ? 'Copying...' : 'Copy from Last Month'}
-            </button>
-            <button
-              onClick={startEditing}
-              className="rounded-md bg-white border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Create New Budget
-            </button>
-          </div>
-          {copyMutation.isError && (
-            <p className="mt-2 text-sm text-red-600">{copyMutation.error.message}</p>
-          )}
-        </div>
+      {(copyMutation.isError || overwriteCopyMutation.isError) && (
+        <p className="mb-4 text-sm text-red-600">
+          {copyMutation.error?.message ?? overwriteCopyMutation.error?.message}
+        </p>
       )}
 
-      {/* No budget for past/future months */}
-      {!hasBudget && !isCurrentMonth && !budgetDetailQuery.isLoading && (
+      {/* No budget message */}
+      {!hasBudget && !budgetDetailQuery.isLoading && !showForm && (
         <div className="mb-6 rounded-lg bg-gray-50 border border-gray-200 p-6 text-center">
-          <p className="text-gray-500">No budget was set for {formatMonth(month)}.</p>
+          <p className="text-gray-500">No budget set for {formatMonth(month)}.</p>
+          <p className="text-sm text-gray-400 mt-1">Create one or copy from the previous month.</p>
         </div>
       )}
 

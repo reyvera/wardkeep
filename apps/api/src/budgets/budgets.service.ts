@@ -172,6 +172,25 @@ export class BudgetsService {
   }
 
   /**
+   * Deletes a budget and all its allocations.
+   * @param userId - The authenticated user's ID
+   * @param budgetId - The budget ID to delete
+   * @throws NotFoundException if the budget does not exist or belongs to another user
+   */
+  async deleteBudget(userId: string, budgetId: string): Promise<void> {
+    const budget = await this.prisma.budget.findFirst({
+      where: { id: budgetId, userId },
+    });
+
+    if (!budget) {
+      throw new NotFoundException('Budget not found');
+    }
+
+    await this.prisma.budgetAllocation.deleteMany({ where: { budgetId } });
+    await this.prisma.budget.delete({ where: { id: budgetId } });
+  }
+
+  /**
    * Copies a budget from the previous month into the given month.
    * Only copies allocations whose categories still exist for the user.
    * @param userId - The authenticated user's ID
