@@ -7,6 +7,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';
 import { AuthModule } from './auth/auth.module';
 import { BackupModule } from './backup/backup.module';
+import { BankConnectionsModule } from './bank-connections/bank-connections.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CashflowModule } from './cashflow/cashflow.module';
 import { CategoriesModule } from './categories/categories.module';
@@ -38,6 +39,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     AccountsModule,
     AiChatModule,
     BackupModule,
+    BankConnectionsModule,
     BudgetsModule,
     CashflowModule,
     CategoriesModule,

@@ -14,15 +14,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   setToken: (token) => {
     if (token) {
       localStorage.setItem('token', token);
+      document.cookie = `token=${token}; path=/; SameSite=Strict`;
       apiClient.setToken(token);
     } else {
       localStorage.removeItem('token');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       apiClient.setToken(null);
     }
     set({ token, isAuthenticated: !!token });
   },
   logout: () => {
     localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     apiClient.setToken(null);
     set({ token: null, isAuthenticated: false });
   },

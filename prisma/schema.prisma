@@ -33,6 +33,7 @@ model User {
   auditLogs             AuditLog[]
   recurringTransactions RecurringTransaction[]
   resetTokens           PasswordResetToken[]
+  bankConnections       BankConnection[]
 }
 
 model Session {
@@ -78,6 +79,7 @@ model Account {
   user         User                   @relation(fields: [userId], references: [id])
   transactions Transaction[]
   recurring    RecurringTransaction[]
+  linkedBankAccounts LinkedBankAccount[]
 
   @@unique([userId, name])
   @@index([userId, isArchived])
@@ -382,4 +384,52 @@ model AICorrection {
 
   @@unique([userId, merchant])
   @@index([userId, merchant])
+}
+
+// ─── Bank Connections (SimpleFIN/Plaid) ─────────────────────────────────────────
+
+model BankConnection {
+  id              String               @id @default(uuid())
+  userId          String
+  provider        BankConnectionProvider
+  institutionName String               @db.VarChar(200)
+  accessToken     String               @db.VarChar(1000) // Encrypted at application layer
+  status          BankConnectionStatus @default(ACTIVE)
+  lastSyncAt      DateTime?
+  lastError       String?              @db.VarChar(500)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  user            User                 @relation(fields: [userId], references: [id])
+  linkedAccounts  LinkedBankAccount[]
+
+  @@index([userId, status])
+}
+
+model LinkedBankAccount {
+  id               String   @id @default(uuid())
+  connectionId     String
+  accountId        String?  // Links to the local Account, null if not yet linked
+  externalId       String   @db.VarChar(200) // External account ID from provider
+  externalName     String   @db.VarChar(200)
+  externalType     String   @db.VarChar(50)
+  isEnabled        Boolean  @default(true) // Whether to sync transactions for this account
+  createdAt        DateTime @default(now())
+
+  connection       BankConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  account          Account?       @relation(fields: [accountId], references: [id])
+
+  @@unique([connectionId, externalId])
+  @@index([accountId])
+}
+
+enum BankConnectionProvider {
+  SIMPLEFIN
+  PLAID
+}
+
+enum BankConnectionStatus {
+  ACTIVE
+  ERROR
+  DISCONNECTED
 }

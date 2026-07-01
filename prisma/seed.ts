@@ -28,23 +28,15 @@ const DEFAULT_CATEGORIES = [
  */
 export async function seedCategories(prisma: PrismaClient, userId: string) {
   const categories = await Promise.all(
-    DEFAULT_CATEGORIES.map((name) =>
-      prisma.category.upsert({
-        where: {
-          userId_parentId_name: {
-            userId,
-            parentId: null,
-            name,
-          },
-        },
-        update: {},
-        create: {
-          userId,
-          name,
-          isDefault: true,
-        },
-      }),
-    ),
+    DEFAULT_CATEGORIES.map(async (name) => {
+      const existing = await prisma.category.findFirst({
+        where: { userId, parentId: null, name },
+      });
+      if (existing) return existing;
+      return prisma.category.create({
+        data: { userId, name, isDefault: true },
+      });
+    }),
   );
 
   return categories;

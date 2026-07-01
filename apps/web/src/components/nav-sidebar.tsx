@@ -14,6 +14,7 @@ const navItems = [
   { href: '/recurring', label: 'Cash Flow', icon: '🔄' },
   { href: '/chat', label: 'Chat', icon: '🤖' },
   { href: '/import', label: 'Import', icon: '📥' },
+  { href: '/bank-connections', label: 'Bank Connections', icon: '🔗' },
   { href: '/settings', label: 'Settings', icon: '🔧' },
 ];
 

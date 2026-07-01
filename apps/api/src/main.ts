@@ -1,4 +1,9 @@
 import 'reflect-metadata';
+import { config } from 'dotenv';
+import { resolve } from 'node:path';
+
+// Load .env from monorepo root
+config({ path: resolve(__dirname, '../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';

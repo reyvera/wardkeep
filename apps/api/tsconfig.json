@@ -12,12 +12,11 @@
     "sourceMap": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "paths": {
-      "@budgetapp/shared": ["../../packages/shared/src/index.ts"],
-      "@budgetapp/finance-engine": ["../../packages/finance-engine/src/index.ts"],
-      "@budgetapp/ai-engine": ["../../packages/ai-engine/src/index.ts"],
-      "@budgetapp/importers": ["../../packages/importers/src/index.ts"]
-    }
+    "noUncheckedIndexedAccess": false,
+    "paths": {}
+  },
+  "ts-node": {
+    "swc": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]

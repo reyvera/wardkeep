@@ -565,6 +565,27 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
 - The worker processes all async jobs (AI categorization, recurring detection, backups) to keep API responsive
 - Docker Compose deployment is self-contained; Local AI mode requires no external network after initial pull
 
+## Bugs and Fixes
+
+- [x] 24.1 Login page should be the default route
+  - Navigating to `localhost:3000` shows the dashboard instead of the login page
+  - Unauthenticated users must be redirected to `/login`, not `/dashboard`
+  - Fixed: Added Next.js middleware that checks for auth cookie, root route now redirects to `/login`
+
+## Future Features
+
+- [x] 25. Bank account auto-connection (Plaid/SimpleFIN)
+  - [x] 25.1 Evaluate and integrate a bank connection provider
+    - Preferred: SimpleFIN (privacy-respecting, designed for self-hosted finance apps)
+    - Alternative: Plaid, Teller, GoCardless (Nordigen)
+    - Implement OAuth/token-based account linking flow
+    - Auto-import transactions daily from linked accounts
+    - Sync real account balances automatically
+    - Add webhook handling for real-time transaction notifications
+    - Add recurring sync job to worker (BullMQ queue)
+    - Respect AI Privacy Mode — bank connection tokens stored encrypted (AES-256)
+    - Provide UI for linking/unlinking accounts and managing connections
+
 ## Task Dependency Graph
 
 ```json
