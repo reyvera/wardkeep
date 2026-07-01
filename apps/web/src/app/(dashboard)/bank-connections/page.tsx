@@ -23,6 +23,12 @@ interface BankConnection {
   linkedAccounts: LinkedAccount[];
 }
 
+interface LocalAccount {
+  id: string;
+  name: string;
+  type: string;
+}
+
 export default function BankConnectionsPage() {
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -33,6 +39,11 @@ export default function BankConnectionsPage() {
   const connectionsQuery = useQuery({
     queryKey: ['bank-connections'],
     queryFn: () => apiClient.get<BankConnection[]>('/bank-connections'),
+  });
+
+  const accountsQuery = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => apiClient.get<LocalAccount[]>('/accounts'),
   });
 
   const createMutation = useMutation({
@@ -59,6 +70,14 @@ export default function BankConnectionsPage() {
   const removeMutation = useMutation({
     mutationFn: (connectionId: string) =>
       apiClient.delete(`/bank-connections/${connectionId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
+    },
+  });
+
+  const linkMutation = useMutation({
+    mutationFn: ({ linkedBankAccountId, accountId }: { linkedBankAccountId: string; accountId: string }) =>
+      apiClient.post('/bank-connections/link-account', { linkedBankAccountId, accountId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
     },
@@ -214,17 +233,35 @@ export default function BankConnectionsPage() {
           {conn.linkedAccounts.length > 0 && (
             <div className="mt-3 border-t pt-3">
               <p className="text-sm font-medium text-gray-700 mb-2">Linked Accounts</p>
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {conn.linkedAccounts.map((la) => (
-                  <li key={la.id} className="flex items-center justify-between text-sm">
+                  <li key={la.id} className="flex items-center justify-between text-sm gap-3">
                     <span className="text-gray-600">
                       {la.externalName}{' '}
                       <span className="text-gray-400">({la.externalType})</span>
                     </span>
                     {la.account ? (
-                      <span className="text-green-600">→ {la.account.name}</span>
+                      <span className="text-green-600 font-medium">→ {la.account.name}</span>
                     ) : (
-                      <span className="text-amber-600">Not linked</span>
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            linkMutation.mutate({
+                              linkedBankAccountId: la.id,
+                              accountId: e.target.value,
+                            });
+                          }
+                        }}
+                        className="rounded-md border border-gray-300 px-2 py-1 text-sm"
+                      >
+                        <option value="">Link to account...</option>
+                        {(accountsQuery.data ?? []).map((acct) => (
+                          <option key={acct.id} value={acct.id}>
+                            {acct.name} ({acct.type})
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </li>
                 ))}
