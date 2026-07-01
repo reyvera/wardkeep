@@ -21,9 +21,14 @@ interface Category {
 
 interface TransactionsResponse {
   data: Transaction[];
-  total: number;
-  page: number;
-  pageSize: number;
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }
 
 export default function TransactionsPage() {
@@ -93,7 +98,7 @@ export default function TransactionsPage() {
     },
   });
 
-  const totalPages = txQuery.data ? Math.ceil(txQuery.data.total / txQuery.data.pageSize) : 1;
+  const totalPages = txQuery.data?.meta.totalPages ?? 1;
 
   return (
     <div>
