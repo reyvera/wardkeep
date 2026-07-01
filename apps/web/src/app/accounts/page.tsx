@@ -26,7 +26,11 @@ export default function AccountsPage() {
 
   const createMutation = useMutation({
     mutationFn: () =>
-      apiClient.post('/accounts', { name, type, balance: parseFloat(balance) || 0 }),
+      apiClient.post('/accounts', {
+        name,
+        type: type.toUpperCase(),
+        initialBalance: balance || '0',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       setShowForm(false);
@@ -80,7 +84,8 @@ export default function AccountsPage() {
               <option value="savings">Savings</option>
               <option value="credit_card">Credit Card</option>
               <option value="loan">Loan</option>
-              <option value="investment">Investment</option>
+              <option value="mortgage">Mortgage</option>
+              <option value="cash">Cash</option>
             </select>
             <input
               placeholder="Opening balance"
