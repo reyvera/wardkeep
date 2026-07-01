@@ -56,7 +56,25 @@ export class BankConnectionsService {
     // Encrypt the access token before storage
     const encryptedToken = this.encryption.encrypt(accessToken);
 
-    // Create connection and linked accounts in a transaction
+    // Auto-create local accounts for each discovered external account
+    const localAccounts = await Promise.all(
+      discoveredAccounts.map(async (acct) => {
+        // Map SimpleFIN currency/type to our AccountType enum
+        const accountType = this.mapExternalType(acct.name);
+        const localAccount = await this.prisma.account.create({
+          data: {
+            userId,
+            name: acct.name,
+            type: accountType,
+            currency: acct.type.length === 3 ? acct.type : 'USD',
+            initialBalance: 0,
+          },
+        });
+        return { externalId: acct.externalId, localAccountId: localAccount.id, name: acct.name, externalType: acct.type };
+      }),
+    );
+
+    // Create connection and linked accounts, pre-linked to the auto-created local accounts
     const connection = await this.prisma.bankConnection.create({
       data: {
         userId,
@@ -65,18 +83,37 @@ export class BankConnectionsService {
         accessToken: encryptedToken,
         status: 'ACTIVE',
         linkedAccounts: {
-          create: discoveredAccounts.map((acct) => ({
+          create: localAccounts.map((acct) => ({
             externalId: acct.externalId,
             externalName: acct.name,
-            externalType: acct.type,
+            externalType: acct.externalType,
             isEnabled: true,
+            accountId: acct.localAccountId,
           })),
         },
       },
-      include: { linkedAccounts: true },
+      include: {
+        linkedAccounts: {
+          include: { account: { select: { id: true, name: true, type: true } } },
+        },
+      },
     });
 
     return connection;
+  }
+
+  /**
+   * Maps an external account name to a local AccountType.
+   * Uses simple heuristics based on the account name.
+   */
+  private mapExternalType(name: string): string {
+    const lower = name.toLowerCase();
+    if (lower.includes('checking')) return 'CHECKING';
+    if (lower.includes('savings')) return 'SAVINGS';
+    if (lower.includes('credit')) return 'CREDIT_CARD';
+    if (lower.includes('loan')) return 'LOAN';
+    if (lower.includes('mortgage')) return 'MORTGAGE';
+    return 'CHECKING';
   }
 
   /**
