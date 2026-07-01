@@ -112,7 +112,7 @@ export default function BankConnectionsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                {provider === 'SIMPLEFIN' ? 'SimpleFIN Token (Base64)' : 'Access Token'}
+                {provider === 'SIMPLEFIN' ? 'SimpleFIN Token or Access URL' : 'Access Token'}
               </label>
               <input
                 type="text"
@@ -120,7 +120,7 @@ export default function BankConnectionsPage() {
                 onChange={(e) => setSetupToken(e.target.value)}
                 placeholder={
                   provider === 'SIMPLEFIN'
-                    ? 'aHR0cHM6Ly9icmlkZ2Uuc2ltcGxlZmluLm9yZy...'
+                    ? 'https://demo:demo@beta-bridge.simplefin.org/simplefin'
                     : 'Plaid access token'
                 }
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
@@ -128,15 +128,10 @@ export default function BankConnectionsPage() {
               />
               {provider === 'SIMPLEFIN' && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Get your setup token from{' '}
-                  <a
-                    href="https://beta-bridge.simplefin.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    SimpleFIN Bridge
-                  </a>
+                  Paste a Base64 setup token OR a direct access URL. For demo, use:{' '}
+                  <code className="bg-gray-100 px-1 rounded text-xs">
+                    https://demo:demo@beta-bridge.simplefin.org/simplefin
+                  </code>
                 </p>
               )}
             </div>

@@ -168,32 +168,49 @@ export class BankConnectionsService {
 
   /**
    * Exchanges a SimpleFIN setup token for an access URL.
-   * SimpleFIN tokens are Base64-encoded URLs. Decode, then POST to claim the access URL.
+   * Accepts either:
+   * - A Base64-encoded claim token (standard flow)
+   * - A direct access URL (e.g. https://user:pass@beta-bridge.simplefin.org/simplefin)
    */
   private async exchangeSimplefinToken(setupToken: string) {
     try {
-      // Decode the Base64 setup token to get the claim URL
-      const claimUrl = Buffer.from(setupToken, 'base64').toString('utf-8');
+      let accessUrl: string;
 
-      // POST to the claim URL to get the access URL
-      const response = await fetch(claimUrl, { method: 'POST' });
+      // If it looks like a URL already, treat it as a direct access URL
+      if (setupToken.startsWith('https://')) {
+        accessUrl = setupToken;
+      } else {
+        // Decode the Base64 setup token to get the claim URL
+        const claimUrl = Buffer.from(setupToken, 'base64').toString('utf-8');
 
-      if (response.status === 403) {
-        throw new BadRequestException(
-          'SimpleFIN token already claimed or invalid. Generate a new token.',
-        );
+        if (!claimUrl.startsWith('https://')) {
+          throw new BadRequestException('Invalid SimpleFIN token — decoded value is not a URL');
+        }
+
+        // POST to the claim URL to get the access URL
+        const response = await fetch(claimUrl, { method: 'POST', redirect: 'follow' });
+
+        if (response.status === 403) {
+          throw new BadRequestException(
+            'SimpleFIN token already claimed or invalid. Generate a new token.',
+          );
+        }
+
+        if (!response.ok) {
+          throw new BadRequestException(
+            `Failed to exchange SimpleFIN setup token (HTTP ${response.status})`,
+          );
+        }
+
+        accessUrl = (await response.text()).trim();
       }
-
-      if (!response.ok) {
-        throw new BadRequestException('Failed to exchange SimpleFIN setup token');
-      }
-
-      const accessUrl = await response.text();
 
       // Fetch accounts from the access URL
       const accountsResponse = await fetch(`${accessUrl}/accounts`);
       if (!accountsResponse.ok) {
-        throw new BadRequestException('Failed to fetch accounts from SimpleFIN');
+        throw new BadRequestException(
+          `Failed to fetch accounts from SimpleFIN (HTTP ${accountsResponse.status})`,
+        );
       }
 
       const data = await accountsResponse.json();
@@ -206,7 +223,9 @@ export class BankConnectionsService {
       return { accessUrl, accounts };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Failed to connect to SimpleFIN. Check your setup token.');
+      throw new BadRequestException(
+        `Failed to connect to SimpleFIN: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
