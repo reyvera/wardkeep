@@ -39,19 +39,31 @@ export class AccountsService {
 
     const accounts = await this.prisma.account.findMany({
       where,
-      include: { transactions: true },
+      include: {
+        transactions: true,
+        linkedBankAccounts: { select: { id: true } },
+      },
       orderBy: { createdAt: 'asc' },
     });
 
     return accounts.map((account) => {
-      const currentBalance = calculateBalance(
-        new Decimal(account.initialBalance.toString()),
-        account.transactions.map((tx) => ({
-          ...tx,
-          amount: tx.amount.toString(),
-          aiConfidence: tx.aiConfidence?.toString() ?? null,
-        })),
-      );
+      let currentBalance: string;
+
+      // For bank-linked accounts, use the bank-reported balance (stored in initialBalance)
+      // For manual accounts, compute from initial balance + transactions
+      if (account.linkedBankAccounts.length > 0) {
+        currentBalance = new Decimal(account.initialBalance.toString()).toFixed(2);
+      } else {
+        const computed = calculateBalance(
+          new Decimal(account.initialBalance.toString()),
+          account.transactions.map((tx) => ({
+            ...tx,
+            amount: tx.amount.toString(),
+            aiConfidence: tx.aiConfidence?.toString() ?? null,
+          })),
+        );
+        currentBalance = computed.toFixed(2);
+      }
 
       return {
         id: account.id,
@@ -60,7 +72,7 @@ export class AccountsService {
         type: account.type,
         currency: account.currency,
         initialBalance: account.initialBalance.toString(),
-        currentBalance: currentBalance.toFixed(2),
+        currentBalance,
         isArchived: account.isArchived,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,

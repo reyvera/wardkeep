@@ -299,6 +299,7 @@ export class BankConnectionsService {
 
   /**
    * Fetches transactions from SimpleFIN and imports them into linked local accounts.
+   * Also updates account balances from SimpleFIN's reported balances.
    */
   private async fetchSimplefinTransactions(
     accessUrl: string,
@@ -319,6 +320,15 @@ export class BankConnectionsService {
       for (const extAccount of data.accounts ?? []) {
         const linked = linkedAccounts.find((la) => la.externalId === extAccount.id);
         if (!linked || !linked.accountId) continue;
+
+        // Update the local account balance to match what the bank reports
+        const reportedBalance = Number(extAccount.balance ?? extAccount['available-balance'] ?? 0);
+        if (!isNaN(reportedBalance)) {
+          await this.prisma.account.update({
+            where: { id: linked.accountId },
+            data: { initialBalance: reportedBalance },
+          });
+        }
 
         for (const tx of extAccount.transactions ?? []) {
           // SimpleFIN uses UNIX epoch timestamps for 'posted'
