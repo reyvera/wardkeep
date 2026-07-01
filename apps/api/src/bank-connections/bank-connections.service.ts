@@ -355,7 +355,7 @@ export class BankConnectionsService {
               accountId: linked.accountId,
               date: txDate,
               amount,
-              type: Number(tx.amount) >= 0 ? 'INCOME' : 'EXPENSE',
+              type: Number(tx.amount) >= 0 ? 'CREDIT' : 'DEBIT',
               merchant,
               description: String(tx.memo ?? '').substring(0, 500) || null,
             },

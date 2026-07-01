@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api-client';
 interface NetWorth {
   assets: number;
   liabilities: number;
-  total: number;
+  netWorth: number;
 }
 
 interface Transaction {
@@ -58,7 +58,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm text-gray-500">Total</p>
               <p className="text-xl font-bold">
-                ${Number(netWorthQuery.data.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${Number(netWorthQuery.data.netWorth).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>

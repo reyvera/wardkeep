@@ -8,7 +8,7 @@ interface Account {
   id: string;
   name: string;
   type: string;
-  balance: number;
+  currentBalance: string;
   isArchived: boolean;
 }
 
@@ -130,7 +130,7 @@ export default function AccountsPage() {
                   <td className="px-4 py-3">{account.name}</td>
                   <td className="px-4 py-3 capitalize">{account.type.replace('_', ' ')}</td>
                   <td className="px-4 py-3 text-right font-mono">
-                    ${Number(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    ${Number(account.currentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </td>
                   <td className="px-4 py-3">
                     {!account.isArchived && (
