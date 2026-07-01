@@ -181,17 +181,37 @@ docker compose up -d
 - **Package builds:** All packages emit CommonJS. Packages resolve `@budgetapp/*` from node_modules (compiled dist), not source.
 - **Auth:** Middleware redirects unauthenticated users to `/login`. Token stored in localStorage + cookie for SSR middleware access.
 
+## Roadmap
+
+✅ = shipped · 🔄 = in progress · 📋 = planned
+
+| Feature | Status |
+|---------|--------|
+| Bank auto-import (SimpleFIN) | ✅ |
+| AI chat assistant (OpenAI/Anthropic/Ollama) | ✅ |
+| Dashboard with charts & savings projections | ✅ |
+| Monthly budgets with category progress | ✅ |
+| Transaction categorization (manual + AI) | ✅ |
+| Transfer detection & filtering | ✅ |
+| Debt payoff calculator | ✅ |
+| Cash-flow 90-day forecast | ✅ |
+| Encrypted backups | ✅ |
+| PWA / offline support | ✅ |
+| Docker self-hosted deployment | ✅ |
+| Income configuration & pay schedule | 📋 |
+| AI-powered auto-categorization (background) | 📋 |
+| Recurring transaction detection | 📋 |
+| AI chat with action capabilities (create budgets, categorize) | 📋 |
+| Spending heatmap by day of week | 📋 |
+| Net worth history trend line | 📋 |
+| Multi-currency support | 📋 |
+| Mobile-optimized UI improvements | 📋 |
+
+Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)
+
 ## Project Status
 
 MVP feature set is complete and functional. Bank connections, AI chat, accounts, transactions, budgets, and settings all work end-to-end.
-
-Remaining optional work:
-- Property-based tests (33 correctness properties defined in design doc)
-- Integration tests for critical user journeys
-- Recurring transaction detection (worker background job)
-- AI auto-categorization batch processing (worker background job)
-
-See `.kiro/specs/ai-personal-finance-app/tasks.md` for the full task breakdown.
 
 ## License
 
