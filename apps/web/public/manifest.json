@@ -1,0 +1,12 @@
+{
+  "name": "BudgetApp - Personal Finance",
+  "short_name": "BudgetApp",
+  "description": "AI-powered personal finance management",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
