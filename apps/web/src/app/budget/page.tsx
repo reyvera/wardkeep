@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
@@ -36,14 +36,30 @@ interface AllocationInput {
   amount: string;
 }
 
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function navigateMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const date = new Date(y!, m! - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number);
+  const date = new Date(y!, m! - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
 export default function BudgetPage() {
   const queryClient = useQueryClient();
-  const [month, setMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
+  const [month, setMonth] = useState(getCurrentMonth);
   const [showForm, setShowForm] = useState(false);
   const [allocations, setAllocations] = useState<AllocationInput[]>([{ categoryId: '', amount: '' }]);
+
+  const isCurrentMonth = month === getCurrentMonth();
 
   const budgetQuery = useQuery({
     queryKey: ['budget-summary', month],
@@ -58,6 +74,15 @@ export default function BudgetPage() {
   const categoriesQuery = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiClient.get<Category[]>('/categories'),
+  });
+
+  // Auto-copy from previous month if no budget exists for current month
+  const copyMutation = useMutation({
+    mutationFn: () => apiClient.post('/budgets/copy', { month }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
+      queryClient.invalidateQueries({ queryKey: ['budget-detail', month] });
+    },
   });
 
   const createMutation = useMutation({
@@ -90,6 +115,13 @@ export default function BudgetPage() {
   });
 
   const hasBudget = !!budgetDetailQuery.data?.id;
+
+  // Auto-copy: if current month has no budget but previous month does, offer to copy
+  const showAutoCopy = isCurrentMonth && !hasBudget && !budgetDetailQuery.isLoading;
+
+  useEffect(() => {
+    setShowForm(false);
+  }, [month]);
 
   const startEditing = () => {
     if (budgetDetailQuery.data?.allocations) {
@@ -127,23 +159,77 @@ export default function BudgetPage() {
 
   return (
     <div>
+      {/* Header with month navigation */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Budget</h1>
-        <div className="flex items-center gap-3">
-          <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
+        <div className="flex items-center gap-2">
           <button
-            onClick={startEditing}
-            className="rounded-md bg-blue-600 px-3 py-2 text-white text-sm font-medium hover:bg-blue-700"
+            onClick={() => setMonth(navigateMonth(month, -1))}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
           >
-            {hasBudget ? 'Edit Budget' : 'Create Budget'}
+            ← Prev
+          </button>
+          <button
+            onClick={() => setMonth(getCurrentMonth())}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 font-medium"
+          >
+            Today
+          </button>
+          <button
+            onClick={() => setMonth(navigateMonth(month, 1))}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            Next →
           </button>
         </div>
       </div>
+
+      {/* Current month display */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-700">{formatMonth(month)}</h2>
+        {hasBudget && isCurrentMonth && (
+          <button
+            onClick={startEditing}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-white text-sm font-medium hover:bg-blue-700"
+          >
+            Edit Budget
+          </button>
+        )}
+      </div>
+
+      {/* Auto-copy prompt */}
+      {showAutoCopy && (
+        <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
+          <p className="text-sm text-blue-800 mb-3">
+            No budget set for {formatMonth(month)}. Would you like to copy from last month or create a new one?
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => copyMutation.mutate()}
+              disabled={copyMutation.isPending}
+              className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {copyMutation.isPending ? 'Copying...' : 'Copy from Last Month'}
+            </button>
+            <button
+              onClick={startEditing}
+              className="rounded-md bg-white border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Create New Budget
+            </button>
+          </div>
+          {copyMutation.isError && (
+            <p className="mt-2 text-sm text-red-600">{copyMutation.error.message}</p>
+          )}
+        </div>
+      )}
+
+      {/* No budget for past/future months */}
+      {!hasBudget && !isCurrentMonth && !budgetDetailQuery.isLoading && (
+        <div className="mb-6 rounded-lg bg-gray-50 border border-gray-200 p-6 text-center">
+          <p className="text-gray-500">No budget was set for {formatMonth(month)}.</p>
+        </div>
+      )}
 
       {(createMutation.isError || updateMutation.isError) && (
         <p className="mb-4 text-sm text-red-600">
@@ -151,10 +237,11 @@ export default function BudgetPage() {
         </p>
       )}
 
+      {/* Edit/Create form */}
       {showForm && (
         <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-4">
-            {hasBudget ? 'Edit' : 'Create'} Budget for {month}
+            {hasBudget ? 'Edit' : 'Create'} Budget — {formatMonth(month)}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-3">
             {allocations.map((alloc, idx) => (
@@ -202,10 +289,10 @@ export default function BudgetPage() {
         </div>
       )}
 
+      {/* Budget summary */}
       {budgetQuery.data && (
         <>
           <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-3">Summary for {month}</h2>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Allocated</p>
@@ -228,6 +315,7 @@ export default function BudgetPage() {
             </div>
           </div>
 
+          {/* Category progress bars */}
           {budgetQuery.data.categoryProgress && budgetQuery.data.categoryProgress.length > 0 && (
             <div className="rounded-lg bg-white p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-semibold">Category Breakdown</h2>
@@ -257,13 +345,6 @@ export default function BudgetPage() {
             </div>
           )}
         </>
-      )}
-
-      {!budgetQuery.data && !budgetQuery.isLoading && !showForm && (
-        <div className="rounded-lg bg-white p-8 shadow-sm text-center">
-          <p className="text-gray-500">No budget set for {month}.</p>
-          <p className="text-sm text-gray-400 mt-1">Click "Create Budget" to get started.</p>
-        </div>
       )}
     </div>
   );
