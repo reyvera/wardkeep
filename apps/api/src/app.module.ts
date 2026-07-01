@@ -5,6 +5,7 @@ import { RATE_LIMIT_API } from '@budgetapp/shared';
 
 import { AccountsModule } from './accounts/accounts.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -24,6 +25,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     HealthModule,
     AuthModule,
     AccountsModule,
+    CategoriesModule,
     TransactionsModule,
   ],
   providers: [
