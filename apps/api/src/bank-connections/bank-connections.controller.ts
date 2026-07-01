@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, UseInterceptors, Req } from '@nestjs/common';
 
 import { AuthGuard } from '../common/guards/auth.guard';
+import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { BankConnectionsService } from './bank-connections.service';
 import { CreateBankConnectionDto } from './dto/create-connection.dto';
 import { LinkAccountDto } from './dto/link-account.dto';
@@ -11,6 +12,7 @@ import { LinkAccountDto } from './dto/link-account.dto';
  */
 @Controller('bank-connections')
 @UseGuards(AuthGuard)
+@UseInterceptors(UserScopeInterceptor)
 export class BankConnectionsController {
   constructor(private readonly service: BankConnectionsService) {}
 
@@ -19,8 +21,8 @@ export class BankConnectionsController {
    * @returns Array of connections with linked accounts
    */
   @Get()
-  async list(@Req() req: { userId: string }) {
-    return this.service.listConnections(req.userId);
+  async list(@Req() req: ScopedRequest) {
+    return this.service.listConnections(req.userId!);
   }
 
   /**
@@ -29,8 +31,8 @@ export class BankConnectionsController {
    * @returns The created connection with discovered accounts
    */
   @Post()
-  async create(@Req() req: { userId: string }, @Body() dto: CreateBankConnectionDto) {
-    return this.service.createConnection(req.userId, dto);
+  async create(@Req() req: ScopedRequest, @Body() dto: CreateBankConnectionDto) {
+    return this.service.createConnection(req.userId!, dto);
   }
 
   /**
@@ -38,8 +40,8 @@ export class BankConnectionsController {
    * @param dto - The linked bank account ID and local account ID
    */
   @Post('link-account')
-  async linkAccount(@Req() req: { userId: string }, @Body() dto: LinkAccountDto) {
-    return this.service.linkAccount(req.userId, dto.linkedBankAccountId, dto.accountId ?? '');
+  async linkAccount(@Req() req: ScopedRequest, @Body() dto: LinkAccountDto) {
+    return this.service.linkAccount(req.userId!, dto.linkedBankAccountId, dto.accountId ?? '');
   }
 
   /**
@@ -48,8 +50,8 @@ export class BankConnectionsController {
    * @returns Sync results with imported/skipped counts
    */
   @Post(':id/sync')
-  async sync(@Req() req: { userId: string }, @Param('id') id: string) {
-    return this.service.syncConnection(req.userId, id);
+  async sync(@Req() req: ScopedRequest, @Param('id') id: string) {
+    return this.service.syncConnection(req.userId!, id);
   }
 
   /**
@@ -57,7 +59,7 @@ export class BankConnectionsController {
    * @param id - The connection ID to remove
    */
   @Delete(':id')
-  async remove(@Req() req: { userId: string }, @Param('id') id: string) {
-    return this.service.removeConnection(req.userId, id);
+  async remove(@Req() req: ScopedRequest, @Param('id') id: string) {
+    return this.service.removeConnection(req.userId!, id);
   }
 }
