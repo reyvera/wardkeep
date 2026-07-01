@@ -1,0 +1,21 @@
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages/ packages/
+COPY apps/api/ apps/api/
+COPY prisma/ prisma/
+RUN corepack enable && pnpm install --frozen-lockfile
+RUN pnpm turbo build --filter=@budgetapp/api
+RUN npx prisma generate
+
+FROM node:18-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY docker/api-entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+EXPOSE 4000
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "dist/main.js"]

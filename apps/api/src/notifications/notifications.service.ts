@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { NotificationsGateway } from './notifications.gateway';
+
 export interface BudgetNotification {
   userId: string;
   type: 'budget_warning' | 'budget_overspent';
@@ -13,17 +15,18 @@ export interface BudgetNotification {
 
 @Injectable()
 export class NotificationsService {
-  /** In-memory store of recent notifications (will be replaced by WebSocket/DB in later task) */
+  /** In-memory store of recent notifications */
   private notifications: BudgetNotification[] = [];
 
+  constructor(private readonly gateway: NotificationsGateway) {}
+
   /**
-   * Emits a budget threshold notification.
-   * Currently stores in memory; will be delivered via WebSocket in task 21.
+   * Emits a budget threshold notification via WebSocket and stores it in memory.
    * @param notification - The budget notification to emit
    */
   emitBudgetNotification(notification: BudgetNotification): void {
     this.notifications.push(notification);
-    // TODO: Task 21 will add WebSocket gateway delivery here
+    this.gateway.sendToUser(notification.userId, 'budget_notification', notification);
   }
 
   /**
