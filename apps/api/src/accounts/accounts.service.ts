@@ -249,6 +249,8 @@ export class AccountsService {
 
   /**
    * Computes the user's net worth from all active (non-archived) accounts.
+   * For bank-linked accounts, uses the bank-reported balance directly.
+   * For manual accounts, computes from initial balance + transactions.
    * Net worth = total assets - total liabilities.
    * @param userId - The authenticated user's ID
    * @returns Object with assets, liabilities, and netWorth as formatted decimal strings
@@ -256,33 +258,48 @@ export class AccountsService {
   async getNetWorth(userId: string) {
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
-      include: { transactions: true },
+      include: {
+        transactions: true,
+        linkedBankAccounts: { select: { id: true } },
+      },
     });
 
-    const accountsWithTransactions: AccountWithTransactions[] = accounts.map((acc) => ({
-      account: {
-        id: acc.id,
-        userId: acc.userId,
-        name: acc.name,
-        type: acc.type as AccountType,
-        currency: acc.currency,
-        initialBalance: acc.initialBalance.toString(),
-        isArchived: acc.isArchived,
-        createdAt: acc.createdAt,
-        updatedAt: acc.updatedAt,
-      },
-      transactions: acc.transactions.map((tx) => ({
-        ...tx,
-        amount: tx.amount.toString(),
-        aiConfidence: tx.aiConfidence?.toString() ?? null,
-      })),
-    }));
+    let assets = new Decimal(0);
+    let liabilities = new Decimal(0);
 
-    const result = calculateNetWorth(accountsWithTransactions);
+    const liabilityTypes = ['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC'];
+
+    for (const account of accounts) {
+      let balance: Decimal;
+
+      if (account.linkedBankAccounts.length > 0) {
+        // Bank-linked: use reported balance
+        balance = new Decimal(account.initialBalance.toString());
+      } else {
+        // Manual: compute from transactions
+        balance = calculateBalance(
+          new Decimal(account.initialBalance.toString()),
+          account.transactions.map((tx) => ({
+            ...tx,
+            amount: tx.amount.toString(),
+            aiConfidence: tx.aiConfidence?.toString() ?? null,
+          })),
+        );
+      }
+
+      if (liabilityTypes.includes(account.type)) {
+        liabilities = liabilities.plus(balance.abs());
+      } else {
+        assets = assets.plus(balance);
+      }
+    }
+
+    const netWorth = assets.minus(liabilities);
+
     return {
-      assets: result.assets.toFixed(2),
-      liabilities: result.liabilities.toFixed(2),
-      netWorth: result.netWorth.toFixed(2),
+      assets: assets.toFixed(2),
+      liabilities: liabilities.toFixed(2),
+      netWorth: netWorth.toFixed(2),
     };
   }
 }
