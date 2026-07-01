@@ -274,20 +274,20 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - _Requirements: 4.2, 4.4, 4.5, 4.6, 4.8_
 
 - [ ] 11. Implement AI Engine (packages/ai-engine)
-  - [~] 11.1 Create AI provider abstraction and Ollama provider
+  - [x] 11.1 Create AI provider abstraction and Ollama provider
     - Define AIProvider interface with `complete(prompt, options)` and `isAvailable()`
     - Implement OllamaProvider connecting to local Ollama instance (http://ollama:11434)
     - Implement circuit breaker: open after 5 consecutive failures, 60s cooldown
     - _Requirements: 16.1, 16.2_
 
-  - [~] 11.2 Implement cloud providers (OpenAI, Anthropic) and privacy mode routing
+  - [x] 11.2 Implement cloud providers (OpenAI, Anthropic) and privacy mode routing
     - Implement OpenAIProvider and AnthropicProvider with API key validation
     - Implement privacy mode router: Local → Ollama only, Cloud → cloud only, Hybrid → route based on sensitivity
     - Define sensitive data: account balances, account numbers, transaction amounts, merchant names, PII
     - Never fall back to cloud when in Local mode; queue if Ollama unavailable
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.6, 16.7, 16.8_
 
-  - [~] 11.3 Implement AI categorization engine
+  - [x] 11.3 Implement AI categorization engine
     - Create `categorize(transaction)` returning CategorySuggestion with confidence score (0.00–1.00)
     - Create `batchCategorize(transactions)` for bulk processing
     - Implement confidence routing: >0.85 auto-assign, 0.50–0.85 suggest, <0.50 Uncategorized
@@ -306,7 +306,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Generate AI requests under each privacy mode; verify no external calls in Local mode
     - **Validates: Requirements 16.2, 16.8**
 
-  - [~] 11.6 Implement AI chat interface with Finance Engine verification
+  - [x] 11.6 Implement AI chat interface with Finance Engine verification
     - Create `chat(query, financialContext, history)` returning AIResponse
     - Maintain conversation context for up to 10 previous exchanges per session
     - Pass all numerical claims through Finance Engine `verifyAIClaim` before returning
