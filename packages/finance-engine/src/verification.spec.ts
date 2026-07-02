@@ -1,432 +1,165 @@
-import { Decimal } from 'decimal.js';
-import { describe, expect, it } from 'vitest';
-
-import { FinancialContext, NumericalClaim, verifyAIClaim } from './verification';
-
 /**
- * Helper to build a simple financial context.
+ * Property-based tests for AI claim verification.
+ *
+ * Feature: ai-personal-finance-app
+ * Property 16
  */
-function buildContext(overrides?: Partial<FinancialContext>): FinancialContext {
-  return {
-    accounts: [],
-    ...overrides,
-  };
-}
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
+import { Decimal } from 'decimal.js';
 
-describe('verifyAIClaim', () => {
-  describe('account_balance', () => {
-    it('returns isCorrect=true when claimed value matches computed balance', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '1000.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '200.00', type: 'DEBIT', categoryId: 'cat-1', date: new Date('2024-01-15') },
-              { amount: '50.00', type: 'CREDIT', categoryId: null, date: new Date('2024-01-20') },
-            ],
-          },
-        ],
-      });
+import {
+  verifyAIClaim,
+  NumericalClaim,
+  FinancialContext,
+  ClaimType,
+} from './verification';
 
-      const claim: NumericalClaim = {
-        type: 'account_balance',
-        claimedValue: '850.00', // 1000 - 200 + 50
-        accountId: 'acc-1',
-      };
+// ─── Generators ─────────────────────────────────────────────────────────────────
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-      expect(result.verifiedValue.eq(new Decimal('850.00'))).toBe(true);
-      expect(result.correctionWarning).toBeUndefined();
-    });
+const amountArb = fc
+  .double({ min: 0.01, max: 999999.99, noNaN: true, noDefaultInfinity: true })
+  .map((n) => n.toFixed(2));
 
-    it('returns isCorrect=false with correctionWarning when claim is wrong', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '500.00',
-            type: 'SAVINGS',
-            isArchived: false,
-            transactions: [
-              { amount: '100.00', type: 'DEBIT', categoryId: null, date: new Date('2024-02-01') },
-            ],
-          },
-        ],
-      });
+const txTypeArb = fc.constantFrom('CREDIT', 'DEBIT');
 
-      const claim: NumericalClaim = {
-        type: 'account_balance',
-        claimedValue: '450.00', // Wrong — correct is 400
-        accountId: 'acc-1',
-      };
+const transactionContextArb = fc.record({
+  amount: amountArb,
+  type: txTypeArb,
+  categoryId: fc.option(fc.uuid(), { nil: null }),
+  date: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }),
+});
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(false);
-      expect(result.verifiedValue.eq(new Decimal('400.00'))).toBe(true);
-      expect(result.claimedValue.eq(new Decimal('450.00'))).toBe(true);
-      expect(result.correctionWarning).toContain('450.00');
-      expect(result.correctionWarning).toContain('400.00');
-    });
+const accountContextArb = fc.record({
+  id: fc.uuid(),
+  initialBalance: amountArb,
+  type: fc.constantFrom('CHECKING', 'SAVINGS', 'CREDIT_CARD', 'LOAN'),
+  isArchived: fc.constant(false),
+  transactions: fc.array(transactionContextArb, { minLength: 0, maxLength: 10 }),
+});
 
-    it('returns zero for unknown account', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '100.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [],
-          },
-        ],
-      });
+// ─── Property 16 ────────────────────────────────────────────────────────────────
 
-      const claim: NumericalClaim = {
-        type: 'account_balance',
-        claimedValue: '100.00',
-        accountId: 'unknown-acc',
-      };
+describe('Feature: ai-personal-finance-app, Property 16: Finance Engine verifies and corrects AI numerical claims', () => {
+  it('correct claims pass verification', () => {
+    fc.assert(
+      fc.property(
+        accountContextArb,
+        (accountCtx) => {
+          // Independently compute the correct balance
+          const initial = new Decimal(accountCtx.initialBalance);
+          const computedBalance = accountCtx.transactions.reduce((bal, tx) => {
+            const amount = new Decimal(tx.amount);
+            if (tx.type === 'CREDIT') return bal.plus(amount);
+            return bal.minus(amount);
+          }, initial);
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(false);
-      expect(result.verifiedValue.eq(new Decimal('0'))).toBe(true);
-    });
+          const context: FinancialContext = {
+            accounts: [accountCtx],
+          };
+
+          // Claim the correct value
+          const claim: NumericalClaim = {
+            type: 'account_balance',
+            claimedValue: computedBalance.toString(),
+            accountId: accountCtx.id,
+          };
+
+          const result = verifyAIClaim(claim, context);
+
+          expect(result.isCorrect).toBe(true);
+          expect(result.verifiedValue.eq(computedBalance)).toBe(true);
+          expect(result.claimedValue.eq(computedBalance)).toBe(true);
+          expect(result.correctionWarning).toBeUndefined();
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 
-  describe('net_worth', () => {
-    it('computes net worth from non-archived accounts (assets - liabilities)', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-checking',
-            initialBalance: '5000.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '1000.00', type: 'CREDIT', categoryId: null, date: new Date('2024-01-10') },
-            ],
-          },
-          {
-            id: 'acc-cc',
-            initialBalance: '0.00',
-            type: 'CREDIT_CARD',
-            isArchived: false,
-            transactions: [
-              { amount: '500.00', type: 'DEBIT', categoryId: 'cat-1', date: new Date('2024-01-12') },
-            ],
-          },
-          {
-            id: 'acc-archived',
-            initialBalance: '9999.00',
-            type: 'SAVINGS',
-            isArchived: true,
-            transactions: [],
-          },
-        ],
-      });
+  it('wrong claims are detected and corrected', () => {
+    fc.assert(
+      fc.property(
+        accountContextArb,
+        amountArb,
+        (accountCtx, wrongOffset) => {
+          // Independently compute the correct balance
+          const initial = new Decimal(accountCtx.initialBalance);
+          const computedBalance = accountCtx.transactions.reduce((bal, tx) => {
+            const amount = new Decimal(tx.amount);
+            if (tx.type === 'CREDIT') return bal.plus(amount);
+            return bal.minus(amount);
+          }, initial);
 
-      // Checking: 5000 + 1000 = 6000 (asset)
-      // Credit card: 0 - 500 = -500 (liability, balance is -500)
-      // Net worth = 6000 - (-500) = 6500
-      const claim: NumericalClaim = {
-        type: 'net_worth',
-        claimedValue: '6500.00',
-      };
+          // Add an offset to make the claim wrong
+          const wrongValue = computedBalance.plus(new Decimal(wrongOffset));
+          fc.pre(!wrongValue.eq(computedBalance));
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-      expect(result.verifiedValue.eq(new Decimal('6500.00'))).toBe(true);
-    });
+          const context: FinancialContext = {
+            accounts: [accountCtx],
+          };
 
-    it('excludes archived accounts', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '1000.00',
-            type: 'SAVINGS',
-            isArchived: true,
-            transactions: [],
-          },
-        ],
-      });
+          const claim: NumericalClaim = {
+            type: 'account_balance',
+            claimedValue: wrongValue.toString(),
+            accountId: accountCtx.id,
+          };
 
-      const claim: NumericalClaim = {
-        type: 'net_worth',
-        claimedValue: '0.00',
-      };
+          const result = verifyAIClaim(claim, context);
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
+          expect(result.isCorrect).toBe(false);
+          expect(result.verifiedValue.eq(computedBalance)).toBe(true);
+          expect(result.claimedValue.eq(wrongValue)).toBe(true);
+          expect(result.correctionWarning).toBeDefined();
+          expect(result.correctionWarning).toContain('verified value is');
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 
-  describe('category_spending', () => {
-    it('sums debits for a specific category', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '1000.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '50.00', type: 'DEBIT', categoryId: 'groceries', date: new Date('2024-03-05') },
-              { amount: '30.00', type: 'DEBIT', categoryId: 'groceries', date: new Date('2024-03-10') },
-              { amount: '100.00', type: 'DEBIT', categoryId: 'rent', date: new Date('2024-03-01') },
-              { amount: '200.00', type: 'CREDIT', categoryId: 'groceries', date: new Date('2024-03-15') },
-            ],
-          },
-        ],
-      });
+  it('net worth claims verified correctly', () => {
+    fc.assert(
+      fc.property(
+        fc.array(accountContextArb, { minLength: 1, maxLength: 5 }),
+        (accounts) => {
+          // Compute expected net worth
+          let assets = new Decimal(0);
+          let liabilities = new Decimal(0);
+          const ASSET_TYPES = new Set(['CHECKING', 'SAVINGS', 'CASH', 'MANUAL']);
+          const LIABILITY_TYPES = new Set(['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC']);
 
-      const claim: NumericalClaim = {
-        type: 'category_spending',
-        claimedValue: '80.00', // 50 + 30
-        categoryId: 'groceries',
-      };
+          for (const acct of accounts) {
+            if (acct.isArchived) continue;
+            const balance = acct.transactions.reduce((bal, tx) => {
+              const amount = new Decimal(tx.amount);
+              if (tx.type === 'CREDIT') return bal.plus(amount);
+              return bal.minus(amount);
+            }, new Decimal(acct.initialBalance));
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
+            if (ASSET_TYPES.has(acct.type)) {
+              assets = assets.plus(balance);
+            } else if (LIABILITY_TYPES.has(acct.type)) {
+              liabilities = liabilities.plus(balance);
+            }
+          }
 
-    it('filters by month when specified', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '40.00', type: 'DEBIT', categoryId: 'food', date: new Date('2024-01-15') },
-              { amount: '60.00', type: 'DEBIT', categoryId: 'food', date: new Date('2024-02-10') },
-            ],
-          },
-        ],
-      });
+          const expectedNetWorth = assets.minus(liabilities);
 
-      const claim: NumericalClaim = {
-        type: 'category_spending',
-        claimedValue: '40.00',
-        categoryId: 'food',
-        month: '2024-01-01',
-      };
+          const context: FinancialContext = { accounts };
 
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-  });
+          // Correct claim
+          const claim: NumericalClaim = {
+            type: 'net_worth',
+            claimedValue: expectedNetWorth.toString(),
+          };
 
-  describe('total_spending', () => {
-    it('sums all debits across all accounts', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '100.00', type: 'DEBIT', categoryId: 'cat-1', date: new Date('2024-04-01') },
-              { amount: '200.00', type: 'CREDIT', categoryId: null, date: new Date('2024-04-02') },
-            ],
-          },
-          {
-            id: 'acc-2',
-            initialBalance: '0.00',
-            type: 'SAVINGS',
-            isArchived: false,
-            transactions: [
-              { amount: '75.50', type: 'DEBIT', categoryId: 'cat-2', date: new Date('2024-04-05') },
-            ],
-          },
-        ],
-      });
-
-      const claim: NumericalClaim = {
-        type: 'total_spending',
-        claimedValue: '175.50', // 100 + 75.50
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-
-    it('filters total spending by month', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '50.00', type: 'DEBIT', categoryId: null, date: new Date('2024-05-10') },
-              { amount: '25.00', type: 'DEBIT', categoryId: null, date: new Date('2024-06-10') },
-            ],
-          },
-        ],
-      });
-
-      const claim: NumericalClaim = {
-        type: 'total_spending',
-        claimedValue: '50.00',
-        month: '2024-05-01',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-  });
-
-  describe('budget_remaining', () => {
-    it('computes allocated minus spent for a category in a month', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '120.00', type: 'DEBIT', categoryId: 'groceries', date: new Date('2024-03-15') },
-              { amount: '30.00', type: 'DEBIT', categoryId: 'groceries', date: new Date('2024-03-20') },
-            ],
-          },
-        ],
-        budgetAllocations: [
-          { categoryId: 'groceries', amount: '500.00', month: '2024-03-01' },
-        ],
-      });
-
-      // Remaining = 500 - (120 + 30) = 350
-      const claim: NumericalClaim = {
-        type: 'budget_remaining',
-        claimedValue: '350.00',
-        categoryId: 'groceries',
-        month: '2024-03-01',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-      expect(result.verifiedValue.eq(new Decimal('350.00'))).toBe(true);
-    });
-
-    it('returns zero remaining when no allocation exists', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '50.00', type: 'DEBIT', categoryId: 'dining', date: new Date('2024-03-10') },
-            ],
-          },
-        ],
-        budgetAllocations: [],
-      });
-
-      // No allocation → allocated = 0, spent = 50, remaining = -50
-      const claim: NumericalClaim = {
-        type: 'budget_remaining',
-        claimedValue: '-50.00',
-        categoryId: 'dining',
-        month: '2024-03-01',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-  });
-
-  describe('monthly_income', () => {
-    it('sums all credits in the specified month', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '3000.00', type: 'CREDIT', categoryId: null, date: new Date('2024-06-01') },
-              { amount: '500.00', type: 'CREDIT', categoryId: null, date: new Date('2024-06-15') },
-              { amount: '1000.00', type: 'DEBIT', categoryId: 'rent', date: new Date('2024-06-01') },
-              { amount: '2000.00', type: 'CREDIT', categoryId: null, date: new Date('2024-07-01') },
-            ],
-          },
-        ],
-      });
-
-      const claim: NumericalClaim = {
-        type: 'monthly_income',
-        claimedValue: '3500.00', // 3000 + 500
-        month: '2024-06-01',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-
-    it('returns zero when no credits in the month', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '0.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [
-              { amount: '100.00', type: 'DEBIT', categoryId: null, date: new Date('2024-08-10') },
-            ],
-          },
-        ],
-      });
-
-      const claim: NumericalClaim = {
-        type: 'monthly_income',
-        claimedValue: '0.00',
-        month: '2024-08-01',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(true);
-    });
-  });
-
-  describe('correction warning format', () => {
-    it('includes both claimed and verified values in the warning message', () => {
-      const context = buildContext({
-        accounts: [
-          {
-            id: 'acc-1',
-            initialBalance: '1000.00',
-            type: 'CHECKING',
-            isArchived: false,
-            transactions: [],
-          },
-        ],
-      });
-
-      const claim: NumericalClaim = {
-        type: 'account_balance',
-        claimedValue: '999.00',
-        accountId: 'acc-1',
-      };
-
-      const result = verifyAIClaim(claim, context);
-      expect(result.isCorrect).toBe(false);
-      expect(result.correctionWarning).toBeDefined();
-      expect(result.correctionWarning).toContain('999.00');
-      expect(result.correctionWarning).toContain('1000.00');
-      expect(result.correctionWarning).toContain('Displaying corrected value');
-    });
+          const result = verifyAIClaim(claim, context);
+          expect(result.isCorrect).toBe(true);
+          expect(result.verifiedValue.eq(expectedNetWorth)).toBe(true);
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });

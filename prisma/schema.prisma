@@ -100,21 +100,22 @@ enum AccountType {
 // ─── Transactions ───────────────────────────────────────────────────────────────
 
 model Transaction {
-  id               String          @id @default(uuid())
+  id               String            @id @default(uuid())
   userId           String
   accountId        String
   categoryId       String?
-  date             DateTime        @db.Date
-  amount           Decimal         @db.Decimal(19, 4)
+  date             DateTime          @db.Date
+  amount           Decimal           @db.Decimal(19, 4)
   type             TransactionType
-  merchant         String?         @db.VarChar(100)
-  description      String?         @db.VarChar(500)
-  notes            String?         @db.VarChar(1000)
-  isReconciliation Boolean         @default(false)
-  aiCategorized    Boolean         @default(false)
-  aiConfidence     Decimal?        @db.Decimal(3, 2)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  status           TransactionStatus @default(POSTED)
+  merchant         String?           @db.VarChar(100)
+  description      String?           @db.VarChar(500)
+  notes            String?           @db.VarChar(1000)
+  isReconciliation Boolean           @default(false)
+  aiCategorized    Boolean           @default(false)
+  aiConfidence     Decimal?          @db.Decimal(3, 2)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   account  Account          @relation(fields: [accountId], references: [id])
   category Category?        @relation(fields: [categoryId], references: [id])
@@ -130,6 +131,12 @@ enum TransactionType {
   DEBIT
   CREDIT
   TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  POSTED
+  CLEARED
 }
 
 model TransactionTag {

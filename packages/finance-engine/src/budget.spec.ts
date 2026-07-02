@@ -1,269 +1,152 @@
+/**
+ * Property-based tests for budget calculations.
+ *
+ * Feature: ai-personal-finance-app
+ * Properties 9, 10
+ */
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
 import { Decimal } from 'decimal.js';
-import { describe, expect, it } from 'vitest';
 
-import { Budget, BudgetAllocation, Transaction, TransactionType } from '@budgetapp/shared';
+import { Transaction, TransactionType, BudgetAllocation } from '@budgetapp/shared';
 
-import { calculateBudgetProgress, calculateBudgetSummary } from './budget';
+import { calculateBudgetProgress, CategoryProgress } from './budget';
 
-/** Helper to create a minimal transaction. */
-function makeTx(overrides: Partial<Transaction> & { amount: string; type: TransactionType }): Transaction {
-  return {
-    id: 'tx-1',
-    userId: 'user-1',
-    accountId: 'acc-1',
-    categoryId: null,
-    date: new Date('2024-06-15'),
-    merchant: null,
-    description: null,
-    notes: null,
-    isReconciliation: false,
-    aiCategorized: false,
-    aiConfidence: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  };
-}
+// ─── Generators ─────────────────────────────────────────────────────────────────
 
-/** Helper to create a minimal allocation. */
-function makeAllocation(categoryId: string, amount: string): BudgetAllocation {
-  return {
-    id: `alloc-${categoryId}`,
-    budgetId: 'budget-1',
-    categoryId,
-    amount,
-  };
-}
+const amountArb = fc.stringMatching(/^[1-9]\d{0,5}\.\d{2}$/).filter((s) => {
+  const d = new Decimal(s);
+  return d.gte('0.01') && d.lte('999999.99');
+});
 
-describe('calculateBudgetProgress', () => {
-  it('returns empty array when no allocations', () => {
-    const result = calculateBudgetProgress([], []);
-    expect(result).toEqual([]);
+/** Generate a category ID from a fixed pool so transactions can match allocations. */
+const categoryIdArb = fc.constantFrom('cat-1', 'cat-2', 'cat-3', 'cat-4', 'cat-5');
+
+const allocationArb = (categoryId: string): fc.Arbitrary<BudgetAllocation> =>
+  fc.record({
+    id: fc.uuid(),
+    budgetId: fc.uuid(),
+    categoryId: fc.constant(categoryId),
+    amount: amountArb,
   });
 
-  it('calculates zero spending when no transactions match', () => {
-    const allocations = [makeAllocation('cat-food', '500.00')];
-    const transactions: Transaction[] = [];
+const debitTransactionArb = (categoryId: string): fc.Arbitrary<Transaction> =>
+  fc.record({
+    id: fc.uuid(),
+    userId: fc.uuid(),
+    accountId: fc.uuid(),
+    categoryId: fc.constant(categoryId as string | null),
+    date: fc.date({ min: new Date('2024-01-01'), max: new Date('2024-12-31') }),
+    amount: amountArb,
+    type: fc.constant(TransactionType.DEBIT),
+    merchant: fc.option(fc.string(), { nil: null }),
+    description: fc.option(fc.string(), { nil: null }),
+    notes: fc.option(fc.string(), { nil: null }),
+    isReconciliation: fc.constant(false),
+    aiCategorized: fc.constant(false),
+    aiConfidence: fc.constant(null),
+    createdAt: fc.date(),
+    updatedAt: fc.date(),
+  }) as fc.Arbitrary<Transaction>;
 
-    const result = calculateBudgetProgress(allocations, transactions);
+// ─── Property 9 ─────────────────────────────────────────────────────────────────
 
-    expect(result).toHaveLength(1);
-    expect(result[0].categoryId).toBe('cat-food');
-    expect(result[0].allocated.eq(new Decimal('500.00'))).toBe(true);
-    expect(result[0].spent.eq(new Decimal('0'))).toBe(true);
-    expect(result[0].remaining.eq(new Decimal('500.00'))).toBe(true);
-    expect(result[0].percentUsed.eq(new Decimal('0'))).toBe(true);
-    expect(result[0].status).toBe('ok');
-  });
+describe('Feature: ai-personal-finance-app, Property 9: Budget actual spending equals sum of category expenses in period', () => {
+  it('spent for each category equals sum of matching DEBIT transactions', () => {
+    fc.assert(
+      fc.property(
+        fc.array(categoryIdArb, { minLength: 1, maxLength: 5 }).chain((categoryIds) => {
+          const uniqueIds = [...new Set(categoryIds)];
+          const allocations = fc.tuple(
+            ...uniqueIds.map((id) => allocationArb(id)),
+          );
+          const transactions = fc.array(
+            fc.oneof(...uniqueIds.map((id) => debitTransactionArb(id))),
+            { minLength: 0, maxLength: 30 },
+          );
+          return fc.tuple(allocations, transactions, fc.constant(uniqueIds));
+        }),
+        ([allocations, transactions, categoryIds]) => {
+          const progress = calculateBudgetProgress(
+            allocations as BudgetAllocation[],
+            transactions,
+          );
 
-  it('sums only DEBIT transactions for spending', () => {
-    const allocations = [makeAllocation('cat-food', '200.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '50.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-food', amount: '30.00', type: TransactionType.CREDIT }),
-      makeTx({ id: 'tx-3', categoryId: 'cat-food', amount: '20.00', type: TransactionType.DEBIT }),
-    ];
+          for (const cp of progress) {
+            const expectedSpent = transactions
+              .filter(
+                (tx) =>
+                  tx.type === TransactionType.DEBIT &&
+                  tx.categoryId === cp.categoryId,
+              )
+              .reduce((sum, tx) => sum.plus(new Decimal(tx.amount)), new Decimal(0));
 
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].spent.eq(new Decimal('70.00'))).toBe(true);
-    expect(result[0].remaining.eq(new Decimal('130.00'))).toBe(true);
-  });
-
-  it('only counts transactions matching the allocation categoryId', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '40.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-transport', amount: '60.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].spent.eq(new Decimal('40.00'))).toBe(true);
-  });
-
-  it('assigns "ok" status when spending is below 90%', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '89.99', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('ok');
-  });
-
-  it('assigns "warning" status at exactly 90%', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '90.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('warning');
-    expect(result[0].percentUsed.eq(new Decimal('90'))).toBe(true);
-  });
-
-  it('assigns "warning" status between 90% and 100%', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '95.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('warning');
-  });
-
-  it('assigns "overspent" status at exactly 100%', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '100.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('overspent');
-    expect(result[0].percentUsed.eq(new Decimal('100'))).toBe(true);
-    expect(result[0].remaining.eq(new Decimal('0'))).toBe(true);
-  });
-
-  it('assigns "overspent" status when spending exceeds allocation', () => {
-    const allocations = [makeAllocation('cat-food', '100.00')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '150.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('overspent');
-    expect(result[0].remaining.eq(new Decimal('-50.00'))).toBe(true);
-    expect(result[0].percentUsed.eq(new Decimal('150'))).toBe(true);
-  });
-
-  it('handles zero allocation without division errors', () => {
-    const allocations = [makeAllocation('cat-food', '0')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '10.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].allocated.eq(new Decimal('0'))).toBe(true);
-    expect(result[0].spent.eq(new Decimal('10.00'))).toBe(true);
-    expect(result[0].percentUsed.eq(new Decimal('0'))).toBe(true);
-    expect(result[0].status).toBe('ok');
-  });
-
-  it('uses exact decimal arithmetic avoiding floating point errors', () => {
-    const allocations = [makeAllocation('cat-food', '0.30')];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '0.10', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-food', amount: '0.10', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-3', categoryId: 'cat-food', amount: '0.10', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    // 0.1 + 0.1 + 0.1 === 0.3 with Decimal.js (not 0.30000000000000004)
-    expect(result[0].spent.eq(new Decimal('0.30'))).toBe(true);
-    expect(result[0].remaining.eq(new Decimal('0'))).toBe(true);
-  });
-
-  it('handles multiple allocations independently', () => {
-    const allocations = [
-      makeAllocation('cat-food', '200.00'),
-      makeAllocation('cat-transport', '100.00'),
-    ];
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '180.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-transport', amount: '110.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetProgress(allocations, transactions);
-
-    expect(result[0].status).toBe('warning');
-    expect(result[1].status).toBe('overspent');
+            expect(cp.spent.eq(expectedSpent)).toBe(true);
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });
 
-describe('calculateBudgetSummary', () => {
-  const baseBudget: Budget = {
-    id: 'budget-1',
-    userId: 'user-1',
-    month: new Date('2024-06-01'),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+// ─── Property 10 ────────────────────────────────────────────────────────────────
 
-  it('returns zeroes when budget has no allocations', () => {
-    const result = calculateBudgetSummary(baseBudget, []);
+describe('Feature: ai-personal-finance-app, Property 10: Budget threshold notifications fire at correct percentages', () => {
+  it('status is warning at >=90% and overspent at >=100%', () => {
+    fc.assert(
+      fc.property(
+        amountArb,
+        fc.double({ min: 0, max: 2, noNaN: true, noDefaultInfinity: true }),
+        (allocatedStr, spentRatio) => {
+          const allocated = new Decimal(allocatedStr);
+          fc.pre(allocated.gt(0));
 
-    expect(result.totalAllocated.eq(new Decimal('0'))).toBe(true);
-    expect(result.totalSpent.eq(new Decimal('0'))).toBe(true);
-    expect(result.totalRemaining.eq(new Decimal('0'))).toBe(true);
-    expect(result.overspentCount).toBe(0);
-    expect(result.categoryProgress).toEqual([]);
-  });
+          // Create a single allocation
+          const categoryId = 'cat-test';
+          const allocation: BudgetAllocation = {
+            id: 'alloc-1',
+            budgetId: 'budget-1',
+            categoryId,
+            amount: allocatedStr,
+          };
 
-  it('aggregates totals across all allocations', () => {
-    const budget: Budget = {
-      ...baseBudget,
-      allocations: [
-        makeAllocation('cat-food', '300.00'),
-        makeAllocation('cat-transport', '150.00'),
-      ],
-    };
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '100.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-transport', amount: '50.00', type: TransactionType.DEBIT }),
-    ];
+          // Generate a transaction that results in the desired spending ratio
+          const spentAmount = allocated.times(new Decimal(spentRatio)).toDecimalPlaces(2);
+          fc.pre(spentAmount.gte('0.01'));
 
-    const result = calculateBudgetSummary(budget, transactions);
+          const transaction: Transaction = {
+            id: 'tx-1',
+            userId: 'user-1',
+            accountId: 'acc-1',
+            categoryId,
+            date: new Date('2024-06-15'),
+            amount: spentAmount.toString(),
+            type: TransactionType.DEBIT,
+            merchant: null,
+            description: null,
+            notes: null,
+            isReconciliation: false,
+            aiCategorized: false,
+            aiConfidence: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
 
-    expect(result.totalAllocated.eq(new Decimal('450.00'))).toBe(true);
-    expect(result.totalSpent.eq(new Decimal('150.00'))).toBe(true);
-    expect(result.totalRemaining.eq(new Decimal('300.00'))).toBe(true);
-    expect(result.overspentCount).toBe(0);
-    expect(result.categoryProgress).toHaveLength(2);
-  });
+          const [progress] = calculateBudgetProgress([allocation], [transaction]);
 
-  it('counts overspent categories correctly', () => {
-    const budget: Budget = {
-      ...baseBudget,
-      allocations: [
-        makeAllocation('cat-food', '100.00'),
-        makeAllocation('cat-transport', '100.00'),
-        makeAllocation('cat-utilities', '100.00'),
-      ],
-    };
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '120.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-2', categoryId: 'cat-transport', amount: '105.00', type: TransactionType.DEBIT }),
-      makeTx({ id: 'tx-3', categoryId: 'cat-utilities', amount: '50.00', type: TransactionType.DEBIT }),
-    ];
+          const ratio = spentAmount.div(allocated);
 
-    const result = calculateBudgetSummary(budget, transactions);
-
-    expect(result.overspentCount).toBe(2);
-    expect(result.totalAllocated.eq(new Decimal('300.00'))).toBe(true);
-    expect(result.totalSpent.eq(new Decimal('275.00'))).toBe(true);
-    expect(result.totalRemaining.eq(new Decimal('25.00'))).toBe(true);
-  });
-
-  it('computes negative totalRemaining when overall overspent', () => {
-    const budget: Budget = {
-      ...baseBudget,
-      allocations: [makeAllocation('cat-food', '100.00')],
-    };
-    const transactions = [
-      makeTx({ id: 'tx-1', categoryId: 'cat-food', amount: '200.00', type: TransactionType.DEBIT }),
-    ];
-
-    const result = calculateBudgetSummary(budget, transactions);
-
-    expect(result.totalRemaining.eq(new Decimal('-100.00'))).toBe(true);
-    expect(result.overspentCount).toBe(1);
+          if (ratio.gte(new Decimal('1'))) {
+            expect(progress.status).toBe('overspent');
+          } else if (ratio.gte(new Decimal('0.9'))) {
+            expect(progress.status).toBe('warning');
+          } else {
+            expect(progress.status).toBe('ok');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });

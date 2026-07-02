@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Plus, Search, ChevronLeft, ChevronRight, X, ArrowLeftRight } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, X, ArrowLeftRight, Clock } from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 
 interface Transaction {
@@ -14,6 +14,7 @@ interface Transaction {
   categoryId: string | null;
   categoryName?: string;
   type: string;
+  status?: string;
   accountId: string;
 }
 
@@ -240,14 +241,20 @@ export default function TransactionsPage() {
               const amt = Math.abs(Number(tx.amount));
               const isCredit = tx.type === 'CREDIT';
               const isTransfer = tx.type === 'TRANSFER';
+              const isPending = tx.status === 'PENDING';
               const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
               const dateStr = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
               return (
                 <div
                   key={tx.id}
-                  className="card flex items-center gap-3 py-3 px-4 hover:border-edge-hover transition-colors duration-150"
+                  className={`card flex items-center gap-3 py-3 px-4 hover:border-edge-hover transition-colors duration-150 ${isPending ? 'opacity-70' : ''}`}
                 >
+                  {/* Pending indicator */}
+                  {isPending && (
+                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent-yellow" title="Pending" />
+                  )}
+
                   {/* Category Icon */}
                   <CategoryIcon name={catName} size="sm" />
 
@@ -258,6 +265,11 @@ export default function TransactionsPage() {
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] text-content-tertiary">{dateStr}</span>
+                      {isPending && (
+                        <span className="category-pill text-[10px] bg-accent-yellow/10 text-accent-yellow">
+                          <Clock size={8} className="inline mr-0.5" />Pending
+                        </span>
+                      )}
                       {catName && (
                         <span
                           className="category-pill text-[10px]"

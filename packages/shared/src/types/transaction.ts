@@ -9,6 +9,13 @@ export enum TransactionType {
   TRANSFER = 'TRANSFER',
 }
 
+/** Transaction clearing status. */
+export enum TransactionStatus {
+  PENDING = 'PENDING',
+  POSTED = 'POSTED',
+  CLEARED = 'CLEARED',
+}
+
 /** Tag attached to a transaction. */
 export interface TransactionTag {
   id: string;
@@ -26,6 +33,7 @@ export interface Transaction {
   /** Stored as string for Decimal.js compatibility during serialization. */
   amount: string;
   type: TransactionType;
+  status: TransactionStatus;
   merchant: string | null;
   description: string | null;
   notes: string | null;

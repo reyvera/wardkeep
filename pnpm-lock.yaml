@@ -179,6 +179,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.0
         version: 10.5.2(postcss@8.5.16)
+      fast-check:
+        specifier: ^4.8.0
+        version: 4.8.0
       postcss:
         specifier: ^8.4.0
         version: 8.5.16
@@ -188,6 +191,9 @@ importers:
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.43)
 
   apps/worker:
     dependencies:
@@ -229,6 +235,9 @@ importers:
         specifier: workspace:*
         version: link:../shared
     devDependencies:
+      fast-check:
+        specifier: ^4.8.0
+        version: 4.8.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
@@ -245,6 +254,9 @@ importers:
         specifier: ^10.4.0
         version: 10.6.0
     devDependencies:
+      fast-check:
+        specifier: ^4.8.0
+        version: 4.8.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
@@ -261,6 +273,9 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.43
+      fast-check:
+        specifier: ^4.8.0
+        version: 4.8.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3

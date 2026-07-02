@@ -366,6 +366,7 @@ export class BankConnectionsService {
               date: txDate,
               amount,
               type: Number(tx.amount) >= 0 ? 'CREDIT' : 'DEBIT',
+              status: tx.pending ? 'PENDING' : 'POSTED',
               merchant,
               description: String(tx.memo ?? '').substring(0, 500) || null,
             },

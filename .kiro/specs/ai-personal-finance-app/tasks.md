@@ -89,7 +89,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - All functions are pure with no side effects
     - _Requirements: 2.4, 2.5, 2.6_
 
-  - [ ]* 4.2 Write property tests for balance and net worth (Properties 1, 2, 3)
+  - [x]* 4.2 Write property tests for balance and net worth (Properties 1, 2, 3)
     - **Property 1: Account balance is initial balance plus sum of credits minus sum of debits**
     - **Property 2: Net worth equals assets minus liabilities excluding archived accounts**
     - **Property 3: Transaction deletion adjusts balance correctly**
@@ -103,7 +103,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - All calculations use Decimal.js for exact arithmetic
     - _Requirements: 6.3, 6.4, 6.5, 6.6, 6.8, 6.9_
 
-  - [ ]* 4.4 Write property tests for budget calculations (Properties 9, 10)
+  - [x]* 4.4 Write property tests for budget calculations (Properties 9, 10)
     - **Property 9: Budget actual spending equals sum of category expenses in period**
     - **Property 10: Budget threshold notifications fire at correct percentages**
     - Generate random allocations and transaction sets; verify exact decimal sums
@@ -118,7 +118,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Cap projection at 360 months; return warning if minimum payments exceed total payment
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11_
 
-  - [ ]* 4.6 Write property tests for debt calculator (Properties 17, 18, 19, 20)
+  - [x]* 4.6 Write property tests for debt calculator (Properties 17, 18, 19, 20)
     - **Property 17: Debt payoff schedule computes correct monthly amortization**
     - **Property 18: Extra payments distribute according to strategy rules**
     - **Property 19: Strategy comparison computes correct interest savings**
@@ -134,7 +134,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Flat projection when no recurring transactions exist
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.7, 11.8, 11.9_
 
-  - [ ]* 4.8 Write property tests for cash-flow projections (Properties 21, 22, 23)
+  - [x]* 4.8 Write property tests for cash-flow projections (Properties 21, 22, 23)
     - **Property 21: Cash-flow projection deterministically computes daily balances**
     - **Property 22: Below-zero projection generates notification with correct details**
     - **Property 23: No recurring transactions implies flat projection**
@@ -146,7 +146,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Return VerificationResult with isCorrect flag, verified value, and correction warning if discrepancy
     - _Requirements: 9.7_
 
-  - [ ]* 4.10 Write property test for AI claim verification (Property 16)
+  - [x]* 4.10 Write property test for AI claim verification (Property 16)
     - **Property 16: Finance Engine verifies and corrects AI numerical claims**
     - Generate claims with known-correct and known-incorrect values; verify detection
     - **Validates: Requirements 9.7**
@@ -180,7 +180,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Apply during import and manual transaction creation
     - _Requirements: 3.9, 3.10_
 
-  - [ ]* 6.4 Write property test for duplicate detection (Property 4)
+  - [x]* 6.4 Write property test for duplicate detection (Property 4)
     - **Property 4: Duplicate detection flags matching date+amount+merchant in same account**
     - Generate transaction pairs with matching/non-matching fields; verify correct flagging
     - **Validates: Requirements 3.9, 4.4**
@@ -195,7 +195,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Validate unique name within same parent scope, max 200 categories per user
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [ ]* 7.2 Write property tests for category hierarchy (Properties 7, 8)
+  - [x]* 7.2 Write property tests for category hierarchy (Properties 7, 8)
     - **Property 7: Category deletion reassigns all transactions to Uncategorized**
     - **Property 8: Sub-categories enforce single-level depth**
     - Generate category trees and transaction associations; verify reassignment and depth constraints
@@ -232,7 +232,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Process batch of 1000 transactions against 100 rules within 10 seconds
     - _Requirements: 7.6, 7.7_
 
-  - [ ]* 8.3 Write property tests for rules engine (Properties 11, 12, 13)
+  - [x]* 8.3 Write property tests for rules engine (Properties 11, 12, 13)
     - **Property 11: Rules engine evaluates in priority order with correct conflict resolution**
     - **Property 12: Rule condition evaluation matches AND/OR logic correctly**
     - **Property 13: Dry-run mode produces match list without data modification**
@@ -258,7 +258,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Ensure parse → export → re-parse produces matching data
     - _Requirements: 4.9_
 
-  - [ ]* 10.3 Write property tests for import/export (Properties 5, 6)
+  - [x]* 10.3 Write property tests for import/export (Properties 5, 6)
     - **Property 5: Import round-trip preserves transaction data**
     - **Property 6: Malformed import rows are skipped without blocking valid rows**
     - Generate random valid/invalid transaction rows; verify round-trip and error isolation
@@ -295,13 +295,13 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Subsequent requests for same merchant use correction over AI suggestion
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
 
-  - [ ]* 11.4 Write property tests for AI categorization (Properties 14, 15)
+  - [x]* 11.4 Write property tests for AI categorization (Properties 14, 15)
     - **Property 14: AI categorization confidence thresholds route correctly**
     - **Property 15: User category correction trains merchant mapping**
     - Generate random confidence scores and merchant corrections; verify routing and learning
     - **Validates: Requirements 8.3, 8.4, 8.5, 8.6**
 
-  - [ ]* 11.5 Write property test for AI privacy mode routing (Property 29)
+  - [x]* 11.5 Write property test for AI privacy mode routing (Property 29)
     - **Property 29: AI Privacy Mode enforces routing constraints**
     - Generate AI requests under each privacy mode; verify no external calls in Local mode
     - **Validates: Requirements 16.2, 16.8**
@@ -338,7 +338,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Suppress dismissed patterns from future detection
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.7_
 
-  - [ ]* 12.4 Write property tests for recurring detection (Properties 24, 25)
+  - [x]* 12.4 Write property tests for recurring detection (Properties 24, 25)
     - **Property 24: Recurring transaction detection requires 3+ occurrences within consistent intervals**
     - **Property 25: Dismissed patterns suppressed from future detection**
     - Generate transaction histories with embedded recurring patterns; verify detection criteria
@@ -395,7 +395,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Support scheduled backups (daily, weekly, monthly) via BullMQ
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8_
 
-  - [ ]* 15.2 Write property tests for backup service (Properties 26, 27, 28)
+  - [x]* 15.2 Write property tests for backup service (Properties 26, 27, 28)
     - **Property 26: Backup round-trip preserves all user data**
     - **Property 27: Invalid passphrase leaves existing data unchanged**
     - **Property 28: Backup retention deletes oldest when limit exceeded**
@@ -487,7 +487,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Target LCP ≤ 3 seconds under simulated 4G (1.6 Mbps, 150ms RTT)
     - _Requirements: 13.1, 13.6, 13.7_
 
-  - [ ]* 18.3 Write property test for offline action queue (Property 32)
+  - [x]* 18.3 Write property test for offline action queue (Property 32)
     - **Property 32: Offline action queue enforces capacity and sync order**
     - Generate action sequences exceeding capacity; verify 101st rejection and sync behavior
     - **Validates: Requirements 13.3, 13.4, 13.9**
@@ -539,7 +539,7 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Verify all health check endpoints return correct service status
     - _Requirements: 4.8, 7.4, 8.9, 14.7_
 
-  - [ ]* 22.2 Write integration tests for critical user journeys
+  - [x]* 22.2 Write integration tests for critical user journeys
     - Test: signup → add account → import CSV → verify rules applied → check budget progress
     - Test: add debts → calculate payoff → compare strategies → what-if simulation
     - Test: chat query → AI response → Finance Engine verification → correction display

@@ -1,97 +1,192 @@
+/**
+ * Property-based tests for balance and net-worth calculations.
+ *
+ * Feature: ai-personal-finance-app
+ * Properties 1, 2, 3
+ */
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
 import { Decimal } from 'decimal.js';
-import { describe, expect, it } from 'vitest';
 
-import { Transaction, TransactionType } from '@budgetapp/shared';
+import { Transaction, TransactionType, AccountType } from '@budgetapp/shared';
 
 import { calculateBalance } from './balance';
+import { calculateNetWorth, AccountWithTransactions } from './net-worth';
 
-function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
-  return {
-    id: 'tx-1',
-    userId: 'user-1',
-    accountId: 'acc-1',
-    categoryId: null,
-    date: new Date('2024-01-15'),
-    amount: '100.00',
-    type: TransactionType.DEBIT,
-    merchant: null,
-    description: null,
-    notes: null,
-    isReconciliation: false,
-    aiCategorized: false,
-    aiConfidence: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  };
-}
+// ─── Generators ─────────────────────────────────────────────────────────────────
 
-describe('calculateBalance', () => {
-  it('returns initial balance when there are no transactions', () => {
-    const result = calculateBalance(new Decimal('1000.00'), []);
-    expect(result.eq(new Decimal('1000.00'))).toBe(true);
+const amountArb = fc.stringMatching(/^[1-9]\d{0,5}\.\d{2}$/).filter((s) => {
+  const d = new Decimal(s);
+  return d.gte('0.01') && d.lte('999999.99');
+});
+
+const transactionTypeArb = fc.constantFrom(TransactionType.CREDIT, TransactionType.DEBIT);
+
+const transactionArb = fc.record({
+  id: fc.uuid(),
+  userId: fc.uuid(),
+  accountId: fc.uuid(),
+  categoryId: fc.option(fc.uuid(), { nil: null }),
+  date: fc.date({ min: new Date('2020-01-01'), max: new Date('2025-12-31') }),
+  amount: amountArb,
+  type: transactionTypeArb,
+  merchant: fc.option(fc.string(), { nil: null }),
+  description: fc.option(fc.string(), { nil: null }),
+  notes: fc.option(fc.string(), { nil: null }),
+  isReconciliation: fc.boolean(),
+  aiCategorized: fc.boolean(),
+  aiConfidence: fc.option(fc.string(), { nil: null }),
+  createdAt: fc.date(),
+  updatedAt: fc.date(),
+}) as fc.Arbitrary<Transaction>;
+
+const initialBalanceArb = fc.oneof(
+  amountArb,
+  fc.constant('0.00'),
+).map((s) => new Decimal(s));
+
+const assetTypeArb = fc.constantFrom(
+  AccountType.CHECKING,
+  AccountType.SAVINGS,
+  AccountType.CASH,
+  AccountType.MANUAL,
+);
+
+const liabilityTypeArb = fc.constantFrom(
+  AccountType.CREDIT_CARD,
+  AccountType.LOAN,
+  AccountType.MORTGAGE,
+  AccountType.HELOC,
+);
+
+const accountTypeArb = fc.oneof(assetTypeArb, liabilityTypeArb);
+
+// ─── Property 1 ─────────────────────────────────────────────────────────────────
+
+describe('Feature: ai-personal-finance-app, Property 1: Account balance is initial balance plus sum of credits minus sum of debits', () => {
+  it('balance equals initial + credits - debits', () => {
+    fc.assert(
+      fc.property(
+        initialBalanceArb,
+        fc.array(transactionArb, { minLength: 0, maxLength: 50 }),
+        (initialBalance, transactions) => {
+          const result = calculateBalance(initialBalance, transactions);
+
+          const credits = transactions
+            .filter((tx) => tx.type === TransactionType.CREDIT)
+            .reduce((sum, tx) => sum.plus(new Decimal(tx.amount)), new Decimal(0));
+
+          const debits = transactions
+            .filter((tx) => tx.type === TransactionType.DEBIT)
+            .reduce((sum, tx) => sum.plus(new Decimal(tx.amount)), new Decimal(0));
+
+          const expected = initialBalance.plus(credits).minus(debits);
+
+          expect(result.eq(expected)).toBe(true);
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
+});
 
-  it('adds credits to the initial balance', () => {
-    const transactions = [
-      makeTransaction({ amount: '250.50', type: TransactionType.CREDIT }),
-    ];
-    const result = calculateBalance(new Decimal('1000.00'), transactions);
-    expect(result.eq(new Decimal('1250.50'))).toBe(true);
+// ─── Property 2 ─────────────────────────────────────────────────────────────────
+
+describe('Feature: ai-personal-finance-app, Property 2: Net worth equals assets minus liabilities excluding archived accounts', () => {
+  it('net worth = sum(asset balances) - sum(liability balances), archived excluded', () => {
+    const accountWithTxArb = fc.record({
+      account: fc.record({
+        id: fc.uuid(),
+        userId: fc.uuid(),
+        name: fc.string({ minLength: 1, maxLength: 20 }),
+        type: accountTypeArb,
+        currency: fc.constant('USD'),
+        initialBalance: amountArb,
+        isArchived: fc.boolean(),
+        createdAt: fc.date(),
+        updatedAt: fc.date(),
+      }),
+      transactions: fc.array(transactionArb, { minLength: 0, maxLength: 10 }),
+    }) as fc.Arbitrary<AccountWithTransactions>;
+
+    fc.assert(
+      fc.property(
+        fc.array(accountWithTxArb, { minLength: 0, maxLength: 10 }),
+        (accounts) => {
+          const result = calculateNetWorth(accounts);
+
+          let expectedAssets = new Decimal(0);
+          let expectedLiabilities = new Decimal(0);
+
+          const ASSET_TYPES = new Set([
+            AccountType.CHECKING,
+            AccountType.SAVINGS,
+            AccountType.CASH,
+            AccountType.MANUAL,
+          ]);
+          const LIABILITY_TYPES = new Set([
+            AccountType.CREDIT_CARD,
+            AccountType.LOAN,
+            AccountType.MORTGAGE,
+            AccountType.HELOC,
+          ]);
+
+          for (const { account, transactions } of accounts) {
+            if (account.isArchived) continue;
+
+            const balance = calculateBalance(
+              new Decimal(account.initialBalance),
+              transactions,
+            );
+
+            if (ASSET_TYPES.has(account.type)) {
+              expectedAssets = expectedAssets.plus(balance);
+            } else if (LIABILITY_TYPES.has(account.type)) {
+              expectedLiabilities = expectedLiabilities.plus(balance);
+            }
+          }
+
+          const expectedNetWorth = expectedAssets.minus(expectedLiabilities);
+
+          expect(result.assets.eq(expectedAssets)).toBe(true);
+          expect(result.liabilities.eq(expectedLiabilities)).toBe(true);
+          expect(result.netWorth.eq(expectedNetWorth)).toBe(true);
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
+});
 
-  it('subtracts debits from the initial balance', () => {
-    const transactions = [
-      makeTransaction({ amount: '300.00', type: TransactionType.DEBIT }),
-    ];
-    const result = calculateBalance(new Decimal('1000.00'), transactions);
-    expect(result.eq(new Decimal('700.00'))).toBe(true);
-  });
+// ─── Property 3 ─────────────────────────────────────────────────────────────────
 
-  it('handles a mix of credits and debits correctly', () => {
-    const transactions = [
-      makeTransaction({ amount: '500.00', type: TransactionType.CREDIT }),
-      makeTransaction({ amount: '200.00', type: TransactionType.DEBIT }),
-      makeTransaction({ amount: '50.25', type: TransactionType.CREDIT }),
-    ];
-    const result = calculateBalance(new Decimal('1000.00'), transactions);
-    // 1000 + 500 - 200 + 50.25 = 1350.25
-    expect(result.eq(new Decimal('1350.25'))).toBe(true);
-  });
+describe('Feature: ai-personal-finance-app, Property 3: Transaction deletion adjusts balance correctly', () => {
+  it('removing a transaction recalculates balance without it', () => {
+    fc.assert(
+      fc.property(
+        initialBalanceArb,
+        fc.array(transactionArb, { minLength: 1, maxLength: 50 }),
+        fc.nat(),
+        (initialBalance, transactions, indexSeed) => {
+          fc.pre(transactions.length > 0);
 
-  it('handles zero initial balance', () => {
-    const transactions = [
-      makeTransaction({ amount: '100.00', type: TransactionType.CREDIT }),
-      makeTransaction({ amount: '30.00', type: TransactionType.DEBIT }),
-    ];
-    const result = calculateBalance(new Decimal('0'), transactions);
-    expect(result.eq(new Decimal('70.00'))).toBe(true);
-  });
+          const indexToRemove = indexSeed % transactions.length;
+          const removedTx = transactions[indexToRemove];
+          const remainingTxs = transactions.filter((_, i) => i !== indexToRemove);
 
-  it('can produce a negative balance', () => {
-    const transactions = [
-      makeTransaction({ amount: '1500.00', type: TransactionType.DEBIT }),
-    ];
-    const result = calculateBalance(new Decimal('1000.00'), transactions);
-    expect(result.eq(new Decimal('-500.00'))).toBe(true);
-  });
+          const balanceWithAll = calculateBalance(initialBalance, transactions);
+          const balanceWithout = calculateBalance(initialBalance, remainingTxs);
 
-  it('handles precise decimal values without floating-point errors', () => {
-    const transactions = [
-      makeTransaction({ amount: '0.1', type: TransactionType.CREDIT }),
-      makeTransaction({ amount: '0.2', type: TransactionType.CREDIT }),
-    ];
-    const result = calculateBalance(new Decimal('0'), transactions);
-    // 0.1 + 0.2 should be exactly 0.3, not 0.30000000000000004
-    expect(result.eq(new Decimal('0.3'))).toBe(true);
-  });
-
-  it('handles large amounts without precision loss', () => {
-    const transactions = [
-      makeTransaction({ amount: '999999999.99', type: TransactionType.CREDIT }),
-      makeTransaction({ amount: '999999999.99', type: TransactionType.DEBIT }),
-    ];
-    const result = calculateBalance(new Decimal('0.01'), transactions);
-    expect(result.eq(new Decimal('0.01'))).toBe(true);
+          // Removing a credit should decrease balance; removing a debit should increase it
+          const removedAmount = new Decimal(removedTx.amount);
+          if (removedTx.type === TransactionType.CREDIT) {
+            expect(balanceWithout.eq(balanceWithAll.minus(removedAmount))).toBe(true);
+          } else {
+            expect(balanceWithout.eq(balanceWithAll.plus(removedAmount))).toBe(true);
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });
