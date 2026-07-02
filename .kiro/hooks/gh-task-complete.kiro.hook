@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Close GitHub Issue on Task Complete",
+  "description": "After a spec task completes, find the matching GitHub issue, remove the in-progress label, and close it with a reference to the latest commit.",
+  "version": "1.0.0",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task just completed. Identify which GitHub issue corresponds to this task (match by title/keywords). If a matching open issue exists: 1) Remove the 'status/in-progress' label with: gh issue edit <number> --remove-label 'status/in-progress'. 2) Close the issue with: gh issue close <number> --comment 'Completed in commit <sha>' (get sha from git log --format=%H -1). If no matching issue is found, skip silently."
+  }
+}

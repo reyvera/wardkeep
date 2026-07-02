@@ -572,6 +572,74 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
   - Unauthenticated users must be redirected to `/login`, not `/dashboard`
   - Fixed: Added Next.js middleware that checks for auth cookie, root route now redirects to `/login`
 
+## v1.0 — UI Redesign (Copilot Money–Inspired)
+
+- [ ] 25. UI/UX overhaul — premium dark-mode-first design
+  - [ ] 25.1 Set up design system foundations
+    - Install Inter font via next/font/google
+    - Replace emoji nav icons with Lucide React SVG icons
+    - Define CSS custom properties for full color palette (dark + light mode)
+    - Configure Tailwind darkMode: 'class' with dark as default
+    - Add color palette to tailwind.config.ts (bg-primary, bg-secondary, bg-elevated, etc.)
+    - Set up theme toggle (dark/light/system) in settings and nav
+  - [ ] 25.2 Redesign app shell and navigation
+    - Dark sidebar (#0D0F12) with icon + label nav items
+    - Active state: blue tint background + left accent border
+    - Collapsible sidebar (full → icon-only at 64px)
+    - Mobile: bottom tab bar with 5 primary nav items
+    - Content area: max-width 1200px, centered, 32px padding
+    - Skeleton loading placeholders for all page loads
+  - [ ] 25.3 Redesign dashboard page
+    - Net worth hero number (32-40px bold) with monthly trend indicator
+    - 2-3 column summary card grid (spending, upcoming bills, recent transactions)
+    - Cash flow sparkline widget
+    - Accounts list with balance + sparkline per account
+    - Cards: dark bg (#151921), 1px border (#232A36), 12px radius
+  - [ ] 25.4 Redesign transactions page
+    - Search bar + filter chips (account, category, date, type, review status, tag)
+    - Summary bar: total spent / total income / net for current filter
+    - Transaction rows: emoji + merchant | category pill | aligned amount (green/red)
+    - Unreviewed indicator: light-blue dot on left edge
+    - Hover quick-actions: categorize, review, flag
+    - Keyboard navigation: arrows, X select, R review, C categorize
+    - Bulk selection bar with batch actions
+    - Sort by date or amount
+  - [ ] 25.5 Redesign budget page
+    - Month selector with arrows (← June 2026 →)
+    - Spending pace line chart (daily cumulative vs ideal pace line)
+    - Category progress bars: 8px rounded, gradient fill (blue→green under, yellow at 90%, red at 100%+)
+    - Per-category: name (left), "$X of $Y" (right), remaining/overspent below
+    - Rollover indicators where applicable
+  - [ ] 25.6 Redesign accounts page
+    - Account list: name | institution | type badge | balance | sparkline trend
+    - Detail view: full balance history chart (time period selectors: 1W|1M|3M|6M|1Y|ALL)
+    - Net worth summary card at top with breakdown
+  - [ ] 25.7 Redesign categories/spending page
+    - Donut or horizontal bar chart for spending distribution
+    - Category list: emoji + name + monthly total + YTD average
+    - Color-coded category pills (10% opacity background, full saturation text)
+    - Click category → filtered transaction list
+  - [ ] 25.8 Redesign remaining pages (chat, debt, cash flow, settings, import, rules, recurring, bank connections)
+    - Apply consistent card styling, typography, and color system
+    - Chat: message bubbles with distinct user/AI styling
+    - Debt: schedule table with clean number alignment (tabular-nums)
+    - Cash flow: area chart with gradient fill, below-zero zone highlighted in red
+    - Settings: grouped sections with clear labels and toggles
+  - [ ] 25.9 Add micro-interactions and polish
+    - 150ms ease-out transitions on hover states
+    - 200ms panel open/close animations
+    - Framer Motion page transitions
+    - Optimistic UI updates (immediate feedback, revert on failure)
+    - Toast notifications: slide-in from top-right, auto-dismiss 5s
+    - Skeleton loading for all data-dependent views
+  - [ ] 25.10 Accessibility and responsiveness pass
+    - Verify 4.5:1 contrast ratios for all text
+    - Focus rings visible in both themes
+    - ARIA labels on all interactive elements
+    - Reduced-motion preference disables animations
+    - Responsive breakpoints: 320px, 768px, 1024px, 1440px, 2560px
+    - Test with screen reader (VoiceOver/NVDA)
+
 ## Future Features
 
 - [x] 25. Bank account auto-connection (Plaid/SimpleFIN)
@@ -599,6 +667,112 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Hourly: uses average hours × rate as estimate, adjusts as actuals post
     - Dashboard shows "Next paycheck: ~[date]" indicator
     - Projection formula: (received + expected remaining income) - (spent + projected remaining spend)
+
+- [ ] 27. Budget rollovers
+  - [ ] 27.1 Add rollover tracking to budget model
+    - Track unspent amount per category at month end
+    - Roll unspent balance forward to next month's allocation automatically
+    - Show rollover amount separately from base allocation in UI ("$42.33 from Feb")
+    - Allow user to opt-in/out of rollovers per category
+    - Update Finance Engine budget calculations to include rollover amounts
+
+- [ ] 28. Transaction review/inbox workflow
+  - [ ] 28.1 Add review status to transactions
+    - Add `reviewed` boolean field to Transaction model (default: false)
+    - New transactions from bank sync and imports start as unreviewed
+    - Manual transactions start as reviewed
+    - Add "Mark as Reviewed" action (single and bulk)
+    - Add filter for unreviewed transactions
+    - Show unreviewed count badge in navigation
+    - Dashboard shows "X transactions to review" indicator
+
+- [ ] 29. Tags support
+  - [ ] 29.1 Implement tag model and API
+    - Create Tag model (id, name, color, userId) with many-to-many relation to transactions
+    - Add CRUD endpoints: GET/POST/DELETE /api/tags
+    - Add tag assignment to transactions (multiple tags per transaction)
+    - Add tag filter to transaction search
+    - Rules engine can auto-apply tags as an action type
+    - UI: tag chips on transactions, tag management page, tag filter in search
+
+- [ ] 30. Subscription management view
+  - [ ] 30.1 Dedicated subscriptions UI and tracking
+    - Create /subscriptions page showing all detected recurring charges
+    - Group by: active, upcoming this month, annual renewals approaching
+    - Show: merchant name, amount, frequency, next expected date, total annual cost
+    - Allow marking subscriptions as "cancelled" (stops monitoring)
+    - Show total monthly subscription burn rate on dashboard
+    - Alert when a cancelled subscription still charges
+
+- [ ] 31. Spending trends and monthly comparisons
+  - [ ] 31.1 Add spending analytics endpoints and UI
+    - GET /api/analytics/trends — month-over-month category spending comparison
+    - GET /api/analytics/summary — income vs expenses, savings rate
+    - Show per-category change indicators ("+$240 Groceries", "-$180 Recreation")
+    - Dashboard widget: "This month vs last month" summary
+    - Visualize 6-month or 12-month spending trends per category as line/bar charts
+
+- [ ] 32. Proactive AI daily briefings
+  - [ ] 32.1 Implement proactive AI assistant
+    - Worker job (daily, configurable time) generates personalized financial briefing
+    - Detects: unusual charges, budgets running hot, spending pattern shifts
+    - Suggests: recategorizations, refund matches, new category proposals
+    - Suggests where idle cash could be moved (savings goals)
+    - Delivers via WebSocket notification + dedicated "Briefing" view in UI
+    - Each suggestion is actionable with one-tap approve/dismiss
+    - AI learns from dismissed suggestions to reduce noise over time
+
+- [ ] 33. Spending pace line visualization
+  - [ ] 33.1 Add daily spending pace chart to budget
+    - Show cumulative daily spending as a line chart within each budget month
+    - Overlay "ideal pace" line (total budget / days in month)
+    - Indicate if user is currently under/over pace with dollar amount
+    - Show on dashboard and budget detail page
+
+- [ ] 34. Investment and portfolio tracking
+  - [ ] 34.1 Add investment account support
+    - New account types: BROKERAGE, RETIREMENT, CRYPTO
+    - Holdings model: ticker/symbol, quantity, cost basis
+    - Integrate market data API for live price updates (e.g., Yahoo Finance, Alpha Vantage)
+    - Show: portfolio value, daily change %, asset allocation (equity/crypto/ETF/cash/bonds)
+    - Track individual holding performance over time
+    - Include investment accounts in net worth calculation
+
+- [ ] 35. Real estate tracking
+  - [ ] 35.1 Add property valuation support
+    - New account type: REAL_ESTATE
+    - Accept property address or Zillow/Redfin URL
+    - Fetch and periodically refresh estimated market value
+    - Calculate home equity (value minus mortgage balance if linked)
+    - Include in net worth as an asset
+
+- [ ] 36. Refund matching
+  - [ ] 36.1 Detect and match refunds to original charges
+    - When a credit arrives from same merchant as a prior debit, flag as potential refund
+    - Match criteria: same merchant, amount ≤ original charge, within 90 days
+    - Show matched pair in UI for confirmation
+    - Confirmed refunds excluded from spending totals and budget tracking
+
+- [ ] 37. Custom themes and color personalization
+  - [ ] 37.1 Implement theme engine with user-defined colors
+    - Add ThemeConfig model to UserSettings (accent color, background style, chart palette)
+    - Provide preset themes: Midnight (default dark), Slate, Ocean, Forest, Sunset, Lavender, Mono
+    - Each preset defines: accent color, secondary accent, chart color palette, surface tones
+    - Allow custom accent color picker (hue wheel) that auto-generates full palette
+    - Live preview: changes apply instantly as user adjusts
+    - Store theme preference per user, sync across devices
+  - [ ] 37.2 Build theme customization UI in settings
+    - Settings → Appearance section with theme grid (visual swatches)
+    - "Custom" option opens color picker for accent + optional background tint
+    - Chart color palette selector (5-6 presets: Default, Pastel, Vibrant, Monochrome, Accessible)
+    - Dark/Light/System toggle integrated with theme selection
+    - Preview card showing how dashboard would look with selected theme
+  - [ ] 37.3 Implement CSS variable–based theming
+    - All colors reference CSS custom properties (already in ui-design.md system)
+    - Theme switch updates :root variables — no page reload needed
+    - Respect accessibility: auto-check contrast ratios, warn if custom accent is too low contrast
+    - Export/import theme as JSON (for sharing between users or devices)
+    - Category colors remain independently customizable per category
 
 ## Task Dependency Graph
 

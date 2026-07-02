@@ -1,13 +1,13 @@
 {
   "enabled": true,
-  "name": "Sync Tasks to GitHub",
-  "description": "After each agent execution that includes commits, checks if any tasks were completed and updates the corresponding GitHub issues (closes them) and updates milestone progress.",
-  "version": "1",
+  "name": "Sync Tasks to GitHub on Stop",
+  "description": "After agent execution, runs the sync script to close any GitHub issues that match the latest commit message keywords.",
+  "version": "1.0.0",
   "when": {
     "type": "agentStop"
   },
   "then": {
     "type": "runCommand",
-    "command": "cd /home/prosoft/random/budgetapp && export PATH=\"/home/prosoft/.nvm/versions/node/v22.23.1/bin:$PATH\" && git log --oneline -1 2>/dev/null | head -1"
+    "command": "source ~/.bashrc 2>/dev/null; cd /home/prosoft/random/budgetapp && bash scripts/sync-tasks-to-github.sh"
   }
 }

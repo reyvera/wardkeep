@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Mark GitHub Issue In Progress",
+  "description": "Before starting a spec task, find the matching GitHub issue and add an 'in-progress' label so the project board reflects current work.",
+  "version": "1.0.0",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task is about to start. Identify which GitHub issue corresponds to this task (match by title/keywords from the task description). If a matching open issue exists, add the label 'status/in-progress' to it using: gh issue edit <number> --add-label 'status/in-progress'. If the label doesn't exist yet, create it first with: gh label create 'status/in-progress' --color '0052CC' --description 'Currently being worked on' --force. If no matching issue is found, skip silently."
+  }
+}
