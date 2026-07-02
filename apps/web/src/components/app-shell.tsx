@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 
 import { Sidebar } from './sidebar';
 import { MobileNav } from './mobile-nav';
+import { DemoBanner } from './demo-banner';
 
 /** Pages that should NOT show the navigation shell */
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -18,6 +19,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      {/* Demo banner */}
+      <DemoBanner />
+
       {/* Desktop sidebar */}
       <Sidebar />
 

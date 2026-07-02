@@ -625,14 +625,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Debt: schedule table with clean number alignment (tabular-nums)
     - Cash flow: area chart with gradient fill, below-zero zone highlighted in red
     - Settings: grouped sections with clear labels and toggles
-  - [ ] 25.9 Add micro-interactions and polish
+  - [x] 25.9 Add micro-interactions and polish
     - 150ms ease-out transitions on hover states
     - 200ms panel open/close animations
     - Framer Motion page transitions
     - Optimistic UI updates (immediate feedback, revert on failure)
     - Toast notifications: slide-in from top-right, auto-dismiss 5s
     - Skeleton loading for all data-dependent views
-  - [ ] 25.10 Accessibility and responsiveness pass
+  - [x] 25.10 Accessibility and responsiveness pass
     - Verify 4.5:1 contrast ratios for all text
     - Focus rings visible in both themes
     - ARIA labels on all interactive elements
@@ -640,8 +640,8 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Responsive breakpoints: 320px, 768px, 1024px, 1440px, 2560px
     - Test with screen reader (VoiceOver/NVDA)
 
-- [ ] 26. Live demo instance with sample data
-  - [ ] 26.1 Create demo seed dataset
+- [x] 26. Live demo instance with sample data
+  - [x] 26.1 Create demo seed dataset
     - Generate 6 months of realistic sample transactions (~500 transactions)
     - Sample accounts: Checking, Savings, Credit Card, Mortgage, Brokerage
     - Varied merchants, categories, amounts to showcase categorization and trends
@@ -650,14 +650,14 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Sample debt payoff scenario (credit card + student loan)
     - Sample AI chat history showing typical interactions
     - Demo user credentials: demo@budgetapp.io / DemoPassword123
-  - [ ] 26.2 Implement demo mode with data reset
+  - [x] 26.2 Implement demo mode with data reset
     - Add DEMO_MODE=true environment variable
     - Demo mode: read-only bank connections (no real SimpleFIN calls)
     - Auto-reset demo data every 24 hours (cron job or on-login reset)
     - Banner at top: "This is a demo — data resets daily. Sign up for your own instance."
     - Disable: password change, backup restore, API key entry, real bank connections
     - AI chat works with mocked responses (no Ollama required for demo)
-  - [ ] 26.3 Lightweight deploy configuration
+  - [x] 26.3 Lightweight deploy configuration
     - Minimal Docker Compose for demo (no Ollama, no worker — just web + api + postgres + redis)
     - Reduce resource requirements: 1GB RAM, 1 CPU core, 5GB storage
     - Optional: Fly.io or Railway one-click deploy template

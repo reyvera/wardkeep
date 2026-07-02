@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { ThemeProvider } from '@/components/theme-provider';
+import { ToastProvider } from '@/components/toast';
 import { registerServiceWorker } from '@/lib/register-sw';
 import { offlineQueue } from '@/lib/offline-queue';
 import { apiClient } from '@/lib/api-client';
@@ -33,7 +34,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
