@@ -6,7 +6,7 @@ import {
   compareStrategies,
   Debt,
   PayoffStrategy,
-} from '@budgetapp/finance-engine';
+} from '@wardkeep/finance-engine';
 
 import { CalculateDebtDto, CompareDebtDto } from './dto/calculate-debt.dto';
 

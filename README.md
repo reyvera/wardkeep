@@ -1,8 +1,10 @@
-# AI Personal Finance App
+# Wardkeep
 
-A private, self-hostable budgeting and finance assistant that helps you track spending, income, debt, savings, bills, subscriptions, and cash flow across all devices.
+*Guard your ground.*
 
-**The key difference:** instead of only showing numbers, the app explains what is happening, predicts what is coming, and recommends actions.
+A private, self-hostable, AI-powered personal finance app that helps you track spending, income, debt, savings, bills, subscriptions, and cash flow across all devices.
+
+**The key difference:** instead of only showing numbers, Wardkeep explains what is happening, predicts what is coming, and recommends actions.
 
 ## Core Principle
 
@@ -102,7 +104,7 @@ pnpm db:seed
 
 # 5. Start the API (terminal 1)
 cd apps/api
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/budgetapp?schema=public" \
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
 REDIS_HOST=localhost REDIS_PORT=6379 PORT=4000 SESSION_TIMEOUT=30 \
 ENCRYPTION_KEY=change-me-in-production AI_PRIVACY_MODE=LOCAL \
 OLLAMA_URL=http://localhost:11434 \
@@ -144,7 +146,7 @@ cd packages/importers && pnpm test
 
 ```bash
 # Clone and configure
-git clone <repo-url> && cd budgetapp
+git clone <repo-url> && cd wardkeep
 cp .env.example .env
 # Edit .env — change ENCRYPTION_KEY to a secure random value
 
@@ -159,7 +161,7 @@ docker compose up -d
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | postgresql://postgres:postgres@localhost:5432/budgetapp | PostgreSQL connection string |
+| `DATABASE_URL` | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string |
 | `REDIS_HOST` | localhost | Redis hostname |
 | `REDIS_PORT` | 6379 | Redis port |
 | `ENCRYPTION_KEY` | change-me-in-production | AES-256 key for encrypting API keys and bank tokens. **Change in production.** |
@@ -178,7 +180,7 @@ docker compose up -d
 - **Balance display:** Bank-linked accounts show the balance reported by SimpleFIN. Manual accounts compute balance from initial balance + transactions.
 - **API dev server:** Uses `ts-node` with SWC (not tsx/esbuild) because NestJS requires `emitDecoratorMetadata` for dependency injection.
 - **Database credentials:** The `.env` must use `postgres:postgres` to match docker-compose.
-- **Package builds:** All packages emit CommonJS. Packages resolve `@budgetapp/*` from node_modules (compiled dist), not source.
+- **Package builds:** All packages emit CommonJS. Packages resolve `@wardkeep/*` from node_modules (compiled dist), not source.
 - **Auth:** Middleware redirects unauthenticated users to `/login`. Token stored in localStorage + cookie for SSR middleware access.
 
 ## Roadmap

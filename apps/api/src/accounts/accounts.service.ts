@@ -9,12 +9,12 @@ import { Decimal } from 'decimal.js';
 import {
   AccountType,
   MAX_ACCOUNTS_PER_USER,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 import {
   calculateBalance,
   calculateNetWorth,
   AccountWithTransactions,
-} from '@budgetapp/finance-engine';
+} from '@wardkeep/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';

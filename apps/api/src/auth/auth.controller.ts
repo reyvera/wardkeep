@@ -15,7 +15,7 @@ import {
   RATE_LIMIT_AUTH,
   RegisterSchema,
   ResetPasswordSchema,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AuthService } from './auth.service';

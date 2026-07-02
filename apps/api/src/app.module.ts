@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { RATE_LIMIT_API } from '@budgetapp/shared';
+import { RATE_LIMIT_API } from '@wardkeep/shared';
 
 import { AccountsModule } from './accounts/accounts.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';

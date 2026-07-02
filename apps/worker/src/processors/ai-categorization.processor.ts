@@ -9,7 +9,7 @@ import {
   OllamaProvider,
   AI_CONFIDENCE_AUTO_ASSIGN,
   AI_CONFIDENCE_SUGGEST,
-} from '@budgetapp/ai-engine';
+} from '@wardkeep/ai-engine';
 
 const prisma = new PrismaClient();
 const provider = new OllamaProvider();

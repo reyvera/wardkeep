@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { MIN_AMOUNT, MAX_AMOUNT } from '@budgetapp/shared';
+import { MIN_AMOUNT, MAX_AMOUNT } from '@wardkeep/shared';
 
 export const UpdateBudgetSchema = z.object({
   allocations: z

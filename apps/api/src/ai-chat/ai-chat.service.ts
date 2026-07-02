@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
-import { AIChat, OllamaProvider, OpenAIProvider, AnthropicProvider, ChatMessage } from '@budgetapp/ai-engine';
-import type { AIProvider } from '@budgetapp/ai-engine';
+import { AIChat, OllamaProvider, OpenAIProvider, AnthropicProvider, ChatMessage } from '@wardkeep/ai-engine';
+import type { AIProvider } from '@wardkeep/ai-engine';
 import {
   verifyAIClaim,
   FinancialContext,
   NumericalClaim,
-} from '@budgetapp/finance-engine';
+} from '@wardkeep/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { EncryptionService } from '../common/services/encryption.service';

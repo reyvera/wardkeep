@@ -44,9 +44,9 @@ export function Sidebar() {
       <div className="flex h-16 items-center px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-accent-blue flex items-center justify-center">
-            <span className="text-white text-sm font-bold">B</span>
+            <span className="text-white text-sm font-bold">W</span>
           </div>
-          <span className="text-lg font-semibold text-content-primary">BudgetApp</span>
+          <span className="text-lg font-semibold text-content-primary">Wardkeep</span>
         </Link>
       </div>
 

@@ -8,7 +8,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@budgetapp/shared': new URL('../shared/src/index.ts', import.meta.url).pathname,
+      '@wardkeep/shared': new URL('../shared/src/index.ts', import.meta.url).pathname,
     },
   },
 });

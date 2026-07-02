@@ -3,7 +3,7 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { Transaction, TransactionType } from '@budgetapp/shared';
+import { Transaction, TransactionType } from '@wardkeep/shared';
 
 /**
  * Calculates the current account balance from an initial balance and a list of transactions.

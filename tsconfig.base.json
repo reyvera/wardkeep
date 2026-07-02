@@ -18,10 +18,10 @@
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,
     "paths": {
-      "@budgetapp/shared": ["./packages/shared/src/index.ts"],
-      "@budgetapp/finance-engine": ["./packages/finance-engine/src/index.ts"],
-      "@budgetapp/ai-engine": ["./packages/ai-engine/src/index.ts"],
-      "@budgetapp/importers": ["./packages/importers/src/index.ts"]
+      "@wardkeep/shared": ["./packages/shared/src/index.ts"],
+      "@wardkeep/finance-engine": ["./packages/finance-engine/src/index.ts"],
+      "@wardkeep/ai-engine": ["./packages/ai-engine/src/index.ts"],
+      "@wardkeep/importers": ["./packages/importers/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]

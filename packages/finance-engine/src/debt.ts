@@ -6,7 +6,7 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { MAX_DEBTS, MAX_PROJECTION_MONTHS } from '@budgetapp/shared';
+import { MAX_DEBTS, MAX_PROJECTION_MONTHS } from '@wardkeep/shared';
 
 // Set precision to 20 for intermediate interest calculations (10+ decimal places)
 Decimal.set({ precision: 20 });

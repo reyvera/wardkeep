@@ -2,7 +2,7 @@
  * AI-powered transaction categorization with confidence scoring.
  * Checks user corrections first, then falls back to LLM classification.
  */
-import { AI_CONFIDENCE_AUTO_ASSIGN, AI_CONFIDENCE_SUGGEST } from '@budgetapp/shared';
+import { AI_CONFIDENCE_AUTO_ASSIGN, AI_CONFIDENCE_SUGGEST } from '@wardkeep/shared';
 
 import { CategorySuggestion } from './types';
 import { AIProvider } from './providers/ai-provider';

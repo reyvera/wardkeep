@@ -1,5 +1,5 @@
 {
-  "name": "@budgetapp/finance-engine",
+  "name": "@wardkeep/finance-engine",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -10,7 +10,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@budgetapp/shared": "workspace:*",
+    "@wardkeep/shared": "workspace:*",
     "decimal.js": "^10.4.0"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = '@budgetapp/shared';
+export const PACKAGE_NAME = '@wardkeep/shared';
 
 export * from './types';
 export * from './validation';

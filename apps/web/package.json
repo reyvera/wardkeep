@@ -1,5 +1,5 @@
 {
-  "name": "@budgetapp/web",
+  "name": "@wardkeep/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@budgetapp/shared": "workspace:*",
+    "@wardkeep/shared": "workspace:*",
     "@tanstack/react-query": "^5.50.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.23.0",

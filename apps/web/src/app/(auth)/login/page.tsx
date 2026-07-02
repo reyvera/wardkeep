@@ -32,7 +32,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-accent-blue flex items-center justify-center">
-            <span className="text-white text-xl font-bold">B</span>
+            <span className="text-white text-xl font-bold">W</span>
           </div>
         </div>
 

@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: 'BudgetApp - Personal Finance',
-  description: 'AI-powered personal finance management',
+  title: 'Wardkeep - Personal Finance',
+  description: 'Self-hosted, AI-powered personal finance. Guard your ground.',
   manifest: '/manifest.json',
   themeColor: '#0d0f12',
 };

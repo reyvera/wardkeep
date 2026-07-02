@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = '@budgetapp/finance-engine';
+export const PACKAGE_NAME = '@wardkeep/finance-engine';
 
 export { calculateBalance } from './balance';
 export { calculateBudgetProgress, calculateBudgetSummary } from './budget';

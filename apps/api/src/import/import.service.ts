@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import { parse, ParseResult, ColumnMapping, ImportFormat, ParsedTransaction } from '@budgetapp/importers';
+import { parse, ParseResult, ColumnMapping, ImportFormat, ParsedTransaction } from '@wardkeep/importers';
 import { Decimal } from 'decimal.js';
 
 import { PrismaService } from '../prisma/prisma.service';

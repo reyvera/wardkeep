@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { Decimal } from 'decimal.js';
 
-import { RecurringTransaction, RecurrenceFrequency } from '@budgetapp/shared';
+import { RecurringTransaction, RecurrenceFrequency } from '@wardkeep/shared';
 
 import { projectCashFlow, CashFlowAccount, OneTimeEvent } from './cash-flow';
 

@@ -56,7 +56,7 @@ export function NavSidebar() {
           {/* Brand */}
           <div className="flex h-16 items-center px-6 border-b">
             <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-              BudgetApp
+              Wardkeep
             </Link>
           </div>
 

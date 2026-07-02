@@ -3,7 +3,7 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { Account, AccountType, Transaction } from '@budgetapp/shared';
+import { Account, AccountType, Transaction } from '@wardkeep/shared';
 
 import { calculateBalance } from './balance';
 

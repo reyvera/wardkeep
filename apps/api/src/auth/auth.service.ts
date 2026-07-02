@@ -14,7 +14,7 @@ import {
   MAX_FAILED_LOGINS,
   RESET_TOKEN_EXPIRY_MINUTES,
   SESSION_TIMEOUT_MINUTES,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 
 import { AuditService } from '../common/services/audit.service';
 import { PrismaService } from '../prisma/prisma.service';

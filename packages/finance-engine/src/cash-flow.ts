@@ -6,7 +6,7 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { RecurringTransaction, RecurrenceFrequency, CASH_FLOW_DAYS } from '@budgetapp/shared';
+import { RecurringTransaction, RecurrenceFrequency, CASH_FLOW_DAYS } from '@wardkeep/shared';
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 

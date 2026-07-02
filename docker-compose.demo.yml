@@ -16,7 +16,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: budgetapp
+      POSTGRES_DB: wardkeep
     volumes:
       - demo_pg_data:/var/lib/postgresql/data
     ports:
@@ -42,7 +42,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/budgetapp?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wardkeep?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
       PORT: 4000

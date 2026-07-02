@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
-import { TransactionType } from '@budgetapp/shared';
-import { calculateBudgetSummary } from '@budgetapp/finance-engine';
+import { TransactionType } from '@wardkeep/shared';
+import { calculateBudgetSummary } from '@wardkeep/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';

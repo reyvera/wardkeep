@@ -9,7 +9,7 @@ import {
   RuleConditionField,
   RuleLogic,
   RuleOperator,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRuleDto } from './dto/create-rule.dto';

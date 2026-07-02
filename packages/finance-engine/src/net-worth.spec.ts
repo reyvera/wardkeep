@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { describe, expect, it } from 'vitest';
 
-import { Account, AccountType, Transaction, TransactionType } from '@budgetapp/shared';
+import { Account, AccountType, Transaction, TransactionType } from '@wardkeep/shared';
 
 import { AccountWithTransactions, calculateNetWorth } from './net-worth';
 

@@ -1,4 +1,4 @@
-import { RuleConditionField, RuleOperator, RuleLogic } from '@budgetapp/shared';
+import { RuleConditionField, RuleOperator, RuleLogic } from '@wardkeep/shared';
 
 /** A condition to evaluate against a transaction. */
 export interface EvalCondition {

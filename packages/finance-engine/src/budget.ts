@@ -3,7 +3,7 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { Budget, BudgetAllocation, Transaction, TransactionType } from '@budgetapp/shared';
+import { Budget, BudgetAllocation, Transaction, TransactionType } from '@wardkeep/shared';
 
 /** Budget status thresholds. */
 const WARNING_THRESHOLD = new Decimal('0.9');

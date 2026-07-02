@@ -1,5 +1,5 @@
 {
-  "name": "@budgetapp/api",
+  "name": "@wardkeep/api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,10 +10,10 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@budgetapp/ai-engine": "workspace:*",
-    "@budgetapp/finance-engine": "workspace:*",
-    "@budgetapp/importers": "workspace:*",
-    "@budgetapp/shared": "workspace:*",
+    "@wardkeep/ai-engine": "workspace:*",
+    "@wardkeep/finance-engine": "workspace:*",
+    "@wardkeep/importers": "workspace:*",
+    "@wardkeep/shared": "workspace:*",
     "@nestjs/common": "^10.3.0",
     "@nestjs/core": "^10.3.0",
     "@nestjs/platform-express": "^10.3.0",

@@ -22,7 +22,7 @@ inclusion: auto
 
 1. Node built-ins (`node:crypto`, `node:path`)
 2. External packages (`@nestjs/*`, `react`, `decimal.js`)
-3. Internal packages (`@budgetapp/shared`, `@budgetapp/finance-engine`)
+3. Internal packages (`@wardkeep/shared`, `@wardkeep/finance-engine`)
 4. Relative imports (`./`, `../`)
 
 Blank line between each group.

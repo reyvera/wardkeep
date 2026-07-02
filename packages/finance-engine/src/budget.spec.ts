@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { Decimal } from 'decimal.js';
 
-import { Transaction, TransactionType, BudgetAllocation } from '@budgetapp/shared';
+import { Transaction, TransactionType, BudgetAllocation } from '@wardkeep/shared';
 
 import { calculateBudgetProgress, CategoryProgress } from './budget';
 

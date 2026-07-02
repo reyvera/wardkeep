@@ -25,7 +25,7 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/budgetapp
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/wardkeep
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AI_PRIVACY_MODE=LOCAL
@@ -49,7 +49,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.worker
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/budgetapp
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/wardkeep
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AI_PRIVACY_MODE=LOCAL
@@ -65,7 +65,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=budgetapp
+      - POSTGRES_DB=wardkeep
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:

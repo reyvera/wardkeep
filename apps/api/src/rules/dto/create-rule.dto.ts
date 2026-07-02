@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { RuleLogic, RuleConditionField, RuleOperator, RuleActionType } from '@budgetapp/shared';
+import { RuleLogic, RuleConditionField, RuleOperator, RuleActionType } from '@wardkeep/shared';
 
 const ConditionSchema = z.object({
   field: z.nativeEnum(RuleConditionField),

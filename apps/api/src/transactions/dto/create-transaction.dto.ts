@@ -9,7 +9,7 @@ import {
   MERCHANT_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   NOTES_MAX_LENGTH,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 
 /**
  * Zod schema for creating a new transaction.

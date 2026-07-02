@@ -11,7 +11,7 @@ export class EncryptionService {
 
   constructor() {
     const envKey = process.env['ENCRYPTION_KEY'] ?? 'default-dev-key-change-in-production!!';
-    this.key = scryptSync(envKey, 'budgetapp-salt', 32);
+    this.key = scryptSync(envKey, 'wardkeep-salt', 32);
   }
 
   /**

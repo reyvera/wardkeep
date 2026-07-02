@@ -8,4 +8,4 @@ export const redisConfig = {
 };
 
 export const databaseUrl =
-  process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres@localhost:5432/budgetapp';
+  process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres@localhost:5432/wardkeep';

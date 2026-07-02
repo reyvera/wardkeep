@@ -19,7 +19,7 @@ docker compose up -d postgres redis
 
 # 3. Start the API (terminal 1)
 cd apps/api
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/budgetapp?schema=public" \
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
 REDIS_HOST=localhost \
 REDIS_PORT=6379 \
 PORT=4000 \
@@ -39,7 +39,7 @@ pnpm dev
 - **Web UI:** http://localhost:3000 (redirects to /login if unauthenticated)
 - **API:** http://localhost:4000
 - **API Health:** http://localhost:4000/api/health
-- **Postgres:** localhost:5432 (user: postgres, password: postgres, db: budgetapp)
+- **Postgres:** localhost:5432 (user: postgres, password: postgres, db: wardkeep)
 - **Redis:** localhost:6379
 
 ## Database Setup (first time only)
@@ -68,7 +68,7 @@ AI is configured per-user in the Settings page (http://localhost:3000/settings).
 ### Local Mode (private — requires 8GB+ RAM)
 ```bash
 docker compose up -d ollama
-docker exec -it budgetapp-ollama-1 ollama pull llama3:8b
+docker exec -it wardkeep-ollama-1 ollama pull llama3:8b
 ```
 Then set AI Privacy Mode to LOCAL in Settings.
 
@@ -99,7 +99,7 @@ This applies everywhere: Accounts page, Dashboard net worth, Cash Flow projectio
 - The API uses `ts-node` with SWC (not tsx/esbuild) because NestJS requires `emitDecoratorMetadata` for DI
 - The `.env` file at the monorepo root must use `postgres:postgres` credentials to match docker-compose
 - The shared package (and other packages) must be built as CommonJS (`module: "CommonJS"` in their tsconfigs)
-- Package tsconfigs use `"paths": {}` to override base tsconfig paths — packages resolve `@budgetapp/*` from node_modules (compiled dist) not source
+- Package tsconfigs use `"paths": {}` to override base tsconfig paths — packages resolve `@wardkeep/*` from node_modules (compiled dist) not source
 - `AuthModule` is `@Global()` so `AuthGuard` can resolve `AuthService` across all modules
 - Ollama is optional for dev — AI features degrade gracefully without it
 - The frontend uses a Next.js middleware (`apps/web/src/middleware.ts`) that checks for a `token` cookie to protect routes

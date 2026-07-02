@@ -1,6 +1,6 @@
 /**
  * Data transfer object for user registration.
- * Validated via Zod RegisterSchema from @budgetapp/shared.
+ * Validated via Zod RegisterSchema from @wardkeep/shared.
  */
 export interface RegisterDto {
   email: string;

@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 
-import { RATE_LIMIT_AUTH } from '@budgetapp/shared';
+import { RATE_LIMIT_AUTH } from '@wardkeep/shared';
 
 // ─── Rate Limiter Simulation ────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 {
-  "name": "BudgetApp - Personal Finance",
-  "short_name": "BudgetApp",
-  "description": "AI-powered personal finance management",
+  "name": "Wardkeep - Personal Finance",
+  "short_name": "Wardkeep",
+  "description": "Self-hosted, AI-powered personal finance. Guard your ground.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f9fafb",

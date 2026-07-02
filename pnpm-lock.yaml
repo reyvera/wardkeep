@@ -42,18 +42,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@budgetapp/ai-engine':
-        specifier: workspace:*
-        version: link:../../packages/ai-engine
-      '@budgetapp/finance-engine':
-        specifier: workspace:*
-        version: link:../../packages/finance-engine
-      '@budgetapp/importers':
-        specifier: workspace:*
-        version: link:../../packages/importers
-      '@budgetapp/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^10.3.0
         version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -75,6 +63,18 @@ importers:
       '@prisma/client':
         specifier: ^5.14.0
         version: 5.22.0(prisma@5.22.0)
+      '@wardkeep/ai-engine':
+        specifier: workspace:*
+        version: link:../../packages/ai-engine
+      '@wardkeep/finance-engine':
+        specifier: workspace:*
+        version: link:../../packages/finance-engine
+      '@wardkeep/importers':
+        specifier: workspace:*
+        version: link:../../packages/importers
+      '@wardkeep/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -142,12 +142,12 @@ importers:
 
   apps/web:
     dependencies:
-      '@budgetapp/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@tanstack/react-query':
         specifier: ^5.50.0
         version: 5.101.2(react@18.3.1)
+      '@wardkeep/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       framer-motion:
         specifier: ^12.42.2
         version: 12.42.2(react-dom@18.3.1)(react@18.3.1)
@@ -197,21 +197,21 @@ importers:
 
   apps/worker:
     dependencies:
-      '@budgetapp/ai-engine':
-        specifier: workspace:*
-        version: link:../../packages/ai-engine
-      '@budgetapp/finance-engine':
-        specifier: workspace:*
-        version: link:../../packages/finance-engine
-      '@budgetapp/importers':
-        specifier: workspace:*
-        version: link:../../packages/importers
-      '@budgetapp/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@prisma/client':
         specifier: ^5.14.0
         version: 5.22.0(prisma@5.22.0)
+      '@wardkeep/ai-engine':
+        specifier: workspace:*
+        version: link:../../packages/ai-engine
+      '@wardkeep/finance-engine':
+        specifier: workspace:*
+        version: link:../../packages/finance-engine
+      '@wardkeep/importers':
+        specifier: workspace:*
+        version: link:../../packages/importers
+      '@wardkeep/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       bullmq:
         specifier: ^5.0.0
         version: 5.79.2
@@ -231,7 +231,7 @@ importers:
 
   packages/ai-engine:
     dependencies:
-      '@budgetapp/shared':
+      '@wardkeep/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -247,7 +247,7 @@ importers:
 
   packages/finance-engine:
     dependencies:
-      '@budgetapp/shared':
+      '@wardkeep/shared':
         specifier: workspace:*
         version: link:../shared
       decimal.js:
@@ -266,7 +266,7 @@ importers:
 
   packages/importers:
     dependencies:
-      '@budgetapp/shared':
+      '@wardkeep/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:

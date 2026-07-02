@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as fc from 'fast-check';
 
 import { AICategorizer, CategoryRef, CategorizationInput } from './categorizer';
-import { AI_CONFIDENCE_AUTO_ASSIGN, AI_CONFIDENCE_SUGGEST } from '@budgetapp/shared';
+import { AI_CONFIDENCE_AUTO_ASSIGN, AI_CONFIDENCE_SUGGEST } from '@wardkeep/shared';
 import { AIProvider } from './providers/ai-provider';
 
 /** Create a mock AI provider. */

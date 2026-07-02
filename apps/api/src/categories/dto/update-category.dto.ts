@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { CATEGORY_NAME_MAX_LENGTH } from '@budgetapp/shared';
+import { CATEGORY_NAME_MAX_LENGTH } from '@wardkeep/shared';
 
 /**
  * Zod schema for updating a category.

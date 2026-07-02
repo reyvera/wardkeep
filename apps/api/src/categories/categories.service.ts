@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { MAX_CATEGORIES_PER_USER } from '@budgetapp/shared';
+import { MAX_CATEGORIES_PER_USER } from '@wardkeep/shared';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';

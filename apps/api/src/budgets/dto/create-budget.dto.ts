@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { MIN_AMOUNT, MAX_AMOUNT } from '@budgetapp/shared';
+import { MIN_AMOUNT, MAX_AMOUNT } from '@wardkeep/shared';
 
 export const CreateBudgetSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),

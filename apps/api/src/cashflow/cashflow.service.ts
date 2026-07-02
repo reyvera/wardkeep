@@ -6,13 +6,13 @@ import {
   projectCashFlow,
   CashFlowAccount,
   OneTimeEvent,
-} from '@budgetapp/finance-engine';
+} from '@wardkeep/finance-engine';
 import {
   RecurringTransaction,
   RecurrenceFrequency,
   Transaction,
   TransactionType,
-} from '@budgetapp/shared';
+} from '@wardkeep/shared';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { OneTimeEventDto } from './dto/one-time-event.dto';
