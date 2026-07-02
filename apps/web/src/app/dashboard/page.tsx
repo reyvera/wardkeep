@@ -4,9 +4,15 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import {
+  TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
+  Wallet, CreditCard, Landmark, PiggyBank,
+} from 'lucide-react';
+import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface NetWorth {
   assets: string;
@@ -28,6 +34,7 @@ interface BudgetSummary {
   overspentCount: number;
   categoryProgress: Array<{
     categoryId: string;
+    categoryName?: string;
     allocated: string;
     spent: string;
     percentUsed: string;
@@ -46,7 +53,18 @@ interface SpendingStats {
   };
 }
 
-const PIE_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+interface Transaction {
+  id: string;
+  description: string;
+  amount: string;
+  type: string;
+  date: string;
+  categoryId?: string;
+  categoryName?: string;
+  merchant?: string;
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getCurrentMonth() {
   const now = new Date();
@@ -64,6 +82,41 @@ function formatMonth(month: string): string {
   const date = new Date(y!, m! - 1, 1);
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getAccountIcon(type: string) {
+  switch (type) {
+    case 'CREDIT_CARD': return CreditCard;
+    case 'LOAN': case 'MORTGAGE': return Landmark;
+    case 'SAVINGS': return PiggyBank;
+    default: return Wallet;
+  }
+}
+
+const ACCOUNT_TYPE_ORDER = ['CHECKING', 'SAVINGS', 'CREDIT_CARD', 'LOAN', 'MORTGAGE', 'CASH'];
+
+function groupAccountsByType(accounts: Account[]) {
+  const groups: Record<string, Account[]> = {};
+  for (const acc of accounts) {
+    const type = acc.type || 'OTHER';
+    if (!groups[type]) groups[type] = [];
+    groups[type].push(acc);
+  }
+  return Object.entries(groups).sort(([a], [b]) => {
+    const ai = ACCOUNT_TYPE_ORDER.indexOf(a);
+    const bi = ACCOUNT_TYPE_ORDER.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+}
+
+function formatAccountType(type: string): string {
+  return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(getCurrentMonth);
@@ -88,307 +141,331 @@ export default function DashboardPage() {
     queryFn: () => apiClient.get<SpendingStats>(`/transactions/stats?month=${month}`),
   });
 
+  const recentTxQuery = useQuery({
+    queryKey: ['recent-transactions'],
+    queryFn: () => apiClient.get<{ data: Transaction[] }>('/transactions?limit=5&sort=date&order=desc'),
+  });
+
+  const netWorth = Number(netWorthQuery.data?.netWorth ?? 0);
   const assets = Number(netWorthQuery.data?.assets ?? 0);
   const liabilities = Number(netWorthQuery.data?.liabilities ?? 0);
-  const netWorth = Number(netWorthQuery.data?.netWorth ?? 0);
 
   const budgetAllocated = Number(budgetQuery.data?.totalAllocated ?? 0);
   const budgetSpent = Number(budgetQuery.data?.totalSpent ?? 0);
   const budgetRemaining = Number(budgetQuery.data?.totalRemaining ?? 0);
-  const budgetPct = budgetAllocated > 0 ? Math.min(100, (budgetSpent / budgetAllocated) * 100) : 0;
+
+  const income = statsQuery.data?.monthTotals?.income ?? 0;
+  const expenses = statsQuery.data?.monthTotals?.expenses ?? 0;
+  const daysElapsed = statsQuery.data?.monthTotals?.daysElapsed ?? 0;
+  const daysInMonth = statsQuery.data?.monthTotals?.daysInMonth ?? 30;
+  const dailyRate = daysElapsed > 0 ? expenses / daysElapsed : 0;
+
+  // Spending pace data for the area chart
+  const paceData = Array.from({ length: daysElapsed || 1 }, (_, i) => ({
+    day: i + 1,
+    actual: Math.round(dailyRate * (i + 1) * 100) / 100,
+    budget: budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * (i + 1) * 100) / 100 : 0,
+  }));
+
+  const underOver = budgetAllocated > 0
+    ? budgetAllocated - budgetSpent
+    : 0;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-page-title text-content-primary">Dashboard</h1>
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setMonth(navigateMonth(month, -1))}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+            className="btn-ghost p-2"
+            aria-label="Previous month"
           >
-            ←
+            <ChevronLeft size={16} />
           </button>
           <button
             onClick={() => setMonth(getCurrentMonth())}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+            className="btn-secondary text-xs px-3 py-1.5"
           >
             {formatMonth(month)}
           </button>
           <button
             onClick={() => setMonth(navigateMonth(month, 1))}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+            className="btn-ghost p-2"
+            aria-label="Next month"
           >
-            →
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* Net Worth Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-lg bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Net Worth</p>
-          <p className={`text-2xl font-bold ${netWorth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ${netWorth.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </p>
+      {/* Spending Pace Chart */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-2">
+          <span className="card-title">SPENDING PACE</span>
+          {budgetAllocated > 0 && (
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                underOver >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+              }`}
+            >
+              ${Math.abs(underOver).toLocaleString('en-US', { maximumFractionDigits: 0 })} {underOver >= 0 ? 'under' : 'over'}
+            </span>
+          )}
         </div>
-        <div className="rounded-lg bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Total Assets</p>
-          <p className="text-2xl font-bold text-green-600">
-            ${assets.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        <ResponsiveContainer width="100%" height={140}>
+          <AreaChart data={paceData}>
+            <defs>
+              <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="day" hide />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
+              formatter={(value) => [`$${Number(value).toFixed(2)}`, '']}
+              labelFormatter={(day) => `Day ${day}`}
+            />
+            {budgetAllocated > 0 && (
+              <Area type="monotone" dataKey="budget" stroke="var(--text-tertiary)" strokeDasharray="4 4" fill="none" strokeWidth={1} />
+            )}
+            <Area type="monotone" dataKey="actual" stroke="var(--accent-green)" fill="url(#spendGradient)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Main Grid: 3 columns on large, 2 on medium */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* Net Worth Card */}
+        <div className="card">
+          <span className="card-title">NET WORTH</span>
+          <p className={`text-hero tabular-nums ${netWorth >= 0 ? 'text-content-primary' : 'text-accent-red'}`}>
+            ${formatCurrency(netWorth)}
           </p>
+          <div className="flex items-center gap-4 mt-3 text-xs">
+            <span className="flex items-center gap-1 text-accent-green">
+              <TrendingUp size={12} /> ${formatCurrency(assets)}
+            </span>
+            <span className="flex items-center gap-1 text-accent-red">
+              <TrendingDown size={12} /> ${formatCurrency(liabilities)}
+            </span>
+          </div>
         </div>
-        <div className="rounded-lg bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Total Liabilities</p>
-          <p className="text-2xl font-bold text-red-600">
-            ${liabilities.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </p>
+
+        {/* Monthly Spending Card */}
+        <div className="card">
+          <span className="card-title">THIS MONTH</span>
+          <div className="space-y-2 mt-1">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-content-secondary">Income</span>
+              <span className="amount-positive text-sm">+${formatCurrency(income)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-content-secondary">Spent</span>
+              <span className="amount-negative text-sm">-${formatCurrency(expenses)}</span>
+            </div>
+            <div className="border-t border-edge pt-2 flex justify-between items-center">
+              <span className="text-sm font-medium text-content-primary">Net</span>
+              <span className={`text-sm font-bold tabular-nums ${income - expenses >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                {income - expenses >= 0 ? '+' : ''}${formatCurrency(income - expenses)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Budget Card */}
+        <div className="card">
+          <span className="card-title">BUDGET</span>
+          {budgetAllocated > 0 ? (
+            <>
+              <div className="flex justify-between items-baseline mt-1">
+                <span className="text-lg font-bold tabular-nums text-content-primary">
+                  ${formatCurrency(budgetSpent)}
+                </span>
+                <span className="text-xs text-content-tertiary">
+                  of ${formatCurrency(budgetAllocated)}
+                </span>
+              </div>
+              <div className="progress-track mt-3">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.min(100, (budgetSpent / budgetAllocated) * 100)}%`,
+                    background: budgetSpent / budgetAllocated > 0.9
+                      ? 'var(--accent-red)'
+                      : budgetSpent / budgetAllocated > 0.7
+                        ? 'var(--accent-yellow)'
+                        : 'var(--accent-blue)',
+                  }}
+                />
+              </div>
+              <p className={`text-xs mt-2 font-medium ${budgetRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+                {budgetRemaining >= 0 ? `$${formatCurrency(budgetRemaining)} left` : `$${formatCurrency(Math.abs(budgetRemaining))} over`}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-content-tertiary mt-2">No budget set</p>
+          )}
         </div>
       </div>
 
-      {/* Savings Projection Card */}
-      {statsQuery.data?.monthTotals && (
-        (() => {
-          const { income, expenses, daysElapsed, daysInMonth } = statsQuery.data!.monthTotals;
-          const dailySpendRate = daysElapsed > 0 ? expenses / daysElapsed : 0;
-          const projectedTotalSpend = budgetAllocated > 0
-            ? Math.min(budgetAllocated, expenses + dailySpendRate * (daysInMonth - daysElapsed))
-            : dailySpendRate * daysInMonth;
-          const projectedRemainingSpend = Math.max(0, projectedTotalSpend - expenses);
-          const projectedSavings = income - expenses - projectedRemainingSpend;
-          const savingsRate = income > 0 ? (projectedSavings / income) * 100 : 0;
+      {/* Second Row: Accounts + Top Categories + Recent Transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          return (
-            <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold mb-4">Projected Savings Growth</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Income this month</span>
-                  <span className="font-medium text-green-600">+${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        {/* Accounts */}
+        <div className="card">
+          <span className="card-title">ACCOUNTS</span>
+          {accountsQuery.data && accountsQuery.data.length > 0 ? (
+            <div className="space-y-4 mt-2">
+              {groupAccountsByType(accountsQuery.data).map(([type, accounts]) => (
+                <div key={type}>
+                  <p className="text-[10px] uppercase tracking-wider text-content-tertiary font-medium mb-1.5">
+                    {formatAccountType(type)}
+                  </p>
+                  <div className="space-y-1.5">
+                    {accounts.map((acc) => {
+                      const bal = Number(acc.currentBalance);
+                      const Icon = getAccountIcon(acc.type);
+                      const isDebt = ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(acc.type);
+                      return (
+                        <div key={acc.id} className="flex items-center justify-between py-1">
+                          <div className="flex items-center gap-2">
+                            <Icon size={14} className="text-content-tertiary" />
+                            <span className="text-sm text-content-primary truncate max-w-[120px]">{acc.name}</span>
+                          </div>
+                          <span className={`text-sm font-semibold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}>
+                            {isDebt ? '-' : ''}${formatCurrency(Math.abs(bal))}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Already spent</span>
-                  <span className="font-medium text-red-600">-${expenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Projected remaining spend</span>
-                  <span className="font-medium text-orange-500">-${projectedRemainingSpend.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div className="border-t pt-3 flex justify-between">
-                  <span className="font-semibold text-gray-800">Projected savings growth</span>
-                  <span className={`text-xl font-bold ${projectedSavings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {projectedSavings >= 0 ? '+' : ''}${projectedSavings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-content-tertiary mt-2">No accounts yet</p>
+          )}
+        </div>
+
+        {/* Top Categories */}
+        <div className="card">
+          <span className="card-title">TOP CATEGORIES</span>
+          {statsQuery.data && statsQuery.data.spendingByCategory.length > 0 ? (
+            <div className="space-y-2.5 mt-2">
+              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat, i) => (
+                <div key={cat.categoryId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CategoryIcon name={cat.name} size="sm" />
+                    <span className="text-sm text-content-primary truncate max-w-[120px]">{cat.name}</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-content-primary">
+                    ${formatCurrency(cat.amount)}
                   </span>
                 </div>
-                {/* Savings rate bar */}
-                <div>
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Savings rate</span>
-                    <span>{savingsRate.toFixed(1)}% of income</span>
-                  </div>
-                  <div className="h-3 w-full rounded-full bg-gray-200">
-                    <div
-                      className={`h-3 rounded-full transition-all ${savingsRate >= 20 ? 'bg-green-500' : savingsRate >= 10 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                      style={{ width: `${Math.max(0, Math.min(100, savingsRate))}%` }}
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400">
-                  Based on {daysElapsed} of {daysInMonth} days elapsed · ${dailySpendRate.toFixed(2)}/day spending rate
-                </p>
-              </div>
+              ))}
             </div>
-          );
-        })()
-      )}
+          ) : (
+            <p className="text-sm text-content-tertiary mt-2">No spending data</p>
+          )}
+        </div>
 
-      {/* Accounts breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Accounts</h2>
-          {accountsQuery.isLoading && <p className="text-gray-500">Loading...</p>}
-          {accountsQuery.data && accountsQuery.data.length > 0 ? (
-            <div className="space-y-3">
-              {accountsQuery.data.map((acc) => {
-                const bal = Number(acc.currentBalance);
-                const isDebt = ['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC'].includes(acc.type);
+        {/* Recent Transactions */}
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <span className="card-title">RECENT</span>
+          </div>
+          {recentTxQuery.data?.data && recentTxQuery.data.data.length > 0 ? (
+            <div className="space-y-2 mt-2">
+              {(recentTxQuery.data.data as Transaction[]).slice(0, 5).map((tx) => {
+                const amt = Number(tx.amount);
+                const isCredit = tx.type === 'CREDIT';
                 return (
-                  <div key={acc.id} className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium text-sm">{acc.name}</p>
-                      <p className="text-xs text-gray-400 capitalize">{acc.type.replace('_', ' ').toLowerCase()}</p>
+                  <div key={tx.id} className="flex items-center justify-between py-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <CategoryIcon name={tx.categoryName} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm text-content-primary truncate">
+                          {tx.merchant || tx.description}
+                        </p>
+                        {tx.categoryName && (
+                          <span
+                            className="category-pill text-[10px] mt-0.5"
+                            style={{
+                              backgroundColor: `${getCategoryIcon(tx.categoryName).color}15`,
+                              color: getCategoryIcon(tx.categoryName).color,
+                            }}
+                          >
+                            {tx.categoryName}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className={`font-mono font-semibold ${isDebt ? 'text-red-600' : 'text-gray-900'}`}>
-                      ${Math.abs(bal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
+                    <span className={`text-sm font-semibold tabular-nums ml-3 ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}>
+                      {isCredit ? '+' : ''}${formatCurrency(amt)}
+                    </span>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">No accounts yet.</p>
-          )}
-        </div>
-
-        {/* Budget progress this month */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">
-            Budget — {formatMonth(month)}
-          </h2>
-          {budgetQuery.data ? (
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">
-                  ${budgetSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })} spent
-                </span>
-                <span className="text-gray-500">
-                  ${budgetAllocated.toLocaleString('en-US', { minimumFractionDigits: 2 })} allocated
-                </span>
-              </div>
-              <div className="h-4 w-full rounded-full bg-gray-200 mb-3">
-                <div
-                  className={`h-4 rounded-full transition-all ${budgetPct > 90 ? 'bg-red-500' : budgetPct > 70 ? 'bg-yellow-500' : 'bg-blue-500'}`}
-                  style={{ width: `${budgetPct}%` }}
-                />
-              </div>
-              <p className={`text-sm font-medium ${budgetRemaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {budgetRemaining >= 0
-                  ? `$${budgetRemaining.toLocaleString('en-US', { minimumFractionDigits: 2 })} remaining`
-                  : `$${Math.abs(budgetRemaining).toLocaleString('en-US', { minimumFractionDigits: 2 })} over budget`}
-              </p>
-
-              {/* Top spending categories */}
-              {budgetQuery.data.categoryProgress && budgetQuery.data.categoryProgress.length > 0 && (
-                <div className="mt-4 pt-4 border-t space-y-2">
-                  {budgetQuery.data.categoryProgress
-                    .sort((a, b) => Number(b.spent) - Number(a.spent))
-                    .slice(0, 5)
-                    .map((cp) => {
-                      const pct = Math.min(Number(cp.percentUsed), 100);
-                      return (
-                        <div key={cp.categoryId}>
-                          <div className="flex justify-between text-xs mb-0.5">
-                            <span className="text-gray-600">{cp.categoryId.slice(0, 8)}...</span>
-                            <span className="text-gray-500">{pct.toFixed(0)}%</span>
-                          </div>
-                          <div className="h-2 rounded-full bg-gray-100">
-                            <div
-                              className={`h-2 rounded-full ${pct > 100 ? 'bg-red-400' : 'bg-blue-400'}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-gray-400 text-sm">No budget set for this month.</p>
+            <p className="text-sm text-content-tertiary mt-2">No transactions yet</p>
           )}
         </div>
       </div>
 
-      {/* Net Worth Bar Visualization */}
-      <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
-        <h2 className="text-lg font-semibold mb-4">Assets vs Liabilities</h2>
-        <div className="space-y-3">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Assets</span>
-              <span className="font-medium text-green-600">
-                ${assets.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="h-6 rounded bg-green-100">
-              <div
-                className="h-6 rounded bg-green-500"
-                style={{ width: `${assets + liabilities > 0 ? (assets / (assets + liabilities)) * 100 : 50}%` }}
+      {/* Third Row: Income vs Expenses Trend */}
+      {statsQuery.data && statsQuery.data.monthlyTrend.length > 0 && (
+        <div className="card">
+          <span className="card-title">INCOME VS EXPENSES (6 MONTHS)</span>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={statsQuery.data.monthlyTrend}>
+              <defs>
+                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--accent-red)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="var(--accent-red)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} />
+              <YAxis fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
+                formatter={(value) => [`$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, '']}
               />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Liabilities</span>
-              <span className="font-medium text-red-600">
-                ${liabilities.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="h-6 rounded bg-red-100">
-              <div
-                className="h-6 rounded bg-red-500"
-                style={{ width: `${assets + liabilities > 0 ? (liabilities / (assets + liabilities)) * 100 : 50}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row */}
-      {statsQuery.data && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Income vs Expenses Trend */}
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Income vs Expenses (6 months)</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statsQuery.data.monthlyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" fontSize={12} />
-                <YAxis fontSize={12} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(value: number) => `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`} />
-                <Legend />
-                <Bar dataKey="income" fill="#10b981" name="Income" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="#ef4444" name="Expenses" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Spending by Category Pie */}
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Spending by Category (This Month)</h2>
-            {statsQuery.data.spendingByCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={statsQuery.data.spendingByCategory}
-                    dataKey="amount"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                    fontSize={11}
-                  >
-                    {statsQuery.data.spendingByCategory.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-400 text-sm text-center py-8">No categorized spending this month.</p>
-            )}
-          </div>
+              <Area type="monotone" dataKey="income" stroke="var(--accent-green)" fill="url(#incomeGrad)" strokeWidth={2} name="Income" />
+              <Area type="monotone" dataKey="expenses" stroke="var(--accent-red)" fill="url(#expenseGrad)" strokeWidth={2} name="Expenses" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       )}
 
       {/* Top Merchants */}
       {statsQuery.data && statsQuery.data.topMerchants.length > 0 && (
-        <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-4">Top Merchants (This Month)</h2>
-          <div className="space-y-2">
-            {statsQuery.data.topMerchants.map((m, i) => {
+        <div className="card">
+          <span className="card-title">TOP MERCHANTS</span>
+          <div className="space-y-2.5 mt-2">
+            {statsQuery.data.topMerchants.slice(0, 5).map((m, i) => {
               const maxAmount = statsQuery.data!.topMerchants[0]!.amount;
               const pct = maxAmount > 0 ? (m.amount / maxAmount) * 100 : 0;
               return (
                 <div key={i}>
-                  <div className="flex justify-between text-sm mb-0.5">
-                    <span className="text-gray-700 truncate max-w-[200px]">{m.merchant}</span>
-                    <span className="font-mono text-gray-600">${m.amount.toFixed(2)}</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-content-primary truncate max-w-[200px]">{m.merchant}</span>
+                    <span className="font-semibold tabular-nums text-content-primary">${m.amount.toFixed(2)}</span>
                   </div>
-                  <div className="h-2 rounded-full bg-gray-100">
-                    <div className="h-2 rounded-full bg-indigo-400" style={{ width: `${pct}%` }} />
+                  <div className="progress-track">
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${pct}%`, background: 'var(--accent-purple)' }}
+                    />
                   </div>
                 </div>
               );
@@ -396,28 +473,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">{accountsQuery.data?.length ?? 0}</p>
-          <p className="text-xs text-gray-500">Accounts</p>
-        </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">
-            {accountsQuery.data?.filter((a) => ['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC'].includes(a.type)).length ?? 0}
-          </p>
-          <p className="text-xs text-gray-500">Debts</p>
-        </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">{budgetQuery.data?.overspentCount ?? 0}</p>
-          <p className="text-xs text-gray-500">Categories Over Budget</p>
-        </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
-          <p className="text-2xl font-bold">{budgetPct.toFixed(0)}%</p>
-          <p className="text-xs text-gray-500">Budget Used</p>
-        </div>
-      </div>
     </div>
   );
 }

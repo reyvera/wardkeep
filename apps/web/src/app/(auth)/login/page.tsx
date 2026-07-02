@@ -27,53 +27,64 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-center">Sign In</h1>
+    <div className="flex min-h-screen items-center justify-center px-4" style={{ background: 'var(--bg-primary)' }}>
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <div className="h-12 w-12 rounded-xl bg-accent-blue flex items-center justify-center">
+            <span className="text-white text-xl font-bold">B</span>
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-center text-content-primary mb-2">Welcome back</h1>
+        <p className="text-sm text-center text-content-tertiary mb-8">Sign in to your account</p>
+
         {loginMutation.isError && (
-          <p className="mb-4 text-sm text-red-600">{loginMutation.error.message}</p>
+          <div className="mb-4 rounded-lg bg-accent-red/10 border border-accent-red/20 px-4 py-3">
+            <p className="text-sm text-accent-red">{loginMutation.error.message}</p>
+          </div>
         )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label htmlFor="email" className="input-label">Email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="input"
+              placeholder="you@example.com"
               required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+            <label htmlFor="password" className="input-label">Password</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="input"
+              placeholder="••••••••••••"
               required
             />
           </div>
           <button
             type="submit"
             disabled={loginMutation.isPending}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="btn-primary w-full"
           >
             {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        <div className="mt-4 text-center text-sm text-gray-600">
-          <Link href="/forgot-password" className="text-blue-600 hover:underline">
+
+        <div className="mt-6 text-center text-sm text-content-tertiary">
+          <Link href="/forgot-password" className="text-accent-blue hover:underline">
             Forgot password?
           </Link>
           <span className="mx-2">·</span>
-          <Link href="/register" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-accent-blue hover:underline">
             Create account
           </Link>
         </div>

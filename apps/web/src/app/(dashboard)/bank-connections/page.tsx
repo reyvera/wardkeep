@@ -3,31 +3,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { Plus, RefreshCw, Trash2, Link2, Landmark, X, CircleDot } from 'lucide-react';
 
-interface LinkedAccount {
-  id: string;
-  externalId: string;
-  externalName: string;
-  externalType: string;
-  isEnabled: boolean;
-  account: { id: string; name: string; type: string } | null;
-}
+interface LinkedAccount { id: string; externalId: string; externalName: string; externalType: string; isEnabled: boolean; account: { id: string; name: string; type: string } | null; }
+interface BankConnection { id: string; provider: string; institutionName: string; status: string; lastSyncAt: string | null; lastError: string | null; linkedAccounts: LinkedAccount[]; }
+interface LocalAccount { id: string; name: string; type: string; }
 
-interface BankConnection {
-  id: string;
-  provider: string;
-  institutionName: string;
-  status: string;
-  lastSyncAt: string | null;
-  lastError: string | null;
-  linkedAccounts: LinkedAccount[];
-}
-
-interface LocalAccount {
-  id: string;
-  name: string;
-  type: string;
-}
+function getStatusColor(status: string): string { switch (status) { case 'ACTIVE': return 'text-accent-green'; case 'ERROR': return 'text-accent-red'; default: return 'text-content-tertiary'; } }
 
 export default function BankConnectionsPage() {
   const queryClient = useQueryClient();
@@ -36,236 +18,85 @@ export default function BankConnectionsPage() {
   const [setupToken, setSetupToken] = useState('');
   const [provider, setProvider] = useState<'SIMPLEFIN' | 'PLAID'>('SIMPLEFIN');
 
-  const connectionsQuery = useQuery({
-    queryKey: ['bank-connections'],
-    queryFn: () => apiClient.get<BankConnection[]>('/bank-connections'),
-  });
+  const connectionsQuery = useQuery({ queryKey: ['bank-connections'], queryFn: () => apiClient.get<BankConnection[]>('/bank-connections') });
+  const accountsQuery = useQuery({ queryKey: ['accounts'], queryFn: () => apiClient.get<LocalAccount[]>('/accounts') });
 
-  const accountsQuery = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => apiClient.get<LocalAccount[]>('/accounts'),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: () =>
-      apiClient.post('/bank-connections', { provider, institutionName, setupToken }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
-      setShowAddForm(false);
-      setInstitutionName('');
-      setSetupToken('');
-    },
-  });
-
-  const syncMutation = useMutation({
-    mutationFn: (connectionId: string) =>
-      apiClient.post<{ imported: number; skippedDuplicates: number }>(
-        `/bank-connections/${connectionId}/sync`,
-      ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
-    },
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: (connectionId: string) =>
-      apiClient.delete(`/bank-connections/${connectionId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
-    },
-  });
-
-  const linkMutation = useMutation({
-    mutationFn: ({ linkedBankAccountId, accountId }: { linkedBankAccountId: string; accountId: string }) =>
-      apiClient.post('/bank-connections/link-account', { linkedBankAccountId, accountId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bank-connections'] });
-    },
-  });
+  const createMutation = useMutation({ mutationFn: () => apiClient.post('/bank-connections', { provider, institutionName, setupToken }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['bank-connections'] }); setShowAddForm(false); setInstitutionName(''); setSetupToken(''); } });
+  const syncMutation = useMutation({ mutationFn: (connectionId: string) => apiClient.post<{ imported: number; skippedDuplicates: number }>(`/bank-connections/${connectionId}/sync`), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bank-connections'] }) });
+  const removeMutation = useMutation({ mutationFn: (connectionId: string) => apiClient.delete(`/bank-connections/${connectionId}`), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bank-connections'] }) });
+  const linkMutation = useMutation({ mutationFn: ({ linkedBankAccountId, accountId }: { linkedBankAccountId: string; accountId: string }) => apiClient.post('/bank-connections/link-account', { linkedBankAccountId, accountId }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bank-connections'] }) });
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Bank Connections</h1>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700"
-        >
-          {showAddForm ? 'Cancel' : 'Add Connection'}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-page-title text-content-primary">Bank Connections</h1>
+        <button onClick={() => setShowAddForm(!showAddForm)} className={showAddForm ? 'btn-secondary' : 'btn-primary'}>
+          {showAddForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add Connection</>}
         </button>
       </div>
 
       {showAddForm && (
-        <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Connect a Bank</h2>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              createMutation.mutate();
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Provider</label>
-              <select
-                value={provider}
-                onChange={(e) => setProvider(e.target.value as 'SIMPLEFIN' | 'PLAID')}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="SIMPLEFIN">SimpleFIN</option>
-                <option value="PLAID">Plaid</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Institution Name
-              </label>
-              <input
-                type="text"
-                value={institutionName}
-                onChange={(e) => setInstitutionName(e.target.value)}
-                placeholder="e.g. Chase, Bank of America"
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                {provider === 'SIMPLEFIN' ? 'SimpleFIN Token or Access URL' : 'Access Token'}
-              </label>
-              <input
-                type="text"
-                value={setupToken}
-                onChange={(e) => setSetupToken(e.target.value)}
-                placeholder={
-                  provider === 'SIMPLEFIN'
-                    ? 'https://demo:demo@beta-bridge.simplefin.org/simplefin'
-                    : 'Plaid access token'
-                }
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
-                required
-              />
-              {provider === 'SIMPLEFIN' && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Paste a Base64 setup token OR a direct access URL. For demo, use:{' '}
-                  <code className="bg-gray-100 px-1 rounded text-xs">
-                    https://demo:demo@beta-bridge.simplefin.org/simplefin
-                  </code>
-                </p>
-              )}
-            </div>
-            {createMutation.isError && (
-              <p className="text-sm text-red-600">{createMutation.error.message}</p>
-            )}
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="rounded-md bg-green-600 px-4 py-2 text-white font-medium hover:bg-green-700 disabled:opacity-50"
-            >
-              {createMutation.isPending ? 'Connecting...' : 'Connect'}
-            </button>
-          </form>
-        </div>
+        <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="card space-y-4">
+          <span className="card-title">CONNECT A BANK</span>
+          {createMutation.isError && <p className="text-sm text-accent-red">{createMutation.error.message}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label className="input-label">Provider</label><select value={provider} onChange={(e) => setProvider(e.target.value as 'SIMPLEFIN' | 'PLAID')} className="input"><option value="SIMPLEFIN">SimpleFIN</option><option value="PLAID">Plaid</option></select></div>
+            <div><label className="input-label">Institution Name</label><input type="text" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="e.g. Chase, Bank of America" className="input" required /></div>
+          </div>
+          <div>
+            <label className="input-label">{provider === 'SIMPLEFIN' ? 'SimpleFIN Token or Access URL' : 'Access Token'}</label>
+            <input type="text" value={setupToken} onChange={(e) => setSetupToken(e.target.value)} placeholder={provider === 'SIMPLEFIN' ? 'https://demo:demo@beta-bridge.simplefin.org/simplefin' : 'Plaid access token'} className="input font-mono text-xs" required />
+            {provider === 'SIMPLEFIN' && <p className="mt-2 text-xs text-content-tertiary">Paste a Base64 setup token or a direct access URL. For demo: <code className="bg-surface-elevated px-1.5 py-0.5 rounded text-xs text-accent-blue">https://demo:demo@beta-bridge.simplefin.org/simplefin</code></p>}
+          </div>
+          <button type="submit" disabled={createMutation.isPending} className="btn-primary">{createMutation.isPending ? 'Connecting...' : 'Connect'}</button>
+        </form>
       )}
 
-      {connectionsQuery.isLoading && <p className="text-gray-500">Loading connections...</p>}
-      {connectionsQuery.isError && (
-        <p className="text-red-600">{connectionsQuery.error.message}</p>
-      )}
+      {connectionsQuery.isLoading && <div className="space-y-4">{[1, 2].map((i) => <div key={i} className="card space-y-3"><div className="flex items-center gap-4"><div className="skeleton w-10 h-10 rounded-full" /><div className="flex-1 space-y-2"><div className="skeleton h-5 w-40" /><div className="skeleton h-3 w-56" /></div></div></div>)}</div>}
+      {connectionsQuery.isError && <div className="card"><p className="text-accent-red text-sm">{connectionsQuery.error.message}</p></div>}
 
       {connectionsQuery.data && connectionsQuery.data.length === 0 && !showAddForm && (
-        <div className="rounded-lg bg-white p-8 shadow-sm text-center">
-          <p className="text-gray-500 mb-2">No bank connections yet.</p>
-          <p className="text-sm text-gray-400">
-            Connect your bank accounts to automatically import transactions.
-          </p>
-        </div>
+        <div className="card text-center py-12"><Landmark size={40} className="mx-auto text-content-tertiary mb-3" /><p className="text-content-secondary text-sm">No bank connections yet</p><p className="text-content-tertiary text-xs mt-1">Connect your bank accounts to automatically import transactions</p></div>
       )}
 
       {connectionsQuery.data?.map((conn) => (
-        <div key={conn.id} className="mb-4 rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="font-semibold text-lg">{conn.institutionName}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
-                  {conn.provider}
-                </span>
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${
-                    conn.status === 'ACTIVE'
-                      ? 'bg-green-500'
-                      : conn.status === 'ERROR'
-                        ? 'bg-red-500'
-                        : 'bg-gray-400'
-                  }`}
-                />
-                <span>{conn.status}</span>
-                {conn.lastSyncAt && (
-                  <span>· Last sync: {new Date(conn.lastSyncAt).toLocaleString()}</span>
-                )}
+        <div key={conn.id} className="card space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-elevated"><Landmark size={18} className="text-content-secondary" /></div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-content-primary">{conn.institutionName}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs font-mono bg-surface-elevated px-2 py-0.5 rounded text-content-tertiary">{conn.provider}</span>
+                <CircleDot size={12} className={getStatusColor(conn.status)} />
+                <span className={`text-xs ${getStatusColor(conn.status)}`}>{conn.status}</span>
+                {conn.lastSyncAt && <span className="text-xs text-content-tertiary">· Last sync: {new Date(conn.lastSyncAt).toLocaleString()}</span>}
               </div>
-              {conn.lastError && (
-                <p className="text-sm text-red-500 mt-1">{conn.lastError}</p>
-              )}
+              {conn.lastError && <p className="text-xs text-accent-red mt-1">{conn.lastError}</p>}
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => syncMutation.mutate(conn.id)}
-                disabled={syncMutation.isPending}
-                className="rounded-md bg-blue-100 px-3 py-1.5 text-blue-700 text-sm font-medium hover:bg-blue-200 disabled:opacity-50"
-              >
-                Sync
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm('Disconnect this bank? Your local accounts and transactions will be kept.')) {
-                    removeMutation.mutate(conn.id);
-                  }
-                }}
-                className="rounded-md bg-red-100 px-3 py-1.5 text-red-700 text-sm font-medium hover:bg-red-200"
-              >
-                Disconnect
-              </button>
+              <button onClick={() => syncMutation.mutate(conn.id)} disabled={syncMutation.isPending} className="btn-ghost p-2 text-content-tertiary hover:text-accent-blue" title="Sync"><RefreshCw size={16} /></button>
+              <button onClick={() => { if (confirm('Disconnect this bank?')) removeMutation.mutate(conn.id); }} className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" title="Disconnect"><Trash2 size={16} /></button>
             </div>
           </div>
 
           {conn.linkedAccounts.length > 0 && (
-            <div className="mt-3 border-t pt-3">
-              <p className="text-sm font-medium text-gray-700 mb-2">Linked Accounts</p>
-              <ul className="space-y-2">
+            <div className="border-t border-edge pt-4">
+              <span className="card-title">LINKED ACCOUNTS</span>
+              <div className="space-y-2 mt-2">
                 {conn.linkedAccounts.map((la) => (
-                  <li key={la.id} className="flex items-center justify-between text-sm gap-3">
-                    <span className="text-gray-600">
-                      {la.externalName}{' '}
-                      <span className="text-gray-400">({la.externalType})</span>
-                    </span>
+                  <div key={la.id} className="flex items-center justify-between gap-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0"><Link2 size={12} className="text-content-tertiary flex-shrink-0" /><span className="text-sm text-content-secondary truncate">{la.externalName}</span><span className="text-xs text-content-tertiary">({la.externalType})</span></div>
                     {la.account ? (
-                      <span className="text-green-600 font-medium">→ {la.account.name}</span>
+                      <span className="text-xs font-medium text-accent-green whitespace-nowrap">→ {la.account.name}</span>
                     ) : (
-                      <select
-                        defaultValue=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            linkMutation.mutate({
-                              linkedBankAccountId: la.id,
-                              accountId: e.target.value,
-                            });
-                          }
-                        }}
-                        className="rounded-md border border-gray-300 px-2 py-1 text-sm"
-                      >
+                      <select defaultValue="" onChange={(e) => { if (e.target.value) linkMutation.mutate({ linkedBankAccountId: la.id, accountId: e.target.value }); }} className="input w-auto text-xs py-1.5 px-2">
                         <option value="">Link to account...</option>
-                        {(accountsQuery.data ?? []).map((acct) => (
-                          <option key={acct.id} value={acct.id}>
-                            {acct.name} ({acct.type})
-                          </option>
-                        ))}
+                        {(accountsQuery.data ?? []).map((acct) => <option key={acct.id} value={acct.id}>{acct.name} ({acct.type})</option>)}
                       </select>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>

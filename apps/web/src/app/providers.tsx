@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
+import { ThemeProvider } from '@/components/theme-provider';
 import { registerServiceWorker } from '@/lib/register-sw';
 import { offlineQueue } from '@/lib/offline-queue';
 import { apiClient } from '@/lib/api-client';
@@ -30,5 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </QueryClientProvider>
+  );
 }

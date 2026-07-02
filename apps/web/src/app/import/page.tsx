@@ -3,201 +3,91 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { Upload, FileUp, Eye, CheckCircle } from 'lucide-react';
 
-interface PreviewTransaction {
-  date: string;
-  merchant: string;
-  amount: number;
-  category?: string;
-}
+interface PreviewTransaction { date: string; merchant: string; amount: number; category?: string; }
+interface ImportResult { imported: number; duplicates: number; errors: number; }
 
-interface ImportResult {
-  imported: number;
-  duplicates: number;
-  errors: number;
-}
+function formatCurrency(value: number): string { return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 export default function ImportPage() {
   const [format, setFormat] = useState<'csv' | 'ofx' | 'qfx'>('csv');
   const [fileData, setFileData] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
-  const [columnMapping, setColumnMapping] = useState({
-    date: 'date',
-    merchant: 'description',
-    amount: 'amount',
-    category: 'category',
-  });
+  const [columnMapping, setColumnMapping] = useState({ date: 'date', merchant: 'description', amount: 'amount', category: 'category' });
   const [preview, setPreview] = useState<PreviewTransaction[]>([]);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  const previewMutation = useMutation({
-    mutationFn: () =>
-      apiClient.post<{ transactions: PreviewTransaction[] }>('/import/preview', {
-        fileData,
-        format,
-        columnMapping: format === 'csv' ? columnMapping : undefined,
-      }),
-    onSuccess: (data) => setPreview(data.transactions.slice(0, 10)),
-  });
-
-  const commitMutation = useMutation({
-    mutationFn: () =>
-      apiClient.post<ImportResult>('/import/commit', {
-        fileData,
-        format,
-        columnMapping: format === 'csv' ? columnMapping : undefined,
-      }),
-    onSuccess: (data) => {
-      setImportResult(data);
-      setPreview([]);
-    },
-  });
+  const previewMutation = useMutation({ mutationFn: () => apiClient.post<{ transactions: PreviewTransaction[] }>('/import/preview', { fileData, format, columnMapping: format === 'csv' ? columnMapping : undefined }), onSuccess: (data) => setPreview(data.transactions.slice(0, 10)) });
+  const commitMutation = useMutation({ mutationFn: () => apiClient.post<ImportResult>('/import/commit', { fileData, format, columnMapping: format === 'csv' ? columnMapping : undefined }), onSuccess: (data) => { setImportResult(data); setPreview([]); } });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFileName(file.name);
-    setImportResult(null);
-    setPreview([]);
+    setFileName(file.name); setImportResult(null); setPreview([]);
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(',')[1] ?? result;
-      setFileData(base64);
-    };
+    reader.onload = () => { const result = reader.result as string; setFileData(result.split(',')[1] ?? result); };
     reader.readAsDataURL(file);
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Import Transactions</h1>
+    <div className="space-y-6">
+      <h1 className="text-page-title text-content-primary">Import Transactions</h1>
 
-      <div className="rounded-lg bg-white p-6 shadow-sm space-y-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Format</label>
-            <select
-              value={format}
-              onChange={(e) => setFormat(e.target.value as 'csv' | 'ofx' | 'qfx')}
-              className="rounded-md border border-gray-300 px-3 py-2"
-            >
-              <option value="csv">CSV</option>
-              <option value="ofx">OFX</option>
-              <option value="qfx">QFX</option>
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">File</label>
-            <input
-              type="file"
-              accept=".csv,.ofx,.qfx"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
+      <div className="card space-y-4">
+        <span className="card-title">FILE UPLOAD</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label className="input-label">Format</label><select value={format} onChange={(e) => setFormat(e.target.value as 'csv' | 'ofx' | 'qfx')} className="input"><option value="csv">CSV</option><option value="ofx">OFX</option><option value="qfx">QFX</option></select></div>
+          <div><label className="input-label">File</label><input type="file" accept=".csv,.ofx,.qfx" onChange={handleFileChange} className="input file:mr-4 file:rounded-md file:border-0 file:bg-accent-blue/10 file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-blue cursor-pointer" /></div>
         </div>
-        {fileName && <p className="text-sm text-gray-600">Selected: {fileName}</p>}
+        {fileName && <div className="flex items-center gap-2 text-sm text-content-secondary"><FileUp size={14} className="text-accent-blue" /><span>{fileName}</span></div>}
 
-        {/* Column mapping for CSV */}
         {format === 'csv' && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Column Mapping</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-xs text-gray-500">Date column</label>
-                <input
-                  value={columnMapping.date}
-                  onChange={(e) => setColumnMapping({ ...columnMapping, date: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Merchant column</label>
-                <input
-                  value={columnMapping.merchant}
-                  onChange={(e) => setColumnMapping({ ...columnMapping, merchant: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Amount column</label>
-                <input
-                  value={columnMapping.amount}
-                  onChange={(e) => setColumnMapping({ ...columnMapping, amount: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Category column</label>
-                <input
-                  value={columnMapping.category}
-                  onChange={(e) => setColumnMapping({ ...columnMapping, category: e.target.value })}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
-                />
-              </div>
+          <div className="space-y-3">
+            <span className="card-title">COLUMN MAPPING</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div><label className="input-label">Date</label><input value={columnMapping.date} onChange={(e) => setColumnMapping({ ...columnMapping, date: e.target.value })} className="input" /></div>
+              <div><label className="input-label">Merchant</label><input value={columnMapping.merchant} onChange={(e) => setColumnMapping({ ...columnMapping, merchant: e.target.value })} className="input" /></div>
+              <div><label className="input-label">Amount</label><input value={columnMapping.amount} onChange={(e) => setColumnMapping({ ...columnMapping, amount: e.target.value })} className="input" /></div>
+              <div><label className="input-label">Category</label><input value={columnMapping.category} onChange={(e) => setColumnMapping({ ...columnMapping, category: e.target.value })} className="input" /></div>
             </div>
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => previewMutation.mutate()}
-            disabled={!fileData || previewMutation.isPending}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
-            {previewMutation.isPending ? 'Loading...' : 'Preview'}
-          </button>
-          {preview.length > 0 && (
-            <button
-              onClick={() => commitMutation.mutate()}
-              disabled={commitMutation.isPending}
-              className="rounded-md bg-green-600 px-4 py-2 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-            >
-              {commitMutation.isPending ? 'Importing...' : 'Commit Import'}
-            </button>
-          )}
+        <div className="flex gap-3 pt-2">
+          <button onClick={() => previewMutation.mutate()} disabled={!fileData || previewMutation.isPending} className="btn-primary"><Eye size={16} /> {previewMutation.isPending ? 'Loading...' : 'Preview'}</button>
+          {preview.length > 0 && <button onClick={() => commitMutation.mutate()} disabled={commitMutation.isPending} className="btn-primary"><Upload size={16} /> {commitMutation.isPending ? 'Importing...' : 'Commit Import'}</button>}
         </div>
-
-        {previewMutation.isError && (
-          <p className="text-sm text-red-600">{previewMutation.error.message}</p>
-        )}
+        {previewMutation.isError && <p className="text-sm text-accent-red">{previewMutation.error.message}</p>}
       </div>
 
-      {/* Import result */}
       {importResult && (
-        <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4">
-          <h3 className="font-medium text-green-800 mb-1">Import Complete</h3>
-          <p className="text-sm text-green-700">
-            Imported: {importResult.imported} · Duplicates skipped: {importResult.duplicates} · Errors: {importResult.errors}
-          </p>
+        <div className="card border-accent-green/30">
+          <div className="flex items-center gap-3 mb-3"><CheckCircle size={18} className="text-accent-green" /><span className="text-sm font-medium text-accent-green">Import Complete</span></div>
+          <div className="grid grid-cols-3 gap-4">
+            <div><p className="text-xs text-content-tertiary">Imported</p><p className="text-lg font-bold tabular-nums text-accent-green">{importResult.imported}</p></div>
+            <div><p className="text-xs text-content-tertiary">Duplicates Skipped</p><p className="text-lg font-bold tabular-nums text-accent-yellow">{importResult.duplicates}</p></div>
+            <div><p className="text-xs text-content-tertiary">Errors</p><p className="text-lg font-bold tabular-nums text-accent-red">{importResult.errors}</p></div>
+          </div>
         </div>
       )}
 
-      {/* Preview table */}
       {preview.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white shadow-sm">
-          <h3 className="px-4 pt-4 font-medium">Preview (first 10 rows)</h3>
-          <table className="w-full text-left text-sm mt-2">
-            <thead className="border-b bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Merchant</th>
-                <th className="px-4 py-3 font-medium text-right">Amount</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {preview.map((tx, i) => (
-                <tr key={i}>
-                  <td className="px-4 py-3">{tx.date}</td>
-                  <td className="px-4 py-3">{tx.merchant}</td>
-                  <td className="px-4 py-3 text-right font-mono">${Number(tx.amount).toFixed(2)}</td>
-                  <td className="px-4 py-3">{tx.category ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="card overflow-hidden p-0">
+          <div className="px-6 pt-6 pb-3"><span className="card-title">PREVIEW (FIRST 10 ROWS)</span></div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead><tr className="border-t border-b border-edge"><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Date</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Merchant</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Amount</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Category</th></tr></thead>
+              <tbody className="divide-y divide-edge">
+                {preview.map((tx, i) => <tr key={i} className="hover:bg-surface-elevated transition-colors"><td className="px-6 py-3 text-content-secondary">{tx.date}</td><td className="px-6 py-3 text-content-primary">{tx.merchant}</td><td className="px-6 py-3 text-right tabular-nums text-content-primary">${formatCurrency(Number(tx.amount))}</td><td className="px-6 py-3 text-content-tertiary">{tx.category ?? '—'}</td></tr>)}
+              </tbody>
+            </table>
+          </div>
         </div>
+      )}
+
+      {!fileData && !importResult && preview.length === 0 && (
+        <div className="card text-center py-12"><Upload size={40} className="mx-auto text-content-tertiary mb-3" /><p className="text-content-secondary text-sm">No file selected</p><p className="text-content-tertiary text-xs mt-1">Upload a CSV, OFX, or QFX file to import transactions</p></div>
       )}
     </div>
   );

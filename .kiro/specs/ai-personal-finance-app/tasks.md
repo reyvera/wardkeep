@@ -575,27 +575,27 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
 ## v1.0 — UI Redesign (Copilot Money–Inspired)
 
 - [ ] 25. UI/UX overhaul — premium dark-mode-first design
-  - [ ] 25.1 Set up design system foundations
+  - [x] 25.1 Set up design system foundations
     - Install Inter font via next/font/google
     - Replace emoji nav icons with Lucide React SVG icons
     - Define CSS custom properties for full color palette (dark + light mode)
     - Configure Tailwind darkMode: 'class' with dark as default
     - Add color palette to tailwind.config.ts (bg-primary, bg-secondary, bg-elevated, etc.)
     - Set up theme toggle (dark/light/system) in settings and nav
-  - [ ] 25.2 Redesign app shell and navigation
+  - [x] 25.2 Redesign app shell and navigation
     - Dark sidebar (#0D0F12) with icon + label nav items
     - Active state: blue tint background + left accent border
     - Collapsible sidebar (full → icon-only at 64px)
     - Mobile: bottom tab bar with 5 primary nav items
     - Content area: max-width 1200px, centered, 32px padding
     - Skeleton loading placeholders for all page loads
-  - [ ] 25.3 Redesign dashboard page
+  - [x] 25.3 Redesign dashboard page
     - Net worth hero number (32-40px bold) with monthly trend indicator
     - 2-3 column summary card grid (spending, upcoming bills, recent transactions)
     - Cash flow sparkline widget
     - Accounts list with balance + sparkline per account
     - Cards: dark bg (#151921), 1px border (#232A36), 12px radius
-  - [ ] 25.4 Redesign transactions page
+  - [x] 25.4 Redesign transactions page
     - Search bar + filter chips (account, category, date, type, review status, tag)
     - Summary bar: total spent / total income / net for current filter
     - Transaction rows: emoji + merchant | category pill | aligned amount (green/red)
@@ -604,22 +604,22 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Keyboard navigation: arrows, X select, R review, C categorize
     - Bulk selection bar with batch actions
     - Sort by date or amount
-  - [ ] 25.5 Redesign budget page
+  - [x] 25.5 Redesign budget page
     - Month selector with arrows (← June 2026 →)
     - Spending pace line chart (daily cumulative vs ideal pace line)
     - Category progress bars: 8px rounded, gradient fill (blue→green under, yellow at 90%, red at 100%+)
     - Per-category: name (left), "$X of $Y" (right), remaining/overspent below
     - Rollover indicators where applicable
-  - [ ] 25.6 Redesign accounts page
+  - [x] 25.6 Redesign accounts page
     - Account list: name | institution | type badge | balance | sparkline trend
     - Detail view: full balance history chart (time period selectors: 1W|1M|3M|6M|1Y|ALL)
     - Net worth summary card at top with breakdown
-  - [ ] 25.7 Redesign categories/spending page
+  - [x] 25.7 Redesign categories/spending page
     - Donut or horizontal bar chart for spending distribution
     - Category list: emoji + name + monthly total + YTD average
     - Color-coded category pills (10% opacity background, full saturation text)
     - Click category → filtered transaction list
-  - [ ] 25.8 Redesign remaining pages (chat, debt, cash flow, settings, import, rules, recurring, bank connections)
+  - [x] 25.8 Redesign remaining pages (chat, debt, cash flow, settings, import, rules, recurring, bank connections)
     - Apply consistent card styling, typography, and color system
     - Chat: message bubbles with distinct user/AI styling
     - Debt: schedule table with clean number alignment (tabular-nums)
@@ -639,6 +639,31 @@ This plan builds the AI Personal Finance App incrementally from the monorepo fou
     - Reduced-motion preference disables animations
     - Responsive breakpoints: 320px, 768px, 1024px, 1440px, 2560px
     - Test with screen reader (VoiceOver/NVDA)
+
+- [ ] 26. Live demo instance with sample data
+  - [ ] 26.1 Create demo seed dataset
+    - Generate 6 months of realistic sample transactions (~500 transactions)
+    - Sample accounts: Checking, Savings, Credit Card, Mortgage, Brokerage
+    - Varied merchants, categories, amounts to showcase categorization and trends
+    - Pre-configured budgets with some over/under budget categories
+    - Recurring transactions: rent, utilities, subscriptions, salary
+    - Sample debt payoff scenario (credit card + student loan)
+    - Sample AI chat history showing typical interactions
+    - Demo user credentials: demo@budgetapp.io / DemoPassword123
+  - [ ] 26.2 Implement demo mode with data reset
+    - Add DEMO_MODE=true environment variable
+    - Demo mode: read-only bank connections (no real SimpleFIN calls)
+    - Auto-reset demo data every 24 hours (cron job or on-login reset)
+    - Banner at top: "This is a demo — data resets daily. Sign up for your own instance."
+    - Disable: password change, backup restore, API key entry, real bank connections
+    - AI chat works with mocked responses (no Ollama required for demo)
+  - [ ] 26.3 Lightweight deploy configuration
+    - Minimal Docker Compose for demo (no Ollama, no worker — just web + api + postgres + redis)
+    - Reduce resource requirements: 1GB RAM, 1 CPU core, 5GB storage
+    - Optional: Fly.io or Railway one-click deploy template
+    - Optional: docker-compose.demo.yml with pre-built images from GitHub Container Registry
+    - Health check endpoint returns demo status for monitoring
+    - Add demo link to README and project landing page
 
 ## Future Features
 

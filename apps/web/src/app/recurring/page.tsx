@@ -3,188 +3,106 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { RefreshCw, Check, X, CalendarClock } from 'lucide-react';
 
-interface RecurringTransaction {
-  id: string;
-  merchant: string;
-  amount: number;
-  frequency: string;
-  nextDate: string;
-  isConfirmed: boolean;
-}
+interface RecurringTransaction { id: string; merchant: string; amount: number; frequency: string; nextDate: string; isConfirmed: boolean; }
+interface CashFlowProjection { date: string; balance: number; income: number; expenses: number; }
+interface CashFlowSummary { projections: CashFlowProjection[]; endBalance: number; lowestBalance: number; lowestDate: string; }
 
-interface CashFlowProjection {
-  date: string;
-  balance: number;
-  income: number;
-  expenses: number;
-}
-
-interface CashFlowSummary {
-  projections: CashFlowProjection[];
-  endBalance: number;
-  lowestBalance: number;
-  lowestDate: string;
-}
+function formatCurrency(value: number): string { return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 export default function RecurringPage() {
   const queryClient = useQueryClient();
   const [accountId, setAccountId] = useState('');
 
-  const recurringQuery = useQuery({
-    queryKey: ['recurring'],
-    queryFn: () => apiClient.get<RecurringTransaction[]>('/recurring'),
-  });
+  const recurringQuery = useQuery({ queryKey: ['recurring'], queryFn: () => apiClient.get<RecurringTransaction[]>('/recurring') });
+  const cashFlowQuery = useQuery({ queryKey: ['cashflow', accountId], queryFn: () => apiClient.get<CashFlowSummary>(`/cashflow/forecast${accountId ? `?accountId=${accountId}` : ''}`), enabled: true });
 
-  const cashFlowQuery = useQuery({
-    queryKey: ['cashflow', accountId],
-    queryFn: () =>
-      apiClient.get<CashFlowSummary>(
-        `/cashflow/forecast${accountId ? `?accountId=${accountId}` : ''}`,
-      ),
-    enabled: true,
-  });
-
-  const confirmMutation = useMutation({
-    mutationFn: (id: string) => apiClient.post(`/recurring/${id}/confirm`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring'] }),
-  });
-
-  const dismissMutation = useMutation({
-    mutationFn: (id: string) => apiClient.post(`/recurring/${id}/dismiss`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring'] }),
-  });
+  const confirmMutation = useMutation({ mutationFn: (id: string) => apiClient.post(`/recurring/${id}/confirm`), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring'] }) });
+  const dismissMutation = useMutation({ mutationFn: (id: string) => apiClient.post(`/recurring/${id}/dismiss`), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring'] }) });
 
   const confirmed = recurringQuery.data?.filter((r) => r.isConfirmed) ?? [];
   const detected = recurringQuery.data?.filter((r) => !r.isConfirmed) ?? [];
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Cash Flow &amp; Recurring</h1>
+    <div className="space-y-6">
+      <h1 className="text-page-title text-content-primary">Cash Flow &amp; Recurring</h1>
 
-      {/* Recurring Transactions Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-4">Recurring Transactions</h2>
+      {cashFlowQuery.data && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="card"><span className="card-title">END BALANCE (90D)</span><p className="text-2xl font-bold tabular-nums text-content-primary">${formatCurrency(Number(cashFlowQuery.data.endBalance))}</p></div>
+          <div className="card"><span className="card-title">LOWEST BALANCE</span><p className="text-2xl font-bold tabular-nums text-accent-red">${formatCurrency(Number(cashFlowQuery.data.lowestBalance))}</p></div>
+          <div className="card"><span className="card-title">LOWEST DATE</span><p className="text-2xl font-bold text-content-primary">{cashFlowQuery.data.lowestDate}</p></div>
+        </div>
+      )}
 
-        {recurringQuery.isLoading && <p className="text-gray-500">Loading...</p>}
-        {recurringQuery.isError && <p className="text-red-600">{recurringQuery.error.message}</p>}
+      <div className="space-y-4">
+        <h2 className="text-section text-content-primary">Recurring Transactions</h2>
 
-        {/* Confirmed */}
-        {confirmed.length > 0 && (
-          <div className="rounded-lg bg-white p-4 shadow-sm mb-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Confirmed</h3>
-            <ul className="divide-y text-sm">
-              {confirmed.map((r) => (
-                <li key={r.id} className="flex items-center justify-between py-2">
-                  <div>
-                    <span className="font-medium">{r.merchant}</span>
-                    <span className="text-gray-500 ml-2">
-                      ${Number(r.amount).toFixed(2)} · {r.frequency} · Next: {r.nextDate}
-                    </span>
+        {recurringQuery.isLoading && <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="card flex items-center gap-4 py-4"><div className="skeleton w-8 h-8 rounded-full" /><div className="flex-1 space-y-2"><div className="skeleton h-4 w-36" /><div className="skeleton h-3 w-48" /></div><div className="skeleton h-5 w-20" /></div>)}</div>}
+        {recurringQuery.isError && <div className="card"><p className="text-accent-red text-sm">{recurringQuery.error.message}</p></div>}
+
+        {detected.length > 0 && (
+          <div className="card border-accent-yellow/30">
+            <span className="card-title text-accent-yellow">DETECTED PATTERNS</span>
+            <div className="space-y-3 mt-3">
+              {detected.map((r) => (
+                <div key={r.id} className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-yellow/10"><RefreshCw size={14} className="text-accent-yellow" /></div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-medium text-content-primary">{r.merchant}</p><p className="text-xs text-content-tertiary">${formatCurrency(Number(r.amount))} · {r.frequency}</p></div>
+                  <div className="flex gap-2">
+                    <button onClick={() => confirmMutation.mutate(r.id)} className="btn-ghost p-2 text-content-tertiary hover:text-accent-green" title="Confirm"><Check size={14} /></button>
+                    <button onClick={() => dismissMutation.mutate(r.id)} className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" title="Dismiss"><X size={14} /></button>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
-        {/* Detected patterns */}
-        {detected.length > 0 && (
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <h3 className="text-sm font-medium text-yellow-800 mb-2">Detected Patterns</h3>
-            <ul className="divide-y divide-yellow-100 text-sm">
-              {detected.map((r) => (
-                <li key={r.id} className="flex items-center justify-between py-2">
-                  <div>
-                    <span className="font-medium">{r.merchant}</span>
-                    <span className="text-gray-600 ml-2">
-                      ${Number(r.amount).toFixed(2)} · {r.frequency}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => confirmMutation.mutate(r.id)}
-                      className="text-xs rounded bg-green-600 px-2 py-1 text-white hover:bg-green-700"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => dismissMutation.mutate(r.id)}
-                      className="text-xs rounded bg-gray-300 px-2 py-1 text-gray-700 hover:bg-gray-400"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+        {confirmed.length > 0 && (
+          <div className="space-y-2">
+            {confirmed.map((r) => (
+              <div key={r.id} className="card flex items-center gap-4 py-4 hover:border-edge-hover transition-colors duration-150">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-green/10"><RefreshCw size={14} className="text-accent-green" /></div>
+                <div className="flex-1 min-w-0"><p className="text-sm font-medium text-content-primary">{r.merchant}</p><p className="text-xs text-content-tertiary">{r.frequency} · Next: {r.nextDate}</p></div>
+                <p className="text-sm font-bold tabular-nums text-content-primary">${formatCurrency(Number(r.amount))}</p>
+              </div>
+            ))}
           </div>
         )}
 
         {recurringQuery.data && confirmed.length === 0 && detected.length === 0 && (
-          <p className="text-gray-500">No recurring transactions detected yet.</p>
+          <div className="card text-center py-12"><RefreshCw size={40} className="mx-auto text-content-tertiary mb-3" /><p className="text-content-secondary text-sm">No recurring transactions detected yet</p><p className="text-content-tertiary text-xs mt-1">Add more transactions and patterns will be automatically detected</p></div>
         )}
       </div>
 
-      {/* Cash Flow Forecast Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Cash Flow Forecast (90 days)</h2>
-          <input
-            placeholder="Account ID (optional)"
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm w-56"
-          />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-section text-content-primary">Cash Flow Forecast (90 days)</h2>
+          <div className="w-56"><input placeholder="Filter by Account ID" value={accountId} onChange={(e) => setAccountId(e.target.value)} className="input" /></div>
         </div>
 
-        {cashFlowQuery.isLoading && <p className="text-gray-500">Loading...</p>}
-        {cashFlowQuery.isError && <p className="text-red-600">{cashFlowQuery.error.message}</p>}
-        {cashFlowQuery.data && (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div>
-                <p className="text-sm text-gray-500">End Balance (90d)</p>
-                <p className="text-xl font-bold">
-                  ${Number(cashFlowQuery.data.endBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Lowest Balance</p>
-                <p className="text-xl font-bold text-red-600">
-                  ${Number(cashFlowQuery.data.lowestBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Lowest Date</p>
-                <p className="text-xl font-bold">{cashFlowQuery.data.lowestDate}</p>
-              </div>
+        {cashFlowQuery.isLoading && <div className="card space-y-3"><div className="skeleton h-6 w-48" /><div className="skeleton h-64 w-full" /></div>}
+        {cashFlowQuery.isError && <div className="card"><p className="text-accent-red text-sm">{cashFlowQuery.error.message}</p></div>}
+
+        {cashFlowQuery.data && cashFlowQuery.data.projections.length > 0 && (
+          <div className="card overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead><tr className="border-b border-edge"><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Date</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Income</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Expenses</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Balance</th></tr></thead>
+                <tbody className="divide-y divide-edge">
+                  {cashFlowQuery.data.projections.slice(0, 30).map((p, i) => (
+                    <tr key={i} className="hover:bg-surface-elevated transition-colors"><td className="px-6 py-3 text-content-secondary">{p.date}</td><td className="px-6 py-3 text-right tabular-nums text-accent-green">${formatCurrency(Number(p.income))}</td><td className="px-6 py-3 text-right tabular-nums text-accent-red">${formatCurrency(Number(p.expenses))}</td><td className="px-6 py-3 text-right tabular-nums text-content-primary font-medium">${formatCurrency(Number(p.balance))}</td></tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            {cashFlowQuery.data.projections.length > 0 && (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-b bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Date</th>
-                      <th className="px-3 py-2 font-medium text-right">Income</th>
-                      <th className="px-3 py-2 font-medium text-right">Expenses</th>
-                      <th className="px-3 py-2 font-medium text-right">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {cashFlowQuery.data.projections.slice(0, 30).map((p, i) => (
-                      <tr key={i}>
-                        <td className="px-3 py-2">{p.date}</td>
-                        <td className="px-3 py-2 text-right text-green-600">${Number(p.income).toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right text-red-600">${Number(p.expenses).toFixed(2)}</td>
-                        <td className="px-3 py-2 text-right font-mono">${Number(p.balance).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
+        )}
+
+        {cashFlowQuery.data && cashFlowQuery.data.projections.length === 0 && (
+          <div className="card text-center py-12"><CalendarClock size={40} className="mx-auto text-content-tertiary mb-3" /><p className="text-content-secondary text-sm">No forecast data available</p><p className="text-content-tertiary text-xs mt-1">Confirm recurring transactions to see your cash flow projection</p></div>
         )}
       </div>
     </div>
