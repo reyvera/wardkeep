@@ -17,6 +17,12 @@
     --border-default: #232a36;
     --border-hover: #2f3845;
 
+    /* Brand */
+    --brand-navy: #1a1f2b;
+    --brand-gold: #c9a84c;
+    --brand-gold-light: #d4b85e;
+    --brand-gold-muted: #a08838;
+
     --accent-blue: #4a9eff;
     --accent-green: #34d399;
     --accent-red: #f87171;
@@ -49,6 +55,12 @@
 
     --border-default: #e5e8ec;
     --border-hover: #d1d5db;
+
+    /* Brand */
+    --brand-navy: #1a1f2b;
+    --brand-gold: #c9a84c;
+    --brand-gold-light: #d4b85e;
+    --brand-gold-muted: #a08838;
 
     --accent-blue: #2563eb;
     --accent-green: #059669;

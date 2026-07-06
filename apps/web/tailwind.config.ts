@@ -10,6 +10,13 @@ const config: Config = {
         '3xl': '2560px',
       },
       colors: {
+        // Brand
+        brand: {
+          navy: 'var(--brand-navy)',
+          gold: 'var(--brand-gold)',
+          'gold-light': 'var(--brand-gold-light)',
+          'gold-muted': 'var(--brand-gold-muted)',
+        },
         // Surface / Background
         surface: {
           primary: 'var(--bg-primary)',
