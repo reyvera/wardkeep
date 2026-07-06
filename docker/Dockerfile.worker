@@ -9,11 +9,14 @@ RUN corepack enable && pnpm install --frozen-lockfile
 RUN pnpm turbo build --filter=@wardkeep/worker
 RUN npx prisma generate
 
+# Prune to production deps only (includes generated Prisma client)
+RUN pnpm --filter=@wardkeep/worker deploy --prod /app/pruned
+
 FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
+COPY --from=builder /app/pruned/node_modules ./node_modules
 COPY --from=builder /app/apps/worker/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 CMD ["node", "dist/main.js"]
