@@ -1,14 +1,25 @@
+# ============================================================================
+# Docker Compose — Production (Pre-built Images)
+#
+# For users who just want to run Wardkeep without building from source.
+# Images are pulled from GitHub Container Registry.
+#
+# Usage:
+#   1. Copy .env.example to .env and set ENCRYPTION_KEY
+#   2. docker compose -f docker-compose.prod.yml up -d
+#
+# Update:
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+# ============================================================================
+
 services:
   web:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.web
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:4000/api
+    image: ghcr.io/reymundovera/wardkeep-web:latest
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000/api
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-4000}/api
     depends_on:
       api:
         condition: service_healthy
@@ -20,19 +31,17 @@ services:
       retries: 3
 
   api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.api
+    image: ghcr.io/reymundovera/wardkeep-api:latest
     ports:
-      - "4000:4000"
+      - "${API_PORT:-4000}:4000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/wardkeep?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wardkeep}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - AI_PRIVACY_MODE=LOCAL
+      - AI_PRIVACY_MODE=${AI_PRIVACY_MODE:-LOCAL}
       - OLLAMA_URL=http://ollama:11434
-      - SESSION_TIMEOUT=30
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-me-in-production}
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-30}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
       - PORT=4000
     depends_on:
       postgres:
@@ -47,16 +56,14 @@ services:
       retries: 3
 
   worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.worker
+    image: ghcr.io/reymundovera/wardkeep-worker:latest
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/wardkeep?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wardkeep}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - AI_PRIVACY_MODE=LOCAL
+      - AI_PRIVACY_MODE=${AI_PRIVACY_MODE:-LOCAL}
       - OLLAMA_URL=http://ollama:11434
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-me-in-production}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
     depends_on:
       api:
         condition: service_healthy
@@ -67,16 +74,16 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=postgres
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=wardkeep
+      - POSTGRES_DB=${POSTGRES_DB:-wardkeep}
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -85,8 +92,6 @@ services:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -96,6 +101,8 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    profiles:
+      - ai
     volumes:
       - ollama_models:/root/.ollama
     ports:
@@ -111,4 +118,3 @@ volumes:
   pg_data:
   redis_data:
   ollama_models:
-  backups:

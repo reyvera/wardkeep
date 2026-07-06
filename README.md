@@ -144,17 +144,66 @@ cd packages/importers && pnpm test
 
 ### Self-Hosted Deployment (Production)
 
+#### One-liner install (recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/reymundovera/wardkeep/main/install.sh | bash
+```
+
+This downloads the compose file, generates secure credentials, pulls images, and starts the app. Done in under 2 minutes.
+
+#### Manual install (from pre-built images)
+
+```bash
+# Create a directory and download the compose file
+mkdir ~/wardkeep && cd ~/wardkeep
+curl -fsSL https://raw.githubusercontent.com/reymundovera/wardkeep/main/docker-compose.prod.yml -o docker-compose.yml
+
+# Create .env with your encryption key
+echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env
+echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
+
+# Pull and start
+docker compose pull
+docker compose up -d
+```
+
+#### Build from source
+
 ```bash
 # Clone and configure
-git clone <repo-url> && cd wardkeep
+git clone https://github.com/reymundovera/wardkeep.git && cd wardkeep
 cp .env.example .env
-# Edit .env — change ENCRYPTION_KEY to a secure random value
+# Edit .env — set ENCRYPTION_KEY to a secure random value (openssl rand -hex 32)
 
-# Start everything
-docker compose up -d
+# Build and start everything
+docker compose up -d --build
 
 # App available at http://localhost:3000
 # API health check at http://localhost:4000/api/health
+```
+
+#### Updating
+
+```bash
+# Pre-built images
+cd ~/wardkeep && docker compose pull && docker compose up -d
+
+# From source
+cd wardkeep && git pull && docker compose up -d --build
+```
+
+#### Local AI setup (optional, requires 8GB+ RAM)
+
+```bash
+# Start with the AI profile
+docker compose --profile ai up -d
+
+# Pull a model
+docker compose exec ollama ollama pull llama3:8b
+
+# Set AI_PRIVACY_MODE=LOCAL in .env, then restart
+docker compose restart api worker
 ```
 
 ### Environment Variables

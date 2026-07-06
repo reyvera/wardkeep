@@ -1,16 +1,26 @@
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages/ packages/
 COPY apps/web/ apps/web/
 RUN corepack enable && pnpm install --frozen-lockfile
-RUN pnpm turbo build --filter=@budgetapp/web
 
-FROM node:18-alpine AS runner
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+RUN pnpm turbo build --filter=@wardkeep/web
+
+FROM node:22-alpine AS runner
 WORKDIR /app
+RUN apk add --no-cache wget
 ENV NODE_ENV=production
+
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
 COPY --from=builder /app/apps/web/public ./public
+
 EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
