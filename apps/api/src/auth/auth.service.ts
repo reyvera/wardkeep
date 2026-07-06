@@ -218,7 +218,7 @@ export class AuthService {
 
     // Check absolute expiry
     if (session.expiresAt < now) {
-      await this.prisma.session.delete({ where: { id: session.id } });
+      await this.prisma.session.deleteMany({ where: { id: session.id } });
       throw new UnauthorizedException('Invalid or expired session');
     }
 
@@ -228,7 +228,7 @@ export class AuthService {
     );
 
     if (inactivityLimit < now) {
-      await this.prisma.session.delete({ where: { id: session.id } });
+      await this.prisma.session.deleteMany({ where: { id: session.id } });
       throw new UnauthorizedException('Invalid or expired session');
     }
 
@@ -236,6 +236,9 @@ export class AuthService {
     await this.prisma.session.update({
       where: { id: session.id },
       data: { lastActive: now },
+    }).catch(() => {
+      // Session was deleted by another request
+      throw new UnauthorizedException('Invalid or expired session');
     });
 
     return session.user;

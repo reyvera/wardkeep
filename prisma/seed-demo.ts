@@ -8,7 +8,7 @@ import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-const DEMO_EMAIL = 'demo@budgetapp.io';
+const DEMO_EMAIL = 'demo@wardkeep.app';
 const DEMO_PASSWORD = 'DemoPassword123';
 
 // ─── Merchants and categories ────────────────────────────────────────────────
@@ -111,6 +111,7 @@ async function main() {
       date.setDate(i === 0 ? 1 : 15);
       await prisma.transaction.create({
         data: {
+          userId: user.id,
           accountId: checking.id,
           amount: '2800.00',
           type: 'CREDIT',
@@ -128,6 +129,7 @@ async function main() {
     rentDate.setDate(1);
     await prisma.transaction.create({
       data: {
+        userId: user.id,
         accountId: checking.id,
         amount: '1850.00',
         type: 'DEBIT',
@@ -163,6 +165,7 @@ async function main() {
 
       await prisma.transaction.create({
         data: {
+          userId: user.id,
           accountId: account.id,
           amount: amount.toFixed(2),
           type: 'DEBIT',
@@ -180,7 +183,7 @@ async function main() {
 
   // Create current month budget
   const now = new Date();
-  const budgetMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const budgetMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const budget = await prisma.budget.create({
     data: {
       userId: user.id,
