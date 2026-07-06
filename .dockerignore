@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/.next/
+
+# Turbo cache
+.turbo/
+**/.turbo/
+
+# Git
+.git/
+.gitmodules
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+api.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+**/coverage/
+
+# Kiro config
+.kiro/
+
+# GitHub
+.github/
+
+# Misc
+.commit.log
+.gh-issue-result.txt
+LICENSE
+README.md

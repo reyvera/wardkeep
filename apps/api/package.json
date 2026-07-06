@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "swc src -d dist --strip-leading-paths --config-file .swcrc",
+    "build:check": "tsc --project tsconfig.json --noEmit",
     "start": "node dist/main.js",
     "start:dev": "ts-node --project tsconfig.json src/main.ts",
     "test": "vitest run",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",
     "@nestjs/testing": "^10.3.0",
+    "@swc/cli": "^0.5.0",
     "@swc/core": "^1.15.43",
     "@swc/register": "^0.1.10",
     "@types/bcrypt": "^5.0.2",
