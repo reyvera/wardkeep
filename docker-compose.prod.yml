@@ -15,7 +15,7 @@
 
 services:
   web:
-    image: ghcr.io/reymundovera/wardkeep-web:latest
+    image: ghcr.io/reyvera/wardkeep-web:latest
     ports:
       - "${WEB_PORT:-3000}:3000"
     environment:
@@ -31,7 +31,7 @@ services:
       retries: 3
 
   api:
-    image: ghcr.io/reymundovera/wardkeep-api:latest
+    image: ghcr.io/reyvera/wardkeep-api:latest
     ports:
       - "${API_PORT:-4000}:4000"
     environment:
@@ -56,7 +56,7 @@ services:
       retries: 3
 
   worker:
-    image: ghcr.io/reymundovera/wardkeep-worker:latest
+    image: ghcr.io/reyvera/wardkeep-worker:latest
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wardkeep}?schema=public
       - REDIS_HOST=redis

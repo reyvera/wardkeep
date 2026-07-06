@@ -14,6 +14,10 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/wardkeep
+  # Images will be published as:
+  #   ghcr.io/reyvera/wardkeep-api
+  #   ghcr.io/reyvera/wardkeep-web
+  #   ghcr.io/reyvera/wardkeep-worker
 
 jobs:
   build-and-push:

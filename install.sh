@@ -3,7 +3,7 @@
 # Wardkeep — Self-Hosted Installation Script
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/reymundovera/wardkeep/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
 #
 # Or manually:
 #   bash install.sh
@@ -12,7 +12,7 @@
 set -e
 
 INSTALL_DIR="${WARDKEEP_DIR:-$HOME/wardkeep}"
-REPO_URL="https://raw.githubusercontent.com/reymundovera/wardkeep/main"
+REPO_URL="https://raw.githubusercontent.com/reyvera/budgetapp/main"
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
