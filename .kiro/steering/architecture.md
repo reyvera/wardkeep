@@ -74,3 +74,14 @@ Never create circular dependencies between packages.
 - Service worker handles offline caching and action queuing
 - All API calls go through a typed client generated from shared types
 - Components are server components by default; add `'use client'` only when needed
+
+## Docker Deployment Architecture
+
+- **Three container images:** api, web, worker — each built from `docker/Dockerfile.*`
+- **API + Worker:** Copy full pnpm workspace structure to preserve symlinks. Set `NODE_PATH` for hoisted dep resolution. Strip source files in runner stage.
+- **Web:** Uses Next.js `output: 'standalone'` — minimal server with embedded deps. In monorepos, standalone outputs at `apps/web/server.js` (not root).
+- **Build tool:** API uses SWC (`@swc/cli`) for production builds — fast, no type checking. Packages use tsc.
+- **Entry points:** API at `apps/api/dist/main.js`, Worker at `apps/worker/dist/apps/worker/src/main.js` (nested due to tsconfig paths), Web at `apps/web/server.js`.
+- **Startup:** API entrypoint runs `prisma migrate deploy` before starting. Refuses default ENCRYPTION_KEY.
+- **CI/CD:** GitHub Actions builds and pushes images to GHCR on tag push. amd64 only (arm64 QEMU too slow on free runners).
+- **Compose variants:** `docker-compose.yml` (build from source, postgres:15), `docker-compose.prod.yml` (pre-built GHCR images, postgres:16), `docker-compose.demo.yml` (lightweight, no AI/worker).

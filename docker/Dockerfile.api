@@ -1,3 +1,17 @@
+# =============================================================================
+# Wardkeep API — Docker Image
+#
+# Key decisions:
+# - Copies full workspace structure (not just dist) to preserve pnpm symlinks
+#   that resolve @wardkeep/* workspace packages.
+# - NODE_PATH includes pnpm's hoisted store AND the app's local node_modules
+#   so both transitive deps (express, reflect-metadata) and workspace packages
+#   (@wardkeep/shared) resolve correctly.
+# - Uses SWC for builds (fast, no type checking — matches dev behavior).
+# - Entrypoint runs Prisma migrations before starting the server.
+# - Requires openssl for Prisma engine compatibility on Alpine.
+# =============================================================================
+
 FROM node:22-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache openssl
@@ -13,9 +27,10 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache openssl wget
 ENV NODE_ENV=production
+# pnpm hoists transitive deps here; app's workspace deps are symlinked here
 ENV NODE_PATH=/app/node_modules/.pnpm/node_modules:/app/apps/api/node_modules
 
-# Copy entire workspace structure — preserves pnpm symlinks
+# Copy entire workspace — preserves pnpm symlinks for @wardkeep/* packages
 COPY --from=builder /app ./
 
 # Remove source files to slim the image (keep dist + node_modules)

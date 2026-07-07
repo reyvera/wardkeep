@@ -1,3 +1,15 @@
+# =============================================================================
+# Wardkeep Web — Docker Image
+#
+# Key decisions:
+# - Uses Next.js standalone output mode (configured in next.config.js).
+# - In a pnpm monorepo, standalone outputs server.js at apps/web/server.js
+#   (not the root), with the full monorepo structure embedded.
+# - Static files and public assets must be copied to paths relative to server.js.
+# - NEXT_PUBLIC_API_URL is baked in at build time (ARG) since Next.js inlines
+#   env vars prefixed with NEXT_PUBLIC_ during the build.
+# =============================================================================
+
 FROM node:22-alpine AS builder
 WORKDIR /app
 

@@ -12,25 +12,26 @@ AI is never the source of truth. Deterministic math handles balances, forecasts,
 
 ## Tech Stack
 
-- **Frontend:** Next.js 14+ / React / TypeScript / Tailwind CSS (PWA)
-- **Backend:** NestJS / TypeScript / Prisma ORM
-- **Database:** PostgreSQL 15+ (NUMERIC(19,4) for currency)
-- **Cache/Queue:** Redis 7+ / BullMQ
+- **Frontend:** Next.js 14 / React 18 / TypeScript / Tailwind CSS (PWA with standalone output)
+- **Backend:** NestJS 10 / TypeScript / Prisma 5 ORM / SWC (build)
+- **Database:** PostgreSQL 16 (production) / 15 (dev compose) — NUMERIC(19,4) for currency
+- **Cache/Queue:** Redis 7 / BullMQ
 - **AI:** Ollama (local LLM) + optional OpenAI/Anthropic cloud APIs
 - **Bank Sync:** SimpleFIN (auto-import transactions from linked bank accounts)
-- **Deployment:** Docker Compose
-- **Monorepo:** Turborepo
+- **Deployment:** Docker Compose with pre-built images on GHCR
+- **Monorepo:** Turborepo + pnpm 8.15.9 workspaces
+- **CI/CD:** GitHub Actions (build + test on PR, multi-arch publish on tag)
 
 ## Architecture
 
 ```
 apps/
-├── web/          # Next.js PWA (user-facing UI)
-├── api/          # NestJS REST API (business logic, auth, data access)
+├── web/          # Next.js PWA (standalone output for Docker)
+├── api/          # NestJS REST API (SWC build, ts-node --swc for dev)
 └── worker/       # BullMQ consumer (background jobs)
 
 packages/
-├── shared/           # Types, validation schemas, constants
+├── shared/           # Types, validation schemas, constants (CommonJS)
 ├── finance-engine/   # Pure deterministic math (no I/O, no side effects)
 ├── ai-engine/        # AI provider abstraction (Ollama, OpenAI, Anthropic)
 └── importers/        # File parsers (CSV, OFX, QFX)
@@ -51,7 +52,7 @@ packages/
 - **Cash-flow forecast** — 90-day projections based on recurring transactions
 - **Encrypted backups** — AES-256-GCM with user passphrase
 - **Progressive Web App** — Offline support, installable on any device
-- **Docker Compose** — Single-command self-hosted deployment
+- **Docker Compose** — Single-command self-hosted deployment with pre-built images
 
 ## AI Privacy Modes
 
@@ -82,7 +83,7 @@ Bank-linked accounts display the balance reported by your bank directly. Manual 
 ### Prerequisites
 
 - **Node.js v22+** (use nvm: `nvm install 22 && nvm use 22`)
-- **Docker & Docker Compose** (for Postgres and Redis)
+- **Docker & Docker Compose v2** (for Postgres, Redis, and production deployment)
 - **pnpm 8.15.9** (managed via corepack — auto-installed from `packageManager` field)
 
 ### Development Setup
@@ -94,7 +95,7 @@ export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm use 22
 # 2. Install dependencies
 pnpm install
 
-# 3. Start infrastructure
+# 3. Start infrastructure (Postgres 15 + Redis)
 docker compose up -d postgres redis
 
 # 4. Set up database (first time only)
@@ -102,22 +103,33 @@ npx prisma db push
 npx prisma generate
 pnpm db:seed
 
-# 5. Start the API (terminal 1)
+# 5. Start the API (terminal 1) — uses ts-node with SWC for fast startup
 cd apps/api
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
 REDIS_HOST=localhost REDIS_PORT=6379 PORT=4000 SESSION_TIMEOUT=30 \
-ENCRYPTION_KEY=change-me-in-production AI_PRIVACY_MODE=LOCAL \
+ENCRYPTION_KEY=dev-testing-key AI_PRIVACY_MODE=LOCAL \
 OLLAMA_URL=http://localhost:11434 \
-npx ts-node --project tsconfig.json src/main.ts
+npx ts-node --swc --project tsconfig.json src/main.ts
 
 # 6. Start the Web frontend (terminal 2)
 cd apps/web
 pnpm dev
 ```
 
+### Demo User
+
+To seed a demo user with 6 months of sample data:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
+npx tsx prisma/seed-demo.ts
+```
+
+Login: `demo@wardkeep.app` / `DemoPassword123`
+
 ### URLs
 
-- **Web UI:** http://localhost:3000
+- **Web UI:** http://localhost:3000 (redirects to /login if unauthenticated)
 - **API:** http://localhost:4000
 - **API Health:** http://localhost:4000/api/health
 
@@ -134,25 +146,26 @@ pnpm dev
 ### Running Tests
 
 ```bash
-# Run all package tests
+# Run all tests across the monorepo
 pnpm turbo test
 
 # Run a specific package's tests
 cd packages/finance-engine && pnpm test
 cd packages/importers && pnpm test
+cd packages/ai-engine && pnpm test
 ```
 
-### Self-Hosted Deployment (Production)
+## Self-Hosted Deployment (Production)
 
-#### One-liner install (recommended)
+### One-liner install (recommended)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
 ```
 
-This downloads the compose file, generates secure credentials, pulls images, and starts the app. Done in under 2 minutes.
+This downloads the compose file, generates secure credentials, pulls pre-built images from GHCR, and starts the app. Done in under 2 minutes.
 
-#### Manual install (from pre-built images)
+### Manual install (from pre-built images)
 
 ```bash
 # Create a directory and download the compose file
@@ -168,7 +181,7 @@ docker compose pull
 docker compose up -d
 ```
 
-#### Build from source
+### Build from source
 
 ```bash
 # Clone and configure
@@ -183,7 +196,7 @@ docker compose up -d --build
 # API health check at http://localhost:4000/api/health
 ```
 
-#### Updating
+### Updating
 
 ```bash
 # Pre-built images
@@ -193,11 +206,12 @@ cd ~/wardkeep && docker compose pull && docker compose up -d
 cd wardkeep && git pull && docker compose up -d --build
 ```
 
-#### Local AI setup (optional, requires 8GB+ RAM)
+### Local AI setup (optional, requires 8GB+ RAM)
 
 ```bash
-# Start with the AI profile
-docker compose --profile ai up -d
+# Start with the AI profile (prod compose) or just start ollama (dev compose)
+docker compose --profile ai up -d    # prod
+docker compose up -d ollama           # dev
 
 # Pull a model
 docker compose exec ollama ollama pull llama3:8b
@@ -206,18 +220,26 @@ docker compose exec ollama ollama pull llama3:8b
 docker compose restart api worker
 ```
 
-### Environment Variables
+### Dockge / Portainer Setup
+
+If you use a Docker management UI like Dockge, create a stack with the contents of `docker-compose.prod.yml` and add a `.env` file with `ENCRYPTION_KEY` and `POSTGRES_PASSWORD`. The images are public on GHCR — no auth required to pull.
+
+## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string |
-| `REDIS_HOST` | localhost | Redis hostname |
+| `ENCRYPTION_KEY` | *(required)* | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. App refuses to start with placeholder value. |
+| `POSTGRES_PASSWORD` | postgres | PostgreSQL password. Set a unique value in production. |
+| `DATABASE_URL` | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker) |
+| `REDIS_HOST` | localhost (redis in Docker) | Redis hostname |
 | `REDIS_PORT` | 6379 | Redis port |
-| `ENCRYPTION_KEY` | change-me-in-production | AES-256 key for encrypting API keys and bank tokens. **Change in production.** |
 | `AI_PRIVACY_MODE` | LOCAL | AI routing: LOCAL, HYBRID, or CLOUD |
 | `OLLAMA_URL` | http://localhost:11434 | Ollama endpoint for local AI |
 | `SESSION_TIMEOUT` | 30 | Session inactivity timeout in minutes |
 | `PORT` | 4000 | API server port |
+| `WEB_PORT` | 3000 | Host port for web UI (prod compose) |
+| `API_PORT` | 4000 | Host port for API (prod compose) |
+| `DEMO_MODE` | false | Set to `true` to bypass ENCRYPTION_KEY safety check |
 
 ### Minimum Hardware Requirements
 
@@ -226,15 +248,29 @@ docker compose restart api worker
 
 ## Key Technical Notes
 
-- **Balance display:** Bank-linked accounts show the balance reported by SimpleFIN. Manual accounts compute balance from initial balance + transactions.
-- **API dev server:** Uses `ts-node` with SWC (not tsx/esbuild) because NestJS requires `emitDecoratorMetadata` for dependency injection.
-- **Database credentials:** The `.env` must use `postgres:postgres` to match docker-compose.
-- **Package builds:** All packages emit CommonJS. Packages resolve `@wardkeep/*` from node_modules (compiled dist), not source.
-- **Auth:** Middleware redirects unauthenticated users to `/login`. Token stored in localStorage + cookie for SSR middleware access.
+### Development
+
+- **API dev server:** Uses `ts-node --swc` (not tsx/esbuild) because NestJS requires `emitDecoratorMetadata` for dependency injection. SWC handles decorator compilation without full type-checking.
+- **API production build:** Uses `@swc/cli` (`swc src -d dist`) — skips type checking for fast builds. Type checking available separately via `tsc --noEmit`.
+- **Package builds:** All packages emit CommonJS (`module: "CommonJS"` in tsconfigs). Package tsconfigs override base paths with `"paths": {}` so they resolve `@wardkeep/*` from node_modules (compiled dist), not source.
+- **Database credentials:** Dev compose uses `postgres:postgres`. Production compose uses env vars.
+- **Auth:** Token stored in both localStorage (for API calls) and a cookie (for Next.js SSR middleware). Middleware redirects unauthenticated users to `/login`.
+- **Balance display:** Bank-linked accounts show balance from SimpleFIN. Manual accounts compute from `initialBalance + sum(credits) - sum(debits)`.
+
+### Docker Deployment
+
+- **pnpm workspace symlinks:** Docker `COPY` doesn't preserve symlinks the way pnpm expects. The API and worker Dockerfiles copy the entire workspace structure from the builder, then remove source files. This preserves the `node_modules/@wardkeep/*` → `packages/*/` symlink chain.
+- **NODE_PATH:** Required for pnpm's hoisted dependency resolution. Set to `/app/node_modules/.pnpm/node_modules:/app/apps/{app}/node_modules` so Node can find both hoisted transitive deps (like `express`, `reflect-metadata`) and workspace packages (like `@wardkeep/shared`).
+- **Next.js standalone in monorepos:** The standalone output places `server.js` at `apps/web/server.js` (not the root), with static files and public assets relative to that path. The web Dockerfile accounts for this.
+- **Worker entry point:** Due to the worker tsconfig's `paths` referencing workspace packages, `tsc` outputs with the full directory structure: `apps/worker/dist/apps/worker/src/main.js`.
+- **Prisma in Docker:** Requires `openssl` package in Alpine images. The entrypoint runs `prisma migrate deploy` (or falls back to `prisma db push`) before starting the API.
+- **Postgres version:** Dev compose uses postgres:15-alpine. Prod compose uses postgres:16-alpine. Existing data volumes initialized with one version are NOT compatible with the other — you'll see "database files are incompatible" if mismatched.
+- **ENCRYPTION_KEY safety:** The API entrypoint refuses to start if `ENCRYPTION_KEY=change-me-in-production` (unless `DEMO_MODE=true`).
+- **Image updates:** Always `docker rmi` the old images before pulling, or use `docker compose pull --ignore-pull-failures` — Docker may cache `latest` tags and not re-pull.
 
 ## Roadmap
 
-✅ = shipped · 🔄 = in progress · 📋 = planned
+✅ = shipped · 📋 = planned
 
 | Feature | Status |
 |---------|--------|
@@ -249,20 +285,18 @@ docker compose restart api worker
 | Encrypted backups | ✅ |
 | PWA / offline support | ✅ |
 | Docker self-hosted deployment | ✅ |
-| Income configuration & pay schedule | 📋 |
-| AI-powered auto-categorization (background) | 📋 |
-| Recurring transaction detection | 📋 |
-| AI chat with action capabilities (create budgets, categorize) | 📋 |
-| Spending heatmap by day of week | 📋 |
-| Net worth history trend line | 📋 |
+| Pre-built images on GHCR | ✅ |
+| CI/CD pipeline | ✅ |
+| Readiness Engine (household decision engine) | 📋 |
+| Capability SDK (extensible domain modules) | 📋 |
+| Morning Brief / Advisor | 📋 |
 | Multi-currency support | 📋 |
-| Mobile-optimized UI improvements | 📋 |
 
 Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)
 
 ## Project Status
 
-MVP feature set is complete and functional. Bank connections, AI chat, accounts, transactions, budgets, and settings all work end-to-end.
+v1.0.0 released. Self-hosted deployment verified on Dockge. Bank connections, AI chat, accounts, transactions, budgets, and settings all work end-to-end.
 
 ## License
 

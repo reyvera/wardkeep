@@ -1,3 +1,14 @@
+# =============================================================================
+# Wardkeep Worker — Docker Image
+#
+# Key decisions:
+# - Same workspace-copy strategy as the API for pnpm symlink preservation.
+# - Entry point is nested at apps/worker/dist/apps/worker/src/main.js because
+#   the worker's tsconfig has `paths` pointing to ../../packages/*, which causes
+#   tsc to output the full directory structure relative to the composite root.
+# - NODE_PATH resolves hoisted deps + workspace packages.
+# =============================================================================
+
 FROM node:22-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache openssl
@@ -15,11 +26,12 @@ RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 ENV NODE_PATH=/app/node_modules/.pnpm/node_modules:/app/apps/worker/node_modules
 
-# Copy entire workspace structure — preserves pnpm symlinks
+# Copy entire workspace — preserves pnpm symlinks for @wardkeep/* packages
 COPY --from=builder /app ./
 
 # Remove source files to slim the image (keep dist + node_modules)
 RUN rm -rf packages/*/src apps/worker/src apps/api apps/web \
     && rm -rf .turbo turbo.json tsconfig.base.json
 
+# Entry path is nested due to tsconfig paths causing tsc to emit full dir structure
 CMD ["node", "apps/worker/dist/apps/worker/src/main.js"]
