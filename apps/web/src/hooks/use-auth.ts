@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { apiClient } from '@/lib/api-client';
@@ -31,18 +31,6 @@ export function useAuth() {
     });
     storeLogout();
     router.push('/login');
-  }, [storeLogout, router]);
-
-  // Register the unauthorized handler so any 401 response auto-redirects
-  useEffect(() => {
-    apiClient.setUnauthorizedHandler(() => {
-      storeLogout();
-      router.push('/login');
-    });
-
-    return () => {
-      apiClient.setUnauthorizedHandler(null);
-    };
   }, [storeLogout, router]);
 
   const login = async (credentials: LoginCredentials) => {
