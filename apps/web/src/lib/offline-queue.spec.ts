@@ -4,7 +4,7 @@
  * Feature: ai-personal-finance-app
  * Property 32: Offline action queue enforces capacity (max 100) and FIFO sync order
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 
 // ─── Test-friendly OfflineQueue implementation ───────────────────────────────────

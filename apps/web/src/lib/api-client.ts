@@ -4,12 +4,22 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
 class ApiClient {
   private token: string | null = null;
+  private onUnauthorized: (() => void) | null = null;
 
   constructor() {
     // Restore token from localStorage on initialization (client-side only)
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('token');
     }
+  }
+
+  /**
+   * Register a callback that fires when a 401 response is received.
+   * Used to trigger automatic logout and redirect on session expiry.
+   * @param callback - Function to call on unauthorized response
+   */
+  setUnauthorizedHandler(callback: (() => void) | null) {
+    this.onUnauthorized = callback;
   }
 
   setToken(token: string | null) {
@@ -35,6 +45,11 @@ class ApiClient {
       });
 
       if (!res.ok) {
+        // Handle 401 — session expired or invalid
+        if (res.status === 401 && !path.startsWith('/auth/')) {
+          this.onUnauthorized?.();
+        }
+
         const error = await res.json().catch(() => ({ message: 'Request failed' }));
         throw new Error(error.message ?? `HTTP ${res.status}`);
       }

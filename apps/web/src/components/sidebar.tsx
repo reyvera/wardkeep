@@ -15,7 +15,9 @@ import {
   Upload,
   Link2,
   Settings,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,6 +39,7 @@ const bottomNavItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <aside className="hidden md:flex h-screen w-sidebar flex-col border-r border-edge bg-surface-primary sticky top-0">
@@ -94,6 +97,16 @@ export function Sidebar() {
               </li>
             );
           })}
+          <li>
+            <button
+              onClick={logout}
+              className="nav-item w-full text-left text-content-tertiary hover:text-accent-red"
+              aria-label="Sign out"
+            >
+              <LogOut size={18} strokeWidth={1.5} />
+              <span>Sign Out</span>
+            </button>
+          </li>
         </ul>
       </div>
     </aside>

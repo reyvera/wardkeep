@@ -357,7 +357,7 @@ export default function DashboardPage() {
           <span className="card-title">TOP CATEGORIES</span>
           {statsQuery.data && statsQuery.data.spendingByCategory.length > 0 ? (
             <div className="space-y-2.5 mt-2">
-              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat, i) => (
+              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat) => (
                 <div key={cat.categoryId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CategoryIcon name={cat.name} size="sm" />

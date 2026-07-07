@@ -14,15 +14,18 @@ const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/reset-passwor
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths, static assets, and API routes through
+  // Allow static assets and API routes through
   if (
-    PUBLIC_PATHS.some((path) => pathname.startsWith(path)) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname === '/manifest.json' ||
-    pathname === '/sw.js' ||
-    pathname === '/'
+    pathname === '/sw.js'
   ) {
+    return NextResponse.next();
+  }
+
+  // Allow public auth paths through
+  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
@@ -32,6 +35,12 @@ export function middleware(request: NextRequest) {
   if (!token) {
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect authenticated users from root to dashboard
+  if (pathname === '/') {
+    const dashboardUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(dashboardUrl);
   }
 
   return NextResponse.next();

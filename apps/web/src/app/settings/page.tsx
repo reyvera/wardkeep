@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Save, Shield, Key, Clock, AlertTriangle, Settings } from 'lucide-react';
+import { Save, Shield, Key, Clock, AlertTriangle, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface UserSettings {
   aiPrivacyMode: string;
@@ -14,6 +15,7 @@ interface UserSettings {
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
+  const { logout } = useAuth();
   const [form, setForm] = useState<UserSettings>({ aiPrivacyMode: 'LOCAL', openaiKey: '', anthropicKey: '', backupSchedule: 'DAILY' });
 
   const settingsQuery = useQuery({ queryKey: ['settings'], queryFn: () => apiClient.get<UserSettings>('/settings') });
@@ -118,6 +120,18 @@ export default function SettingsPage() {
           <p className="text-content-secondary text-sm">Unable to load settings</p>
         </div>
       )}
+
+      {/* Sign Out — visible for mobile users who access settings via "More" tab */}
+      <div className="max-w-xl pt-4 border-t border-edge">
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 text-sm text-content-tertiary hover:text-accent-red transition-colors"
+          aria-label="Sign out"
+        >
+          <LogOut size={16} />
+          <span>Sign Out</span>
+        </button>
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { MobileNav } from './mobile-nav';
 import { DemoBanner } from './demo-banner';
+import { AuthGuard } from './auth-guard';
 
 /** Pages that should NOT show the navigation shell */
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
@@ -18,22 +19,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Demo banner */}
-      <DemoBanner />
+    <AuthGuard>
+      <div className="flex min-h-screen">
+        {/* Demo banner */}
+        <DemoBanner />
 
-      {/* Desktop sidebar */}
-      <Sidebar />
+        {/* Desktop sidebar */}
+        <Sidebar />
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-content px-4 py-6 md:px-8 md:py-8">
-          {children}
-        </div>
-      </main>
+        {/* Main content */}
+        <main className="flex-1 overflow-auto">
+          <div className="mx-auto max-w-content px-4 py-6 md:px-8 md:py-8">
+            {children}
+          </div>
+        </main>
 
-      {/* Mobile bottom nav */}
-      <MobileNav />
-    </div>
+        {/* Mobile bottom nav */}
+        <MobileNav />
+      </div>
+    </AuthGuard>
   );
 }
