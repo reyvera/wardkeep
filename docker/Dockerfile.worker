@@ -22,4 +22,4 @@ COPY --from=builder /app ./
 RUN rm -rf packages/*/src apps/worker/src apps/api apps/web \
     && rm -rf .turbo turbo.json tsconfig.base.json
 
-CMD ["node", "apps/worker/dist/main.js"]
+CMD ["node", "apps/worker/dist/apps/worker/src/main.js"]
