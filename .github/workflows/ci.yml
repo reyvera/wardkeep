@@ -66,6 +66,8 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Validate compose configs
+        env:
+          ENCRYPTION_KEY: ci-validation-placeholder
         run: |
           docker compose config --quiet
           docker compose -f docker-compose.demo.yml config --quiet
