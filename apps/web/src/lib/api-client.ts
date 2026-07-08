@@ -1,6 +1,20 @@
 import { offlineQueue } from './offline-queue';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+/**
+ * Derive the API base URL at runtime from the browser's current location.
+ * This eliminates the need to configure NEXT_PUBLIC_API_URL per deployment.
+ * Falls back to env var for SSR/build contexts where window isn't available.
+ */
+function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    // Use same protocol and hostname as the browser, with API port 4000
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:4000/api`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+}
+
+const API_BASE = getApiBase();
 
 class ApiClient {
   private token: string | null = null;
