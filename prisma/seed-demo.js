@@ -39,11 +39,24 @@ function pickRandom(arr) {
 }
 
 async function main() {
-  // Skip if demo user already exists
+  // Check if demo user exists
   const existing = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
   if (existing) {
-    console.log('  ℹ Demo user already exists, skipping seed.');
-    return;
+    // Check if the user has categories (indicator that seeding completed)
+    const categoryCount = await prisma.category.count({ where: { userId: existing.id } });
+    if (categoryCount > 0) {
+      console.log('  ℹ Demo user already exists with data, skipping seed.');
+      return;
+    }
+    // User exists but no data — delete and recreate
+    console.log('  ℹ Demo user exists but has no data, re-seeding...');
+    await prisma.transaction.deleteMany({ where: { userId: existing.id } });
+    await prisma.budgetAllocation.deleteMany({ where: { budget: { userId: existing.id } } });
+    await prisma.budget.deleteMany({ where: { userId: existing.id } });
+    await prisma.account.deleteMany({ where: { userId: existing.id } });
+    await prisma.category.deleteMany({ where: { userId: existing.id } });
+    await prisma.session.deleteMany({ where: { userId: existing.id } });
+    await prisma.user.delete({ where: { id: existing.id } });
   }
 
   console.log('  🌱 Seeding demo data...');
