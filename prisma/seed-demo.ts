@@ -4,7 +4,6 @@
  */
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -24,8 +23,6 @@ const MERCHANTS = {
   'Housing': ['Apt Rent LLC', 'State Farm Insurance'],
   'Subscriptions': ['iCloud Storage', 'ChatGPT Plus', 'GitHub Pro', 'Notion'],
 };
-
-const INCOME_SOURCES = ['Acme Corp Payroll', 'Freelance Client', 'Interest Payment'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,13 +87,13 @@ async function main() {
   const checking = await prisma.account.create({
     data: { name: 'Chase Checking', type: 'CHECKING', userId: user.id, initialBalance: '4500.00' },
   });
-  const savings = await prisma.account.create({
+  const _savings = await prisma.account.create({
     data: { name: 'Ally Savings', type: 'SAVINGS', userId: user.id, initialBalance: '12000.00' },
   });
   const creditCard = await prisma.account.create({
     data: { name: 'Amex Blue Cash', type: 'CREDIT_CARD', userId: user.id, initialBalance: '1847.32' },
   });
-  const mortgage = await prisma.account.create({
+  const _mortgage = await prisma.account.create({
     data: { name: 'Home Mortgage', type: 'MORTGAGE', userId: user.id, initialBalance: '245000.00' },
   });
 

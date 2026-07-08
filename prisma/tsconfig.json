@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "typeRoots": [
+      "../apps/api/node_modules/@types",
+      "../node_modules/.pnpm/@types+node@20.19.43/node_modules/@types",
+      "../node_modules/.pnpm/@types+bcrypt@5.0.2/node_modules/@types"
+    ]
+  },
+  "include": ["./**/*.ts"]
+}
