@@ -8,6 +8,7 @@ import { Decimal } from 'decimal.js';
 
 import {
   AccountType,
+  DEBT_ACCOUNT_TYPES,
   MAX_ACCOUNTS_PER_USER,
 } from '@wardkeep/shared';
 import {
@@ -114,6 +115,20 @@ export class AccountsService {
       },
     });
 
+    // Auto-create a DebtProfile for liability-type accounts
+    const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
+    if (debtTypes.includes(dto.type)) {
+      await this.prisma.debtProfile.create({
+        data: {
+          userId,
+          accountId: account.id,
+          apr: new Decimal(0),
+          minimumPayment: new Decimal(0),
+          priority: 0,
+        },
+      });
+    }
+
     return {
       id: account.id,
       userId: account.userId,
@@ -171,6 +186,31 @@ export class AccountsService {
       },
     });
 
+    // Sync DebtProfile when account type changes
+    if (dto.type !== undefined && dto.type !== account.type) {
+      const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
+      const wasDebt = debtTypes.includes(account.type);
+      const isNowDebt = debtTypes.includes(dto.type);
+
+      if (!wasDebt && isNowDebt) {
+        // Changed to a liability type — create DebtProfile
+        await this.prisma.debtProfile.create({
+          data: {
+            userId,
+            accountId,
+            apr: new Decimal(0),
+            minimumPayment: new Decimal(0),
+            priority: 0,
+          },
+        });
+      } else if (wasDebt && !isNowDebt) {
+        // Changed from a liability type — remove DebtProfile
+        await this.prisma.debtProfile.deleteMany({
+          where: { accountId },
+        });
+      }
+    }
+
     let currentBalance: string;
     if (updated.linkedBankAccounts.length > 0) {
       currentBalance = new Decimal(updated.initialBalance.toString()).toFixed(2);
@@ -218,6 +258,11 @@ export class AccountsService {
       where: { id: accountId },
       data: { isArchived: true },
     });
+
+    // Remove the linked DebtProfile when archiving a liability account
+    await this.prisma.debtProfile.deleteMany({
+      where: { accountId },
+    });
   }
 
   /**
@@ -247,6 +292,11 @@ export class AccountsService {
 
     // Delete recurring transactions for this account
     await this.prisma.recurringTransaction.deleteMany({
+      where: { accountId },
+    });
+
+    // Delete linked debt profile (also cascade-deleted, but explicit for clarity)
+    await this.prisma.debtProfile.deleteMany({
       where: { accountId },
     });
 
