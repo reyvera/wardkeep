@@ -47,12 +47,27 @@ async function main() {
   // Clean existing demo user
   const existing = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
   if (existing) {
-    // Delete all user data
+    // Delete all user data (order matters for foreign key constraints)
+    await prisma.transactionTag.deleteMany({ where: { transaction: { account: { userId: existing.id } } } });
     await prisma.transaction.deleteMany({ where: { account: { userId: existing.id } } });
+    await prisma.recurringTransaction.deleteMany({ where: { userId: existing.id } });
     await prisma.budgetAllocation.deleteMany({ where: { budget: { userId: existing.id } } });
     await prisma.budget.deleteMany({ where: { userId: existing.id } });
+    await prisma.debtProfile.deleteMany({ where: { userId: existing.id } });
+    await prisma.linkedBankAccount.deleteMany({ where: { connection: { userId: existing.id } } });
+    await prisma.bankConnection.deleteMany({ where: { userId: existing.id } });
     await prisma.account.deleteMany({ where: { userId: existing.id } });
+    await prisma.ruleCondition.deleteMany({ where: { rule: { userId: existing.id } } });
+    await prisma.ruleAction.deleteMany({ where: { rule: { userId: existing.id } } });
+    await prisma.rule.deleteMany({ where: { userId: existing.id } });
     await prisma.category.deleteMany({ where: { userId: existing.id } });
+    await prisma.chatMessage.deleteMany({ where: { session: { userId: existing.id } } });
+    await prisma.chatSession.deleteMany({ where: { userId: existing.id } });
+    await prisma.aICorrection.deleteMany({ where: { userId: existing.id } });
+    await prisma.auditLog.deleteMany({ where: { userId: existing.id } });
+    await prisma.backup.deleteMany({ where: { userId: existing.id } });
+    await prisma.userSettings.deleteMany({ where: { userId: existing.id } });
+    await prisma.passwordResetToken.deleteMany({ where: { userId: existing.id } });
     await prisma.session.deleteMany({ where: { userId: existing.id } });
     await prisma.user.delete({ where: { id: existing.id } });
   }
@@ -98,6 +113,15 @@ async function main() {
   });
 
   console.log('  ✓ Created 4 accounts');
+
+  // Create debt profiles for liability accounts (auto-sync with debt payoff)
+  await prisma.debtProfile.create({
+    data: { userId: user.id, accountId: creditCard.id, apr: '0.1999', minimumPayment: '35.00', priority: 1 },
+  });
+  await prisma.debtProfile.create({
+    data: { userId: user.id, accountId: _mortgage.id, apr: '0.0675', minimumPayment: '1580.00', priority: 2 },
+  });
+  console.log('  ✓ Created debt profiles for liability accounts');
 
   // Generate 6 months of transactions
   let txCount = 0;
