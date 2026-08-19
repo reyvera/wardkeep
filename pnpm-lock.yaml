@@ -286,6 +286,18 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.43)
 
+  packages/readiness:
+    devDependencies:
+      fast-check:
+        specifier: ^4.8.0
+        version: 4.8.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.43)
+
   packages/shared:
     dependencies:
       decimal.js:
