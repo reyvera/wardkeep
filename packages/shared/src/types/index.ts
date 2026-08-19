@@ -1,4 +1,5 @@
 export * from './account';
+export * from './debt-profile';
 export * from './transaction';
 export * from './category';
 export * from './budget';

@@ -80,6 +80,7 @@ model Account {
   transactions Transaction[]
   recurring    RecurringTransaction[]
   linkedBankAccounts LinkedBankAccount[]
+  debtProfile  DebtProfile?
 
   @@unique([userId, name])
   @@index([userId, isArchived])
@@ -379,6 +380,39 @@ model AuditLog {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+}
+
+// ─── Debt Profiles ──────────────────────────────────────────────────────────────
+
+model DebtProfile {
+  id             String   @id @default(uuid())
+  userId         String
+  accountId      String   @unique
+  apr            Decimal  @db.Decimal(5, 4) // 0.0000 to 1.0000 (0%–100%)
+  minimumPayment Decimal  @db.Decimal(19, 4)
+  priority       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Saved Payoff Plans ─────────────────────────────────────────────────────────
+
+model SavedPayoffPlan {
+  id                  String   @id @default(uuid())
+  userId              String
+  name                String   @db.VarChar(100)
+  accountIds          String[] // Array of account IDs included in this plan
+  strategy            String   @db.VarChar(20) // snowball, avalanche, custom
+  totalMonthlyPayment Decimal  @db.Decimal(19, 4)
+  totalInterest       Decimal  @db.Decimal(19, 4)
+  totalMonths         Int
+  createdAt           DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 // ─── AI Corrections ─────────────────────────────────────────────────────────────
