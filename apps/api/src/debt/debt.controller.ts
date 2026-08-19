@@ -1,6 +1,12 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -14,12 +20,128 @@ import {
 } from '../common/interceptors/user-scope.interceptor';
 import { DebtService } from './debt.service';
 import { CalculateDebtSchema, CompareDebtSchema } from './dto/calculate-debt.dto';
+import {
+  CreateDebtProfileSchema,
+  UpdateDebtProfileSchema,
+  CreatePayoffPlanSchema,
+} from './dto/debt-profile.dto';
 
 @Controller('debt')
 @UseGuards(AuthGuard)
 @UseInterceptors(UserScopeInterceptor)
 export class DebtController {
   constructor(private readonly debtService: DebtService) {}
+
+  // ─── Debt Profiles ────────────────────────────────────────────────────────
+
+  /**
+   * Lists all debt profiles for the authenticated user.
+   * Returns profiles with linked account data and computed current balances.
+   * @param req - The scoped request with userId
+   * @returns Array of debt profiles with account details
+   */
+  @Get('profiles')
+  async listProfiles(@Req() req: ScopedRequest) {
+    return this.debtService.listProfiles(req.userId!);
+  }
+
+  /**
+   * Creates a new debt profile linked to a liability account.
+   * @param req - The scoped request with userId and body
+   * @returns The newly created debt profile
+   */
+  @Post('profiles')
+  async createProfile(@Req() req: ScopedRequest) {
+    const result = CreateDebtProfileSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.createProfile(req.userId!, result.data);
+  }
+
+  /**
+   * Updates an existing debt profile (APR, minimum payment, or priority).
+   * @param req - The scoped request with userId and body
+   * @param id - The debt profile ID from route params
+   * @returns The updated debt profile
+   */
+  @Patch('profiles/:id')
+  async updateProfile(@Req() req: ScopedRequest, @Param('id') id: string) {
+    const result = UpdateDebtProfileSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.updateProfile(req.userId!, id, result.data);
+  }
+
+  /**
+   * Deletes a debt profile.
+   * @param req - The scoped request with userId
+   * @param id - The debt profile ID from route params
+   */
+  @Delete('profiles/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteProfile(@Req() req: ScopedRequest, @Param('id') id: string) {
+    await this.debtService.deleteProfile(req.userId!, id);
+  }
+
+  // ─── Auto-Sync: Debts from Accounts ──────────────────────────────────────
+
+  /**
+   * Returns all debt-type accounts with their profiles in the format
+   * expected by the payoff calculator. Balances are computed live.
+   * @param req - The scoped request with userId
+   * @returns Array of debts ready for the calculator
+   */
+  @Get('from-accounts')
+  async getDebtsFromAccounts(@Req() req: ScopedRequest) {
+    return this.debtService.getDebtsFromAccounts(req.userId!);
+  }
+
+  // ─── Saved Payoff Plans ───────────────────────────────────────────────────
+
+  /**
+   * Lists all saved payoff plans for the authenticated user.
+   * @param req - The scoped request with userId
+   * @returns Array of saved plans ordered by creation date
+   */
+  @Get('plans')
+  async listPlans(@Req() req: ScopedRequest) {
+    return this.debtService.listPlans(req.userId!);
+  }
+
+  /**
+   * Saves a new payoff plan with selected accounts, strategy, and results.
+   * @param req - The scoped request with userId and body
+   * @returns The saved plan
+   */
+  @Post('plans')
+  async createPlan(@Req() req: ScopedRequest) {
+    const result = CreatePayoffPlanSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.createPlan(req.userId!, result.data);
+  }
+
+  /**
+   * Deletes a saved payoff plan.
+   * @param req - The scoped request with userId
+   * @param id - The plan ID from route params
+   */
+  @Delete('plans/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deletePlan(@Req() req: ScopedRequest, @Param('id') id: string) {
+    await this.debtService.deletePlan(req.userId!, id);
+  }
+
+  // ─── Payoff Calculations ──────────────────────────────────────────────────
 
   /**
    * Calculates a debt payoff schedule using the specified strategy.
