@@ -12,7 +12,7 @@ export type {
   FinancialContext,
   VerificationResult,
 } from './verification';
-export { calculatePayoffSchedule, compareStrategies } from './debt';
+export { calculatePayoffSchedule, compareStrategies, calculateConsolidation, calculateMinimumOnlyPayoff, calculateVelocityBanking } from './debt';
 export type {
   PayoffStrategy,
   Debt,
@@ -20,6 +20,10 @@ export type {
   DebtSchedule,
   PayoffResult,
   StrategyComparison,
+  ConsolidationParams,
+  ConsolidationResult,
+  VelocityBankingParams,
+  VelocityBankingResult,
 } from './debt';
 export { projectCashFlow, expandRecurring } from './cash-flow';
 export type {

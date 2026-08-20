@@ -543,6 +543,30 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Total monthly subscription burn rate
     - Alert on cancelled subscription still charging
 
+### 35b. Debt Payoff Enhancements [COMPLETE]
+
+- [x] 35b.1 Improved schedule display
+    - Month-by-month consolidated view (all debts shown per month)
+    - Per-debt summary cards with payoff month and total interest
+    - Month total rows and "Paid Off" status indicators
+    - Configurable time horizon (12/24/60/all months)
+
+- [x] 35b.2 Debt consolidation calculator
+    - Model refinancing into single fixed-rate loan
+    - Inputs: new APR, term (months), origination fee %
+    - Outputs: monthly payment, total interest, total cost
+    - Comparison against minimum-only baseline
+
+- [x] 35b.3 Velocity banking (HELOC chunking) calculator
+    - Model using a line of credit for lump-sum debt payments
+    - Inputs: HELOC limit, HELOC APR, monthly disposable income, chunk amount
+    - Shows debt interest + HELOC interest (combined cost)
+    - Comparison against minimum-only baseline
+
+- [x] 35b.4 Minimum-only baseline calculator
+    - Calculates time and interest using only minimum payments
+    - Serves as comparison benchmark for all advanced strategies
+
 ### 36. Investment & Asset Tracking
 
 - [ ] 36.1 Investment account support

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "swc src -d dist --strip-leading-paths --config-file .swcrc",
     "build:check": "tsc --project tsconfig.json --noEmit",
+    "dev": "ts-node --swc --project tsconfig.json src/main.ts",
     "start": "node dist/main.js",
     "start:dev": "ts-node --project tsconfig.json src/main.ts",
     "test": "vitest run",

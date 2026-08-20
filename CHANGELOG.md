@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Debt Consolidation Calculator** — Model refinancing all debts into a single fixed-rate loan. Enter APR, term, and origination fee to see monthly payment, total cost, and savings vs. minimum-only baseline.
+- **Velocity Banking Calculator** — HELOC chunking strategy that uses a line of credit to make lump-sum payments against highest-rate debt, then pays down the HELOC with disposable income. Shows combined interest cost and comparison to baseline.
+- **Minimum-Only Baseline** — Calculate how long debt takes to pay off with only minimum payments. Serves as the comparison benchmark for all other strategies.
+- **Improved Debt Schedule Display** — Month-by-month consolidated view showing all debts per month simultaneously. Includes per-debt summary cards, month totals, "Paid Off" status indicators, and configurable time horizon (12/24/60/all months).
+
+### Changed
+
+- Debt payoff schedule table now groups entries by month (previously listed all months per debt sequentially, making it appear debts were paid one-at-a-time rather than simultaneously).
+
+### API
+
+- `POST /api/debt/consolidation` — Debt consolidation scenario calculator
+- `POST /api/debt/velocity-banking` — Velocity banking (HELOC chunking) calculator
+- `POST /api/debt/minimum-only` — Minimum-payment-only baseline calculator
+
 ## [1.0.0] - 2026-07-06
 
 ### Added

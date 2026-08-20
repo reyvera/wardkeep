@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { Upload, FileUp, Eye, CheckCircle } from 'lucide-react';
 
-interface PreviewTransaction { date: string; merchant: string; amount: number; category?: string; }
-interface ImportResult { imported: number; duplicates: number; errors: number; }
+interface Account { id: string; name: string; isArchived: boolean; }
+interface PreviewTransaction { date: string; description: string; amount: string; category?: string; }
+interface UploadPreview { fileId: string; preview: PreviewTransaction[]; totalRows: number; errors: Array<{ line: number; reason: string }>; }
+interface ImportResult { imported: number; duplicatesSkipped: number; errors: number; }
 
 function formatCurrency(value: number): string { return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
@@ -14,17 +16,44 @@ export default function ImportPage() {
   const [format, setFormat] = useState<'csv' | 'ofx' | 'qfx'>('csv');
   const [fileData, setFileData] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
+  const [accountId, setAccountId] = useState('');
   const [columnMapping, setColumnMapping] = useState({ date: 'date', merchant: 'description', amount: 'amount', category: 'category' });
   const [preview, setPreview] = useState<PreviewTransaction[]>([]);
+  const [uploadId, setUploadId] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  const previewMutation = useMutation({ mutationFn: () => apiClient.post<{ transactions: PreviewTransaction[] }>('/import/preview', { fileData, format, columnMapping: format === 'csv' ? columnMapping : undefined }), onSuccess: (data) => setPreview(data.transactions.slice(0, 10)) });
-  const commitMutation = useMutation({ mutationFn: () => apiClient.post<ImportResult>('/import/commit', { fileData, format, columnMapping: format === 'csv' ? columnMapping : undefined }), onSuccess: (data) => { setImportResult(data); setPreview([]); } });
+  const accountsQuery = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => apiClient.get<Account[]>('/accounts'),
+  });
+
+  const previewMutation = useMutation({
+    mutationFn: () => apiClient.post<UploadPreview>('/import/upload', {
+      accountId,
+      format,
+      content: fileData,
+      mapping: format === 'csv'
+        ? { date: columnMapping.date, amount: columnMapping.amount, description: columnMapping.merchant, category: columnMapping.category }
+        : undefined,
+    }),
+    onSuccess: (data) => {
+      setUploadId(data.fileId);
+      setPreview(data.preview);
+    },
+  });
+  const commitMutation = useMutation({
+    mutationFn: () => apiClient.post<ImportResult>('/import/commit', { fileId: uploadId, accountId }),
+    onSuccess: (data) => {
+      setImportResult(data);
+      setPreview([]);
+      setUploadId(null);
+    },
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFileName(file.name); setImportResult(null); setPreview([]);
+    setFileName(file.name); setImportResult(null); setPreview([]); setUploadId(null);
     const reader = new FileReader();
     reader.onload = () => { const result = reader.result as string; setFileData(result.split(',')[1] ?? result); };
     reader.readAsDataURL(file);
@@ -37,6 +66,7 @@ export default function ImportPage() {
       <div className="card space-y-4">
         <span className="card-title">FILE UPLOAD</span>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><label className="input-label">Import To</label><select value={accountId} onChange={(e) => { setAccountId(e.target.value); setPreview([]); setUploadId(null); }} className="input" required><option value="">Select an account</option>{(accountsQuery.data ?? []).filter((account) => !account.isArchived).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></div>
           <div><label className="input-label">Format</label><select value={format} onChange={(e) => setFormat(e.target.value as 'csv' | 'ofx' | 'qfx')} className="input"><option value="csv">CSV</option><option value="ofx">OFX</option><option value="qfx">QFX</option></select></div>
           <div><label className="input-label">File</label><input type="file" accept=".csv,.ofx,.qfx" onChange={handleFileChange} className="input file:mr-4 file:rounded-md file:border-0 file:bg-accent-blue/10 file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-blue cursor-pointer" /></div>
         </div>
@@ -55,10 +85,11 @@ export default function ImportPage() {
         )}
 
         <div className="flex gap-3 pt-2">
-          <button onClick={() => previewMutation.mutate()} disabled={!fileData || previewMutation.isPending} className="btn-primary"><Eye size={16} /> {previewMutation.isPending ? 'Loading...' : 'Preview'}</button>
-          {preview.length > 0 && <button onClick={() => commitMutation.mutate()} disabled={commitMutation.isPending} className="btn-primary"><Upload size={16} /> {commitMutation.isPending ? 'Importing...' : 'Commit Import'}</button>}
+          <button onClick={() => previewMutation.mutate()} disabled={!fileData || !accountId || previewMutation.isPending} className="btn-primary"><Eye size={16} /> {previewMutation.isPending ? 'Loading...' : 'Preview'}</button>
+          {preview.length > 0 && <button onClick={() => commitMutation.mutate()} disabled={!uploadId || commitMutation.isPending} className="btn-primary"><Upload size={16} /> {commitMutation.isPending ? 'Importing...' : 'Commit Import'}</button>}
         </div>
         {previewMutation.isError && <p className="text-sm text-accent-red">{previewMutation.error.message}</p>}
+        {commitMutation.isError && <p className="text-sm text-accent-red">{commitMutation.error.message}</p>}
       </div>
 
       {importResult && (
@@ -66,7 +97,7 @@ export default function ImportPage() {
           <div className="flex items-center gap-3 mb-3"><CheckCircle size={18} className="text-accent-green" /><span className="text-sm font-medium text-accent-green">Import Complete</span></div>
           <div className="grid grid-cols-3 gap-4">
             <div><p className="text-xs text-content-tertiary">Imported</p><p className="text-lg font-bold tabular-nums text-accent-green">{importResult.imported}</p></div>
-            <div><p className="text-xs text-content-tertiary">Duplicates Skipped</p><p className="text-lg font-bold tabular-nums text-accent-yellow">{importResult.duplicates}</p></div>
+            <div><p className="text-xs text-content-tertiary">Duplicates Skipped</p><p className="text-lg font-bold tabular-nums text-accent-yellow">{importResult.duplicatesSkipped}</p></div>
             <div><p className="text-xs text-content-tertiary">Errors</p><p className="text-lg font-bold tabular-nums text-accent-red">{importResult.errors}</p></div>
           </div>
         </div>
@@ -79,7 +110,7 @@ export default function ImportPage() {
             <table className="w-full text-left text-sm">
               <thead><tr className="border-t border-b border-edge"><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Date</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Merchant</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Amount</th><th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Category</th></tr></thead>
               <tbody className="divide-y divide-edge">
-                {preview.map((tx, i) => <tr key={i} className="hover:bg-surface-elevated transition-colors"><td className="px-6 py-3 text-content-secondary">{tx.date}</td><td className="px-6 py-3 text-content-primary">{tx.merchant}</td><td className="px-6 py-3 text-right tabular-nums text-content-primary">${formatCurrency(Number(tx.amount))}</td><td className="px-6 py-3 text-content-tertiary">{tx.category ?? '—'}</td></tr>)}
+                {preview.map((tx, i) => <tr key={i} className="hover:bg-surface-elevated transition-colors"><td className="px-6 py-3 text-content-secondary">{tx.date}</td><td className="px-6 py-3 text-content-primary">{tx.description}</td><td className="px-6 py-3 text-right tabular-nums text-content-primary">${formatCurrency(Number(tx.amount))}</td><td className="px-6 py-3 text-content-tertiary">{tx.category ?? '—'}</td></tr>)}
               </tbody>
             </table>
           </div>

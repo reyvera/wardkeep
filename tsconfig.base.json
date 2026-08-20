@@ -20,6 +20,7 @@
     "paths": {
       "@wardkeep/shared": ["./packages/shared/src/index.ts"],
       "@wardkeep/finance-engine": ["./packages/finance-engine/src/index.ts"],
+      "@wardkeep/readiness": ["./packages/readiness/src/index.ts"],
       "@wardkeep/ai-engine": ["./packages/ai-engine/src/index.ts"],
       "@wardkeep/importers": ["./packages/importers/src/index.ts"]
     }
