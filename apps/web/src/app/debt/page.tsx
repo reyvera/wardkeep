@@ -157,7 +157,7 @@ export default function DebtPage() {
   const configuredDebts = allDebts.filter(
     (d) => d.isFromAccount ? (d.apr > 0 && d.minimumPayment > 0) : true,
   );
-  const unconfiguredDebts = accountDebts
+  const _unconfiguredDebts = accountDebts
     .filter((d) => selectedAccountIds.has(d.id))
     .filter((d) => parseFloat(d.apr) === 0 || parseFloat(d.minimumPayment) === 0)
     .map((d) => ({
