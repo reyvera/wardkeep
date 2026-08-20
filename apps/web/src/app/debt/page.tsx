@@ -462,49 +462,156 @@ export default function DebtPage() {
       )}
 
       {/* Schedule Results */}
-      {scheduleResult && scheduleResult.schedules.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">Payoff Schedule</span>
-            <button onClick={() => setShowSaveDialog(true)} className="btn-ghost flex items-center gap-1 text-sm text-accent-blue">
-              <Save size={14} /> Save Plan
-            </button>
-          </div>
-          <div className="card overflow-hidden p-0">
-            <div className="px-6 pt-6 pb-4">
-              <p className="text-sm text-content-secondary">
-                {scheduleResult.totalMonths} months · ${formatCurrency(parseFloat(scheduleResult.totalInterest))} total interest
-              </p>
+      {scheduleResult && scheduleResult.schedules.length > 0 && (() => {
+        // Build a consolidated month-by-month view
+        const maxMonth = Math.min(scheduleResult.totalMonths, scheduleViewMax);
+        const monthRows: Array<{
+          month: number;
+          entries: Array<{ debtName: string; debtId: string; payment: string; interest: string; remainingBalance: string; paidOff: boolean }>;
+          totalPayment: number;
+          totalInterest: number;
+        }> = [];
+
+        for (let m = 1; m <= maxMonth; m++) {
+          const entries: typeof monthRows[number]['entries'] = [];
+          let totalPayment = 0;
+          let totalInterest = 0;
+
+          for (const schedule of scheduleResult.schedules) {
+            const row = schedule.months.find((r) => r.month === m);
+            if (row) {
+              const payment = parseFloat(row.payment);
+              const interest = parseFloat(row.interest);
+              const balance = parseFloat(row.remainingBalance);
+              entries.push({
+                debtName: schedule.debtName,
+                debtId: schedule.debtId,
+                payment: row.payment,
+                interest: row.interest,
+                remainingBalance: row.remainingBalance,
+                paidOff: balance <= 0,
+              });
+              totalPayment += payment;
+              totalInterest += interest;
+            }
+          }
+          if (entries.length > 0) {
+            monthRows.push({ month: m, entries, totalPayment, totalInterest });
+          }
+        }
+
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">Payoff Schedule</span>
+              <div className="flex items-center gap-3">
+                <select
+                  value={scheduleViewMax}
+                  onChange={(e) => setScheduleViewMax(parseInt(e.target.value))}
+                  className="input text-xs py-1 px-2 w-auto"
+                >
+                  <option value={12}>12 months</option>
+                  <option value={24}>24 months</option>
+                  <option value={60}>60 months</option>
+                  <option value={360}>All months</option>
+                </select>
+                <button onClick={() => setShowSaveDialog(true)} className="btn-ghost flex items-center gap-1 text-sm text-accent-blue">
+                  <Save size={14} /> Save Plan
+                </button>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-t border-b border-edge">
-                    <th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Month</th>
-                    <th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase">Debt</th>
-                    <th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Payment</th>
-                    <th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Interest</th>
-                    <th className="px-6 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Balance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-edge">
-                  {scheduleResult.schedules.flatMap((schedule) =>
-                    schedule.months.slice(0, 24).map((row, i) => (
-                      <tr key={`${schedule.debtId}-${row.month}-${i}`} className="hover:bg-surface-elevated transition-colors">
-                        <td className="px-6 py-3 text-content-primary tabular-nums">{row.month}</td>
-                        <td className="px-6 py-3 text-content-secondary">{schedule.debtName}</td>
-                        <td className="px-6 py-3 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(row.payment))}</td>
-                        <td className="px-6 py-3 text-right tabular-nums text-accent-red">${formatCurrency(parseFloat(row.interest))}</td>
-                        <td className="px-6 py-3 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(row.remainingBalance))}</td>
-                      </tr>
-                    )),
-                  )}
-                </tbody>
-              </table>
+
+            {/* Summary cards per debt */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {scheduleResult.schedules.map((schedule) => (
+                <div key={schedule.debtId} className="card py-3 px-4">
+                  <p className="text-sm font-medium text-content-primary">{schedule.debtName}</p>
+                  <div className="flex items-baseline gap-4 mt-1">
+                    <span className="text-xs text-content-tertiary">
+                      Paid off: <span className="text-accent-green font-medium">Month {schedule.payoffMonth}</span>
+                    </span>
+                    <span className="text-xs text-content-tertiary">
+                      Interest: <span className="text-accent-red font-medium">${formatCurrency(parseFloat(schedule.totalInterest))}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total summary */}
+            <div className="card py-4 px-6 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-xs text-content-tertiary uppercase">Debt Free In</p>
+                  <p className="text-lg font-bold text-content-primary">{scheduleResult.totalMonths} months</p>
+                </div>
+                <div>
+                  <p className="text-xs text-content-tertiary uppercase">Total Interest</p>
+                  <p className="text-lg font-bold text-accent-red">${formatCurrency(parseFloat(scheduleResult.totalInterest))}</p>
+                </div>
+              </div>
+              <div className="text-xs text-content-tertiary">
+                Strategy: <span className="capitalize font-medium text-content-secondary">{strategy}</span>
+              </div>
+            </div>
+
+            {/* Consolidated month-by-month table */}
+            <div className="card overflow-hidden p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-edge">
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">Month</th>
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">Debt</th>
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Payment</th>
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Interest</th>
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Balance</th>
+                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthRows.map((monthRow) => (
+                      <React.Fragment key={monthRow.month}>
+                        {monthRow.entries.map((entry, i) => (
+                          <tr
+                            key={`${monthRow.month}-${entry.debtId}`}
+                            className={`hover:bg-surface-elevated transition-colors ${i === 0 ? 'border-t border-edge' : ''} ${entry.paidOff ? 'bg-accent-green/5' : ''}`}
+                          >
+                            {i === 0 ? (
+                              <td className="px-4 py-2 text-content-primary tabular-nums font-medium" rowSpan={monthRow.entries.length}>
+                                {monthRow.month}
+                              </td>
+                            ) : null}
+                            <td className="px-4 py-2 text-content-secondary text-xs">{entry.debtName}</td>
+                            <td className="px-4 py-2 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(entry.payment))}</td>
+                            <td className="px-4 py-2 text-right tabular-nums text-accent-red">${formatCurrency(parseFloat(entry.interest))}</td>
+                            <td className="px-4 py-2 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(entry.remainingBalance))}</td>
+                            <td className="px-4 py-2 text-center">
+                              {entry.paidOff ? (
+                                <span className="text-xs bg-accent-green/10 text-accent-green px-2 py-0.5 rounded font-medium">Paid Off</span>
+                              ) : (
+                                <span className="text-xs text-content-tertiary">Active</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Month total row */}
+                        <tr className="bg-surface-elevated/50">
+                          <td className="px-4 py-1"></td>
+                          <td className="px-4 py-1 text-xs text-content-tertiary font-medium">Month Total</td>
+                          <td className="px-4 py-1 text-right tabular-nums text-xs font-medium text-content-secondary">${formatCurrency(monthRow.totalPayment)}</td>
+                          <td className="px-4 py-1 text-right tabular-nums text-xs text-accent-red/70">${formatCurrency(monthRow.totalInterest)}</td>
+                          <td className="px-4 py-1" colSpan={2}></td>
+                        </tr>
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Save Plan Dialog */}
       {showSaveDialog && (
