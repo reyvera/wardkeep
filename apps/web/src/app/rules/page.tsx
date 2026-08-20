@@ -10,7 +10,7 @@ interface Rule {
   name: string;
   priority: number;
   conditions: Array<{ field: string; operator: string; value: string }>;
-  action: { type: string; value: string };
+  actions: Array<{ type: string; value: string }>;
 }
 
 interface DryRunResult {
@@ -22,13 +22,13 @@ export default function RulesPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [dryRunResult, setDryRunResult] = useState<DryRunResult | null>(null);
-  const [newRule, setNewRule] = useState({ name: '', priority: 0, conditionField: 'merchant', conditionOperator: 'contains', conditionValue: '', actionType: 'categorize', actionValue: '' });
+  const [newRule, setNewRule] = useState({ name: '', priority: 0, conditionField: 'MERCHANT', conditionOperator: 'CONTAINS', conditionValue: '', actionType: 'SET_CATEGORY', actionValue: '' });
 
   const rulesQuery = useQuery({ queryKey: ['rules'], queryFn: () => apiClient.get<Rule[]>('/rules') });
 
   const createMutation = useMutation({
-    mutationFn: () => apiClient.post('/rules', { name: newRule.name, priority: newRule.priority, conditions: [{ field: newRule.conditionField, operator: newRule.conditionOperator, value: newRule.conditionValue }], action: { type: newRule.actionType, value: newRule.actionValue } }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['rules'] }); setShowForm(false); setNewRule({ name: '', priority: 0, conditionField: 'merchant', conditionOperator: 'contains', conditionValue: '', actionType: 'categorize', actionValue: '' }); },
+    mutationFn: () => apiClient.post('/rules', { name: newRule.name, priority: newRule.priority || undefined, conditions: [{ field: newRule.conditionField, operator: newRule.conditionOperator, value: newRule.conditionValue }], actions: [{ type: newRule.actionType, value: newRule.actionValue }] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['rules'] }); setShowForm(false); setNewRule({ name: '', priority: 0, conditionField: 'MERCHANT', conditionOperator: 'CONTAINS', conditionValue: '', actionType: 'SET_CATEGORY', actionValue: '' }); },
   });
 
   const deleteMutation = useMutation({ mutationFn: (id: string) => apiClient.delete(`/rules/${id}`), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rules'] }) });
@@ -60,8 +60,8 @@ export default function RulesPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div><label className="input-label">Rule Name</label><input placeholder="e.g. Categorize Netflix" value={newRule.name} onChange={(e) => setNewRule({ ...newRule, name: e.target.value })} className="input" required /></div>
             <div><label className="input-label">Priority</label><input placeholder="0" type="number" value={newRule.priority} onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) || 0 })} className="input" /></div>
-            <div><label className="input-label">Match Field</label><select value={newRule.conditionField} onChange={(e) => setNewRule({ ...newRule, conditionField: e.target.value })} className="input"><option value="merchant">Merchant</option><option value="amount">Amount</option><option value="description">Description</option></select></div>
-            <div><label className="input-label">Operator</label><select value={newRule.conditionOperator} onChange={(e) => setNewRule({ ...newRule, conditionOperator: e.target.value })} className="input"><option value="contains">Contains</option><option value="equals">Equals</option><option value="greater_than">Greater than</option><option value="less_than">Less than</option></select></div>
+            <div><label className="input-label">Match Field</label><select value={newRule.conditionField} onChange={(e) => setNewRule({ ...newRule, conditionField: e.target.value })} className="input"><option value="MERCHANT">Merchant</option><option value="AMOUNT">Amount</option><option value="DESCRIPTION">Description</option></select></div>
+            <div><label className="input-label">Operator</label><select value={newRule.conditionOperator} onChange={(e) => setNewRule({ ...newRule, conditionOperator: e.target.value })} className="input"><option value="CONTAINS">Contains</option><option value="EQUALS">Equals</option><option value="STARTS_WITH">Starts with</option><option value="GREATER_THAN">Greater than</option><option value="LESS_THAN">Less than</option></select></div>
             <div><label className="input-label">Value</label><input placeholder="Match value" value={newRule.conditionValue} onChange={(e) => setNewRule({ ...newRule, conditionValue: e.target.value })} className="input" required /></div>
             <div><label className="input-label">Action Value</label><input placeholder="e.g. Entertainment" value={newRule.actionValue} onChange={(e) => setNewRule({ ...newRule, actionValue: e.target.value })} className="input" required /></div>
           </div>
@@ -79,7 +79,7 @@ export default function RulesPage() {
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-purple/10"><Zap size={16} className="text-accent-purple" /></div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-content-primary">{rule.name}</p>
-                <p className="text-xs text-content-tertiary truncate">Priority {rule.priority} · {rule.conditions.map((c) => `${c.field} ${c.operator} "${c.value}"`).join(', ')} → {rule.action.type}: {rule.action.value}</p>
+                <p className="text-xs text-content-tertiary truncate">Priority {rule.priority} · {rule.conditions.map((c) => `${c.field} ${c.operator} "${c.value}"`).join(', ')} → {rule.actions.map((a) => `${a.type}: ${a.value}`).join(', ')}</p>
               </div>
               <button onClick={() => deleteMutation.mutate(rule.id)} className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" title="Delete rule"><Trash2 size={14} /></button>
             </div>
