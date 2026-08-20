@@ -168,6 +168,53 @@ export class RulesService {
   }
 
   /**
+   * Previews which transactions would match a rule definition without saving it.
+   * Accepts the same DTO as createRule but only returns matching transactions.
+   * @param userId - The authenticated user's ID
+   * @param dto - The rule definition to preview
+   * @returns Object with matchedCount and sample matching transactions (max 20)
+   */
+  async previewRule(userId: string, dto: CreateRuleDto) {
+    await this.validateConditions(dto.conditions);
+    await this.validateActions(userId, dto.actions);
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: { userId },
+      include: { tags: true },
+    });
+
+    const conditions: EvalCondition[] = dto.conditions.map((c) => ({
+      field: c.field as unknown as RuleConditionField,
+      operator: c.operator as unknown as RuleOperator,
+      value: c.value,
+    }));
+
+    const logic = dto.logic ?? RuleLogic.ALL;
+
+    const matching = transactions.filter((tx) => {
+      const evalTx: EvalTransaction = {
+        merchant: tx.merchant,
+        amount: tx.amount.toString(),
+        description: tx.description,
+      };
+      return evaluateRule(conditions, logic as unknown as RuleLogic, evalTx);
+    });
+
+    return {
+      matchedCount: matching.length,
+      transactions: matching.slice(0, 20).map((tx) => ({
+        id: tx.id,
+        date: tx.date,
+        amount: tx.amount.toString(),
+        type: tx.type,
+        merchant: tx.merchant,
+        description: tx.description,
+        categoryId: tx.categoryId,
+      })),
+    };
+  }
+
+  /**
    * Dry-runs a rule against all user transactions, returning matches without modification.
    * @param userId - The authenticated user's ID
    * @param ruleId - The rule ID to dry-run

@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Plus, Search, ChevronLeft, ChevronRight, X, ArrowLeftRight, Clock } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, X, ArrowLeftRight, Clock, Zap } from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
+import { CreateRuleModal } from '@/components/create-rule-modal';
 
 interface Transaction {
   id: string;
@@ -55,6 +56,7 @@ export default function TransactionsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
 
   const [newTx, setNewTx] = useState({
     merchant: '',
@@ -314,6 +316,13 @@ export default function TransactionsPage() {
                         <ArrowLeftRight size={12} />
                       </button>
                     )}
+                    <button
+                      onClick={() => setRuleTransaction(tx)}
+                      className="btn-ghost p-1 text-content-tertiary hover:text-accent-purple"
+                      title="Create rule from this transaction"
+                    >
+                      <Zap size={12} />
+                    </button>
                   </div>
                 </div>
               );
@@ -349,6 +358,14 @@ export default function TransactionsPage() {
             </button>
           </div>
         </>
+      )}
+      {/* Create Rule Modal */}
+      {ruleTransaction && categoriesQuery.data && (
+        <CreateRuleModal
+          transaction={ruleTransaction}
+          categories={categoriesQuery.data}
+          onClose={() => setRuleTransaction(null)}
+        />
       )}
     </div>
   );

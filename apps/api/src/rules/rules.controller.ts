@@ -86,6 +86,24 @@ export class RulesController {
   }
 
   /**
+   * Previews which transactions would match a rule definition without saving it.
+   * Accepts the same body as POST /rules but returns matching transactions instead.
+   * @param req - The scoped request with userId and body
+   * @returns Object with matchedCount and sample matching transactions
+   */
+  @Post('preview')
+  async previewRule(@Req() req: ScopedRequest) {
+    const userId = req.userId!;
+    const result = CreateRuleSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.rulesService.previewRule(userId, result.data);
+  }
+
+  /**
    * Dry-runs a rule against all user transactions without modifying data.
    * @param req - The scoped request with userId
    * @param id - The rule ID from route params
