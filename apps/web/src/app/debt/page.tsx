@@ -157,17 +157,7 @@ export default function DebtPage() {
   const configuredDebts = allDebts.filter(
     (d) => d.isFromAccount ? (d.apr > 0 && d.minimumPayment > 0) : true,
   );
-  const _unconfiguredDebts = accountDebts
-    .filter((d) => selectedAccountIds.has(d.id))
-    .filter((d) => parseFloat(d.apr) === 0 || parseFloat(d.minimumPayment) === 0)
-    .map((d) => ({
-      id: d.id,
-      name: d.name,
-      balance: parseFloat(d.balance) || 0,
-      apr: parseFloat(d.apr) * 100,
-      minimumPayment: parseFloat(d.minimumPayment) || 0,
-      isFromAccount: true,
-    }));
+
 
   const toggleAccount = (id: string) => {
     setSelectedAccountIds((prev) => {
