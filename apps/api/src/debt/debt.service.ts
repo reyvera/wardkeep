@@ -193,13 +193,48 @@ export class DebtService {
   // ─── Auto-Sync: Debts from Accounts ────────────────────────────────────────
 
   /**
-   * Fetches all liability accounts for the user that have debt profiles,
-   * computes their current balance, and returns them in the Debt[] format
+   * Fetches all liability accounts for the user, auto-creating debt profiles
+   * for any that don't have one yet. Returns them in the Debt[] format
    * expected by the finance engine.
    * @param userId - The authenticated user's ID
    * @returns Array of debts ready for the payoff calculator
    */
   async getDebtsFromAccounts(userId: string) {
+    // Auto-create profiles for liability accounts that don't have one
+    const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
+    const liabilityAccounts = await this.prisma.account.findMany({
+      where: {
+        userId,
+        type: { in: debtTypes },
+        isArchived: false,
+      },
+      select: { id: true },
+    });
+
+    const existingProfiles = await this.prisma.debtProfile.findMany({
+      where: { userId },
+      select: { accountId: true },
+    });
+
+    const existingAccountIds = new Set(existingProfiles.map((p) => p.accountId));
+    const missingAccountIds = liabilityAccounts
+      .filter((a) => !existingAccountIds.has(a.id))
+      .map((a) => a.id);
+
+    if (missingAccountIds.length > 0) {
+      await this.prisma.debtProfile.createMany({
+        data: missingAccountIds.map((accountId, index) => ({
+          userId,
+          accountId,
+          apr: new Decimal(0),
+          minimumPayment: new Decimal(0),
+          priority: existingProfiles.length + index + 1,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    // Now fetch all profiles with full data
     const profiles = await this.prisma.debtProfile.findMany({
       where: { userId },
       include: {
