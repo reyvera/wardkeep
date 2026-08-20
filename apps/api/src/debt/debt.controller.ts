@@ -19,7 +19,13 @@ import {
   ScopedRequest,
 } from '../common/interceptors/user-scope.interceptor';
 import { DebtService } from './debt.service';
-import { CalculateDebtSchema, CompareDebtSchema } from './dto/calculate-debt.dto';
+import {
+  CalculateDebtSchema,
+  CompareDebtSchema,
+  ConsolidationSchema,
+  VelocityBankingSchema,
+  MinimumOnlySchema,
+} from './dto/calculate-debt.dto';
 import {
   CreateDebtProfileSchema,
   UpdateDebtProfileSchema,
@@ -189,5 +195,59 @@ export class DebtController {
     }
 
     return this.debtService.whatIf(result.data);
+  }
+
+  // ─── Advanced Strategies ──────────────────────────────────────────────────
+
+  /**
+   * Calculates a debt consolidation scenario.
+   * Models combining all debts into a single fixed-rate loan at the given APR/term.
+   * @param req - The scoped request with body containing debts and consolidation params
+   * @returns Consolidation result with schedule and savings vs. baseline
+   */
+  @Post('consolidation')
+  consolidation(@Req() req: ScopedRequest) {
+    const result = ConsolidationSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.consolidation(result.data);
+  }
+
+  /**
+   * Calculates a velocity banking (HELOC chunking) scenario.
+   * Uses a HELOC to make lump-sum payments against debts, then pays down
+   * the HELOC with monthly disposable income before repeating.
+   * @param req - The scoped request with body containing debts and HELOC params
+   * @returns Velocity banking result with schedules and savings vs. baseline
+   */
+  @Post('velocity-banking')
+  velocityBanking(@Req() req: ScopedRequest) {
+    const result = VelocityBankingSchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.velocityBanking(result.data);
+  }
+
+  /**
+   * Calculates the minimum-only payoff baseline (no extra payments).
+   * Useful for comparing how much other strategies save.
+   * @param req - The scoped request with body containing debts
+   * @returns Payoff schedule using only minimum payments
+   */
+  @Post('minimum-only')
+  minimumOnly(@Req() req: ScopedRequest) {
+    const result = MinimumOnlySchema.safeParse(req.body);
+
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten().fieldErrors);
+    }
+
+    return this.debtService.minimumOnly(result.data);
   }
 }

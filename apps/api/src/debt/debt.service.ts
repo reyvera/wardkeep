@@ -9,6 +9,9 @@ import { Decimal } from 'decimal.js';
 import {
   calculatePayoffSchedule,
   compareStrategies,
+  calculateConsolidation,
+  calculateMinimumOnlyPayoff,
+  calculateVelocityBanking,
   calculateBalance,
   Debt,
   PayoffStrategy,
@@ -16,7 +19,13 @@ import {
 import { DEBT_ACCOUNT_TYPES } from '@wardkeep/shared';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CalculateDebtDto, CompareDebtDto } from './dto/calculate-debt.dto';
+import {
+  CalculateDebtDto,
+  CompareDebtDto,
+  ConsolidationDto,
+  VelocityBankingDto,
+  MinimumOnlyDto,
+} from './dto/calculate-debt.dto';
 import { CreateDebtProfileDto, UpdateDebtProfileDto, CreatePayoffPlanDto } from './dto/debt-profile.dto';
 
 @Injectable()
@@ -361,6 +370,122 @@ export class DebtService {
    */
   whatIf(dto: CalculateDebtDto) {
     return this.calculate(dto);
+  }
+
+  // ─── New Strategies ─────────────────────────────────────────────────────────
+
+  /**
+   * Calculates a debt consolidation scenario.
+   * Models combining all debts into a single fixed-rate loan.
+   * @param dto - The debts and consolidation parameters
+   * @returns Serialized consolidation result with comparison to baseline
+   */
+  consolidation(dto: ConsolidationDto) {
+    const debts: Debt[] = dto.debts.map((d) => ({
+      id: d.id,
+      name: d.name,
+      balance: d.balance,
+      apr: d.apr,
+      minimumPayment: d.minimumPayment,
+      priority: d.priority,
+    }));
+
+    const result = calculateConsolidation(debts, {
+      newApr: dto.newApr,
+      termMonths: dto.termMonths,
+      originationFee: dto.originationFee,
+    });
+
+    return {
+      schedule: {
+        debtId: result.schedule.debtId,
+        debtName: result.schedule.debtName,
+        months: result.schedule.months.map((m) => ({
+          month: m.month,
+          debtId: m.debtId,
+          payment: m.payment.toFixed(2),
+          principal: m.principal.toFixed(2),
+          interest: m.interest.toFixed(2),
+          remainingBalance: m.remainingBalance.toFixed(2),
+        })),
+        totalInterest: result.schedule.totalInterest.toFixed(2),
+        totalPaid: result.schedule.totalPaid.toFixed(2),
+        payoffMonth: result.schedule.payoffMonth,
+      },
+      monthlyPayment: result.monthlyPayment.toFixed(2),
+      totalInterest: result.totalInterest.toFixed(2),
+      totalCost: result.totalCost.toFixed(2),
+      interestSavingsVsBaseline: result.interestSavingsVsBaseline.toFixed(2),
+      timeSavingsVsBaseline: result.timeSavingsVsBaseline,
+      ...(result.warning && { warning: result.warning }),
+    };
+  }
+
+  /**
+   * Calculates a velocity banking scenario using a HELOC.
+   * @param dto - The debts and velocity banking parameters
+   * @returns Serialized velocity banking result with comparison to baseline
+   */
+  velocityBanking(dto: VelocityBankingDto) {
+    const debts: Debt[] = dto.debts.map((d) => ({
+      id: d.id,
+      name: d.name,
+      balance: d.balance,
+      apr: d.apr,
+      minimumPayment: d.minimumPayment,
+      priority: d.priority,
+    }));
+
+    const result = calculateVelocityBanking(debts, {
+      helocLimit: dto.helocLimit,
+      helocApr: dto.helocApr,
+      monthlyDisposableIncome: dto.monthlyDisposableIncome,
+      chunkAmount: dto.chunkAmount,
+    });
+
+    return {
+      schedules: result.schedules.map((s) => ({
+        debtId: s.debtId,
+        debtName: s.debtName,
+        months: s.months.map((m) => ({
+          month: m.month,
+          debtId: m.debtId,
+          payment: m.payment.toFixed(2),
+          principal: m.principal.toFixed(2),
+          interest: m.interest.toFixed(2),
+          remainingBalance: m.remainingBalance.toFixed(2),
+        })),
+        totalInterest: s.totalInterest.toFixed(2),
+        totalPaid: s.totalPaid.toFixed(2),
+        payoffMonth: s.payoffMonth,
+      })),
+      totalInterest: result.totalInterest.toFixed(2),
+      helocInterest: result.helocInterest.toFixed(2),
+      combinedInterest: result.combinedInterest.toFixed(2),
+      totalMonths: result.totalMonths,
+      interestSavingsVsBaseline: result.interestSavingsVsBaseline.toFixed(2),
+      timeSavingsVsBaseline: result.timeSavingsVsBaseline,
+      ...(result.warning && { warning: result.warning }),
+    };
+  }
+
+  /**
+   * Calculates the minimum-only payoff baseline (no extra payments).
+   * @param dto - The debts to calculate for
+   * @returns Serialized payoff schedule using only minimum payments
+   */
+  minimumOnly(dto: MinimumOnlyDto) {
+    const debts: Debt[] = dto.debts.map((d) => ({
+      id: d.id,
+      name: d.name,
+      balance: d.balance,
+      apr: d.apr,
+      minimumPayment: d.minimumPayment,
+      priority: d.priority,
+    }));
+
+    const result = calculateMinimumOnlyPayoff(debts);
+    return this.serializePayoffResult(result);
   }
 
   // ─── Private Helpers ────────────────────────────────────────────────────────
