@@ -202,36 +202,44 @@ export class DebtService {
   async getDebtsFromAccounts(userId: string) {
     // Auto-create profiles for liability accounts that don't have one
     const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
-    const liabilityAccounts = await this.prisma.account.findMany({
-      where: {
-        userId,
-        type: { in: debtTypes },
-        isArchived: false,
-      },
-      select: { id: true },
-    });
 
-    const existingProfiles = await this.prisma.debtProfile.findMany({
-      where: { userId },
-      select: { accountId: true },
-    });
-
-    const existingAccountIds = new Set(existingProfiles.map((p) => p.accountId));
-    const missingAccountIds = liabilityAccounts
-      .filter((a) => !existingAccountIds.has(a.id))
-      .map((a) => a.id);
-
-    if (missingAccountIds.length > 0) {
-      await this.prisma.debtProfile.createMany({
-        data: missingAccountIds.map((accountId, index) => ({
+    try {
+      const liabilityAccounts = await this.prisma.account.findMany({
+        where: {
           userId,
-          accountId,
-          apr: new Decimal(0),
-          minimumPayment: new Decimal(0),
-          priority: existingProfiles.length + index + 1,
-        })),
-        skipDuplicates: true,
+          type: { in: debtTypes },
+          isArchived: false,
+        },
+        select: { id: true },
       });
+
+      const existingProfiles = await this.prisma.debtProfile.findMany({
+        where: { userId },
+        select: { accountId: true },
+      });
+
+      const existingAccountIds = new Set(existingProfiles.map((p) => p.accountId));
+      const missingAccountIds = liabilityAccounts
+        .filter((a) => !existingAccountIds.has(a.id))
+        .map((a) => a.id);
+
+      if (missingAccountIds.length > 0) {
+        await this.prisma.$transaction(
+          missingAccountIds.map((accountId, index) =>
+            this.prisma.debtProfile.create({
+              data: {
+                userId,
+                accountId,
+                apr: new Decimal(0),
+                minimumPayment: new Decimal(0),
+                priority: existingProfiles.length + index + 1,
+              },
+            }),
+          ),
+        );
+      }
+    } catch {
+      // Non-fatal: if auto-creation fails, we still return existing profiles
     }
 
     // Now fetch all profiles with full data
