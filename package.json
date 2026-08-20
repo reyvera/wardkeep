@@ -9,6 +9,9 @@
     "node": ">=20.0.0"
   },
   "scripts": {
+    "dev": "./scripts/dev.sh",
+    "dev:stop": "./scripts/dev.sh --stop",
+    "dev:reset": "./scripts/dev.sh --reset",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
@@ -16,7 +19,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "tsx prisma/seed-demo.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0"
