@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
   Plus, Calculator, BarChart3, Trash2, CreditCard, RefreshCw,
-  Link2, Check, Save, BookMarked,
+  Link2, Check, Save, BookMarked, TrendingDown, Landmark, Zap,
 } from 'lucide-react';
 
 interface Debt {
@@ -36,6 +36,27 @@ interface PayoffResult {
 
 interface StrategyResult { strategy: string; result: PayoffResult }
 interface CompareResult { strategies: StrategyResult[]; interestSavings: string; timeSavings: number }
+
+interface ConsolidationResult {
+  schedule: DebtSchedule;
+  monthlyPayment: string;
+  totalInterest: string;
+  totalCost: string;
+  interestSavingsVsBaseline: string;
+  timeSavingsVsBaseline: number;
+  warning?: string;
+}
+
+interface VelocityBankingResult {
+  schedules: DebtSchedule[];
+  totalInterest: string;
+  helocInterest: string;
+  combinedInterest: string;
+  totalMonths: number;
+  interestSavingsVsBaseline: string;
+  timeSavingsVsBaseline: number;
+  warning?: string;
+}
 
 interface AccountDebt {
   id: string;
@@ -84,6 +105,13 @@ export default function DebtPage() {
   const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set());
   const [planName, setPlanName] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [scheduleViewMax, setScheduleViewMax] = useState(24);
+  const [activeTab, setActiveTab] = useState<'standard' | 'consolidation' | 'velocity'>('standard');
+  const [consolidationParams, setConsolidationParams] = useState({ newApr: '', termMonths: '60', originationFee: '' });
+  const [velocityParams, setVelocityParams] = useState({ helocLimit: '', helocApr: '', monthlyDisposableIncome: '', chunkAmount: '' });
+  const [consolidationResult, setConsolidationResult] = useState<ConsolidationResult | null>(null);
+  const [velocityResult, setVelocityResult] = useState<VelocityBankingResult | null>(null);
+  const [baselineResult, setBaselineResult] = useState<PayoffResult | null>(null);
 
   // Fetch debts auto-synced from accounts
   const { data: accountDebts = [], isLoading, refetch } = useQuery<AccountDebt[]>({
@@ -209,6 +237,61 @@ export default function DebtPage() {
   const deletePlanMutation = useMutation({
     mutationFn: (planId: string) => apiClient.delete(`/debt/plans/${planId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['debt-plans'] }),
+  });
+
+  const consolidationMutation = useMutation({
+    mutationFn: () => {
+      const debtsPayload = configuredDebts.map((d, i) => ({
+        id: d.id || `manual-${i}`,
+        name: d.name,
+        balance: d.balance.toFixed(2),
+        apr: (d.apr / 100).toFixed(4),
+        minimumPayment: d.minimumPayment.toFixed(2),
+      }));
+      return apiClient.post<ConsolidationResult>('/debt/consolidation', {
+        debts: debtsPayload,
+        newApr: (parseFloat(consolidationParams.newApr) / 100).toFixed(4),
+        termMonths: parseInt(consolidationParams.termMonths) || 60,
+        ...(consolidationParams.originationFee && {
+          originationFee: (parseFloat(consolidationParams.originationFee) / 100).toFixed(4),
+        }),
+      });
+    },
+    onSuccess: (data) => { setConsolidationResult(data); },
+  });
+
+  const velocityMutation = useMutation({
+    mutationFn: () => {
+      const debtsPayload = configuredDebts.map((d, i) => ({
+        id: d.id || `manual-${i}`,
+        name: d.name,
+        balance: d.balance.toFixed(2),
+        apr: (d.apr / 100).toFixed(4),
+        minimumPayment: d.minimumPayment.toFixed(2),
+      }));
+      return apiClient.post<VelocityBankingResult>('/debt/velocity-banking', {
+        debts: debtsPayload,
+        helocLimit: (parseFloat(velocityParams.helocLimit) || 0).toFixed(2),
+        helocApr: (parseFloat(velocityParams.helocApr) / 100).toFixed(4),
+        monthlyDisposableIncome: (parseFloat(velocityParams.monthlyDisposableIncome) || 0).toFixed(2),
+        chunkAmount: (parseFloat(velocityParams.chunkAmount) || 0).toFixed(2),
+      });
+    },
+    onSuccess: (data) => { setVelocityResult(data); },
+  });
+
+  const baselineMutation = useMutation({
+    mutationFn: () => {
+      const debtsPayload = configuredDebts.map((d, i) => ({
+        id: d.id || `manual-${i}`,
+        name: d.name,
+        balance: d.balance.toFixed(2),
+        apr: (d.apr / 100).toFixed(4),
+        minimumPayment: d.minimumPayment.toFixed(2),
+      }));
+      return apiClient.post<PayoffResult>('/debt/minimum-only', { debts: debtsPayload });
+    },
+    onSuccess: (data) => { setBaselineResult(data); },
   });
 
   const updateProfileMutation = useMutation({
@@ -430,6 +513,263 @@ export default function DebtPage() {
           </div>
           {calculateMutation.isError && <p className="text-sm text-accent-red">{calculateMutation.error.message}</p>}
           {scheduleResult?.warning && <p className="text-sm text-accent-yellow">{scheduleResult.warning}</p>}
+        </div>
+      )}
+
+      {/* Advanced Strategies */}
+      {configuredDebts.length > 0 && (
+        <div className="card space-y-4">
+          <span className="card-title">EXPLORE STRATEGIES</span>
+          <p className="text-xs text-content-tertiary -mt-2">Compare advanced payoff approaches against your current plan.</p>
+
+          {/* Tab buttons */}
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => { setActiveTab('standard'); baselineMutation.mutate(); }}
+              className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors ${activeTab === 'standard' ? 'border-accent-blue bg-accent-blue/10 text-accent-blue' : 'border-edge text-content-secondary hover:border-edge-hover'}`}
+            >
+              <TrendingDown size={14} /> Minimum Only Baseline
+            </button>
+            <button
+              onClick={() => setActiveTab('consolidation')}
+              className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors ${activeTab === 'consolidation' ? 'border-accent-blue bg-accent-blue/10 text-accent-blue' : 'border-edge text-content-secondary hover:border-edge-hover'}`}
+            >
+              <Landmark size={14} /> Debt Consolidation
+            </button>
+            <button
+              onClick={() => setActiveTab('velocity')}
+              className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors ${activeTab === 'velocity' ? 'border-accent-blue bg-accent-blue/10 text-accent-blue' : 'border-edge text-content-secondary hover:border-edge-hover'}`}
+            >
+              <Zap size={14} /> Velocity Banking
+            </button>
+          </div>
+
+          {/* Minimum Only Baseline */}
+          {activeTab === 'standard' && (
+            <div className="space-y-3">
+              <p className="text-sm text-content-secondary">
+                Shows how long it takes to pay off all debts using only the minimum payments. No extra money applied.
+              </p>
+              <button
+                onClick={() => baselineMutation.mutate()}
+                disabled={baselineMutation.isPending}
+                className="btn-secondary"
+              >
+                <Calculator size={14} /> {baselineMutation.isPending ? 'Calculating...' : 'Calculate Baseline'}
+              </button>
+              {baselineResult && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                    <p className="text-xs text-content-tertiary uppercase">Time to Debt Free</p>
+                    <p className="text-xl font-bold text-content-primary">{baselineResult.totalMonths} months</p>
+                    <p className="text-xs text-content-tertiary">{(baselineResult.totalMonths / 12).toFixed(1)} years</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                    <p className="text-xs text-content-tertiary uppercase">Total Interest Paid</p>
+                    <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(baselineResult.totalInterest))}</p>
+                  </div>
+                </div>
+              )}
+              {baselineResult?.warning && <p className="text-sm text-accent-yellow">{baselineResult.warning}</p>}
+            </div>
+          )}
+
+          {/* Consolidation */}
+          {activeTab === 'consolidation' && (
+            <div className="space-y-4">
+              <p className="text-sm text-content-secondary">
+                Model refinancing all your debts into a single fixed-rate loan. Enter the terms you'd qualify for to see if it saves money.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="input-label">New APR %</label>
+                  <input
+                    placeholder="7.99"
+                    type="number"
+                    step="0.01"
+                    value={consolidationParams.newApr}
+                    onChange={(e) => setConsolidationParams({ ...consolidationParams, newApr: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Term (months)</label>
+                  <input
+                    placeholder="60"
+                    type="number"
+                    step="1"
+                    value={consolidationParams.termMonths}
+                    onChange={(e) => setConsolidationParams({ ...consolidationParams, termMonths: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Origination Fee %</label>
+                  <input
+                    placeholder="0 (optional)"
+                    type="number"
+                    step="0.01"
+                    value={consolidationParams.originationFee}
+                    onChange={(e) => setConsolidationParams({ ...consolidationParams, originationFee: e.target.value })}
+                    className="input"
+                  />
+                  <p className="text-[10px] text-content-tertiary mt-0.5">One-time fee as % of balance</p>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => consolidationMutation.mutate()}
+                    disabled={consolidationMutation.isPending || !consolidationParams.newApr}
+                    className="btn-primary w-full"
+                  >
+                    <Landmark size={14} /> {consolidationMutation.isPending ? 'Calculating...' : 'Calculate'}
+                  </button>
+                </div>
+              </div>
+
+              {consolidationMutation.isError && <p className="text-sm text-accent-red">{consolidationMutation.error.message}</p>}
+
+              {consolidationResult && (
+                <div className="space-y-3 mt-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">Monthly Payment</p>
+                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(consolidationResult.monthlyPayment))}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">Total Interest</p>
+                      <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(consolidationResult.totalInterest))}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">Total Cost (incl. fees)</p>
+                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(consolidationResult.totalCost))}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">vs. Minimum Payments</p>
+                      {parseFloat(consolidationResult.interestSavingsVsBaseline) > 0 ? (
+                        <>
+                          <p className="text-xl font-bold text-accent-green">Save ${formatCurrency(parseFloat(consolidationResult.interestSavingsVsBaseline))}</p>
+                          <p className="text-xs text-accent-green">{consolidationResult.timeSavingsVsBaseline} months faster</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xl font-bold text-accent-red">Costs ${formatCurrency(Math.abs(parseFloat(consolidationResult.interestSavingsVsBaseline)))} more</p>
+                          <p className="text-xs text-accent-red">Not recommended</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {consolidationResult.warning && (
+                    <p className="text-sm text-accent-yellow">{consolidationResult.warning}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Velocity Banking */}
+          {activeTab === 'velocity' && (
+            <div className="space-y-4">
+              <p className="text-sm text-content-secondary">
+                Uses a HELOC (or line of credit) to make lump-sum payments against your highest-rate debt.
+                You then pay down the HELOC with your monthly disposable income and repeat the cycle.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="input-label">HELOC Limit</label>
+                  <input
+                    placeholder="10000"
+                    type="number"
+                    step="100"
+                    value={velocityParams.helocLimit}
+                    onChange={(e) => setVelocityParams({ ...velocityParams, helocLimit: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">HELOC APR %</label>
+                  <input
+                    placeholder="8.5"
+                    type="number"
+                    step="0.01"
+                    value={velocityParams.helocApr}
+                    onChange={(e) => setVelocityParams({ ...velocityParams, helocApr: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">Monthly Disposable $</label>
+                  <input
+                    placeholder="1500"
+                    type="number"
+                    step="100"
+                    value={velocityParams.monthlyDisposableIncome}
+                    onChange={(e) => setVelocityParams({ ...velocityParams, monthlyDisposableIncome: e.target.value })}
+                    className="input"
+                  />
+                  <p className="text-[10px] text-content-tertiary mt-0.5">Income minus expenses (for HELOC paydown)</p>
+                </div>
+                <div>
+                  <label className="input-label">Chunk Amount</label>
+                  <input
+                    placeholder="5000"
+                    type="number"
+                    step="500"
+                    value={velocityParams.chunkAmount}
+                    onChange={(e) => setVelocityParams({ ...velocityParams, chunkAmount: e.target.value })}
+                    className="input"
+                  />
+                  <p className="text-[10px] text-content-tertiary mt-0.5">Lump sum per cycle from HELOC</p>
+                </div>
+              </div>
+              <button
+                onClick={() => velocityMutation.mutate()}
+                disabled={velocityMutation.isPending || !velocityParams.helocLimit || !velocityParams.helocApr || !velocityParams.monthlyDisposableIncome || !velocityParams.chunkAmount}
+                className="btn-primary"
+              >
+                <Zap size={14} /> {velocityMutation.isPending ? 'Calculating...' : 'Calculate Velocity Banking'}
+              </button>
+
+              {velocityMutation.isError && <p className="text-sm text-accent-red">{velocityMutation.error.message}</p>}
+
+              {velocityResult && (
+                <div className="space-y-3 mt-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">Time to Debt Free</p>
+                      <p className="text-xl font-bold text-content-primary">{velocityResult.totalMonths} months</p>
+                      <p className="text-xs text-content-tertiary">{(velocityResult.totalMonths / 12).toFixed(1)} years</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">Debt Interest</p>
+                      <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(velocityResult.totalInterest))}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">HELOC Interest</p>
+                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(velocityResult.helocInterest))}</p>
+                      <p className="text-xs text-content-tertiary">Combined: ${formatCurrency(parseFloat(velocityResult.combinedInterest))}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
+                      <p className="text-xs text-content-tertiary uppercase">vs. Minimum Payments</p>
+                      {parseFloat(velocityResult.interestSavingsVsBaseline) > 0 ? (
+                        <>
+                          <p className="text-xl font-bold text-accent-green">Save ${formatCurrency(parseFloat(velocityResult.interestSavingsVsBaseline))}</p>
+                          <p className="text-xs text-accent-green">{velocityResult.timeSavingsVsBaseline} months faster</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xl font-bold text-accent-red">Costs ${formatCurrency(Math.abs(parseFloat(velocityResult.interestSavingsVsBaseline)))} more</p>
+                          <p className="text-xs text-accent-red">HELOC rate may be too high</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {velocityResult.warning && (
+                    <p className="text-sm text-accent-yellow">{velocityResult.warning}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
