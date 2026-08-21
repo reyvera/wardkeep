@@ -1,11 +1,21 @@
+---
+layout: default
+title: Changelog
+nav_order: 5
+permalink: /changelog
+---
+
 # Changelog
+{: .fs-9 }
 
-All notable changes to Wardkeep will be documented in this file.
+All notable changes to Wardkeep.
+{: .fs-6 .fw-300 }
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-08-20
+---
+
+## [1.2.0] — 2026-08-20
 
 ### Added
 
@@ -19,13 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Debt payoff schedule table now groups entries by month (previously listed all months per debt sequentially, making it appear debts were paid one-at-a-time rather than simultaneously).
 
-### API
+### New API endpoints
 
-- `POST /api/debt/consolidation` — Debt consolidation scenario calculator
-- `POST /api/debt/velocity-banking` — Velocity banking (HELOC chunking) calculator
-- `POST /api/debt/minimum-only` — Minimum-payment-only baseline calculator
+| Endpoint | Description |
+|:---------|:------------|
+| `POST /api/debt/consolidation` | Debt consolidation scenario calculator |
+| `POST /api/debt/velocity-banking` | Velocity banking (HELOC chunking) calculator |
+| `POST /api/debt/minimum-only` | Minimum-payment-only baseline calculator |
 
-## [1.0.0] - 2026-07-06
+---
+
+## [1.0.0] — 2026-07-06
 
 ### Added
 
@@ -59,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Infrastructure
 
 - Multi-stage Docker builds (node:22-alpine)
-- GitHub Actions CI/CD for multi-arch image publishing (amd64 + arm64)
+- GitHub Actions CI/CD for image publishing (amd64 + arm64)
 - One-liner install script for self-hosting
 - Pre-built images on GitHub Container Registry
 - Prisma migrations auto-applied on startup

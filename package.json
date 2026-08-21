@@ -20,12 +20,14 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:demo": "tsx prisma/seed-demo.ts"
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "screenshots": "npx tsx scripts/capture-screenshots.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",

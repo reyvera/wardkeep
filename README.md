@@ -54,6 +54,48 @@ packages/
 - **Progressive Web App** — Offline support, installable on any device
 - **Docker Compose** — Single-command self-hosted deployment with pre-built images
 
+## Screenshots
+
+> Full gallery with all pages at desktop and mobile viewports coming soon via GitHub Pages. These highlight the core experience.
+
+**Dashboard** — Net worth, spending breakdown, savings projections, and recent activity at a glance.
+
+![Dashboard](docs/screenshots/desktop/dashboard.png)
+
+**Transactions** — Search, filter by category/date/account, and bulk-manage transactions.
+
+![Transactions](docs/screenshots/desktop/transactions.png)
+
+**Budget** — Monthly allocations per category with progress bars and overspend alerts.
+
+![Budget](docs/screenshots/desktop/budget.png)
+
+**AI Chat** — Ask natural-language questions about your finances. Runs locally or via cloud APIs.
+
+![AI Chat](docs/screenshots/desktop/chat.png)
+
+**Debt Payoff** — Snowball, avalanche, consolidation, and velocity banking calculators with month-by-month schedules.
+
+![Debt Payoff](docs/screenshots/desktop/debt.png)
+
+**Mobile** — Fully responsive PWA. Installable on any device.
+
+![Mobile Dashboard](docs/screenshots/mobile/dashboard.png)
+
+<details>
+<summary>Regenerating screenshots</summary>
+
+Screenshots are auto-captured with Playwright against the demo user's data. To refresh after UI changes:
+
+```bash
+# Prerequisites: dev servers running, demo user seeded
+npx playwright install chromium   # one-time
+pnpm screenshots
+```
+
+Output: `docs/screenshots/{desktop,mobile}/*.png`
+</details>
+
 ## AI Privacy Modes
 
 Configure in Settings (http://localhost:3000/settings):
