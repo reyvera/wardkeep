@@ -65,6 +65,7 @@ export class DebtService {
         accountType: profile.account.type,
         apr: profile.apr.toString(),
         minimumPayment: profile.minimumPayment.toString(),
+        assetValue: profile.assetValue?.toString() ?? null,
         priority: profile.priority,
         currentBalance,
         createdAt: profile.createdAt,
@@ -113,6 +114,7 @@ export class DebtService {
         accountId: dto.accountId,
         apr: aprDecimal,
         minimumPayment: new Decimal(dto.minimumPayment),
+        assetValue: dto.assetValue ? new Decimal(dto.assetValue) : null,
         priority: dto.priority ?? 0,
       },
     });
@@ -125,6 +127,7 @@ export class DebtService {
       accountType: account.type,
       apr: profile.apr.toString(),
       minimumPayment: profile.minimumPayment.toString(),
+      assetValue: profile.assetValue?.toString() ?? null,
       priority: profile.priority,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
@@ -154,6 +157,9 @@ export class DebtService {
         ...(dto.minimumPayment !== undefined && {
           minimumPayment: new Decimal(dto.minimumPayment),
         }),
+        ...(dto.assetValue !== undefined && {
+          assetValue: dto.assetValue === null ? null : new Decimal(dto.assetValue),
+        }),
         ...(dto.priority !== undefined && { priority: dto.priority }),
       },
       include: { account: true },
@@ -167,6 +173,7 @@ export class DebtService {
       accountType: updated.account.type,
       apr: updated.apr.toString(),
       minimumPayment: updated.minimumPayment.toString(),
+      assetValue: updated.assetValue?.toString() ?? null,
       priority: updated.priority,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,

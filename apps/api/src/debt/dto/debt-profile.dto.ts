@@ -12,6 +12,10 @@ export const CreateDebtProfileSchema = z.object({
   minimumPayment: z
     .string()
     .regex(/^\d+(\.\d+)?$/, 'Minimum payment must be a valid decimal string'),
+  assetValue: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, 'Asset value must be a valid decimal string')
+    .optional(),
   priority: z.number().int().min(0).optional(),
 });
 
@@ -27,6 +31,11 @@ export const UpdateDebtProfileSchema = z.object({
   minimumPayment: z
     .string()
     .regex(/^\d+(\.\d+)?$/, 'Minimum payment must be a valid decimal string')
+    .optional(),
+  assetValue: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, 'Asset value must be a valid decimal string')
+    .nullable()
     .optional(),
   priority: z.number().int().min(0).optional(),
 });

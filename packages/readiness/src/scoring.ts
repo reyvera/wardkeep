@@ -18,7 +18,7 @@ const SCORE_MAX = 100;
 const MAGNITUDE_LIMIT = 10;
 
 export function clampScore(value: number): number {
-  return Math.max(SCORE_MIN, Math.min(SCORE_MAX, value));
+  return Math.round(Math.max(SCORE_MIN, Math.min(SCORE_MAX, value)));
 }
 
 function clampMagnitude(value: number): number {
