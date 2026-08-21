@@ -475,3 +475,51 @@ enum BankConnectionStatus {
   ERROR
   DISCONNECTED
 }
+
+// ─── Readiness Engine ───────────────────────────────────────────────────────────
+
+model ReadinessSnapshot {
+  id          String   @id @default(uuid())
+  userId      String
+  overall     Int
+  protection  Int
+  provision   Int
+  preparation Int
+  prosperity  Int
+  peace       Int
+  recordedAt  DateTime @default(now()) @db.Date
+
+  @@unique([userId, recordedAt])
+  @@index([userId, recordedAt])
+}
+
+model ReadinessSignal {
+  id           String   @id @default(uuid())
+  userId       String
+  capabilityId String   @db.VarChar(50)
+  type         SignalType
+  magnitude    Int      // -10 to +10
+  pillar       ReadinessPillarEnum
+  summary      String   @db.VarChar(500)
+  weight       Decimal  @default(1.0) @db.Decimal(3, 2)
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, pillar])
+  @@index([userId, createdAt])
+}
+
+enum SignalType {
+  RISK
+  OPPORTUNITY
+  MILESTONE
+  WARNING
+  POSITIVE
+}
+
+enum ReadinessPillarEnum {
+  PROTECTION
+  PROVISION
+  PREPARATION
+  PROSPERITY
+}
