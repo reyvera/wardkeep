@@ -16,13 +16,11 @@ import {
   Link2,
   Settings,
   LogOut,
-  Shield,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/readiness', label: 'Readiness', icon: Shield },
   { href: '/accounts', label: 'Accounts', icon: Wallet },
   { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { href: '/categories', label: 'Categories', icon: Tag },
