@@ -205,6 +205,7 @@ export default function TransactionsPage() {
           </select>
           <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} className="input w-auto py-2">
             <option value="">All Categories</option>
+            <option value="NONE">Uncategorized</option>
             {(categoriesQuery.data ?? []).map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
           <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="input w-auto py-2" />

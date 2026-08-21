@@ -51,7 +51,11 @@ export class TransactionsService {
     }
 
     if (filters.categoryId) {
-      where.categoryId = filters.categoryId;
+      if (filters.categoryId === 'NONE') {
+        where.categoryId = null;
+      } else {
+        where.categoryId = filters.categoryId;
+      }
     }
 
     if (filters.merchant) {
