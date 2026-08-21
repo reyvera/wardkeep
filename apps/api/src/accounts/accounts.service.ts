@@ -320,6 +320,7 @@ export class AccountsService {
       include: {
         transactions: true,
         linkedBankAccounts: { select: { id: true } },
+        debtProfile: { select: { assetValue: true } },
       },
     });
 
@@ -348,6 +349,11 @@ export class AccountsService {
 
       if (liabilityTypes.includes(account.type)) {
         liabilities = liabilities.plus(balance.abs());
+
+        // Add linked asset value (home, vehicle) to the assets side
+        if (account.debtProfile?.assetValue) {
+          assets = assets.plus(new Decimal(account.debtProfile.assetValue.toString()));
+        }
       } else {
         assets = assets.plus(balance);
       }

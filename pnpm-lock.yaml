@@ -75,6 +75,9 @@ importers:
       '@wardkeep/importers':
         specifier: workspace:*
         version: link:../../packages/importers
+      '@wardkeep/readiness':
+        specifier: workspace:*
+        version: link:../../packages/readiness
       '@wardkeep/shared':
         specifier: workspace:*
         version: link:../../packages/shared

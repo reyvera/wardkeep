@@ -17,6 +17,7 @@ import { ImportModule } from './import/import.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { ReadinessModule } from './readiness/readiness.module';
 import { RecurringModule } from './recurring/recurring.module';
 import { RulesModule } from './rules/rules.module';
 import { SettingsModule } from './settings/settings.module';
@@ -45,6 +46,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CategoriesModule,
     DebtModule,
     RecurringModule,
+    ReadinessModule,
     RulesModule,
     SettingsModule,
     TransactionsModule,

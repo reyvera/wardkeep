@@ -1,478 +1,288 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from 'recharts';
-import {
-  TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
-  Wallet, CreditCard, Landmark, PiggyBank,
+  Shield, TrendingUp, Wallet, PiggyBank, Hammer,
+  AlertTriangle, Lightbulb, Activity, BarChart3,
 } from 'lucide-react';
-import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-interface NetWorth {
-  assets: string;
-  liabilities: string;
-  netWorth: string;
+interface PillarScores {
+  protection: number;
+  provision: number;
+  preparation: number;
+  prosperity: number;
+  peace: number;
 }
 
-interface Account {
-  id: string;
-  name: string;
-  type: string;
-  currentBalance: string;
+interface Signal {
+  capabilityId: string;
+  type: 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';
+  magnitude: number;
+  pillar: string;
+  summary: string;
+  weight?: number;
 }
 
-interface BudgetSummary {
-  totalAllocated: string;
-  totalSpent: string;
-  totalRemaining: string;
-  overspentCount: number;
-  categoryProgress: Array<{
-    categoryId: string;
-    categoryName?: string;
-    allocated: string;
-    spent: string;
-    percentUsed: string;
-  }>;
-}
-
-interface SpendingStats {
-  monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
-  spendingByCategory: Array<{ categoryId: string; name: string; amount: number }>;
-  topMerchants: Array<{ merchant: string; amount: number }>;
-  monthTotals: {
-    income: number;
-    expenses: number;
-    daysElapsed: number;
-    daysInMonth: number;
-  };
-}
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: string;
-  type: string;
-  date: string;
-  categoryId?: string;
-  categoryName?: string;
-  merchant?: string;
+interface ReadinessResponse {
+  overall: number;
+  pillars: PillarScores;
+  signals: Signal[];
+  topRisks: Signal[];
+  topOpportunities: Signal[];
+  history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+function getScoreColor(score: number): string {
+  if (score >= 95) return 'var(--accent-green)';
+  if (score >= 80) return 'var(--accent-blue)';
+  if (score >= 60) return 'var(--accent-yellow)';
+  if (score >= 40) return 'var(--accent-orange)';
+  return 'var(--accent-red)';
 }
 
-function navigateMonth(month: string, delta: number): string {
-  const [y, m] = month.split('-').map(Number);
-  const date = new Date(y!, m! - 1 + delta, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+function getScoreLabel(score: number): string {
+  if (score >= 95) return 'Excellent';
+  if (score >= 80) return 'Good';
+  if (score >= 60) return 'Attention';
+  if (score >= 40) return 'Warning';
+  return 'Critical';
 }
 
-function formatMonth(month: string): string {
-  const [y, m] = month.split('-').map(Number);
-  const date = new Date(y!, m! - 1, 1);
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-}
-
-function formatCurrency(value: number): string {
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function getAccountIcon(type: string) {
+function getSignalIcon(type: Signal['type']) {
   switch (type) {
-    case 'CREDIT_CARD': return CreditCard;
-    case 'LOAN': case 'MORTGAGE': return Landmark;
-    case 'SAVINGS': return PiggyBank;
-    default: return Wallet;
+    case 'risk': return AlertTriangle;
+    case 'warning': return AlertTriangle;
+    case 'opportunity': return Lightbulb;
+    case 'positive': return TrendingUp;
+    case 'milestone': return Activity;
   }
 }
 
-const ACCOUNT_TYPE_ORDER = ['CHECKING', 'SAVINGS', 'CREDIT_CARD', 'LOAN', 'MORTGAGE', 'CASH'];
-
-function groupAccountsByType(accounts: Account[]) {
-  const groups: Record<string, Account[]> = {};
-  for (const acc of accounts) {
-    const type = acc.type || 'OTHER';
-    if (!groups[type]) groups[type] = [];
-    groups[type].push(acc);
+function getSignalColor(type: Signal['type']): string {
+  switch (type) {
+    case 'risk': return 'var(--accent-red)';
+    case 'warning': return 'var(--accent-amber)';
+    case 'opportunity': return 'var(--accent-blue)';
+    case 'positive': return 'var(--accent-green)';
+    case 'milestone': return 'var(--accent-green)';
   }
-  return Object.entries(groups).sort(([a], [b]) => {
-    const ai = ACCOUNT_TYPE_ORDER.indexOf(a);
-    const bi = ACCOUNT_TYPE_ORDER.indexOf(b);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
 }
 
-function formatAccountType(type: string): string {
-  return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-}
+const PILLAR_META: Record<string, { label: string; icon: typeof Shield; description: string }> = {
+  protection: {
+    label: 'Protection',
+    icon: Shield,
+    description: 'Emergency fund, insurance, security',
+  },
+  provision: {
+    label: 'Provision',
+    icon: Wallet,
+    description: 'Cash flow, bills, budget adherence',
+  },
+  preparation: {
+    label: 'Preparation',
+    icon: Hammer,
+    description: 'Maintenance, goals, planning',
+  },
+  prosperity: {
+    label: 'Prosperity',
+    icon: TrendingUp,
+    description: 'Net worth, debt reduction, investments',
+  },
+  peace: {
+    label: 'Peace',
+    icon: PiggyBank,
+    description: 'Overall stability indicator',
+  },
+};
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [month, setMonth] = useState(getCurrentMonth);
-
-  const netWorthQuery = useQuery({
-    queryKey: ['net-worth'],
-    queryFn: () => apiClient.get<NetWorth>('/accounts/net-worth'),
+  const readinessQuery = useQuery({
+    queryKey: ['readiness'],
+    queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
   });
 
-  const accountsQuery = useQuery({
-    queryKey: ['accounts'],
-    queryFn: () => apiClient.get<Account[]>('/accounts'),
-  });
+  if (readinessQuery.isLoading) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-page-title">Dashboard</h1>
+          <Link href="/dashboard/details" className="btn-ghost text-xs">
+            <BarChart3 size={14} />
+            Spending Details
+          </Link>
+        </div>
+        <div className="grid gap-6">
+          <div className="card"><div className="skeleton h-32 w-full" /></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="card"><div className="skeleton h-20 w-full" /></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const budgetQuery = useQuery({
-    queryKey: ['budget-summary', month],
-    queryFn: () => apiClient.get<BudgetSummary>(`/budgets/${month}/summary`).catch(() => null),
-  });
+  if (readinessQuery.isError) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-page-title">Dashboard</h1>
+          <Link href="/dashboard/details" className="btn-ghost text-xs">
+            <BarChart3 size={14} />
+            Spending Details
+          </Link>
+        </div>
+        <div className="card text-center py-12">
+          <p className="text-content-secondary">
+            Unable to compute readiness. Make sure you have accounts and transactions set up.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const statsQuery = useQuery({
-    queryKey: ['spending-stats', month],
-    queryFn: () => apiClient.get<SpendingStats>(`/transactions/stats?month=${month}`),
-  });
-
-  const recentTxQuery = useQuery({
-    queryKey: ['recent-transactions'],
-    queryFn: () => apiClient.get<{ data: Transaction[] }>('/transactions?limit=5&sort=date&order=desc'),
-  });
-
-  const netWorth = Number(netWorthQuery.data?.netWorth ?? 0);
-  const assets = Number(netWorthQuery.data?.assets ?? 0);
-  const liabilities = Number(netWorthQuery.data?.liabilities ?? 0);
-
-  const budgetAllocated = Number(budgetQuery.data?.totalAllocated ?? 0);
-  const budgetSpent = Number(budgetQuery.data?.totalSpent ?? 0);
-  const budgetRemaining = Number(budgetQuery.data?.totalRemaining ?? 0);
-
-  const income = statsQuery.data?.monthTotals?.income ?? 0;
-  const expenses = statsQuery.data?.monthTotals?.expenses ?? 0;
-  const daysElapsed = statsQuery.data?.monthTotals?.daysElapsed ?? 0;
-  const daysInMonth = statsQuery.data?.monthTotals?.daysInMonth ?? 30;
-  const dailyRate = daysElapsed > 0 ? expenses / daysElapsed : 0;
-
-  // Spending pace data for the area chart
-  const paceData = Array.from({ length: daysElapsed || 1 }, (_, i) => ({
-    day: i + 1,
-    actual: Math.round(dailyRate * (i + 1) * 100) / 100,
-    budget: budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * (i + 1) * 100) / 100 : 0,
-  }));
-
-  const underOver = budgetAllocated > 0
-    ? budgetAllocated - budgetSpent
-    : 0;
+  const data = readinessQuery.data!;
+  const scoreColor = getScoreColor(data.overall);
+  const scoreLabel = getScoreLabel(data.overall);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-page-title text-content-primary">Dashboard</h1>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setMonth(navigateMonth(month, -1))}
-            className="btn-ghost p-2"
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            onClick={() => setMonth(getCurrentMonth())}
-            className="btn-secondary text-xs px-3 py-1.5"
-          >
-            {formatMonth(month)}
-          </button>
-          <button
-            onClick={() => setMonth(navigateMonth(month, 1))}
-            className="btn-ghost p-2"
-            aria-label="Next month"
-          >
-            <ChevronRight size={16} />
-          </button>
+    <div>
+      {/* Header with link to detailed analytics */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-page-title">Dashboard</h1>
+        <Link href="/dashboard/details" className="btn-ghost text-xs">
+          <BarChart3 size={14} />
+          Spending Details
+        </Link>
+      </div>
+
+      {/* Overall Score */}
+      <div className="card mb-6">
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          {/* Score ring */}
+          <div className="relative w-36 h-36 flex-shrink-0">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle
+                cx="50" cy="50" r="42"
+                fill="none"
+                stroke="var(--bg-elevated)"
+                strokeWidth="8"
+              />
+              <circle
+                cx="50" cy="50" r="42"
+                fill="none"
+                stroke={scoreColor}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={`${data.overall * 2.64} 264`}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold text-content-primary">{data.overall}%</span>
+              <span className="text-xs font-medium" style={{ color: scoreColor }}>{scoreLabel}</span>
+            </div>
+          </div>
+
+          {/* Summary text */}
+          <div className="flex-1 text-center md:text-left">
+            <h2 className="text-xl font-semibold text-content-primary mb-1">
+              {data.overall >= 80
+                ? 'You are in good shape.'
+                : data.overall >= 60
+                  ? 'Some areas need attention.'
+                  : 'Action needed to improve readiness.'}
+            </h2>
+            <p className="text-sm text-content-secondary">
+              Your readiness score reflects your household&apos;s financial preparedness across
+              {' '}{Object.keys(data.pillars).length} dimensions.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Spending Pace Chart */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-2">
-          <span className="card-title">SPENDING PACE</span>
-          {budgetAllocated > 0 && (
-            <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                underOver >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-              }`}
-            >
-              ${Math.abs(underOver).toLocaleString('en-US', { maximumFractionDigits: 0 })} {underOver >= 0 ? 'under' : 'over'}
-            </span>
-          )}
-        </div>
-        <ResponsiveContainer width="100%" height={140}>
-          <AreaChart data={paceData}>
-            <defs>
-              <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="day" hide />
-            <YAxis hide />
-            <Tooltip
-              contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
-              formatter={(value) => [`$${Number(value).toFixed(2)}`, '']}
-              labelFormatter={(day) => `Day ${day}`}
-            />
-            {budgetAllocated > 0 && (
-              <Area type="monotone" dataKey="budget" stroke="var(--text-tertiary)" strokeDasharray="4 4" fill="none" strokeWidth={1} />
-            )}
-            <Area type="monotone" dataKey="actual" stroke="var(--accent-green)" fill="url(#spendGradient)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {/* Pillar Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+        {Object.entries(data.pillars).map(([key, score]) => {
+          const meta = PILLAR_META[key];
+          if (!meta) return null;
+          const Icon = meta.icon;
+          const color = getScoreColor(score);
 
-      {/* Main Grid: 3 columns on large, 2 on medium */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-        {/* Net Worth Card */}
-        <div className="card">
-          <span className="card-title">NET WORTH</span>
-          <p className={`text-hero tabular-nums ${netWorth >= 0 ? 'text-content-primary' : 'text-accent-red'}`}>
-            ${formatCurrency(netWorth)}
-          </p>
-          <div className="flex items-center gap-4 mt-3 text-xs">
-            <span className="flex items-center gap-1 text-accent-green">
-              <TrendingUp size={12} /> ${formatCurrency(assets)}
-            </span>
-            <span className="flex items-center gap-1 text-accent-red">
-              <TrendingDown size={12} /> ${formatCurrency(liabilities)}
-            </span>
-          </div>
-        </div>
-
-        {/* Monthly Spending Card */}
-        <div className="card">
-          <span className="card-title">THIS MONTH</span>
-          <div className="space-y-2 mt-1">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-content-secondary">Income</span>
-              <span className="amount-positive text-sm">+${formatCurrency(income)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-content-secondary">Spent</span>
-              <span className="amount-negative text-sm">-${formatCurrency(expenses)}</span>
-            </div>
-            <div className="border-t border-edge pt-2 flex justify-between items-center">
-              <span className="text-sm font-medium text-content-primary">Net</span>
-              <span className={`text-sm font-bold tabular-nums ${income - expenses >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                {income - expenses >= 0 ? '+' : ''}${formatCurrency(income - expenses)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Budget Card */}
-        <div className="card">
-          <span className="card-title">BUDGET</span>
-          {budgetAllocated > 0 ? (
-            <>
-              <div className="flex justify-between items-baseline mt-1">
-                <span className="text-lg font-bold tabular-nums text-content-primary">
-                  ${formatCurrency(budgetSpent)}
-                </span>
-                <span className="text-xs text-content-tertiary">
-                  of ${formatCurrency(budgetAllocated)}
-                </span>
+          return (
+            <div key={key} className="card">
+              <div className="flex items-center gap-2 mb-3">
+                <Icon size={16} style={{ color }} />
+                <span className="text-sm font-medium text-content-primary">{meta.label}</span>
               </div>
-              <div className="progress-track mt-3">
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-2xl font-bold" style={{ color }}>{score}%</span>
+              </div>
+              <div className="progress-track">
                 <div
                   className="progress-fill"
-                  style={{
-                    width: `${Math.min(100, (budgetSpent / budgetAllocated) * 100)}%`,
-                    background: budgetSpent / budgetAllocated > 0.9
-                      ? 'var(--accent-red)'
-                      : budgetSpent / budgetAllocated > 0.7
-                        ? 'var(--accent-yellow)'
-                        : 'var(--accent-blue)',
-                  }}
+                  style={{ width: `${score}%`, backgroundColor: color }}
                 />
               </div>
-              <p className={`text-xs mt-2 font-medium ${budgetRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                {budgetRemaining >= 0 ? `$${formatCurrency(budgetRemaining)} left` : `$${formatCurrency(Math.abs(budgetRemaining))} over`}
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-content-tertiary mt-2">No budget set</p>
-          )}
-        </div>
+              <p className="text-xs text-content-tertiary mt-2">{meta.description}</p>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Second Row: Accounts + Top Categories + Recent Transactions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        {/* Accounts */}
+      {/* Risks and Opportunities */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Risks */}
         <div className="card">
-          <span className="card-title">ACCOUNTS</span>
-          {accountsQuery.data && accountsQuery.data.length > 0 ? (
-            <div className="space-y-4 mt-2">
-              {groupAccountsByType(accountsQuery.data).map(([type, accounts]) => (
-                <div key={type}>
-                  <p className="text-[10px] uppercase tracking-wider text-content-tertiary font-medium mb-1.5">
-                    {formatAccountType(type)}
-                  </p>
-                  <div className="space-y-1.5">
-                    {accounts.map((acc) => {
-                      const bal = Number(acc.currentBalance);
-                      const Icon = getAccountIcon(acc.type);
-                      const isDebt = ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(acc.type);
-                      return (
-                        <div key={acc.id} className="flex items-center justify-between py-1">
-                          <div className="flex items-center gap-2">
-                            <Icon size={14} className="text-content-tertiary" />
-                            <span className="text-sm text-content-primary truncate max-w-[120px]">{acc.name}</span>
-                          </div>
-                          <span className={`text-sm font-semibold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}>
-                            {isDebt ? '-' : ''}${formatCurrency(Math.abs(bal))}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <h3 className="card-title">Top Risks</h3>
+          {data.topRisks.length === 0 ? (
+            <p className="text-sm text-content-tertiary">No active risks detected.</p>
           ) : (
-            <p className="text-sm text-content-tertiary mt-2">No accounts yet</p>
-          )}
-        </div>
-
-        {/* Top Categories */}
-        <div className="card">
-          <span className="card-title">TOP CATEGORIES</span>
-          {statsQuery.data && statsQuery.data.spendingByCategory.length > 0 ? (
-            <div className="space-y-2.5 mt-2">
-              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat) => (
-                <div key={cat.categoryId} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon name={cat.name} size="sm" />
-                    <span className="text-sm text-content-primary truncate max-w-[120px]">{cat.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums text-content-primary">
-                    ${formatCurrency(cat.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-content-tertiary mt-2">No spending data</p>
-          )}
-        </div>
-
-        {/* Recent Transactions */}
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <span className="card-title">RECENT</span>
-          </div>
-          {recentTxQuery.data?.data && recentTxQuery.data.data.length > 0 ? (
-            <div className="space-y-2 mt-2">
-              {(recentTxQuery.data.data as Transaction[]).slice(0, 5).map((tx) => {
-                const amt = Number(tx.amount);
-                const isCredit = tx.type === 'CREDIT';
+            <ul className="space-y-3">
+              {data.topRisks.map((signal, i) => {
+                const Icon = getSignalIcon(signal.type);
+                const color = getSignalColor(signal.type);
                 return (
-                  <div key={tx.id} className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <CategoryIcon name={tx.categoryName} size="sm" />
-                      <div className="min-w-0">
-                        <p className="text-sm text-content-primary truncate">
-                          {tx.merchant || tx.description}
-                        </p>
-                        {tx.categoryName && (
-                          <span
-                            className="category-pill text-[10px] mt-0.5"
-                            style={{
-                              backgroundColor: `${getCategoryIcon(tx.categoryName).color}15`,
-                              color: getCategoryIcon(tx.categoryName).color,
-                            }}
-                          >
-                            {tx.categoryName}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className={`text-sm font-semibold tabular-nums ml-3 ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}>
-                      {isCredit ? '+' : ''}${formatCurrency(amt)}
-                    </span>
-                  </div>
+                  <li key={i} className="flex items-start gap-3">
+                    <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
+                    <span className="text-sm text-content-primary">{signal.summary}</span>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
+          )}
+        </div>
+
+        {/* Top Opportunities */}
+        <div className="card">
+          <h3 className="card-title">Strengths & Opportunities</h3>
+          {data.topOpportunities.length === 0 ? (
+            <p className="text-sm text-content-tertiary">Add accounts and transactions to discover opportunities.</p>
           ) : (
-            <p className="text-sm text-content-tertiary mt-2">No transactions yet</p>
+            <ul className="space-y-3">
+              {data.topOpportunities.map((signal, i) => {
+                const Icon = getSignalIcon(signal.type);
+                const color = getSignalColor(signal.type);
+                return (
+                  <li key={i} className="flex items-start gap-3">
+                    <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
+                    <span className="text-sm text-content-primary">{signal.summary}</span>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </div>
-
-      {/* Third Row: Income vs Expenses Trend */}
-      {statsQuery.data && statsQuery.data.monthlyTrend.length > 0 && (
-        <div className="card">
-          <span className="card-title">INCOME VS EXPENSES (6 MONTHS)</span>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={statsQuery.data.monthlyTrend}>
-              <defs>
-                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-red)" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="var(--accent-red)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} />
-              <YAxis fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-              <Tooltip
-                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
-                formatter={(value) => [`$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, '']}
-              />
-              <Area type="monotone" dataKey="income" stroke="var(--accent-green)" fill="url(#incomeGrad)" strokeWidth={2} name="Income" />
-              <Area type="monotone" dataKey="expenses" stroke="var(--accent-red)" fill="url(#expenseGrad)" strokeWidth={2} name="Expenses" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Top Merchants */}
-      {statsQuery.data && statsQuery.data.topMerchants.length > 0 && (
-        <div className="card">
-          <span className="card-title">TOP MERCHANTS</span>
-          <div className="space-y-2.5 mt-2">
-            {statsQuery.data.topMerchants.slice(0, 5).map((m, i) => {
-              const maxAmount = statsQuery.data!.topMerchants[0]!.amount;
-              const pct = maxAmount > 0 ? (m.amount / maxAmount) * 100 : 0;
-              return (
-                <div key={i}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-content-primary truncate max-w-[200px]">{m.merchant}</span>
-                    <span className="font-semibold tabular-nums text-content-primary">${m.amount.toFixed(2)}</span>
-                  </div>
-                  <div className="progress-track">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${pct}%`, background: 'var(--accent-purple)' }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

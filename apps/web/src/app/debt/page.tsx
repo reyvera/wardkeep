@@ -74,6 +74,7 @@ interface DebtProfileResponse {
   accountType: string;
   apr: string;
   minimumPayment: string;
+  assetValue: string | null;
   priority: number;
 }
 
@@ -101,7 +102,7 @@ export default function DebtPage() {
   const [compareResult, setCompareResult] = useState<CompareResult | null>(null);
   const [newDebt, setNewDebt] = useState({ name: '', balance: '', apr: '', minimumPayment: '' });
   const [editingProfile, setEditingProfile] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState({ apr: '', minimumPayment: '' });
+  const [editValues, setEditValues] = useState({ apr: '', minimumPayment: '', assetValue: '' });
   const [selectedAccountIds, setSelectedAccountIds] = useState<Set<string>>(new Set());
   const [planName, setPlanName] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -285,11 +286,16 @@ export default function DebtPage() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: ({ profileId, apr, minimumPayment }: { profileId: string; apr: string; minimumPayment: string }) =>
-      apiClient.patch(`/debt/profiles/${profileId}`, { apr, minimumPayment }),
+    mutationFn: ({ profileId, apr, minimumPayment, assetValue }: { profileId: string; apr: string; minimumPayment: string; assetValue?: string | null }) =>
+      apiClient.patch(`/debt/profiles/${profileId}`, {
+        apr,
+        minimumPayment,
+        ...(assetValue !== undefined && { assetValue: assetValue || null }),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debt-from-accounts'] });
       queryClient.invalidateQueries({ queryKey: ['debt-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['net-worth'] });
       setEditingProfile(null);
     },
   });
@@ -316,11 +322,17 @@ export default function DebtPage() {
     setEditValues({
       apr: (parseFloat(profile.apr) * 100).toFixed(2),
       minimumPayment: profile.minimumPayment,
+      assetValue: profile.assetValue ?? '',
     });
   };
 
   const saveProfile = (profileId: string) => {
-    updateProfileMutation.mutate({ profileId, apr: editValues.apr, minimumPayment: editValues.minimumPayment });
+    updateProfileMutation.mutate({
+      profileId,
+      apr: editValues.apr,
+      minimumPayment: editValues.minimumPayment,
+      assetValue: editValues.assetValue || null,
+    });
   };
 
   const handleSavePlan = () => {
@@ -408,11 +420,13 @@ export default function DebtPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-content-primary">{debt.name}</p>
                     {isEditing && profile ? (
-                      <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
                         <input type="number" step="0.01" placeholder="APR %" value={editValues.apr} onChange={(e) => setEditValues({ ...editValues, apr: e.target.value })} className="input w-20 text-xs py-1" />
                         <span className="text-xs text-content-tertiary">%</span>
                         <input type="number" step="0.01" placeholder="Min $" value={editValues.minimumPayment} onChange={(e) => setEditValues({ ...editValues, minimumPayment: e.target.value })} className="input w-20 text-xs py-1" />
                         <span className="text-xs text-content-tertiary">min</span>
+                        <input type="number" step="0.01" placeholder="Asset value" value={editValues.assetValue} onChange={(e) => setEditValues({ ...editValues, assetValue: e.target.value })} className="input w-28 text-xs py-1" title="Value of the secured asset (home, vehicle)" />
+                        <span className="text-xs text-content-tertiary">asset</span>
                         <button onClick={() => saveProfile(profile.id)} disabled={updateProfileMutation.isPending} className="btn-primary text-xs px-2 py-1">Save</button>
                         <button onClick={() => setEditingProfile(null)} className="btn-ghost text-xs px-2 py-1">Cancel</button>
                       </div>
@@ -426,6 +440,7 @@ export default function DebtPage() {
                         ) : (
                           <>
                             {aprPct.toFixed(1)}% APR · Min: ${formatCurrency(parseFloat(debt.minimumPayment))}
+                            {profile?.assetValue && <> · Asset: ${formatCurrency(parseFloat(profile.assetValue))}</>}
                             {profile && <button onClick={(e) => { e.stopPropagation(); startEditing(profile); }} className="ml-2 text-accent-blue hover:underline">edit</button>}
                           </>
                         )}

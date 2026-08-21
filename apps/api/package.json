@@ -15,6 +15,7 @@
     "@wardkeep/ai-engine": "workspace:*",
     "@wardkeep/finance-engine": "workspace:*",
     "@wardkeep/importers": "workspace:*",
+    "@wardkeep/readiness": "workspace:*",
     "@wardkeep/shared": "workspace:*",
     "@nestjs/common": "^10.3.0",
     "@nestjs/core": "^10.3.0",
