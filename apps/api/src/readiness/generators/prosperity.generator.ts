@@ -71,6 +71,7 @@ async function generateNetWorthTrendSignals(
     include: {
       transactions: true,
       linkedBankAccounts: { select: { id: true } },
+      debtProfile: { select: { assetValue: true } },
     },
   });
 
@@ -81,6 +82,12 @@ async function generateNetWorthTrendSignals(
     const balance = computeAccountBalance(account);
     if (LIABILITY_TYPES.includes(account.type)) {
       liabilities = liabilities.add(balance.abs());
+
+      // Add linked asset value (home, vehicle) to assets side
+      const assetValue = (account as { debtProfile?: { assetValue: { toString(): string } | null } | null }).debtProfile?.assetValue;
+      if (assetValue) {
+        assets = assets.add(new Decimal(assetValue.toString()));
+      }
     } else {
       assets = assets.add(balance);
     }
