@@ -134,6 +134,7 @@ Common pattern: the frontend must send field names and enum values exactly as th
 - Chat endpoint: expects `{ query }` not `{ message }`
 - Net worth response: returns `{ assets, liabilities, netWorth }` not `total`
 - Account list response: returns `currentBalance` not `balance`
+- Category filter: `categoryId=NONE` filters for uncategorized transactions (null categoryId)
 
 ## Docker Deployment (from source)
 

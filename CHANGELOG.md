@@ -5,10 +5,11 @@ All notable changes to Wardkeep will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-08-20
 
 ### Added
 
+- **Uncategorized Transactions Filter** — Category filter dropdown on the Transactions page now includes an "Uncategorized" option to show only transactions without an assigned category.
 - **Debt Consolidation Calculator** — Model refinancing all debts into a single fixed-rate loan. Enter APR, term, and origination fee to see monthly payment, total cost, and savings vs. minimum-only baseline.
 - **Velocity Banking Calculator** — HELOC chunking strategy that uses a line of credit to make lump-sum payments against highest-rate debt, then pays down the HELOC with disposable income. Shows combined interest cost and comparison to baseline.
 - **Minimum-Only Baseline** — Calculate how long debt takes to pay off with only minimum payments. Serves as the comparison benchmark for all other strategies.
