@@ -390,6 +390,7 @@ model DebtProfile {
   accountId      String   @unique
   apr            Decimal  @db.Decimal(5, 4) // 0.0000 to 1.0000 (0%–100%)
   minimumPayment Decimal  @db.Decimal(19, 4)
+  assetValue     Decimal? @db.Decimal(19, 4) // Linked asset value (home, vehicle) for secured debts
   priority       Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
