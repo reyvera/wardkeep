@@ -12,10 +12,12 @@ if [ "$ENCRYPTION_KEY" = "change-me-in-production" ] && [ "$DEMO_MODE" != "true"
 fi
 
 echo "Running database migrations..."
-npx prisma migrate deploy 2>/dev/null || npx prisma db push --skip-generate 2>/dev/null || true
+node node_modules/prisma/build/index.js migrate deploy 2>/dev/null || \
+  node node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss 2>/dev/null || \
+  echo "WARNING: Database migration/sync failed — starting anyway"
 
-echo "Seeding demo user (skipped if already exists)..."
-node prisma/seed-demo.js || true
+echo "Seeding default data (skipped if already exists)..."
+node prisma/seed-demo.js 2>/dev/null || true
 
 echo "Starting API server..."
 exec "$@"
