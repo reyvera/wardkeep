@@ -3,7 +3,13 @@ description: Private, self-hostable, AI-powered personal finance
 url: "https://reyvera.github.io"
 baseurl: "/budgetapp"
 
-theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-include-cache
 
 color_scheme: dark
 
