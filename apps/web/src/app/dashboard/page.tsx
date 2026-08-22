@@ -36,6 +36,7 @@ interface ReadinessResponse {
   history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
+  pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -230,7 +231,8 @@ export default function DashboardPage() {
           const Icon = meta.icon;
           const color = getScoreColor(score);
 
-          const coverage = key === 'peace' ? data.coverage : data.pillarCoverage[key as keyof ReadinessResponse['pillarCoverage']] ?? 0;
+          const assessment = data.pillarAssessments[key];
+          const coverage = assessment?.coverage ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
           return (
             <Link href={`/dashboard/readiness/${key}`} key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
@@ -239,15 +241,15 @@ export default function DashboardPage() {
                 <span className="text-sm font-medium text-content-primary">{meta.label}</span>
               </div>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-2xl font-bold" style={{ color }}>{coverage ? `${score}%` : '—'}</span>
+                <span className="text-2xl font-bold" style={{ color }}>{assessment?.score === null || !assessment ? '—' : `${score}%`}</span>
               </div>
               <div className="progress-track">
                 <div
                   className="progress-fill"
-                  style={{ width: `${coverage ? score : 0}%`, backgroundColor: color }}
+                  style={{ width: `${assessment?.score === null ? 0 : score}%`, backgroundColor: color }}
                 />
               </div>
-              <p className="text-xs text-content-tertiary mt-2">{key === 'peace' ? 'Derived from your least-ready area' : `${coverageLabel(coverage)} · ${coverage}% covered`}</p>
+              <p className="text-xs text-content-tertiary mt-2">{key === 'peace' ? 'Derived from observed pillars' : `${coverageLabel(coverage)} · ${coverage}% covered`}</p>
               {pillarSignals.map((signal) => <p key={signal.capabilityId} className="text-xs text-content-secondary mt-1 line-clamp-2">{signal.summary}</p>)}
             </Link>
           );
