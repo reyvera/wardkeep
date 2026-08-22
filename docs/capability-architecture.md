@@ -2,7 +2,7 @@
 
 ## Core Concept
 
-A **Capability** is a self-contained domain of household knowledge that contributes to the Readiness Engine. Every Capability follows the same contract: it observes, signals, recommends, and surfaces relevant information through a unified pipeline.
+A **Capability** is a self-contained domain of household knowledge that contributes to the Readiness Engine. Every Capability follows the same contract: it observes, signals, communicates its coverage, recommends, and surfaces relevant information through a unified pipeline.
 
 Capabilities are not "modules" or "plugins" — those words imply optional add-ons. Capabilities are how Wardkeep understands a household.
 
@@ -27,6 +27,10 @@ User            (decisions and actions)
 ```
 
 No Capability bypasses this pipeline. This is what keeps the product coherent as it grows.
+
+### Coverage is part of the contract
+
+Signals describe observed readiness; coverage describes how complete and trustworthy that observation is. A capability must eventually publish whether it is **known**, **partial**, or **not evaluated**, the factors it evaluated or is missing, and relevant provenance/freshness: synchronized, manual, estimated, inferred, calculated, stale, or unknown. The engine must never award readiness credit solely because a capability produced no risk signal.
 
 ## Capability Interface
 

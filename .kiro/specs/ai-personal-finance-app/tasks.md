@@ -335,14 +335,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Click event → navigate to relevant Capability view
     - Mobile-friendly: swipeable, compact cards
 
-### 24. Readiness Dashboard & Brief UI
+### 24. Readiness Dashboard & Brief UI [PARTIAL]
 
-- [ ] 24.1 Implement Readiness dashboard (replaces old dashboard)
-    - Hero: overall readiness score (large number) + trend indicator
-    - Pillar breakdown: 5 progress bars with scores and status labels
-    - Top risk card: biggest current risk with recommendation
-    - Top opportunity card: highest-impact action available
-    - Recent score changes: what moved the needle this week
+- [~] 24.1 Implement Readiness dashboard (replaces old dashboard)
+    - [x] Hero: readiness score, coverage/confidence, strongest/most-limited pillar, and trend indicator
+    - [x] Pillar cards: score, coverage, and contributing signal summaries
+    - [x] Needs attention and Wardkeep recommends sections
+    - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
 
 - [ ] 24.2 Implement Morning Brief UI (new home screen)
     - Greeting with readiness score

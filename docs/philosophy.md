@@ -78,7 +78,7 @@ When a user opens Wardkeep, they should feel like they just sat down with a trus
 ```
 Good morning, Rey.
 
-Household Readiness: 91%
+Household Readiness: 91%  ·  Coverage: 78%
 You are in excellent shape.
 
 Today's Priority
@@ -94,7 +94,7 @@ Risk
   ⚠ Your water heater is 12 years old. Average replacement cost: $1,200.
 ```
 
-That isn't accounting. That's leadership.
+That isn't accounting. That's household leadership—provided Wardkeep is clear about the facts and gaps behind the assessment.
 
 ## The Long-Term Vision
 

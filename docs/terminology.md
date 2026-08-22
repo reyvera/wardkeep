@@ -10,6 +10,7 @@ Consistency in language shapes how people think about a product — both the tea
 |------|-----------|----------|
 | **Household** | The unit Wardkeep serves. Could be one person, a couple, a family, or a shared living arrangement. | User, Account holder |
 | **Readiness** | The state of being prepared for what's coming. The primary metric. | Score, Health, Status |
+| **Coverage** | How much of the relevant household picture Wardkeep has evaluated; the confidence companion to Readiness. | Completeness score, Accuracy |
 | **Capability** | A domain of household knowledge that contributes to readiness. | Plugin, Module, Feature, Add-on |
 | **Advisor** | The AI layer that explains, prioritizes, and recommends. | AI, Chatbot, Assistant |
 | **Signal** | An interpreted observation that affects readiness (risk, opportunity, milestone). | Alert, Notification, Flag |
@@ -186,6 +187,7 @@ const modules = ...;          // NestJS uses "module" internally; we use "Capabi
 | "Couldn't reach your bank. We'll try again shortly." | "Error: Connection failed (code 503)" |
 | "The Advisor is thinking. This usually takes a few seconds." | "Loading AI response..." |
 | "We need a bit more information to compute your Readiness." | "Insufficient data for calculation" |
+| "We have limited information about this area, so this is not a complete assessment." | "You are fully protected" when factors are unknown |
 
 ## Versioning This Document
 
