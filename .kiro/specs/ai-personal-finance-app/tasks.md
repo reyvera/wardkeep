@@ -522,6 +522,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Rank by severity × urgency × financial impact × actionability × confidence
     - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
+- [ ] 39.6 Establish GitHub launch tracking
+    - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
+    - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
+    - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
+    - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
+
 ### 33. Income & Spending Intelligence
 
 - [ ] 33.1 Income configuration and pay schedule
