@@ -49,6 +49,7 @@ const emptyForm = {
   nickname: '',
   renewalDate: '',
   premium: '',
+  premiumFrequency: 'MONTHLY',
   deductible: '',
   coverageAmount: '',
   paymentArrangement: 'SEPARATE',
@@ -129,9 +130,30 @@ export default function InsurancePage() {
       </div>
       {policies.data && activePolicies.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="card py-4"><p className="card-title">ACTIVE POLICIES</p><p className="text-2xl font-bold text-content-primary">{activePolicies.length}</p></div>
-          <div className="card py-4"><p className="card-title">RENEWAL ATTENTION</p><p className={`text-2xl font-bold ${renewalsSoon > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}>{renewalsSoon}</p><p className="mt-1 text-xs text-content-tertiary">Due within 30 days</p></div>
-          <div className="card py-4"><p className="card-title">DETAILS STILL NEEDED</p><p className={`text-2xl font-bold ${detailsNeeded > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}>{detailsNeeded}</p><p className="mt-1 text-xs text-content-tertiary">Missing renewal, deductible, or limit</p></div>
+          <div className="card py-4">
+            <p className="card-title">ACTIVE POLICIES</p>
+            <p className="text-2xl font-bold text-content-primary">{activePolicies.length}</p>
+          </div>
+          <div className="card py-4">
+            <p className="card-title">RENEWAL ATTENTION</p>
+            <p
+              className={`text-2xl font-bold ${renewalsSoon > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
+            >
+              {renewalsSoon}
+            </p>
+            <p className="mt-1 text-xs text-content-tertiary">Due within 30 days</p>
+          </div>
+          <div className="card py-4">
+            <p className="card-title">DETAILS STILL NEEDED</p>
+            <p
+              className={`text-2xl font-bold ${detailsNeeded > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
+            >
+              {detailsNeeded}
+            </p>
+            <p className="mt-1 text-xs text-content-tertiary">
+              Missing renewal, deductible, or limit
+            </p>
+          </div>
         </div>
       )}
       {open && (
@@ -197,6 +219,19 @@ export default function InsurancePage() {
             />
           </div>
           <div>
+            <label className="input-label">Premium frequency</label>
+            <select
+              className="input"
+              value={form.premiumFrequency}
+              onChange={(e) => setForm({ ...form, premiumFrequency: e.target.value })}
+            >
+              <option value="MONTHLY">Monthly</option>
+              <option value="QUARTERLY">Quarterly</option>
+              <option value="SEMI_ANNUAL">Semi-annual</option>
+              <option value="ANNUAL">Annual</option>
+            </select>
+          </div>
+          <div>
             <label className="input-label">Coverage amount (optional)</label>
             <input
               className="input"
@@ -239,7 +274,7 @@ export default function InsurancePage() {
               </div>
               {form.type === 'HOME' && (
                 <div>
-              <label className="input-label">Monthly property-tax escrow (optional)</label>
+                  <label className="input-label">Monthly property-tax escrow (optional)</label>
                   <input
                     className="input"
                     inputMode="decimal"
@@ -308,6 +343,7 @@ export default function InsurancePage() {
                           nickname: policy.nickname ?? '',
                           renewalDate: policy.renewalDate?.slice(0, 10) ?? '',
                           premium: policy.premium ?? '',
+                          premiumFrequency: policy.premiumFrequency,
                           deductible: policy.deductible ?? '',
                           coverageAmount: policy.coverageAmount ?? '',
                           paymentArrangement: policy.paymentArrangement,
