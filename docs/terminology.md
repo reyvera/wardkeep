@@ -10,6 +10,7 @@ Consistency in language shapes how people think about a product — both the tea
 |------|-----------|----------|
 | **Household** | The unit Wardkeep serves. Could be one person, a couple, a family, or a shared living arrangement. | User, Account holder |
 | **Readiness** | The state of being prepared for what's coming. The primary metric. | Score, Health, Status |
+| **Coverage** | How much of the relevant household picture Wardkeep has evaluated; the confidence companion to Readiness. | Completeness score, Accuracy |
 | **Capability** | A domain of household knowledge that contributes to readiness. | Plugin, Module, Feature, Add-on |
 | **Advisor** | The AI layer that explains, prioritizes, and recommends. | AI, Chatbot, Assistant |
 | **Signal** | An interpreted observation that affects readiness (risk, opportunity, milestone). | Alert, Notification, Flag |
@@ -18,13 +19,15 @@ Consistency in language shapes how people think about a product — both the tea
 | **Pillar** | One of five dimensions of household readiness. | Category, Area, Domain |
 | **Household Timeline** | A unified chronological view of past and future events across all Capabilities. | Calendar, History, Schedule |
 | **Morning Brief** | The daily summary of what matters today. | Dashboard, Home screen, Daily digest |
+| **Dashboard** | The current household-readiness command center: readiness, coverage, attention, and recommendations. | Metrics dashboard |
+| **Financial Overview** | Detailed accounts, net worth, spending, budgets, and transactions. | Dashboard |
 | **Recommendation** | A specific action the user could take to improve readiness. | Suggestion, Tip, Alert |
 
 ## The Five Pillars
 
 | Pillar | Meaning | Covers |
 |--------|---------|--------|
-| **Protection** | Shielding the household from catastrophe | Insurance, emergency fund, estate, security, passwords |
+| **Protection** | Shielding the household from financial shocks | Liquid reserves today; eventually insurance, income resilience, estate, obligations, and security |
 | **Provision** | Ensuring the household runs smoothly day to day | Cash flow, bills, income, budget, spending |
 | **Preparation** | Being ready for what's ahead | Maintenance, taxes, goals, education, seasonal tasks |
 | **Prosperity** | Growing the household's position over time | Net worth, investments, debt reduction, giving |
@@ -37,9 +40,12 @@ Consistency in language shapes how people think about a product — both the tea
 | Use | Don't Use |
 |-----|-----------|
 | Household Readiness | Score, Health Check |
+| Readiness coverage | Completeness score |
 | Advisor | AI Chat, Ask AI |
 | Capabilities | Modules, Features, Plugins |
-| Morning Brief | Dashboard, Home |
+| Morning Brief | Daily digest, Home |
+| Dashboard | Passive dashboard, Home |
+| Financial Overview | Dashboard |
 | Household Timeline | Calendar, Events |
 | Provision | Budget, Money |
 | Protection | Insurance, Safety |
@@ -159,7 +165,7 @@ const modules = ...;          // NestJS uses "module" internally; we use "Capabi
 | Notification | Generic, easily ignored | Brief, Insight |
 | Plugin | Implies optional/lesser | Capability |
 | Module | Too technical for users | Capability |
-| Dashboard | Implies passive data display | Morning Brief, Readiness |
+| Dashboard | Use only for the readiness command center; do not use it for a generic metrics page | Financial Overview for detailed money data |
 | Health Score | Medical connotation | Readiness |
 | AI | Generic, overhyped | Advisor |
 | Chatbot | Implies reactive, limited | Advisor |
@@ -184,6 +190,7 @@ const modules = ...;          // NestJS uses "module" internally; we use "Capabi
 | "Couldn't reach your bank. We'll try again shortly." | "Error: Connection failed (code 503)" |
 | "The Advisor is thinking. This usually takes a few seconds." | "Loading AI response..." |
 | "We need a bit more information to compute your Readiness." | "Insufficient data for calculation" |
+| "We have limited information about this area, so this is not a complete assessment." | "You are fully protected" when factors are unknown |
 
 ## Versioning This Document
 

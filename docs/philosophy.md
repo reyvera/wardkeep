@@ -4,7 +4,7 @@
 
 Wardkeep is a decision engine for households.
 
-Not a budgeting app. Not a dashboard. Not a finance tracker.
+Not merely a budgeting app, a metrics dashboard, or a finance tracker.
 
 Wardkeep answers the questions people actually lose sleep over:
 
@@ -56,6 +56,10 @@ Every feature should increase confidence. Not complexity.
 
 Before building anything, ask: "Does this help someone make a better decision?" If the answer is no, it doesn't belong in Wardkeep.
 
+### 7. Honest confidence over false certainty
+
+Wardkeep never turns missing information into reassurance. A readiness assessment must say both what it observes and what it cannot yet evaluate. The product earns trust by separating **readiness** from **coverage**, by showing data freshness and provenance where it matters, and by making assumptions visible.
+
 ## The Design Test
 
 When evaluating any feature, screen, capability, or architectural decision:
@@ -68,7 +72,7 @@ If the answer is no, it doesn't ship.
 
 - It is not accounting software. Accountants look backward. Wardkeep looks forward.
 - It is not a chatbot. Chatbots wait to be asked. Wardkeep surfaces what matters before you think to ask.
-- It is not a dashboard. Dashboards present data. Wardkeep presents understanding.
+- It is not a generic metrics dashboard. The Dashboard is a command center for readiness, coverage, attention, and next actions; detailed money data belongs in Financial Overview.
 - It is not a subscription trap. The free version is genuinely useful. Paid tiers sell convenience, not capability.
 
 ## The Home Screen Promise
@@ -78,7 +82,7 @@ When a user opens Wardkeep, they should feel like they just sat down with a trus
 ```
 Good morning, Rey.
 
-Household Readiness: 91%
+Household Readiness: 91%  ·  Coverage: 78%
 You are in excellent shape.
 
 Today's Priority
@@ -94,7 +98,7 @@ Risk
   ⚠ Your water heater is 12 years old. Average replacement cost: $1,200.
 ```
 
-That isn't accounting. That's leadership.
+That isn't accounting. That's household leadership—provided Wardkeep is clear about the facts and gaps behind the assessment.
 
 ## The Long-Term Vision
 

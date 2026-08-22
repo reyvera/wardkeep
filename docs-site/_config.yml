@@ -1,7 +1,7 @@
 title: Wardkeep
-description: Private, self-hostable, AI-powered personal finance
+description: Private, self-hostable household-readiness platform
 url: "https://reyvera.github.io"
-baseurl: "/budgetapp"
+baseurl: "/wardkeep"
 
 remote_theme: just-the-docs/just-the-docs@v0.10.0
 
@@ -17,9 +17,9 @@ color_scheme: dark
 
 aux_links:
   "GitHub":
-    - "https://github.com/reyvera/budgetapp"
+    - "https://github.com/reyvera/wardkeep"
   "Docker Hub":
-    - "https://github.com/reyvera/budgetapp/pkgs/container/wardkeep-api"
+    - "https://github.com/reyvera/wardkeep/pkgs/container/wardkeep-api"
 
 aux_links_new_tab: true
 
@@ -30,7 +30,7 @@ heading_anchors: true
 back_to_top: true
 back_to_top_text: "Back to top"
 
-footer_content: "Copyright &copy; 2026 Reymundo A Vera. Licensed under <a href=\"https://github.com/reyvera/budgetapp/blob/main/LICENSE\">AGPL-3.0</a>."
+footer_content: "Copyright &copy; 2026 Reymundo A Vera. Licensed under <a href=\"https://github.com/reyvera/wardkeep/blob/main/LICENSE\">AGPL-3.0</a>."
 
 callouts:
   warning:

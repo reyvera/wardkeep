@@ -51,6 +51,7 @@ interface SpendingStats {
     daysElapsed: number;
     daysInMonth: number;
   };
+  dailySpending: Array<{ day: number; actual: number }>;
 }
 
 interface Transaction {
@@ -158,24 +159,21 @@ export default function DashboardPage() {
   const expenses = statsQuery.data?.monthTotals?.expenses ?? 0;
   const daysElapsed = statsQuery.data?.monthTotals?.daysElapsed ?? 0;
   const daysInMonth = statsQuery.data?.monthTotals?.daysInMonth ?? 30;
-  const dailyRate = daysElapsed > 0 ? expenses / daysElapsed : 0;
-
-  // Spending pace data for the area chart
-  const paceData = Array.from({ length: daysElapsed || 1 }, (_, i) => ({
-    day: i + 1,
-    actual: Math.round(dailyRate * (i + 1) * 100) / 100,
-    budget: budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * (i + 1) * 100) / 100 : 0,
+  // The API supplies actual cumulative daily totals. Never infer a smooth line
+  // from today's average: it hides real spending spikes and plateaus.
+  const paceData = (statsQuery.data?.dailySpending ?? []).map((point) => ({
+    ...point,
+    budget: budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * point.day * 100) / 100 : 0,
   }));
-
-  const underOver = budgetAllocated > 0
-    ? budgetAllocated - budgetSpent
-    : 0;
+  const expectedSpend = budgetAllocated > 0 && daysInMonth > 0 ? budgetAllocated * (daysElapsed / daysInMonth) : 0;
+  const paceDifference = expectedSpend - expenses;
+  const projectedSpend = daysElapsed > 0 ? (expenses / daysElapsed) * daysInMonth : 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-page-title text-content-primary">Dashboard</h1>
+        <h1 className="text-page-title text-content-primary">Financial overview</h1>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setMonth(navigateMonth(month, -1))}
@@ -207,10 +205,10 @@ export default function DashboardPage() {
           {budgetAllocated > 0 && (
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                underOver >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                paceDifference >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
               }`}
             >
-              ${Math.abs(underOver).toLocaleString('en-US', { maximumFractionDigits: 0 })} {underOver >= 0 ? 'under' : 'over'}
+              ${Math.abs(paceDifference).toLocaleString('en-US', { maximumFractionDigits: 0 })} {paceDifference >= 0 ? 'ahead of pace' : 'behind pace'}
             </span>
           )}
         </div>
@@ -235,6 +233,11 @@ export default function DashboardPage() {
             <Area type="monotone" dataKey="actual" stroke="var(--accent-green)" fill="url(#spendGradient)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
+        {budgetAllocated > 0 && (
+          <p className="text-xs text-content-tertiary mt-2">
+            ${formatCurrency(budgetRemaining)} remaining · Projected month-end: ${formatCurrency(projectedSpend)}{projectedSpend > budgetAllocated ? ` · $${formatCurrency(projectedSpend - budgetAllocated)} over` : ''}
+          </p>
+        )}
       </div>
 
       {/* Main Grid: 3 columns on large, 2 on medium */}

@@ -13,11 +13,12 @@
     {
       "name": "Phase 2 — Decision Engine",
       "tasks": ["19", "20", "21", "22", "23", "24", "25"],
-      "dependsOn": ["Phase 1 — Finance Platform"]
+      "dependsOn": ["Phase 1 — Finance Platform"],
+      "status": "in_progress"
     },
     {
       "name": "Ongoing Enhancements",
-      "tasks": ["33", "34", "35", "36", "37", "38"],
+      "tasks": ["33", "34", "35", "36", "37", "38", "39"],
       "dependsOn": ["Phase 1 — Finance Platform"]
     }
   ]
@@ -189,13 +190,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ---
 
-## Phase 2 — The Decision Engine [NEXT]
+## Phase 2 — The Decision Engine [IN PROGRESS]
 
 > Goal: Transform the finance app into a decision engine. Build the Readiness Engine, Advisor, and Household Timeline. This is what makes Wardkeep fundamentally different from every other finance app.
 
-### 19. Readiness Engine Core (packages/readiness)
+### 19. Readiness Engine Core (packages/readiness) [FOUNDATION SHIPPED]
 
-- [ ] 19.1 Create packages/readiness with core types and scoring logic
+- [x] 19.1 Create packages/readiness with core types and scoring logic
     - Define Signal, Observation, Recommendation, ReadinessSnapshot types
     - Define ReadinessPillar enum (protection, provision, preparation, prosperity, peace)
     - Implement `computePillarScore(pillar, signals)` — deterministic, pure function
@@ -204,50 +205,49 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - All functions pure, no I/O, fully property-testable
     - Use Decimal.js where financial values feed into scores
 
-- [ ] 19.2 Implement signal aggregation and snapshot storage
-    - Create SignalService in apps/api that collects signals from Capabilities
-    - Store signals in PostgreSQL (Signal model from technical-architecture.md)
-    - Create ReadinessSnapshot model — daily score persistence
-    - Implement snapshot creation job (daily via BullMQ)
-    - API endpoint: GET /api/readiness — returns current score + pillar breakdown
+- [~] 19.2 Implement signal aggregation and snapshot storage
+    - [x] ReadinessService collects current finance-generator signals
+    - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
+    - [x] ReadinessSnapshot model — daily score persistence
+    - [ ] Move snapshot creation to a daily BullMQ job; the endpoint currently records the daily snapshot asynchronously
+    - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
 
-- [ ] 19.3 Implement readiness explainability
-    - Create ReadinessExplanation type with pillar details and contributing signals
-    - API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
-    - Every point deducted or added traceable to a specific Capability and observation
-    - Include trend data (improving/stable/declining per pillar)
+- [~] 19.3 Implement readiness explainability
+    - [x] Current response includes contributing signals and dashboard surfaces their summaries
+    - [ ] Create a ReadinessExplanation type with pillar details, evaluated/missing factors, and score-change reasons
+    - [ ] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
+    - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
 
-- [ ] 19.4 Implement readiness history and trends
-    - API endpoint: GET /api/readiness/history — score snapshots over time
-    - Store 365 days of daily snapshots per household
-    - Compute 7-day, 30-day, 90-day trend indicators
-    - Detect seasonal patterns (optional, AI-enhanced later)
+- [~] 19.4 Implement readiness history and trends
+    - [x] API endpoint: GET /api/readiness/history — score snapshots over time
+    - [x] Dashboard renders up to 90 days of available score history
+    - [ ] Define retention and store 365 days of snapshots per household
+    - [ ] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
+    - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
-- [ ] 19.5 Write property tests for Readiness Engine
+- [~] 19.5 Write property tests for Readiness Engine
     - **Property 34: Pillar score is deterministic given same signals**
     - **Property 35: Overall readiness is weighted average of pillar scores**
     - **Property 36: Peace score derives from minimum pillar and volatility**
-    - **Property 37: No signals implies no penalty (score = 100)**
+    - **Property 37: No signals is never treated as perfect readiness; the API/UI must mark it not evaluated**
     - **Property 38: Signal magnitude bounded to [-10, +10] clamps correctly**
     - Generate random signal sets; verify deterministic, bounded, explainable output
 
-### 20. Finance Capability Signals
+### 20. Finance Capability Signals [PARTIAL]
 
-- [ ] 20.1 Define finance signal generators
+- [~] 20.1 Define finance signal generators
     - Budget adherence signal: risk when >90% spent, opportunity when consistently under
-    - Emergency fund signal: risk when <3 months expenses, positive when ≥6 months
+    - [x] Graduated liquid-reserve signal from 0 through 12 months of filtered ordinary expenses
+    - [ ] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
     - Debt-to-income ratio signal: risk when >36%, warning when >28%
     - Cashflow forecast signal: risk when projected negative within 30 days
     - Net worth trend signal: positive when growing month-over-month
     - Recurring payment reliability signal: risk when missed payments detected
 
-- [ ] 20.2 Wire existing finance services to emit signals
-    - On budget recalculation → emit budget adherence signal
-    - On account balance change → recalculate emergency fund and net worth signals
-    - On cashflow projection → emit forecast signal
-    - On debt change → emit debt-to-income signal
-    - On recurring miss → emit reliability signal
-    - Signals stored in DB and fed to Readiness Engine
+- [~] 20.2 Wire existing finance services to emit signals
+    - [x] Current generators derive signals on readiness evaluation
+    - [ ] Recompute signals on relevant writes and scheduled syncs
+    - [ ] Store signals/observations in DB and feed them through a versioned pipeline
 
 - [ ] 20.3 Implement Capability interface for finance
     - Create FinanceCapability class implementing the Capability interface
@@ -336,14 +336,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Click event → navigate to relevant Capability view
     - Mobile-friendly: swipeable, compact cards
 
-### 24. Readiness Dashboard & Brief UI
+### 24. Readiness Dashboard & Brief UI [PARTIAL]
 
-- [ ] 24.1 Implement Readiness dashboard (replaces old dashboard)
-    - Hero: overall readiness score (large number) + trend indicator
-    - Pillar breakdown: 5 progress bars with scores and status labels
-    - Top risk card: biggest current risk with recommendation
-    - Top opportunity card: highest-impact action available
-    - Recent score changes: what moved the needle this week
+- [~] 24.1 Implement Readiness dashboard (replaces old dashboard)
+    - [x] Hero: readiness score, coverage/confidence, strongest/most-limited pillar, and trend indicator
+    - [x] Pillar cards: score, coverage, and contributing signal summaries
+    - [x] Needs attention and Wardkeep recommends sections
+    - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
 
 - [ ] 24.2 Implement Morning Brief UI (new home screen)
     - Greeting with readiness score
@@ -364,6 +363,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Filter by Capability, by pillar, by action-required
     - Past events show completion status
     - Future events show countdown/proximity
+
+### 24.5 Financial Overview accuracy [COMPLETE]
+
+- [x] Replace reconstructed average spending pace with actual cumulative transaction totals by date
+- [x] Replace mid-month “under/over budget” wording with remaining allocation, pace against expectation, and projected month-end spending
 
 ### 25. Phase 2 Checkpoint
 
@@ -491,6 +495,39 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 > These improve the existing finance foundation. Can be tackled alongside Phase 2 work.
 
+### 39. Readiness Trust & Household Coverage [NEXT]
+
+> Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
+
+- [ ] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
+    - Per-pillar state: `known`, `partial`, or `not_evaluated`
+    - Include evaluated factors, missing factors, data freshness, and provenance
+    - Define how overall readiness behaves when high-weight pillars are not evaluated
+
+- [ ] 39.2 Add data provenance and freshness
+    - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
+    - Display account and score freshness in relevant UI
+    - Reduce or qualify confidence for stale/manual values according to transparent rules
+
+- [ ] 39.3 Harden the Protection liquidity model
+    - Structural transfer exclusion and credit-card payment matching
+    - Distinguish essential burn rate from normal household spending
+    - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
+
+- [ ] 39.4 Add composite Protection capabilities
+    - Insurance policies and renewals, disability/life coverage, deductibles, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+    - Keep every component independently explainable; missing data remains unknown
+
+- [ ] 39.5 Create durable recommendations and impact previews
+    - Rank by severity × urgency × financial impact × actionability × confidence
+    - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
+
+- [ ] 39.6 Establish GitHub launch tracking
+    - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
+    - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
+    - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
+    - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
+
 ### 33. Income & Spending Intelligence
 
 - [ ] 33.1 Income configuration and pay schedule
@@ -505,10 +542,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Per-category change indicators
     - 6/12-month trend visualizations
 
-- [ ] 33.3 Spending pace line visualization
-    - Cumulative daily spending vs ideal pace line
-    - Under/over pace indicator with dollar amount
-    - Show on dashboard and budget detail
+- [x] 33.3 Spending pace line visualization
+    - [x] Cumulative daily spending vs ideal pace line in Financial Overview
+    - [x] Pace indicator with dollar amount and projected month-end spending
+    - [ ] Extend the same truthful pace treatment to budget detail
 
 ### 34. Transaction Workflow
 
