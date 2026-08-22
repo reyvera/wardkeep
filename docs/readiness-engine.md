@@ -93,7 +93,7 @@ GET  /api/changes               meaningful changes since the user’s last visit
 
 ### Harden the scoring model
 
-- Represent a score as **known**, **partial**, or **not evaluated** in the API instead of relying only on a numeric sentinel.
+- [x] Scores now return an explicit **known**, **partial**, or **not evaluated** assessment state, a nullable score, coverage, and evaluated capabilities. The remaining work is to add missing factors, freshness, provenance, and an overall-score rule for unevaluated high-weight pillars.
 - Define capability-specific coverage factors and freshness rules. Manual, estimated, inferred, calculated, synchronized, stale, and unknown data must be distinguishable.
 - Exclude transfers structurally, match credit-card payments to underlying purchases, and develop essential and normal burn-rate views.
 - Add test coverage for zero to 12+ months of reserves, no expense history, transfers, duplicated card payments, large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.

@@ -499,10 +499,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 > Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
 
-- [ ] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
-    - Per-pillar state: `known`, `partial`, or `not_evaluated`
-    - Include evaluated factors, missing factors, data freshness, and provenance
-    - Define how overall readiness behaves when high-weight pillars are not evaluated
+- [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
+    - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
+    - [ ] Include missing factors, data freshness, and provenance
+    - [ ] Define how overall readiness behaves when high-weight pillars are not evaluated
 
 - [ ] 39.2 Add data provenance and freshness
     - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
