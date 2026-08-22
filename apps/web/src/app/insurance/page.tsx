@@ -95,6 +95,15 @@ export default function InsurancePage() {
     event.preventDefault();
     save.mutate();
   };
+  const activePolicies = policies.data?.filter((policy) => policy.isActive) ?? [];
+  const detailsNeeded = activePolicies.filter(
+    (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
+  ).length;
+  const renewalsSoon = activePolicies.filter((policy) => {
+    if (!policy.renewalDate) return false;
+    const days = (new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000;
+    return days >= 0 && days <= 30;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -118,6 +127,13 @@ export default function InsurancePage() {
           Add policy
         </button>
       </div>
+      {policies.data && activePolicies.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="card py-4"><p className="card-title">ACTIVE POLICIES</p><p className="text-2xl font-bold text-content-primary">{activePolicies.length}</p></div>
+          <div className="card py-4"><p className="card-title">RENEWAL ATTENTION</p><p className={`text-2xl font-bold ${renewalsSoon > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}>{renewalsSoon}</p><p className="mt-1 text-xs text-content-tertiary">Due within 30 days</p></div>
+          <div className="card py-4"><p className="card-title">DETAILS STILL NEEDED</p><p className={`text-2xl font-bold ${detailsNeeded > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}>{detailsNeeded}</p><p className="mt-1 text-xs text-content-tertiary">Missing renewal, deductible, or limit</p></div>
+        </div>
+      )}
       {open && (
         <form onSubmit={submit} className="card grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
