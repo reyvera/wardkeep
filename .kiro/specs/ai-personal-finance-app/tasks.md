@@ -536,6 +536,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 39.4 Add composite Protection capabilities
   - [x] Insurance policy records (type, provider, premium, deductible, coverage amount, renewal date), explainable renewal-timing signals, and recorded-deductible-to-liquid-reserve warning
   - [x] Seed representative policies for the demo household, including an upcoming renewal
+  - [x] Record separate versus mortgage/loan/other bundled premiums, linked payment account, and home property-tax escrow to prevent future cash-flow double counting
   - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
   - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
   - Keep every component independently explainable; missing data remains unknown
