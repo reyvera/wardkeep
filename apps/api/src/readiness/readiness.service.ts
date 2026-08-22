@@ -41,11 +41,20 @@ export interface ReadinessResponse {
     delta: number;
     comparedTo: Date;
   }>;
+  changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
 @Injectable()
 export class ReadinessService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getLastDashboardView(userId: string) {
+    return this.prisma.user.findUnique({ where: { id: userId }, select: { lastDashboardViewedAt: true } });
+  }
+
+  async recordDashboardView(userId: string): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { lastDashboardViewedAt: new Date() } });
+  }
 
   /**
    * Computes the full readiness state for a user.
@@ -54,7 +63,7 @@ export class ReadinessService {
    * @param userId - The authenticated user's ID
    * @returns Complete readiness response with scores, signals, and history
    */
-  async getReadiness(userId: string): Promise<ReadinessResponse> {
+  async getReadiness(userId: string, lastViewedAt: Date | null = null): Promise<ReadinessResponse> {
     // Collect signals from all pillar generators in parallel
     const [provisionSignals, prosperitySignals, protectionSignals] = await Promise.all([
       generateProvisionSignals(this.prisma, userId),
@@ -102,15 +111,18 @@ export class ReadinessService {
       ...pillarScoresWithoutPeace,
       peace,
     };
-    const latestSnapshot = recentSnapshots[0];
-    const recentChanges = latestSnapshot
+    const comparisonSnapshot = lastViewedAt
+      ? await this.prisma.readinessSnapshot.findFirst({ where: { userId, recordedAt: { lte: lastViewedAt } }, orderBy: { recordedAt: 'desc' } })
+      : recentSnapshots[0];
+    const changeWindow = comparisonSnapshot ? (lastViewedAt ? 'since_last_visit' : 'since_last_snapshot') : 'none';
+    const recentChanges = comparisonSnapshot
       ? (Object.keys(pillars) as Array<keyof PillarScores>)
         .map((pillar) => ({
           pillar,
-          previous: latestSnapshot[pillar],
+          previous: comparisonSnapshot[pillar],
           current: pillars[pillar],
-          delta: pillars[pillar] - latestSnapshot[pillar],
-          comparedTo: latestSnapshot.recordedAt,
+          delta: pillars[pillar] - comparisonSnapshot[pillar],
+          comparedTo: comparisonSnapshot.recordedAt,
         }))
         .filter((change) => change.delta !== 0)
         .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
@@ -195,6 +207,7 @@ export class ReadinessService {
         lastSynchronizedAt,
       },
       recentChanges,
+      changeWindow,
     };
   }
 
