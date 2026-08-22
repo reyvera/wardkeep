@@ -43,6 +43,18 @@ const label = (value: string) =>
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const monthlyPremium = (policy: Policy) => {
+  if (!policy.premium) return null;
+  const divisor =
+    policy.premiumFrequency === 'ANNUAL'
+      ? 12
+      : policy.premiumFrequency === 'SEMI_ANNUAL'
+        ? 6
+        : policy.premiumFrequency === 'QUARTERLY'
+          ? 3
+          : 1;
+  return Number(policy.premium) / divisor;
+};
 const emptyForm = {
   type: 'AUTO' as PolicyType,
   provider: '',
@@ -393,6 +405,18 @@ export default function InsurancePage() {
                         Included in {policy.paymentAccount?.name ?? 'a bundled payment'}
                         {policy.propertyTaxEscrow
                           ? ` · $${policy.propertyTaxEscrow} property-tax escrow`
+                          : ''}
+                      </b>
+                    </span>
+                  )}
+                  {monthlyPremium(policy) !== null && (
+                    <span className="col-span-2">
+                      Monthly equivalent
+                      <br />
+                      <b className="text-content-primary">
+                        ${monthlyPremium(policy)!.toFixed(2)} / month
+                        {policy.paymentArrangement !== 'SEPARATE'
+                          ? ' · already included above'
                           : ''}
                       </b>
                     </span>
