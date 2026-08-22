@@ -24,6 +24,8 @@ export interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: ReadinessSnapshot[];
+  coverage: number;
+  pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
 }
 
 @Injectable()
@@ -55,7 +57,7 @@ export class ReadinessService {
     const provision = computePillarScore('provision', allSignals);
     const prosperity = computePillarScore('prosperity', allSignals);
     const protection = computePillarScore('protection', allSignals);
-    const preparation = 100; // No generators for this pillar yet
+    const preparation = 0; // No generator means unknown, never "perfect"
 
     const pillarScoresWithoutPeace = { protection, provision, preparation, prosperity };
 
@@ -86,6 +88,16 @@ export class ReadinessService {
       peace,
     };
 
+    const directPillars = ['protection', 'provision', 'preparation', 'prosperity'] as const;
+    const capabilityTargets: Record<(typeof directPillars)[number], number> = {
+      protection: 5, provision: 3, preparation: 4, prosperity: 3,
+    };
+    const pillarCoverage = Object.fromEntries(directPillars.map((pillar) => {
+      const evaluated = new Set(allSignals.filter((signal) => signal.pillar === pillar).map((signal) => signal.capabilityId)).size;
+      return [pillar, Math.round(Math.min(1, evaluated / capabilityTargets[pillar]) * 100)];
+    })) as ReadinessResponse['pillarCoverage'];
+    const coverage = Math.round(directPillars.reduce((sum, pillar) => sum + pillarCoverage[pillar], 0) / directPillars.length);
+
     // Extract top risks and opportunities for quick display
     const topRisks = allSignals
       .filter((s) => s.type === 'risk' || s.type === 'warning')
@@ -104,6 +116,8 @@ export class ReadinessService {
       topRisks,
       topOpportunities,
       history: history.reverse(),
+      coverage,
+      pillarCoverage,
     };
   }
 
