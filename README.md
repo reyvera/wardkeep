@@ -332,7 +332,7 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 | Pre-built images on GHCR | ✅ |
 | CI/CD pipeline | ✅ |
 | Readiness Engine (household decision engine) | 🟡 |
-| Composite Protection (insurance, income resilience, estate, obligations) | 📋 |
+| Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡 |
 | Capability SDK (extensible domain modules) | 📋 |
 | Coming Up timeline, change feed, and Morning Brief / Advisor | 📋 |
 | Readiness scenarios and recommendation impact previews | 📋 |

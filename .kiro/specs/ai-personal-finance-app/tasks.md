@@ -514,8 +514,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Distinguish essential burn rate from normal household spending
     - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
 
-- [ ] 39.4 Add composite Protection capabilities
-    - Insurance policies and renewals, disability/life coverage, deductibles, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+- [~] 39.4 Add composite Protection capabilities
+    - [x] Insurance policy records (type, provider, premium, deductible, coverage amount, renewal date) and explainable renewal-timing signals
+    - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
+    - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
     - Keep every component independently explainable; missing data remains unknown
 
 - [ ] 39.5 Create durable recommendations and impact previews
