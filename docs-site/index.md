@@ -1,131 +1,84 @@
 ---
 layout: home
-title: Home
+title: Wardkeep
 nav_order: 1
 permalink: /
 ---
 
-# Wardkeep
+# A clearer view of your household.
 {: .fs-9 }
 
-Guard your ground.
+Know what matters today. Feel more ready for what comes next.
 {: .fs-6 .fw-300 }
 
-A private, self-hostable household-readiness platform. Wardkeep starts with finance—spending, income, debt, savings, bills, subscriptions, and cash flow—and is becoming the command center for what your household needs to prepare for next.
+Wardkeep is a private, self-hostable home for your money and the responsibilities it supports. It brings spending, bills, savings, debt, and cash flow into one calm place—then helps you see what deserves attention before it becomes urgent.
 {: .fs-5 .fw-300 }
 
-[Get Started]({{ site.baseurl }}/quick-start){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Self-Host Now]({{ site.baseurl }}/deployment){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Get started]({{ site.baseurl }}/quick-start){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Self-host Wardkeep]({{ site.baseurl }}/deployment){: .btn .fs-5 .mb-4 .mb-md-0 }
+
+Private by design. Your data stays under your control.
+{: .fs-3 .text-grey-dk-000 }
 
 ---
 
-## The key difference
+## Money is part of the picture. Your household is the point.
 
-Instead of only showing numbers, Wardkeep **explains** what is happening, **shows how complete that picture is**, **anticipates** what is coming, and **recommends** actions—all while keeping your data private.
+Most finance apps stop at transactions. Wardkeep helps you understand the practical questions behind them:
 
-AI is never the source of truth. Deterministic math handles balances, forecasts, debt calculations, and budgets. AI explains, categorizes, summarizes, detects patterns, and suggests actions.
+| See the whole picture | Understand what matters | Take the next right step |
+|:--|:--|:--|
+| Accounts, spending, budgets, debt, and recurring bills together instead of spread across tools. | A plain-language readiness view that distinguishes what Wardkeep knows from what it has not evaluated yet. | Clear signals about spending pace, cash flow, and financial resilience—without pretending your situation can be reduced to one perfect score. |
 
-### Household readiness
+### Start where you are
 
-Wardkeep’s emerging home experience is a household-readiness command center. It separates **readiness** (how prepared the observed information indicates you are) from **coverage** (how much Wardkeep has actually evaluated). Missing data is never treated as proof that everything is fine.
+Connect or import your accounts, organize your transactions, and set a budget when you are ready. Wardkeep becomes more useful as your picture becomes clearer; it never treats missing information as proof that everything is fine.
 
-The current foundation includes deterministic finance signals, a graduated liquid-reserve assessment, readiness history, coverage indicators, and truthful spending/budget pacing. Composite insurance, estate, home, vehicle, timeline, scenarios, and recommendation impact previews are the next layers—not claims the current score already makes.
+### Stay ahead of ordinary life
 
----
+Track bills, subscriptions, debt payoff, savings, and cash flow in one place. See actual spending pace and a truthful month-end projection, not a chart that fills in the blanks.
 
-## Features
+### Build readiness, not anxiety
 
-### Bank auto-import
-{: .d-inline-block }
-SimpleFIN
-{: .label .label-green }
+The Dashboard highlights your household’s observed strengths, gaps, and next actions. Today it is grounded in finance data; insurance, estate planning, home, vehicle, timelines, and planning tools are being added carefully over time.
 
-Connect your bank accounts and auto-import transactions. Supports most US banks through SimpleFIN Bridge.
-
-### AI chat assistant
-
-Ask natural-language questions about your finances. Runs locally via Ollama or through OpenAI/Anthropic cloud APIs. Your choice.
-
-### Privacy modes
-
-| Mode | Behavior |
-|:-----|:---------|
-| LOCAL | All AI via Ollama. Zero external network calls. |
-| HYBRID | Sensitive data stays local. General queries can use cloud. |
-| CLOUD | All AI via OpenAI/Anthropic. Fast, no local resources. |
-
-### Monthly budgets
-
-Set category allocations, track progress with visual indicators, and get alerts when you're overspending.
-
-### Debt payoff calculator
-
-Model snowball, avalanche, consolidation, and velocity banking strategies. Compare month-by-month schedules side-by-side.
-
-### Cash-flow forecast
-
-90-day projection based on recurring transactions. See what's coming before it arrives.
-
-### Readiness coverage
-
-See the household-readiness score alongside its coverage, contributing finance signals, trend, areas needing attention, and recommended next steps. An unevaluated pillar is shown as unknown rather than perfect.
-
-### CSV / OFX / QFX import
-
-Bring your transaction history from any bank. Column mapping and preview before committing.
-
-### Encrypted backups
-
-AES-256-GCM encryption with your passphrase. Scheduled or on-demand. Your data, your key.
-
-### PWA / Offline
-
-Installable on any device. Works offline with background sync when connectivity returns.
-
-### Self-hosted
-
-Single-command Docker Compose deployment. Pre-built images on GitHub Container Registry. No cloud account required.
+[See the product direction]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
 
 ---
 
-## Tech stack
+## What Wardkeep can help with today
 
-| Layer | Technology |
-|:------|:-----------|
-| Frontend | Next.js 14 / React 18 / TypeScript / Tailwind CSS |
-| Backend | NestJS 10 / TypeScript / Prisma 5 / SWC |
-| Database | PostgreSQL 16 — NUMERIC(19,4) for currency |
-| Queue | Redis 7 / BullMQ |
-| AI | Ollama (local) + OpenAI / Anthropic (optional cloud) |
-| Bank Sync | SimpleFIN |
-| Deployment | Docker Compose / GHCR images |
-| Monorepo | Turborepo + pnpm workspaces |
+- **Bring your accounts together** with SimpleFIN bank import or CSV, OFX, and QFX files.
+- **See where your money is going** with categories, search, rules, and transaction review.
+- **Plan a month with confidence** using budgets, real spending pace, recurring payments, and cash-flow forecasts.
+- **Work through debt deliberately** with snowball, avalanche, and custom payoff comparisons.
+- **Understand financial readiness honestly** with coverage, contributing factors, and an explicit “not evaluated” state when Wardkeep lacks evidence.
+- **Keep control of your information** with self-hosting, encrypted backups, and local or optional cloud AI.
 
 ---
 
-## Quick install
+## Built for privacy and clarity
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/install.sh | bash
-```
+Wardkeep can run entirely in your own environment. Deterministic calculations—not AI—handle balances, forecasts, budgets, debt math, and readiness signals. AI is optional and can help explain, categorize, summarize, and surface patterns.
 
-Downloads the compose file, generates secure credentials, pulls pre-built images, and starts the app. Done in under 2 minutes.
+| Your preference | Wardkeep supports |
+|:--|:--|
+| Keep AI fully local | Ollama, with no external AI calls |
+| Use a mix | Sensitive data stays local while general prompts can use a cloud provider |
+| Move quickly | Optional OpenAI or Anthropic integrations |
 
-[Full deployment guide]({{ site.baseurl }}/deployment){: .btn .btn-outline }
-[Roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
-
----
-
-## Screenshots
-
-> Screenshots are refreshed periodically and may show an earlier financial-overview layout. The current product direction and readiness contract are documented in the repository’s [Readiness Engine specification](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md).
-
-![Dashboard]({{ site.baseurl }}/assets/screenshots/desktop/dashboard.png?v={{ site.time | date: '%s' }})
-
-[View all screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
+[Install Wardkeep]({{ site.baseurl }}/deployment){: .btn .btn-primary }
 
 ---
 
-## License
+## Want the details?
 
-Wardkeep is open source under [AGPL-3.0](https://github.com/reyvera/wardkeep/blob/main/LICENSE). Self-host it, modify it, contribute back.
+Wardkeep is open source. Technical material is here when you need it—not required to understand the product.
+
+[Quick start]({{ site.baseurl }}/quick-start){: .btn .btn-outline }
+[Release roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
+[Screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
+[Readiness model](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md){: .btn .btn-outline }
+[Source on GitHub](https://github.com/reyvera/wardkeep){: .btn .btn-outline }
+
+Wardkeep is open source under [AGPL-3.0](https://github.com/reyvera/wardkeep/blob/main/LICENSE).
