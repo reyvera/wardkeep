@@ -24,8 +24,37 @@ export async function generateProtectionSignals(
   const signals: Signal[] = [];
 
   const emergencyFundSignals = await generateEmergencyFundSignals(prisma, userId);
-  signals.push(...emergencyFundSignals);
+  const insuranceSignals = await generateInsuranceSignals(prisma, userId);
+  signals.push(...emergencyFundSignals, ...insuranceSignals);
 
+  return signals;
+}
+
+/**
+ * Records insurance renewal risk without claiming that entered policies are adequate.
+ * The presence of records is an observed factor; policy limits and household needs are
+ * deliberately not converted into an adequacy score until Wardkeep can evaluate them.
+ */
+async function generateInsuranceSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const policies = await prisma.insurancePolicy.findMany({ where: { userId, isActive: true }, select: { type: true, provider: true, renewalDate: true } });
+  if (policies.length === 0) return [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const signals: Signal[] = [];
+  for (const policy of policies) {
+    if (!policy.renewalDate) continue;
+    const daysUntilRenewal = Math.ceil((policy.renewalDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+    const policyName = `${policy.provider} ${policy.type.toLowerCase().replace('_', ' ')}`;
+    if (daysUntilRenewal < 0) {
+      signals.push({ capabilityId: 'insurance', type: 'risk', magnitude: -6, pillar: 'protection', summary: `${policyName} shows a renewal date that has passed. Confirm the policy is active.`, weight: 1 });
+    } else if (daysUntilRenewal <= 30) {
+      signals.push({ capabilityId: 'insurance', type: 'warning', magnitude: -3, pillar: 'protection', summary: `${policyName} renews in ${daysUntilRenewal} days. Review the policy before it renews.`, weight: 1 });
+    }
+  }
+  if (signals.length === 0) {
+    signals.push({ capabilityId: 'insurance', type: 'positive', magnitude: 1, pillar: 'protection', summary: `${policies.length} active insurance ${policies.length === 1 ? 'policy is' : 'policies are'} recorded. Wardkeep does not yet assess coverage adequacy.`, weight: 0.5 });
+  }
   return signals;
 }
 
