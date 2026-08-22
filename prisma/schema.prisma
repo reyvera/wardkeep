@@ -83,6 +83,7 @@ model Account {
   recurring    RecurringTransaction[]
   linkedBankAccounts LinkedBankAccount[]
   debtProfile  DebtProfile?
+  bundledInsurancePolicies InsurancePolicy[] @relation("BundledInsurancePayments")
 
   @@unique([userId, name])
   @@index([userId, isArchived])
@@ -119,6 +120,13 @@ enum InsurancePremiumFrequency {
   ANNUAL
 }
 
+enum InsurancePaymentArrangement {
+  SEPARATE
+  MORTGAGE_ESCROW
+  LOAN_OR_LEASE
+  OTHER_BUNDLED
+}
+
 model InsurancePolicy {
   id               String                    @id @default(uuid())
   userId           String
@@ -127,6 +135,10 @@ model InsurancePolicy {
   nickname         String?                   @db.VarChar(100)
   premium          Decimal?                  @db.Decimal(19, 4)
   premiumFrequency InsurancePremiumFrequency @default(MONTHLY)
+  paymentArrangement InsurancePaymentArrangement @default(SEPARATE)
+  paymentAccountId String?
+  propertyTaxEscrow Decimal?                 @db.Decimal(19, 4)
+  propertyTaxFrequency InsurancePremiumFrequency?
   deductible       Decimal?                  @db.Decimal(19, 4)
   coverageAmount   Decimal?                  @db.Decimal(19, 4)
   renewalDate      DateTime?                 @db.Date
@@ -136,9 +148,11 @@ model InsurancePolicy {
   updatedAt        DateTime                  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentAccount Account? @relation("BundledInsurancePayments", fields: [paymentAccountId], references: [id], onDelete: SetNull)
 
   @@index([userId, isActive])
   @@index([userId, renewalDate])
+  @@index([paymentAccountId])
 }
 
 
