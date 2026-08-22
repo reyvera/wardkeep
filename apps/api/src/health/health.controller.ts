@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,6 +12,8 @@ interface HealthResponse {
 
 @Controller('health')
 export class HealthController {
+  private readonly logger = new Logger(HealthController.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -26,7 +28,10 @@ export class HealthController {
       await this.prisma.$queryRaw`SELECT 1`;
       databaseStatus = 'up';
     } catch (error) {
-      console.error('Health check DB error:', error);
+      this.logger.error(
+        'Health check database error',
+        error instanceof Error ? error.stack : undefined,
+      );
       databaseStatus = 'down';
     }
 
