@@ -19,6 +19,8 @@ import {
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
+  /** The moment Wardkeep derived this readiness response from the available records. */
+  evaluatedAt: Date;
   overall: number;
   pillars: PillarScores;
   signals: Signal[];
@@ -205,6 +207,7 @@ export class ReadinessService {
     }).length;
 
     return {
+      evaluatedAt: new Date(),
       overall,
       pillars,
       signals: allSignals,

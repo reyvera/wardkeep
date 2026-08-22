@@ -26,6 +26,7 @@ interface Signal {
 }
 
 interface ReadinessResponse {
+  evaluatedAt: string;
   pillars: PillarScores;
   signals: Signal[];
   history: Array<{ pillars: PillarScores; recordedAt: string }>;
@@ -39,6 +40,7 @@ const PILLARS: Record<PillarKey, {
   label: string;
   icon: typeof Shield;
   description: string;
+  sources: string[];
   observed: Array<{ capability: string; label: string }>;
   next: string[];
 }> = {
@@ -46,6 +48,7 @@ const PILLARS: Record<PillarKey, {
     label: 'Protection',
     icon: Shield,
     description: 'How well the household can absorb a financial shock.',
+    sources: ['Account balances', 'Recent debit transactions'],
     observed: [{ capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' }],
     next: ['Income interruption resilience', 'Insurance policies and deductibles', 'Estate documents and beneficiaries', 'Dependents, fixed obligations, and secondary backstops'],
   },
@@ -53,6 +56,7 @@ const PILLARS: Record<PillarKey, {
     label: 'Provision',
     icon: Wallet,
     description: 'Whether day-to-day income, bills, and spending are sustainable.',
+    sources: ['Budgets', 'Transactions', 'Recurring bills'],
     observed: [{ capability: 'budgets', label: 'Budget pace and overspending' }, { capability: 'cashflow', label: 'Cash-flow forecast' }, { capability: 'recurring', label: 'Upcoming recurring bills' }],
     next: ['Income stability', 'Essential expense coverage', 'Recurring-payment reliability'],
   },
@@ -60,6 +64,7 @@ const PILLARS: Record<PillarKey, {
     label: 'Preparation',
     icon: Hammer,
     description: 'How ready the household is for known future costs and responsibilities.',
+    sources: [],
     observed: [],
     next: ['Goals and sinking funds', 'Known future expenses and taxes', 'Home and vehicle maintenance', 'Replacement planning'],
   },
@@ -67,6 +72,7 @@ const PILLARS: Record<PillarKey, {
     label: 'Prosperity',
     icon: TrendingUp,
     description: 'Whether the household’s long-term financial position is improving.',
+    sources: ['Account balances', 'Transactions', 'Debt profiles'],
     observed: [{ capability: 'accounts', label: 'Net-worth position' }, { capability: 'debt', label: 'Debt obligations and payoff progress' }],
     next: ['Net-worth history', 'Savings rate', 'Investment progress', 'Interest burden'],
   },
@@ -74,6 +80,7 @@ const PILLARS: Record<PillarKey, {
     label: 'Peace',
     icon: PiggyBank,
     description: 'A derived indicator of stability, based on the least-ready observed area and recent score movement.',
+    sources: ['Readiness pillar scores', 'Readiness snapshots'],
     observed: [],
     next: ['Better explanations of the upstream pillars', 'Data freshness and confidence rules', 'Meaningful score-change reasons'],
   },
@@ -163,6 +170,11 @@ export default function ReadinessPillarPage() {
         </section>
       )}
 
+      <section className="card">
+        <h2 className="card-title">DATA USED</h2>
+        {meta.sources.length === 0 ? <p className="text-sm text-content-tertiary">No source data is connected to this pillar yet.</p> : <><p className="text-sm text-content-secondary">This assessment was calculated from: {meta.sources.join(' · ')}.</p><p className="text-xs text-content-tertiary mt-3">Evaluated {new Date(data.evaluatedAt).toLocaleString()}. Account sources: {data.dataFreshness.synchronizedAccounts} synchronized · {data.dataFreshness.manualAccounts} manual{data.dataFreshness.staleAccounts > 0 ? ` · ${data.dataFreshness.staleAccounts} may be outdated` : ''}.</p></>}
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="card">
           <h2 className="card-title">EVALUATED FACTORS</h2>
@@ -171,7 +183,7 @@ export default function ReadinessPillarPage() {
         <section className="card">
           <h2 className="card-title">STILL NEEDED FOR A COMPLETE PICTURE</h2>
           <ul className="space-y-3">{meta.next.map((factor) => <li key={factor} className="flex gap-2 text-sm"><CircleHelp size={16} className="text-content-tertiary flex-shrink-0" /><span className="text-content-secondary">{factor}</span></li>)}</ul>
-          <p className="text-xs text-content-tertiary mt-4">Account sources: {data.dataFreshness.synchronizedAccounts} synchronized · {data.dataFreshness.manualAccounts} manual{data.dataFreshness.staleAccounts > 0 ? ` · ${data.dataFreshness.staleAccounts} may be outdated` : ''}. Pillar-specific freshness rules are still being defined.</p>
+          <p className="text-xs text-content-tertiary mt-4">Coverage reflects currently evaluated factors. More source-specific freshness rules are still being defined.</p>
         </section>
       </div>
     </div>
