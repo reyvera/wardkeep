@@ -106,18 +106,19 @@ Single-command Docker Compose deployment. Pre-built images on GitHub Container R
 ## Quick install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/install.sh | bash
 ```
 
 Downloads the compose file, generates secure credentials, pulls pre-built images, and starts the app. Done in under 2 minutes.
 
 [Full deployment guide]({{ site.baseurl }}/deployment){: .btn .btn-outline }
+[Roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
 
 ---
 
 ## Screenshots
 
-> Screenshots are refreshed periodically and may show an earlier financial-overview layout. The current product direction and readiness contract are documented in the repository’s [Readiness Engine specification](https://github.com/reyvera/budgetapp/blob/main/docs/readiness-engine.md).
+> Screenshots are refreshed periodically and may show an earlier financial-overview layout. The current product direction and readiness contract are documented in the repository’s [Readiness Engine specification](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md).
 
 ![Dashboard]({{ site.baseurl }}/assets/screenshots/desktop/dashboard.png)
 
