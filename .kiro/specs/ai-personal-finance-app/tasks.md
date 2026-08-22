@@ -407,46 +407,46 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 26. Additional Capabilities
 
 - [ ] 26.1 Vehicle Capability
-    - Track vehicles: make, model, year, mileage
-    - Maintenance schedules (oil change, tires, registration, inspection)
-    - Signals: overdue maintenance → risk, upcoming registration → timeline event
-    - Pillar: Preparation
+  - Track vehicles: make, model, year, mileage
+  - Maintenance schedules (oil change, tires, registration, inspection)
+  - Signals: overdue maintenance → risk, upcoming registration → timeline event
+  - Pillar: Preparation
 
 - [ ] 26.2 Insurance Capability
-    - Track policies: type, provider, premium, deductible, coverage, renewal date
-    - Signals: renewal approaching → timeline + recommendation, coverage gap → risk
-    - Cross-capability: correlate deductible with emergency fund
-    - Pillar: Protection
+  - Track policies: type, provider, premium, deductible, coverage, renewal date
+  - Signals: renewal approaching → timeline + recommendation, coverage gap → risk
+  - Cross-capability: correlate deductible with emergency fund
+  - Pillar: Protection
 
 - [ ] 26.3 Home Maintenance Capability
-    - Track appliances: type, age, expected lifespan, replacement cost
-    - Maintenance tasks: HVAC filter, gutter cleaning, roof inspection
-    - Signals: appliance nearing end-of-life → risk + sinking fund recommendation
-    - Pillar: Preparation
+  - Track appliances: type, age, expected lifespan, replacement cost
+  - Maintenance tasks: HVAC filter, gutter cleaning, roof inspection
+  - Signals: appliance nearing end-of-life → risk + sinking fund recommendation
+  - Pillar: Preparation
 
 - [ ] 26.4 Estate Capability
-    - Track: will status, beneficiaries, document locations, power of attorney
-    - Signals: no will → critical risk, outdated beneficiaries → warning
-    - Pillar: Protection
+  - Track: will status, beneficiaries, document locations, power of attorney
+  - Signals: no will → critical risk, outdated beneficiaries → warning
+  - Pillar: Protection
 
 - [ ] 26.5 Emergency Preparedness Capability
-    - Track: food storage, water, first aid, important documents, evacuation plan
-    - Signals: incomplete preparation → risk, fully prepared → milestone
-    - Pillar: Protection
+  - Track: food storage, water, first aid, important documents, evacuation plan
+  - Signals: incomplete preparation → risk, fully prepared → milestone
+  - Pillar: Protection
 
 ### 27. Capability Marketplace Infrastructure
 
 - [ ] 27.1 Define Capability packaging format
-    - Standard directory structure for community Capabilities
-    - Manifest file (metadata, pillar mapping, dependencies)
-    - Validation: type-check against capability-sdk interfaces
-    - Versioning and compatibility constraints
+  - Standard directory structure for community Capabilities
+  - Manifest file (metadata, pillar mapping, dependencies)
+  - Validation: type-check against capability-sdk interfaces
+  - Versioning and compatibility constraints
 
 - [ ] 27.2 Implement Capability installation and management
-    - Browse available Capabilities (marketplace API)
-    - Install/uninstall Capabilities per household
-    - Capability isolation: sandboxed data access
-    - Update mechanism for installed Capabilities
+  - Browse available Capabilities (marketplace API)
+  - Install/uninstall Capabilities per household
+  - Capability isolation: sandboxed data access
+  - Update mechanism for installed Capabilities
 
 ---
 
