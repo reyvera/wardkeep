@@ -15,6 +15,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Insurance policies** — Record policy details, renewal dates, deductibles, coverage amounts, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
+- **Protection insurance signals** — Wardkeep can flag upcoming or overdue recorded renewals and compare recorded deductibles with liquid reserves. These are explainable records checks, not insurance-adequacy advice.
+- **Policy dashboard summary** — The Dashboard and Protection page show policy attention and incomplete records with a direct Policies action.
+
+### Changed
+
+- **Policy lifecycle** — Cancelled or replaced policies can be marked inactive and later restored. Inactive policies do not affect current readiness signals.
+- **Documentation delivery** — CI validates the Pages site before merge; the public site redeploys when documentation, screenshots, or the README change.
+
+---
+
 ## [1.2.0] — 2026-08-20
 
 ### Added

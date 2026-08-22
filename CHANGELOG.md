@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
 - **Actual spending-pace data** — Transaction statistics now return cumulative daily spending for truthful pacing charts.
+- **Insurance policies** — Record policy type, provider, premium frequency, deductible, coverage amount, renewal date, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
+- **Protection insurance signals** — Protection can flag upcoming or overdue recorded renewals and warn when recorded deductibles exceed liquid reserves, without claiming insurance adequacy.
+- **Policy dashboard summary** — The Dashboard and Protection detail page now surface active policy count, renewals needing attention, incomplete records, and a direct Policies action.
 
 ### Changed
 
@@ -19,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Protection liquidity score is graduated** — Liquid reserves progress continuously from 0 through 12 months of ordinary expenses instead of treating 3 and 12 months as equally protected.
 - **Protection burn rate excludes common transfer-like debits** — Transfer, credit-card payment, investment, savings-transfer, and principal-payment descriptors no longer automatically inflate ordinary household expense estimates.
 - **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
+- **Reversible policy lifecycle** — Cancelled or replaced policies can be marked inactive and restored later; inactive policies do not affect current readiness signals.
+
+### Infrastructure
+
+- **Docs-site validation** — CI now builds the GitHub Pages site on pull requests and pushes, and Pages redeploys when documentation, screenshots, or the README change. Documentation dependencies are locked and enforced in CI.
 
 ## [1.2.0] - 2026-08-20
 
