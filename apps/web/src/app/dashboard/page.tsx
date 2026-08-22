@@ -38,6 +38,7 @@ interface ReadinessResponse {
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
   pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
   dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
+  recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string }>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -299,6 +300,21 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      <div className="card mt-6">
+        <h3 className="card-title">SINCE YOUR LAST RECORDED CHECK</h3>
+        {data.recentChanges.length === 0 ? (
+          <p className="text-sm text-content-tertiary">No readiness changes have been recorded yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {data.recentChanges.map((change) => {
+              const label = PILLAR_META[change.pillar]?.label ?? change.pillar;
+              return <li key={change.pillar} className="flex items-center justify-between gap-4 text-sm"><span className="text-content-primary">{label} changed from {change.previous} to {change.current}</span><span className={change.delta > 0 ? 'text-accent-green font-medium' : 'text-accent-red font-medium'}>{change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}</span></li>;
+            })}
+          </ul>
+        )}
+        <p className="text-xs text-content-tertiary mt-4">Compared with the most recent daily readiness snapshot. Visit-specific change tracking is planned next.</p>
       </div>
     </div>
   );

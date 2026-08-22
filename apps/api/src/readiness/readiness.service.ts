@@ -34,6 +34,13 @@ export interface ReadinessResponse {
     staleAccounts: number;
     lastSynchronizedAt: Date | null;
   };
+  recentChanges: Array<{
+    pillar: keyof PillarScores;
+    previous: number;
+    current: number;
+    delta: number;
+    comparedTo: Date;
+  }>;
 }
 
 @Injectable()
@@ -95,6 +102,20 @@ export class ReadinessService {
       ...pillarScoresWithoutPeace,
       peace,
     };
+    const latestSnapshot = recentSnapshots[0];
+    const recentChanges = latestSnapshot
+      ? (Object.keys(pillars) as Array<keyof PillarScores>)
+        .map((pillar) => ({
+          pillar,
+          previous: latestSnapshot[pillar],
+          current: pillars[pillar],
+          delta: pillars[pillar] - latestSnapshot[pillar],
+          comparedTo: latestSnapshot.recordedAt,
+        }))
+        .filter((change) => change.delta !== 0)
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 5)
+      : [];
 
     const directPillars = ['protection', 'provision', 'preparation', 'prosperity'] as const;
     const capabilityTargets: Record<(typeof directPillars)[number], number> = {
@@ -173,6 +194,7 @@ export class ReadinessService {
         staleAccounts,
         lastSynchronizedAt,
       },
+      recentChanges,
     };
   }
 
