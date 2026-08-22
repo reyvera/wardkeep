@@ -70,4 +70,4 @@ This page is the public, outcome-oriented roadmap. The detailed engineering plan
 
 GitHub Issues should be the execution tracker: one issue per independently reviewable outcome, linked to a release/milestone and labeled by phase, area, priority, and status. The long-form task plan remains the architecture and acceptance-criteria source of truth; issues should link back to the exact task section instead of duplicating it.
 
-The current repository already has issue templates, labels, and task-sync hooks. The next operational step is to create a **Decision Engine / Launch Readiness** GitHub Project, import the launch-gate issues, and use it for weekly sequencing. A GitHub token with `read:project` is required for CLI access to Projects v2.
+The [Decision Engine / Launch Readiness GitHub Project](https://github.com/users/reyvera/projects/1) now tracks the active launch-gate outcomes and their status. The next operational work is to expand it as independently reviewable outcomes are ready, use it for weekly sequencing, and repair the legacy task-sync hooks to use explicit issue references.

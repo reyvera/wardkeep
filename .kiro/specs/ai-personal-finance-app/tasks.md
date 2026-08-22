@@ -548,10 +548,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [ ] 39.6 Establish GitHub launch tracking
   - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies
-  - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
-  - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
-  - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
-  - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
+  - [x] Create the public **Decision Engine / Launch Readiness** GitHub Project with the active launch gates
+  - [x] Seed the current independently reviewable launch outcomes with task-plan links and acceptance criteria
+  - [x] Apply `phase/*`, `area/*`, `priority/*`, and `status/*` labels to those issues; add milestones as release gates become defined
+  - [ ] Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
 
 ### 33. Income & Spending Intelligence
 
