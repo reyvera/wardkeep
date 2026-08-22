@@ -28,8 +28,9 @@ jobs:
       - name: Copy screenshots into docs-site assets
         run: |
           mkdir -p docs-site/assets/screenshots
-          cp -r docs/screenshots/desktop docs-site/assets/screenshots/
-          cp -r docs/screenshots/mobile docs-site/assets/screenshots/
+          rm -rf docs-site/assets/screenshots/desktop docs-site/assets/screenshots/mobile
+          cp -R docs/screenshots/desktop docs-site/assets/screenshots/desktop
+          cp -R docs/screenshots/mobile docs-site/assets/screenshots/mobile
 
       - name: Setup Pages
         id: pages

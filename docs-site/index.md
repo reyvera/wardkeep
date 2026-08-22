@@ -120,7 +120,7 @@ Downloads the compose file, generates secure credentials, pulls pre-built images
 
 > Screenshots are refreshed periodically and may show an earlier financial-overview layout. The current product direction and readiness contract are documented in the repository’s [Readiness Engine specification](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md).
 
-![Dashboard]({{ site.baseurl }}/assets/screenshots/desktop/dashboard.png)
+![Dashboard]({{ site.baseurl }}/assets/screenshots/desktop/dashboard.png?v={{ site.time | date: '%s' }})
 
 [View all screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
 
