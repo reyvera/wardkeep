@@ -223,7 +223,7 @@ export default function InsurancePage() {
               </div>
               {form.type === 'HOME' && (
                 <div>
-                  <label className="input-label">Property-tax escrow amount (optional)</label>
+              <label className="input-label">Monthly property-tax escrow (optional)</label>
                   <input
                     className="input"
                     inputMode="decimal"

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,6 +18,7 @@ export class InsuranceService {
   }
 
   async create(userId: string, dto: CreateInsurancePolicyDto) {
+    this.validatePaymentArrangement(dto.paymentArrangement, dto.paymentAccountId, dto.propertyTaxEscrow);
     await this.assertPaymentAccount(userId, dto.paymentAccountId);
     const policy = await this.prisma.insurancePolicy.create({
       data: {
@@ -30,7 +31,8 @@ export class InsuranceService {
         paymentArrangement: dto.paymentArrangement,
         paymentAccountId: dto.paymentAccountId || null,
         propertyTaxEscrow: dto.propertyTaxEscrow ? new Decimal(dto.propertyTaxEscrow) : null,
-        propertyTaxFrequency: dto.propertyTaxFrequency,
+        propertyTaxFrequency:
+          dto.propertyTaxFrequency ?? (dto.propertyTaxEscrow ? 'MONTHLY' : null),
         deductible: dto.deductible ? new Decimal(dto.deductible) : null,
         coverageAmount: dto.coverageAmount ? new Decimal(dto.coverageAmount) : null,
         renewalDate: dto.renewalDate ? new Date(`${dto.renewalDate}T00:00:00.000Z`) : null,
@@ -44,6 +46,11 @@ export class InsuranceService {
   async update(userId: string, id: string, dto: UpdateInsurancePolicyDto) {
     const existing = await this.prisma.insurancePolicy.findFirst({ where: { id, userId } });
     if (!existing) throw new NotFoundException('Insurance policy not found');
+    this.validatePaymentArrangement(
+      dto.paymentArrangement ?? existing.paymentArrangement,
+      dto.paymentAccountId === undefined ? existing.paymentAccountId : dto.paymentAccountId,
+      dto.propertyTaxEscrow === undefined ? existing.propertyTaxEscrow?.toString() : dto.propertyTaxEscrow,
+    );
     await this.assertPaymentAccount(userId, dto.paymentAccountId);
     const policy = await this.prisma.insurancePolicy.update({
       where: { id },
@@ -62,6 +69,10 @@ export class InsuranceService {
           propertyTaxEscrow:
             dto.propertyTaxEscrow === null ? null : new Decimal(dto.propertyTaxEscrow),
         }),
+        ...(dto.propertyTaxEscrow !== undefined &&
+          dto.propertyTaxFrequency === undefined && {
+            propertyTaxFrequency: dto.propertyTaxEscrow === null ? null : 'MONTHLY',
+          }),
         ...(dto.renewalDate !== undefined && {
           renewalDate:
             dto.renewalDate === null ? null : new Date(`${dto.renewalDate}T00:00:00.000Z`),
@@ -88,6 +99,15 @@ export class InsuranceService {
       select: { id: true },
     });
     if (!account) throw new NotFoundException('Bundled payment account not found');
+  }
+
+  private validatePaymentArrangement(arrangement: string | undefined, accountId: string | null | undefined, propertyTaxEscrow: string | null | undefined) {
+    if (arrangement && arrangement !== 'SEPARATE' && !accountId) {
+      throw new BadRequestException('A bundled insurance premium must be linked to a household account');
+    }
+    if (propertyTaxEscrow && arrangement !== 'MORTGAGE_ESCROW') {
+      throw new BadRequestException('Property-tax escrow can only be recorded for a mortgage escrow arrangement');
+    }
   }
 
   private serialize(policy: {
