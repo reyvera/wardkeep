@@ -6,16 +6,8 @@ import {
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
-import {
-  AccountType,
-  DEBT_ACCOUNT_TYPES,
-  MAX_ACCOUNTS_PER_USER,
-} from '@wardkeep/shared';
-import {
-  calculateBalance,
-  calculateNetWorth,
-  AccountWithTransactions,
-} from '@wardkeep/finance-engine';
+import { DEBT_ACCOUNT_TYPES, MAX_ACCOUNTS_PER_USER } from '@wardkeep/shared';
+import { calculateBalance } from '@wardkeep/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -66,13 +58,15 @@ export class AccountsService {
         currentBalance = computed.toFixed(2);
       }
 
-      const lastSynchronizedAt = account.linkedBankAccounts
-        .map((linked) => linked.connection.lastSyncAt)
-        .filter((date): date is Date => date !== null)
-        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+      const lastSynchronizedAt =
+        account.linkedBankAccounts
+          .map((linked) => linked.connection.lastSyncAt)
+          .filter((date): date is Date => date !== null)
+          .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
       const source = account.linkedBankAccounts.length > 0 ? 'synchronized' : 'manual';
       const referenceDate = lastSynchronizedAt ?? account.updatedAt;
-      const freshness = Date.now() - referenceDate.getTime() > 7 * 24 * 60 * 60 * 1000 ? 'stale' : 'current';
+      const freshness =
+        Date.now() - referenceDate.getTime() > 7 * 24 * 60 * 60 * 1000 ? 'stale' : 'current';
 
       return {
         id: account.id,

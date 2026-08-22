@@ -10,7 +10,7 @@ import { Decimal } from 'decimal.js';
 
 import { Transaction, TransactionType, BudgetAllocation } from '@wardkeep/shared';
 
-import { calculateBudgetProgress, CategoryProgress } from './budget';
+import { calculateBudgetProgress } from './budget';
 
 // ─── Generators ─────────────────────────────────────────────────────────────────
 
@@ -57,28 +57,19 @@ describe('Feature: ai-personal-finance-app, Property 9: Budget actual spending e
       fc.property(
         fc.array(categoryIdArb, { minLength: 1, maxLength: 5 }).chain((categoryIds) => {
           const uniqueIds = [...new Set(categoryIds)];
-          const allocations = fc.tuple(
-            ...uniqueIds.map((id) => allocationArb(id)),
-          );
+          const allocations = fc.tuple(...uniqueIds.map((id) => allocationArb(id)));
           const transactions = fc.array(
             fc.oneof(...uniqueIds.map((id) => debitTransactionArb(id))),
             { minLength: 0, maxLength: 30 },
           );
           return fc.tuple(allocations, transactions, fc.constant(uniqueIds));
         }),
-        ([allocations, transactions, categoryIds]) => {
-          const progress = calculateBudgetProgress(
-            allocations as BudgetAllocation[],
-            transactions,
-          );
+        ([allocations, transactions, _categoryIds]) => {
+          const progress = calculateBudgetProgress(allocations as BudgetAllocation[], transactions);
 
           for (const cp of progress) {
             const expectedSpent = transactions
-              .filter(
-                (tx) =>
-                  tx.type === TransactionType.DEBIT &&
-                  tx.categoryId === cp.categoryId,
-              )
+              .filter((tx) => tx.type === TransactionType.DEBIT && tx.categoryId === cp.categoryId)
               .reduce((sum, tx) => sum.plus(new Decimal(tx.amount)), new Decimal(0));
 
             expect(cp.spent.eq(expectedSpent)).toBe(true);
