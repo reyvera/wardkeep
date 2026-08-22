@@ -6,6 +6,7 @@ import {
   computePeace,
   Signal,
   PillarScores,
+  PillarAssessment,
   ReadinessSnapshot,
 } from '@wardkeep/readiness';
 
@@ -26,6 +27,7 @@ export interface ReadinessResponse {
   history: ReadinessSnapshot[];
   coverage: number;
   pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
+  pillarAssessments: Record<keyof PillarScores, PillarAssessment>;
 }
 
 @Injectable()
@@ -97,6 +99,26 @@ export class ReadinessService {
       return [pillar, Math.round(Math.min(1, evaluated / capabilityTargets[pillar]) * 100)];
     })) as ReadinessResponse['pillarCoverage'];
     const coverage = Math.round(directPillars.reduce((sum, pillar) => sum + pillarCoverage[pillar], 0) / directPillars.length);
+    const pillarAssessments = Object.fromEntries(directPillars.map((pillar) => {
+      const evaluatedCapabilities = [...new Set(allSignals
+        .filter((signal) => signal.pillar === pillar)
+        .map((signal) => signal.capabilityId))];
+      const pillarCoverageValue = pillarCoverage[pillar];
+      return [pillar, {
+        state: evaluatedCapabilities.length === 0
+          ? 'not_evaluated'
+          : pillarCoverageValue >= 75 ? 'known' : 'partial',
+        score: evaluatedCapabilities.length === 0 ? null : pillars[pillar],
+        coverage: pillarCoverageValue,
+        evaluatedCapabilities,
+      } satisfies PillarAssessment];
+    })) as Pick<ReadinessResponse['pillarAssessments'], (typeof directPillars)[number]>;
+    pillarAssessments.peace = {
+      state: coverage === 0 ? 'not_evaluated' : coverage >= 75 ? 'known' : 'partial',
+      score: coverage === 0 ? null : peace,
+      coverage,
+      evaluatedCapabilities: directPillars.filter((pillar) => pillarAssessments[pillar].state !== 'not_evaluated'),
+    };
 
     // Extract top risks and opportunities for quick display
     const topRisks = allSignals
@@ -118,6 +140,7 @@ export class ReadinessService {
       history: history.reverse(),
       coverage,
       pillarCoverage,
+      pillarAssessments,
     };
   }
 
