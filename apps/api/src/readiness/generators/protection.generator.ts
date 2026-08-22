@@ -4,6 +4,7 @@ import { AccountType, PrismaClient } from '@prisma/client';
 import { calculateBalance } from '@wardkeep/finance-engine';
 import { TransactionType } from '@wardkeep/shared';
 import { Signal } from '@wardkeep/readiness';
+import { calculateHouseholdBurnRate } from './burn-rate';
 
 /** A full year is deliberately required for a maximum liquidity score. */
 const MAXIMUM_MONTHS = 12;
@@ -74,11 +75,8 @@ async function generateEmergencyFundSignals(
     }
   }
 
-  // Calculate a sustainable burn rate from the last 90 days. TRANSFER records
-  // are already excluded by the type filter; the keyword filter catches common
-  // imported credit-card, investment, and savings transfers that are mislabelled
-  // as debits. It is intentionally conservative: unknown transactions remain
-  // included instead of silently understating the household's obligations.
+  // TransactionType.TRANSFER records are excluded structurally. The burn-rate
+  // helper additionally removes common imported transfers mislabeled as debits.
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
@@ -91,18 +89,13 @@ async function generateEmergencyFundSignals(
     include: { category: { select: { name: true } } },
   });
 
-  const transferLike = /(transfer|payment to|credit card payment|cc payment|investment|brokerage|savings transfer|principal payment)/i;
-  const householdDebits = debitTransactions.filter((tx) => {
-    const text = [tx.merchant, tx.description, tx.category?.name].filter(Boolean).join(' ');
-    return !transferLike.test(text);
-  });
-
-  const totalExpenses90Days = householdDebits.reduce(
-    (sum, tx) => sum.add(new Decimal(tx.amount.toString())),
-    new Decimal(0),
-  );
-
-  const monthlyExpenses = totalExpenses90Days.div(3); // 90 days ≈ 3 months
+  const burnRate = calculateHouseholdBurnRate(debitTransactions.map((transaction) => ({
+    amount: transaction.amount.toString(),
+    categoryName: transaction.category?.name,
+    merchant: transaction.merchant,
+    description: transaction.description,
+  })));
+  const monthlyExpenses = burnRate.essentialMonthly;
 
   if (monthlyExpenses.isZero()) {
     signals.push({
@@ -135,7 +128,7 @@ async function generateEmergencyFundSignals(
     type,
     magnitude,
     pillar: 'protection',
-    summary: `Liquid reserves cover ${monthsCoverage.toFixed(1)} months of ordinary expenses. ${targetText}`,
+    summary: `Liquid reserves cover ${monthsCoverage.toFixed(1)} months of ${burnRate.usesNormalFallback ? 'ordinary' : 'essential'} expenses${burnRate.usesNormalFallback ? ' (essential expenses are not categorized yet)' : ''}. ${targetText}`,
     weight: 2,
   });
 
