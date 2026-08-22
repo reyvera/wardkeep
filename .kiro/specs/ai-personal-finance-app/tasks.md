@@ -216,172 +216,172 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 19. Readiness Engine Core (packages/readiness) [FOUNDATION SHIPPED]
 
 - [x] 19.1 Create packages/readiness with core types and scoring logic
-    - Define Signal, Observation, Recommendation, ReadinessSnapshot types
-    - Define ReadinessPillar enum (protection, provision, preparation, prosperity, peace)
-    - Implement `computePillarScore(pillar, signals)` — deterministic, pure function
-    - Implement `computeOverallReadiness(pillarScores, weights)` — weighted average
-    - Implement `computePeace(pillarScores, history)` — derived stability indicator
-    - All functions pure, no I/O, fully property-testable
-    - Use Decimal.js where financial values feed into scores
+  - Define Signal, Observation, Recommendation, ReadinessSnapshot types
+  - Define ReadinessPillar enum (protection, provision, preparation, prosperity, peace)
+  - Implement `computePillarScore(pillar, signals)` — deterministic, pure function
+  - Implement `computeOverallReadiness(pillarScores, weights)` — weighted average
+  - Implement `computePeace(pillarScores, history)` — derived stability indicator
+  - All functions pure, no I/O, fully property-testable
+  - Use Decimal.js where financial values feed into scores
 
 - [~] 19.2 Implement signal aggregation and snapshot storage
-    - [x] ReadinessService collects current finance-generator signals
-    - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
-    - [x] ReadinessSnapshot model — daily score persistence
-    - [ ] Move snapshot creation to a daily BullMQ job; the endpoint currently records the daily snapshot asynchronously
-    - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
+  - [x] ReadinessService collects current finance-generator signals
+  - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
+  - [x] ReadinessSnapshot model — daily score persistence
+  - [ ] Move snapshot creation to a daily BullMQ job; the endpoint currently records the daily snapshot asynchronously
+  - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
 
 - [~] 19.3 Implement readiness explainability
-    - [x] Current response includes contributing signals and dashboard surfaces their summaries
-    - [ ] Create a ReadinessExplanation type with pillar details, evaluated/missing factors, and score-change reasons
-    - [ ] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
-    - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
+  - [x] Current response includes contributing signals and dashboard surfaces their summaries
+  - [ ] Create a ReadinessExplanation type with pillar details, evaluated/missing factors, and score-change reasons
+  - [ ] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
+  - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
 
 - [~] 19.4 Implement readiness history and trends
-    - [x] API endpoint: GET /api/readiness/history — score snapshots over time
-    - [x] Dashboard renders up to 90 days of available score history
-    - [ ] Define retention and store 365 days of snapshots per household
-    - [ ] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
-    - [ ] Detect seasonal patterns (optional, AI-enhanced later)
+  - [x] API endpoint: GET /api/readiness/history — score snapshots over time
+  - [x] Dashboard renders up to 90 days of available score history
+  - [ ] Define retention and store 365 days of snapshots per household
+  - [ ] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
+  - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
 - [~] 19.5 Write property tests for Readiness Engine
-    - **Property 34: Pillar score is deterministic given same signals**
-    - **Property 35: Overall readiness is weighted average of pillar scores**
-    - **Property 36: Peace score derives from minimum pillar and volatility**
-    - **Property 37: No signals is never treated as perfect readiness; the API/UI must mark it not evaluated**
-    - **Property 38: Signal magnitude bounded to [-10, +10] clamps correctly**
-    - Generate random signal sets; verify deterministic, bounded, explainable output
+  - **Property 34: Pillar score is deterministic given same signals**
+  - **Property 35: Overall readiness is weighted average of pillar scores**
+  - **Property 36: Peace score derives from minimum pillar and volatility**
+  - **Property 37: No signals is never treated as perfect readiness; the API/UI must mark it not evaluated**
+  - **Property 38: Signal magnitude bounded to [-10, +10] clamps correctly**
+  - Generate random signal sets; verify deterministic, bounded, explainable output
 
 ### 20. Finance Capability Signals [PARTIAL]
 
 - [~] 20.1 Define finance signal generators
-    - Budget adherence signal: risk when >90% spent, opportunity when consistently under
-    - [x] Graduated liquid-reserve signal from 0 through 12 months of filtered ordinary expenses
-    - [ ] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
-    - Debt-to-income ratio signal: risk when >36%, warning when >28%
-    - Cashflow forecast signal: risk when projected negative within 30 days
-    - Net worth trend signal: positive when growing month-over-month
-    - Recurring payment reliability signal: risk when missed payments detected
+  - Budget adherence signal: risk when >90% spent, opportunity when consistently under
+  - [x] Graduated liquid-reserve signal from 0 through 12 months of filtered ordinary expenses
+  - [ ] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
+  - Debt-to-income ratio signal: risk when >36%, warning when >28%
+  - Cashflow forecast signal: risk when projected negative within 30 days
+  - Net worth trend signal: positive when growing month-over-month
+  - Recurring payment reliability signal: risk when missed payments detected
 
 - [~] 20.2 Wire existing finance services to emit signals
-    - [x] Current generators derive signals on readiness evaluation
-    - [ ] Recompute signals on relevant writes and scheduled syncs
-    - [ ] Store signals/observations in DB and feed them through a versioned pipeline
+  - [x] Current generators derive signals on readiness evaluation
+  - [ ] Recompute signals on relevant writes and scheduled syncs
+  - [ ] Store signals/observations in DB and feed them through a versioned pipeline
 
 - [ ] 20.3 Implement Capability interface for finance
-    - Create FinanceCapability class implementing the Capability interface
-    - Register with CapabilityRegistry at API startup
-    - Wire observations(), signals(), recommendations(), dashboardCards(), timelineEvents()
-    - This wraps existing services — no rewrite of business logic
+  - Create FinanceCapability class implementing the Capability interface
+  - Register with CapabilityRegistry at API startup
+  - Wire observations(), signals(), recommendations(), dashboardCards(), timelineEvents()
+  - This wraps existing services — no rewrite of business logic
 
 - [ ] 20.4 Write tests for finance signal generation
-    - Test: budget at 95% → risk signal with correct magnitude
-    - Test: emergency fund at 2 months → risk signal
-    - Test: net worth increasing 3 consecutive months → positive signal
-    - Test: projected negative cashflow in 14 days → warning signal
-    - Verify signal magnitudes are proportional and bounded
+  - Test: budget at 95% → risk signal with correct magnitude
+  - Test: emergency fund at 2 months → risk signal
+  - Test: net worth increasing 3 consecutive months → positive signal
+  - Test: projected negative cashflow in 14 days → warning signal
+  - Verify signal magnitudes are proportional and bounded
 
 ### 21. Capability Registry & SDK
 
 - [ ] 21.1 Create packages/capability-sdk with base interfaces
-    - Define Capability, CapabilityMetadata, CapabilityRegistry interfaces
-    - Define Observation, Signal, Recommendation, DashboardCard, TimelineEvent types
-    - Export ReadinessPillar type
-    - This becomes the contract for all future Capabilities (core and community)
+  - Define Capability, CapabilityMetadata, CapabilityRegistry interfaces
+  - Define Observation, Signal, Recommendation, DashboardCard, TimelineEvent types
+  - Export ReadinessPillar type
+  - This becomes the contract for all future Capabilities (core and community)
 
 - [ ] 21.2 Implement CapabilityRegistry in apps/api
-    - NestJS service that manages Capability lifecycle (register, enable, disable)
-    - Per-household capability enablement (stored in DB)
-    - API endpoints: GET /api/capabilities, POST /api/capabilities/:id/enable|disable
-    - At startup: auto-register all core Capabilities
+  - NestJS service that manages Capability lifecycle (register, enable, disable)
+  - Per-household capability enablement (stored in DB)
+  - API endpoints: GET /api/capabilities, POST /api/capabilities/:id/enable|disable
+  - At startup: auto-register all core Capabilities
 
 - [ ] 21.3 Implement Capability data isolation
-    - Each Capability's data scoped to householdId
-    - Capabilities cannot read other Capabilities' raw data
-    - Cross-capability reasoning happens only through published signals (via Readiness Engine)
+  - Each Capability's data scoped to householdId
+  - Capabilities cannot read other Capabilities' raw data
+  - Cross-capability reasoning happens only through published signals (via Readiness Engine)
 
 ### 22. Advisor & Morning Brief
 
 - [ ] 22.1 Evolve AI Engine into Advisor
-    - Rename/refactor ai-chat to Advisor service
-    - Advisor receives: readiness scores, signals from all Capabilities, household context
-    - Advisor produces: natural-language explanations, prioritized recommendations, briefs
-    - Advisor never modifies scores — only interprets and explains them
+  - Rename/refactor ai-chat to Advisor service
+  - Advisor receives: readiness scores, signals from all Capabilities, household context
+  - Advisor produces: natural-language explanations, prioritized recommendations, briefs
+  - Advisor never modifies scores — only interprets and explains them
 
 - [ ] 22.2 Implement Morning Brief generation
-    - API endpoint: GET /api/advisor/brief/morning
-    - Contents: greeting, readiness score, today's priority, this week's events, top recommendation, current risk
-    - Deterministic version (no AI): template-based using signals and timeline data
-    - AI-enhanced version: natural language generated from same data (when Advisor available)
-    - Fallback gracefully if AI unavailable — deterministic brief always works
+  - API endpoint: GET /api/advisor/brief/morning
+  - Contents: greeting, readiness score, today's priority, this week's events, top recommendation, current risk
+  - Deterministic version (no AI): template-based using signals and timeline data
+  - AI-enhanced version: natural language generated from same data (when Advisor available)
+  - Fallback gracefully if AI unavailable — deterministic brief always works
 
 - [ ] 22.3 Implement Weekly and Monthly Briefs
-    - GET /api/advisor/brief/weekly — week in review + upcoming week
-    - GET /api/advisor/brief/monthly — month summary, trends, readiness change, wins
-    - Include: score changes, actions taken, recommendations completed, new risks
+  - GET /api/advisor/brief/weekly — week in review + upcoming week
+  - GET /api/advisor/brief/monthly — month summary, trends, readiness change, wins
+  - Include: score changes, actions taken, recommendations completed, new risks
 
 - [ ] 22.4 Implement recommendation prioritization
-    - GET /api/advisor/recommendations — sorted by impact × urgency ÷ effort
-    - Each recommendation links to its source Capability and signal
-    - User can dismiss (won't resurface) or complete (improves readiness)
-    - Track recommendation completion and resulting score changes
+  - GET /api/advisor/recommendations — sorted by impact × urgency ÷ effort
+  - Each recommendation links to its source Capability and signal
+  - User can dismiss (won't resurface) or complete (improves readiness)
+  - Track recommendation completion and resulting score changes
 
 - [ ] 22.5 Implement cross-capability reasoning
-    - Advisor has read access to signals from all active Capabilities simultaneously
-    - Generate insights that span multiple domains:
-      - "Insurance renewal + emergency fund level → safe to increase deductible"
-      - "ARM adjustment in March + planned vacation → build extra buffer"
-    - Store generated insights; deduplicate similar insights within 7 days
+  - Advisor has read access to signals from all active Capabilities simultaneously
+  - Generate insights that span multiple domains:
+    - "Insurance renewal + emergency fund level → safe to increase deductible"
+    - "ARM adjustment in March + planned vacation → build extra buffer"
+  - Store generated insights; deduplicate similar insights within 7 days
 
 ### 23. Household Timeline
 
 - [ ] 23.1 Implement Timeline service and API
-    - API endpoint: GET /api/timeline — unified chronological view
-    - GET /api/timeline/upcoming — next 30 days of events from all Capabilities
-    - GET /api/timeline/history — past events (what happened)
-    - Each event: title, date, capability source, actionRequired flag, status
+  - API endpoint: GET /api/timeline — unified chronological view
+  - GET /api/timeline/upcoming — next 30 days of events from all Capabilities
+  - GET /api/timeline/history — past events (what happened)
+  - Each event: title, date, capability source, actionRequired flag, status
 
 - [ ] 23.2 Wire finance events into Timeline
-    - Recurring bills → upcoming timeline events
-    - Payday → upcoming event
-    - Goal milestones → past/upcoming events
-    - Budget period start/end → recurring events
-    - Debt payoff milestones → upcoming events
+  - Recurring bills → upcoming timeline events
+  - Payday → upcoming event
+  - Goal milestones → past/upcoming events
+  - Budget period start/end → recurring events
+  - Debt payoff milestones → upcoming events
 
 - [ ] 23.3 Implement Timeline UI
-    - Scrollable vertical timeline: past ← today → future
-    - Color-coded by Capability source
-    - Action-required events highlighted
-    - Click event → navigate to relevant Capability view
-    - Mobile-friendly: swipeable, compact cards
+  - Scrollable vertical timeline: past ← today → future
+  - Color-coded by Capability source
+  - Action-required events highlighted
+  - Click event → navigate to relevant Capability view
+  - Mobile-friendly: swipeable, compact cards
 
 ### 24. Readiness Dashboard & Brief UI [PARTIAL]
 
 - [~] 24.1 Implement Readiness dashboard (replaces old dashboard)
-    - [x] Hero: readiness score, coverage/confidence, strongest/most-limited pillar, and trend indicator
-    - [x] Pillar cards: score, coverage, and contributing signal summaries
-    - [x] Needs attention and Wardkeep recommends sections
-    - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
+  - [x] Hero: readiness score, coverage/confidence, strongest/most-limited pillar, and trend indicator
+  - [x] Pillar cards: score, coverage, and contributing signal summaries
+  - [x] Needs attention and Wardkeep recommends sections
+  - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
 
 - [ ] 24.2 Implement Morning Brief UI (new home screen)
-    - Greeting with readiness score
-    - Today's priorities (from Advisor)
-    - This week's timeline events
-    - Top recommendation with one-tap actions
-    - Active risks summary
-    - This becomes the landing page after login
+  - Greeting with readiness score
+  - Today's priorities (from Advisor)
+  - This week's timeline events
+  - Top recommendation with one-tap actions
+  - Active risks summary
+  - This becomes the landing page after login
 
 - [ ] 24.3 Implement Advisor conversation UI (replaces AI Chat)
-    - Rebrand from "AI Chat" to "Advisor"
-    - Advisor context includes readiness state and signals
-    - Responses include inline readiness references ("This affects your Provision score")
-    - Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
+  - Rebrand from "AI Chat" to "Advisor"
+  - Advisor context includes readiness state and signals
+  - Responses include inline readiness references ("This affects your Provision score")
+  - Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
 
 - [ ] 24.4 Implement Timeline UI page
-    - Full-page scrollable timeline
-    - Filter by Capability, by pillar, by action-required
-    - Past events show completion status
-    - Future events show countdown/proximity
+  - Full-page scrollable timeline
+  - Filter by Capability, by pillar, by action-required
+  - Past events show completion status
+  - Future events show countdown/proximity
 
 ### 24.5 Financial Overview accuracy [COMPLETE]
 
@@ -727,16 +727,16 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 39. What-If Engine
 
 - [ ] 39.1 Implement scenario readiness computation
-    - Accept hypothetical signal changes (lose job, buy house, pay off debt)
-    - Recompute all pillar scores with modified signals
-    - Show projected readiness trajectory over time
-    - API endpoint: POST /api/readiness/scenario
+  - Accept hypothetical signal changes (lose job, buy house, pay off debt)
+  - Recompute all pillar scores with modified signals
+  - Show projected readiness trajectory over time
+  - API endpoint: POST /api/readiness/scenario
 
 - [ ] 39.2 Implement scenario UI
-    - "What if" panel with common scenarios as presets
-    - Custom scenario builder (adjust income, add expense, remove account)
-    - Side-by-side: current readiness vs projected
-    - Advisor explains implications of each scenario
+  - "What if" panel with common scenarios as presets
+  - Custom scenario builder (adjust income, add expense, remove account)
+  - Side-by-side: current readiness vs projected
+  - Advisor explains implications of each scenario
 
 ---
 
@@ -747,19 +747,19 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 40. AI Memory
 
 - [ ] 40.1 Implement Advisor memory system
-    - Store learned patterns: seasonal spending, annual events, user preferences
-    - Reference past context: "Last year you spent ~$900 on Christmas"
-    - Track recommendation outcomes: which advice was followed, what happened after
-    - Memory is per-household, stored locally, never sent to cloud
+  - Store learned patterns: seasonal spending, annual events, user preferences
+  - Reference past context: "Last year you spent ~$900 on Christmas"
+  - Track recommendation outcomes: which advice was followed, what happened after
+  - Memory is per-household, stored locally, never sent to cloud
 
 ### 41. Proactive Intelligence
 
 - [ ] 41.1 Implement proactive daily briefing generation
-    - Worker job (configurable time) generates personalized briefing
-    - Detects: unusual charges, budgets running hot, spending shifts
-    - Suggests: recategorizations, savings opportunities, risk mitigations
-    - Each suggestion actionable with one-tap approve/dismiss
-    - Advisor learns from dismissed suggestions to reduce noise
+  - Worker job (configurable time) generates personalized briefing
+  - Detects: unusual charges, budgets running hot, spending shifts
+  - Suggests: recategorizations, savings opportunities, risk mitigations
+  - Each suggestion actionable with one-tap approve/dismiss
+  - Advisor learns from dismissed suggestions to reduce noise
 
 ---
 
@@ -770,145 +770,145 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 41. Hardware Platform & OS Image
 
 - [ ] 41.1 Select and validate reference hardware
-    - Target: ARM64 SBC with 8GB+ RAM (Raspberry Pi 5 8GB, Orange Pi 5, or similar)
-    - Validate Ollama + full stack fits in memory budget (~6GB active, ~1.5GB headroom)
-    - Test sustained load: AI inference + DB queries + background jobs concurrently
-    - Document minimum and recommended hardware specs
-    - Stretch: 16GB board with NPU for accelerated inference (Orange Pi 5 Plus, Rockchip RK3588)
+  - Target: ARM64 SBC with 8GB+ RAM (Raspberry Pi 5 8GB, Orange Pi 5, or similar)
+  - Validate Ollama + full stack fits in memory budget (~6GB active, ~1.5GB headroom)
+  - Test sustained load: AI inference + DB queries + background jobs concurrently
+  - Document minimum and recommended hardware specs
+  - Stretch: 16GB board with NPU for accelerated inference (Orange Pi 5 Plus, Rockchip RK3588)
 
 - [ ] 41.2 Create base OS image
-    - Minimal Linux (Debian/Ubuntu Server arm64 or Alpine)
-    - Pre-installed: Docker, container runtime, mDNS (Avahi for wardkeep.local)
-    - Auto-start on boot: all containers via systemd service
-    - Read-only root filesystem with persistent data partition
-    - Watchdog timer: auto-reboot on hang
+  - Minimal Linux (Debian/Ubuntu Server arm64 or Alpine)
+  - Pre-installed: Docker, container runtime, mDNS (Avahi for wardkeep.local)
+  - Auto-start on boot: all containers via systemd service
+  - Read-only root filesystem with persistent data partition
+  - Watchdog timer: auto-reboot on hang
 
 - [ ] 41.3 Create appliance Docker Compose configuration
-    - `docker-compose.appliance.yml` — single-device optimized
-    - Smaller Ollama model: llama3:8b Q4_K_M or phi-3-mini (fits ~4GB VRAM/RAM)
-    - Resource limits per container (prevent OOM on 8GB devices)
-    - Shared network, local-only bindings (no external exposure by default)
-    - Persistent volumes on data partition with proper permissions
+  - `docker-compose.appliance.yml` — single-device optimized
+  - Smaller Ollama model: llama3:8b Q4_K_M or phi-3-mini (fits ~4GB VRAM/RAM)
+  - Resource limits per container (prevent OOM on 8GB devices)
+  - Shared network, local-only bindings (no external exposure by default)
+  - Persistent volumes on data partition with proper permissions
 
 - [ ] 41.4 ARM64 container image builds
-    - GitHub Actions workflow: build arm64 images natively (self-hosted runner or buildx)
-    - Multi-arch manifest: amd64 + arm64 for all images
-    - Optimize image size: multi-stage builds, Alpine base, strip debug symbols
-    - Target: API <200MB, Web <150MB, Worker <200MB
+  - GitHub Actions workflow: build arm64 images natively (self-hosted runner or buildx)
+  - Multi-arch manifest: amd64 + arm64 for all images
+  - Optimize image size: multi-stage builds, Alpine base, strip debug symbols
+  - Target: API <200MB, Web <150MB, Worker <200MB
 
 ### 42. First-Boot Setup Experience
 
 - [ ] 42.1 Implement first-boot setup service
-    - Detect first boot (no admin user exists)
-    - Generate unique ENCRYPTION_KEY and persist to secure storage
-    - Run Prisma migrations automatically
-    - Pull Ollama model in background (show progress)
-    - Seed default categories
+  - Detect first boot (no admin user exists)
+  - Generate unique ENCRYPTION_KEY and persist to secure storage
+  - Run Prisma migrations automatically
+  - Pull Ollama model in background (show progress)
+  - Seed default categories
 
 - [ ] 42.2 Implement setup wizard UI
-    - Step 1: Welcome screen with device status (network, storage, memory)
-    - Step 2: Create admin account (email, password)
-    - Step 3: Configure household name and timezone
-    - Step 4: Choose AI model size (small/fast vs larger/smarter)
-    - Step 5: Optional — connect bank (SimpleFIN) or skip
-    - Step 6: Done — redirect to Morning Brief / Dashboard
-    - Accessible via http://wardkeep.local or device IP
+  - Step 1: Welcome screen with device status (network, storage, memory)
+  - Step 2: Create admin account (email, password)
+  - Step 3: Configure household name and timezone
+  - Step 4: Choose AI model size (small/fast vs larger/smarter)
+  - Step 5: Optional — connect bank (SimpleFIN) or skip
+  - Step 6: Done — redirect to Morning Brief / Dashboard
+  - Accessible via http://wardkeep.local or device IP
 
 - [ ] 42.3 Implement network discovery
-    - mDNS advertisement: wardkeep.local resolves to device IP
-    - Fallback: DHCP hostname registration
-    - Setup page shows QR code with device URL for mobile onboarding
-    - Optional: UPnP/NAT-PMP for remote access setup (with explicit consent)
+  - mDNS advertisement: wardkeep.local resolves to device IP
+  - Fallback: DHCP hostname registration
+  - Setup page shows QR code with device URL for mobile onboarding
+  - Optional: UPnP/NAT-PMP for remote access setup (with explicit consent)
 
 ### 43. Device Management
 
 - [ ] 43.1 Implement device admin panel
-    - System status: CPU, RAM, disk usage, temperature
-    - Container health: restart count, uptime, logs (last 100 lines)
-    - Network info: IP address, hostname, connected clients
-    - Storage: database size, backup size, available space
-    - Accessible only to admin user, separate from main Wardkeep UI
+  - System status: CPU, RAM, disk usage, temperature
+  - Container health: restart count, uptime, logs (last 100 lines)
+  - Network info: IP address, hostname, connected clients
+  - Storage: database size, backup size, available space
+  - Accessible only to admin user, separate from main Wardkeep UI
 
 - [ ] 43.2 Implement OTA update system
-    - Check for updates: poll GHCR for new image tags (daily)
-    - One-click update: pull new images, run migrations, restart containers
-    - Rollback: keep previous image set, revert on failed health check
-    - Update window: configurable quiet hours (default 3–5 AM)
-    - Changelog shown before update with "Update Now" or "Remind Me Later"
+  - Check for updates: poll GHCR for new image tags (daily)
+  - One-click update: pull new images, run migrations, restart containers
+  - Rollback: keep previous image set, revert on failed health check
+  - Update window: configurable quiet hours (default 3–5 AM)
+  - Changelog shown before update with "Update Now" or "Remind Me Later"
 
 - [ ] 43.3 Implement backup to external storage
-    - USB drive backup: detect inserted USB, offer one-click backup
-    - Backup contents: full DB dump + encryption key + user uploads
-    - Encrypted backup file (AES-256, password set during setup)
-    - Scheduled auto-backup to USB if always connected
-    - Restore from USB on fresh device (migration path)
+  - USB drive backup: detect inserted USB, offer one-click backup
+  - Backup contents: full DB dump + encryption key + user uploads
+  - Encrypted backup file (AES-256, password set during setup)
+  - Scheduled auto-backup to USB if always connected
+  - Restore from USB on fresh device (migration path)
 
 - [ ] 43.4 Implement device recovery
-    - Factory reset: wipe data partition, return to first-boot state
-    - Restore from backup: first-boot wizard offers "Restore from USB" option
-    - Health self-check: auto-restart failed containers, fsck on boot
-    - LED status indicator support (if hardware has GPIO): booting / ready / error
+  - Factory reset: wipe data partition, return to first-boot state
+  - Restore from backup: first-boot wizard offers "Restore from USB" option
+  - Health self-check: auto-restart failed containers, fsck on boot
+  - LED status indicator support (if hardware has GPIO): booting / ready / error
 
 ### 44. Security Hardening
 
 - [ ] 44.1 Network security
-    - Firewall: only expose ports 80/443 on LAN (iptables/nftables)
-    - Optional HTTPS: auto-generate self-signed cert or Let's Encrypt with user domain
-    - No default SSH access (user must opt-in via admin panel)
-    - Automatic security updates for OS packages (unattended-upgrades)
+  - Firewall: only expose ports 80/443 on LAN (iptables/nftables)
+  - Optional HTTPS: auto-generate self-signed cert or Let's Encrypt with user domain
+  - No default SSH access (user must opt-in via admin panel)
+  - Automatic security updates for OS packages (unattended-upgrades)
 
 - [ ] 44.2 Data protection
-    - Full-disk encryption on data partition (LUKS, key derived from user password)
-    - Encryption key never leaves device
-    - Secure erase on factory reset (overwrite, not just delete)
-    - No telemetry, no phone-home, no analytics — fully air-gappable
+  - Full-disk encryption on data partition (LUKS, key derived from user password)
+  - Encryption key never leaves device
+  - Secure erase on factory reset (overwrite, not just delete)
+  - No telemetry, no phone-home, no analytics — fully air-gappable
 
 - [ ] 44.3 Physical security
-    - Tamper detection: warn if case opened (if hardware supports)
-    - USB lockdown: only recognize storage devices, block HID attacks
-    - Boot integrity: verified boot chain if hardware supports (optional)
+  - Tamper detection: warn if case opened (if hardware supports)
+  - USB lockdown: only recognize storage devices, block HID attacks
+  - Boot integrity: verified boot chain if hardware supports (optional)
 
 ### 45. Performance Optimization for Constrained Hardware
 
 - [ ] 45.1 Memory optimization
-    - Tune Postgres shared_buffers and work_mem for 8GB total system
-    - Limit Ollama concurrent inference to 1 (prevent OOM)
-    - Node.js --max-old-space-size per container
-    - Redis maxmemory policy: allkeys-lru with 256MB cap
-    - Monitor and alert when memory pressure exceeds 85%
+  - Tune Postgres shared_buffers and work_mem for 8GB total system
+  - Limit Ollama concurrent inference to 1 (prevent OOM)
+  - Node.js --max-old-space-size per container
+  - Redis maxmemory policy: allkeys-lru with 256MB cap
+  - Monitor and alert when memory pressure exceeds 85%
 
 - [ ] 45.2 Storage optimization
-    - Automatic DB vacuum scheduling (weekly)
-    - Log rotation: 7 days retention, compressed
-    - Ollama model cache management (only keep active model)
-    - Prune unused Docker images after updates
-    - Alert when disk usage exceeds 80%
+  - Automatic DB vacuum scheduling (weekly)
+  - Log rotation: 7 days retention, compressed
+  - Ollama model cache management (only keep active model)
+  - Prune unused Docker images after updates
+  - Alert when disk usage exceeds 80%
 
 - [ ] 45.3 AI inference optimization
-    - Default to smallest viable quantized model
-    - Batch categorization during idle periods (not real-time)
-    - Cache frequent categorization results (merchant → category mapping)
-    - Graceful degradation: skip AI features if memory too low, use rule-based fallback
+  - Default to smallest viable quantized model
+  - Batch categorization during idle periods (not real-time)
+  - Cache frequent categorization results (merchant → category mapping)
+  - Graceful degradation: skip AI features if memory too low, use rule-based fallback
 
 ### 46. Packaging & Distribution
 
 - [ ] 46.1 Create flashing tool and documentation
-    - Image builder script: compose OS + containers into flashable image
-    - Balena Etcher compatible .img file
-    - Documentation: hardware shopping list, flashing guide, first-boot walkthrough
-    - Video tutorial for non-technical users
+  - Image builder script: compose OS + containers into flashable image
+  - Balena Etcher compatible .img file
+  - Documentation: hardware shopping list, flashing guide, first-boot walkthrough
+  - Video tutorial for non-technical users
 
 - [ ] 46.2 Pre-built hardware option
-    - Partner with SBC manufacturer or build custom enclosure
-    - Pre-flash and ship ready-to-use
-    - Include: device, power supply, Ethernet cable, quick-start card
-    - Pricing: hardware cost + small margin (not subscription-based)
+  - Partner with SBC manufacturer or build custom enclosure
+  - Pre-flash and ship ready-to-use
+  - Include: device, power supply, Ethernet cable, quick-start card
+  - Pricing: hardware cost + small margin (not subscription-based)
 
 - [ ] 46.3 Retail packaging and branding
-    - Enclosure design: small, silent, living-room friendly
-    - Status LED: breathing pattern when healthy, color-coded states
-    - Branding: "Wardkeep Home" with minimal, premium packaging
-    - Quick-start guide (printed card, <10 steps to running)
+  - Enclosure design: small, silent, living-room friendly
+  - Status LED: breathing pattern when healthy, color-coded states
+  - Branding: "Wardkeep Home" with minimal, premium packaging
+  - Quick-start guide (printed card, <10 steps to running)
 
 ### 47. Phase 7 Checkpoint
 
