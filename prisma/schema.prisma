@@ -491,6 +491,8 @@ model ReadinessSnapshot {
   peace       Int
   recordedAt  DateTime @default(now()) @db.Date
 
+  signals ReadinessSignal[]
+
   @@unique([userId, recordedAt])
   @@index([userId, recordedAt])
 }
@@ -506,9 +508,13 @@ model ReadinessSignal {
   weight       Decimal  @default(1.0) @db.Decimal(3, 2)
   expiresAt    DateTime?
   createdAt    DateTime @default(now())
+  snapshotId   String?
+
+  snapshot ReadinessSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@index([userId, pillar])
   @@index([userId, createdAt])
+  @@index([snapshotId])
 }
 
 enum SignalType {

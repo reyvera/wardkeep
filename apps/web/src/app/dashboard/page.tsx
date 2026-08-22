@@ -38,7 +38,7 @@ interface ReadinessResponse {
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
   pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
   dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
-  recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string }>;
+  recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string; reason: string | null }>;
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
@@ -311,7 +311,7 @@ export default function DashboardPage() {
           <ul className="space-y-3">
             {data.recentChanges.map((change) => {
               const label = PILLAR_META[change.pillar]?.label ?? change.pillar;
-              return <li key={change.pillar} className="flex items-center justify-between gap-4 text-sm"><span className="text-content-primary">{label} changed from {change.previous} to {change.current}</span><span className={change.delta > 0 ? 'text-accent-green font-medium' : 'text-accent-red font-medium'}>{change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}</span></li>;
+              return <li key={change.pillar} className="flex items-start justify-between gap-4 text-sm"><div><p className="text-content-primary">{label} changed from {change.previous} to {change.current}</p>{change.reason && <p className="text-xs text-content-tertiary mt-1">{change.reason}</p>}</div><span className={change.delta > 0 ? 'text-accent-green font-medium' : 'text-accent-red font-medium'}>{change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}</span></li>;
             })}
           </ul>
         )}

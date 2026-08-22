@@ -31,7 +31,7 @@ export class ReadinessController {
 
     // Record today's snapshot for historical tracking (fire-and-forget)
     this.readinessService
-      .recordSnapshot(userId, readiness.overall, readiness.pillars)
+      .recordSnapshot(userId, readiness.overall, readiness.pillars, readiness.signals)
       .catch(() => {
         // Non-fatal: snapshot persistence failure shouldn't block response
       });
