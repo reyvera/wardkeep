@@ -4,8 +4,19 @@ import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
-  Plus, Calculator, BarChart3, Trash2, CreditCard, RefreshCw,
-  Link2, Check, Save, BookMarked, TrendingDown, Landmark, Zap,
+  Plus,
+  Calculator,
+  BarChart3,
+  Trash2,
+  CreditCard,
+  RefreshCw,
+  Link2,
+  Check,
+  Save,
+  BookMarked,
+  TrendingDown,
+  Landmark,
+  Zap,
 } from 'lucide-react';
 
 interface Debt {
@@ -34,8 +45,15 @@ interface PayoffResult {
   warning?: string;
 }
 
-interface StrategyResult { strategy: string; result: PayoffResult }
-interface CompareResult { strategies: StrategyResult[]; interestSavings: string; timeSavings: number }
+interface StrategyResult {
+  strategy: string;
+  result: PayoffResult;
+}
+interface CompareResult {
+  strategies: StrategyResult[];
+  interestSavings: string;
+  timeSavings: number;
+}
 
 interface ConsolidationResult {
   schedule: DebtSchedule;
@@ -108,14 +126,27 @@ export default function DebtPage() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [scheduleViewMax, setScheduleViewMax] = useState(24);
   const [activeTab, setActiveTab] = useState<'standard' | 'consolidation' | 'velocity'>('standard');
-  const [consolidationParams, setConsolidationParams] = useState({ newApr: '', termMonths: '60', originationFee: '' });
-  const [velocityParams, setVelocityParams] = useState({ helocLimit: '', helocApr: '', monthlyDisposableIncome: '', chunkAmount: '' });
+  const [consolidationParams, setConsolidationParams] = useState({
+    newApr: '',
+    termMonths: '60',
+    originationFee: '',
+  });
+  const [velocityParams, setVelocityParams] = useState({
+    helocLimit: '',
+    helocApr: '',
+    monthlyDisposableIncome: '',
+    chunkAmount: '',
+  });
   const [consolidationResult, setConsolidationResult] = useState<ConsolidationResult | null>(null);
   const [velocityResult, setVelocityResult] = useState<VelocityBankingResult | null>(null);
   const [baselineResult, setBaselineResult] = useState<PayoffResult | null>(null);
 
   // Fetch debts auto-synced from accounts
-  const { data: accountDebts = [], isLoading, refetch } = useQuery<AccountDebt[]>({
+  const {
+    data: accountDebts = [],
+    isLoading,
+    refetch,
+  } = useQuery<AccountDebt[]>({
     queryKey: ['debt-from-accounts'],
     queryFn: () => apiClient.get<AccountDebt[]>('/debt/from-accounts'),
   });
@@ -155,10 +186,9 @@ export default function DebtPage() {
   const allDebts: Debt[] = [...selectedAccountDebts, ...manualDebts];
 
   // Debts ready for calculation (have APR + min payment configured)
-  const configuredDebts = allDebts.filter(
-    (d) => d.isFromAccount ? (d.apr > 0 && d.minimumPayment > 0) : true,
+  const configuredDebts = allDebts.filter((d) =>
+    d.isFromAccount ? d.apr > 0 && d.minimumPayment > 0 : true,
   );
-
 
   const toggleAccount = (id: string) => {
     setSelectedAccountIds((prev) => {
@@ -187,7 +217,10 @@ export default function DebtPage() {
         totalMonthlyPayment: (parseFloat(monthlyPayment) || 0).toFixed(2),
       });
     },
-    onSuccess: (data) => { setScheduleResult(data); setCompareResult(null); },
+    onSuccess: (data) => {
+      setScheduleResult(data);
+      setCompareResult(null);
+    },
   });
 
   const compareMutation = useMutation({
@@ -205,7 +238,10 @@ export default function DebtPage() {
         totalMonthlyPayment: (parseFloat(monthlyPayment) || 0).toFixed(2),
       });
     },
-    onSuccess: (data) => { setCompareResult(data); setScheduleResult(null); },
+    onSuccess: (data) => {
+      setCompareResult(data);
+      setScheduleResult(null);
+    },
   });
 
   const savePlanMutation = useMutation({
@@ -248,7 +284,9 @@ export default function DebtPage() {
         }),
       });
     },
-    onSuccess: (data) => { setConsolidationResult(data); },
+    onSuccess: (data) => {
+      setConsolidationResult(data);
+    },
   });
 
   const velocityMutation = useMutation({
@@ -264,11 +302,15 @@ export default function DebtPage() {
         debts: debtsPayload,
         helocLimit: (parseFloat(velocityParams.helocLimit) || 0).toFixed(2),
         helocApr: (parseFloat(velocityParams.helocApr) / 100).toFixed(4),
-        monthlyDisposableIncome: (parseFloat(velocityParams.monthlyDisposableIncome) || 0).toFixed(2),
+        monthlyDisposableIncome: (parseFloat(velocityParams.monthlyDisposableIncome) || 0).toFixed(
+          2,
+        ),
         chunkAmount: (parseFloat(velocityParams.chunkAmount) || 0).toFixed(2),
       });
     },
-    onSuccess: (data) => { setVelocityResult(data); },
+    onSuccess: (data) => {
+      setVelocityResult(data);
+    },
   });
 
   const baselineMutation = useMutation({
@@ -282,11 +324,23 @@ export default function DebtPage() {
       }));
       return apiClient.post<PayoffResult>('/debt/minimum-only', { debts: debtsPayload });
     },
-    onSuccess: (data) => { setBaselineResult(data); },
+    onSuccess: (data) => {
+      setBaselineResult(data);
+    },
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: ({ profileId, apr, minimumPayment, assetValue }: { profileId: string; apr: string; minimumPayment: string; assetValue?: string | null }) =>
+    mutationFn: ({
+      profileId,
+      apr,
+      minimumPayment,
+      assetValue,
+    }: {
+      profileId: string;
+      apr: string;
+      minimumPayment: string;
+      assetValue?: string | null;
+    }) =>
       apiClient.patch(`/debt/profiles/${profileId}`, {
         apr,
         minimumPayment,
@@ -314,7 +368,8 @@ export default function DebtPage() {
     setNewDebt({ name: '', balance: '', apr: '', minimumPayment: '' });
   };
 
-  const removeManualDebt = (index: number) => setManualDebts(manualDebts.filter((_, i) => i !== index));
+  const removeManualDebt = (index: number) =>
+    setManualDebts(manualDebts.filter((_, i) => i !== index));
   const totalDebt = allDebts.reduce((sum, d) => sum + d.balance, 0);
 
   const startEditing = (profile: DebtProfileResponse) => {
@@ -337,8 +392,10 @@ export default function DebtPage() {
 
   const handleSavePlan = () => {
     if (!planName.trim()) return;
-    const interest = scheduleResult?.totalInterest || compareResult?.strategies[0]?.result.totalInterest || '0';
-    const months = scheduleResult?.totalMonths || compareResult?.strategies[0]?.result.totalMonths || 0;
+    const interest =
+      scheduleResult?.totalInterest || compareResult?.strategies[0]?.result.totalInterest || '0';
+    const months =
+      scheduleResult?.totalMonths || compareResult?.strategies[0]?.result.totalMonths || 0;
     savePlanMutation.mutate({ name: planName, totalInterest: interest, totalMonths: months });
   };
 
@@ -352,7 +409,11 @@ export default function DebtPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-page-title text-content-primary">Debt Payoff</h1>
-        <button onClick={() => refetch()} className="btn-ghost flex items-center gap-1 text-sm text-content-secondary" title="Refresh debts from accounts">
+        <button
+          onClick={() => refetch()}
+          className="btn-ghost flex items-center gap-1 text-sm text-content-secondary"
+          title="Refresh debts from accounts"
+        >
           <RefreshCw size={14} /> Sync
         </button>
       </div>
@@ -362,21 +423,31 @@ export default function DebtPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="card">
             <span className="card-title">SELECTED DEBT</span>
-            <p className="text-2xl font-bold tabular-nums text-accent-red">${formatCurrency(totalDebt)}</p>
+            <p className="text-2xl font-bold tabular-nums text-accent-red">
+              ${formatCurrency(totalDebt)}
+            </p>
           </div>
           <div className="card">
             <span className="card-title">ACCOUNTS</span>
             <p className="text-2xl font-bold tabular-nums text-content-primary">
               {selectedAccountIds.size}/{accountDebts.length}
-              {manualDebts.length > 0 && <span className="text-sm font-normal text-content-tertiary"> + {manualDebts.length} manual</span>}
+              {manualDebts.length > 0 && (
+                <span className="text-sm font-normal text-content-tertiary">
+                  {' '}
+                  + {manualDebts.length} manual
+                </span>
+              )}
             </p>
           </div>
           <div className="card">
             <span className="card-title">AVG APR</span>
             <p className="text-2xl font-bold tabular-nums text-content-primary">
               {configuredDebts.length > 0
-                ? (configuredDebts.reduce((sum, d) => sum + d.apr, 0) / configuredDebts.length).toFixed(1)
-                : '0.0'}%
+                ? (
+                    configuredDebts.reduce((sum, d) => sum + d.apr, 0) / configuredDebts.length
+                  ).toFixed(1)
+                : '0.0'}
+              %
             </p>
           </div>
         </div>
@@ -388,9 +459,13 @@ export default function DebtPage() {
           <div className="flex items-center justify-between">
             <span className="card-title">SELECT ACCOUNTS</span>
             <div className="flex gap-2">
-              <button onClick={selectAll} className="text-xs text-accent-blue hover:underline">Select All</button>
+              <button onClick={selectAll} className="text-xs text-accent-blue hover:underline">
+                Select All
+              </button>
               <span className="text-xs text-content-tertiary">|</span>
-              <button onClick={selectNone} className="text-xs text-accent-blue hover:underline">None</button>
+              <button onClick={selectNone} className="text-xs text-accent-blue hover:underline">
+                None
+              </button>
             </div>
           </div>
           <div className="space-y-1">
@@ -405,13 +480,17 @@ export default function DebtPage() {
                 <div
                   key={debt.id}
                   className={`flex items-center gap-3 py-3 px-4 rounded-lg border transition-colors duration-150 cursor-pointer ${
-                    isSelected ? 'border-accent-blue/40 bg-accent-blue/5' : 'border-edge hover:border-edge-hover'
+                    isSelected
+                      ? 'border-accent-blue/40 bg-accent-blue/5'
+                      : 'border-edge hover:border-edge-hover'
                   }`}
                   onClick={() => !isEditing && toggleAccount(debt.id)}
                 >
-                  <div className={`flex items-center justify-center w-5 h-5 rounded border-2 transition-colors ${
-                    isSelected ? 'bg-accent-blue border-accent-blue' : 'border-content-tertiary'
-                  }`}>
+                  <div
+                    className={`flex items-center justify-center w-5 h-5 rounded border-2 transition-colors ${
+                      isSelected ? 'bg-accent-blue border-accent-blue' : 'border-content-tertiary'
+                    }`}
+                  >
                     {isSelected && <Check size={12} className="text-white" />}
                   </div>
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-red/10">
@@ -420,34 +499,99 @@ export default function DebtPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-content-primary">{debt.name}</p>
                     {isEditing && profile ? (
-                      <div className="flex items-center gap-2 mt-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                        <input type="number" step="0.01" placeholder="APR %" value={editValues.apr} onChange={(e) => setEditValues({ ...editValues, apr: e.target.value })} className="input w-20 text-xs py-1" />
+                      <div
+                        className="flex items-center gap-2 mt-1 flex-wrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="APR %"
+                          value={editValues.apr}
+                          onChange={(e) => setEditValues({ ...editValues, apr: e.target.value })}
+                          className="input w-20 text-xs py-1"
+                        />
                         <span className="text-xs text-content-tertiary">%</span>
-                        <input type="number" step="0.01" placeholder="Min $" value={editValues.minimumPayment} onChange={(e) => setEditValues({ ...editValues, minimumPayment: e.target.value })} className="input w-20 text-xs py-1" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Min $"
+                          value={editValues.minimumPayment}
+                          onChange={(e) =>
+                            setEditValues({ ...editValues, minimumPayment: e.target.value })
+                          }
+                          className="input w-20 text-xs py-1"
+                        />
                         <span className="text-xs text-content-tertiary">min</span>
-                        <input type="number" step="0.01" placeholder="Asset value" value={editValues.assetValue} onChange={(e) => setEditValues({ ...editValues, assetValue: e.target.value })} className="input w-28 text-xs py-1" title="Value of the secured asset (home, vehicle)" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Asset value"
+                          value={editValues.assetValue}
+                          onChange={(e) =>
+                            setEditValues({ ...editValues, assetValue: e.target.value })
+                          }
+                          className="input w-28 text-xs py-1"
+                          title="Value of the secured asset (home, vehicle)"
+                        />
                         <span className="text-xs text-content-tertiary">asset</span>
-                        <button onClick={() => saveProfile(profile.id)} disabled={updateProfileMutation.isPending} className="btn-primary text-xs px-2 py-1">Save</button>
-                        <button onClick={() => setEditingProfile(null)} className="btn-ghost text-xs px-2 py-1">Cancel</button>
+                        <button
+                          onClick={() => saveProfile(profile.id)}
+                          disabled={updateProfileMutation.isPending}
+                          className="btn-primary text-xs px-2 py-1"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingProfile(null)}
+                          className="btn-ghost text-xs px-2 py-1"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     ) : (
                       <p className="text-xs text-content-tertiary">
                         {needsConfig ? (
                           <span className="text-accent-yellow">
                             Needs configuration
-                            {profile && <button onClick={(e) => { e.stopPropagation(); startEditing(profile); }} className="ml-2 text-accent-blue hover:underline">configure</button>}
+                            {profile && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditing(profile);
+                                }}
+                                className="ml-2 text-accent-blue hover:underline"
+                              >
+                                configure
+                              </button>
+                            )}
                           </span>
                         ) : (
                           <>
-                            {aprPct.toFixed(1)}% APR · Min: ${formatCurrency(parseFloat(debt.minimumPayment))}
-                            {profile?.assetValue && <> · Asset: ${formatCurrency(parseFloat(profile.assetValue))}</>}
-                            {profile && <button onClick={(e) => { e.stopPropagation(); startEditing(profile); }} className="ml-2 text-accent-blue hover:underline">edit</button>}
+                            {aprPct.toFixed(1)}% APR · Min: $
+                            {formatCurrency(parseFloat(debt.minimumPayment))}
+                            {profile?.assetValue && (
+                              <> · Asset: ${formatCurrency(parseFloat(profile.assetValue))}</>
+                            )}
+                            {profile && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditing(profile);
+                                }}
+                                className="ml-2 text-accent-blue hover:underline"
+                              >
+                                edit
+                              </button>
+                            )}
                           </>
                         )}
                       </p>
                     )}
                   </div>
-                  <p className="text-sm font-bold tabular-nums text-accent-red">${formatCurrency(parseFloat(debt.balance))}</p>
+                  <p className="text-sm font-bold tabular-nums text-accent-red">
+                    ${formatCurrency(parseFloat(debt.balance))}
+                  </p>
                 </div>
               );
             })}
@@ -458,18 +602,31 @@ export default function DebtPage() {
       {/* Manual debts */}
       {manualDebts.length > 0 && (
         <div className="space-y-2">
-          <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">Manual / What-if</span>
+          <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">
+            Manual / What-if
+          </span>
           {manualDebts.map((d, i) => (
-            <div key={i} className="card flex items-center gap-4 py-4 hover:border-edge-hover transition-colors duration-150">
+            <div
+              key={i}
+              className="card flex items-center gap-4 py-4 hover:border-edge-hover transition-colors duration-150"
+            >
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-red/10">
                 <CreditCard size={16} className="text-accent-red" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-content-primary">{d.name}</p>
-                <p className="text-xs text-content-tertiary">{d.apr}% APR · Min: ${formatCurrency(d.minimumPayment)}</p>
+                <p className="text-xs text-content-tertiary">
+                  {d.apr}% APR · Min: ${formatCurrency(d.minimumPayment)}
+                </p>
               </div>
-              <p className="text-sm font-bold tabular-nums text-accent-red">${formatCurrency(d.balance)}</p>
-              <button onClick={() => removeManualDebt(i)} className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" title="Remove">
+              <p className="text-sm font-bold tabular-nums text-accent-red">
+                ${formatCurrency(d.balance)}
+              </p>
+              <button
+                onClick={() => removeManualDebt(i)}
+                className="btn-ghost p-2 text-content-tertiary hover:text-accent-red"
+                title="Remove"
+              >
                 <Trash2 size={14} />
               </button>
             </div>
@@ -480,14 +637,60 @@ export default function DebtPage() {
       {/* Add Manual Debt Form */}
       <form onSubmit={addDebt} className="card space-y-4">
         <span className="card-title">ADD MANUAL DEBT</span>
-        <p className="text-xs text-content-tertiary -mt-2">For what-if scenarios. Debts from your accounts are imported automatically.</p>
+        <p className="text-xs text-content-tertiary -mt-2">
+          For what-if scenarios. Debts from your accounts are imported automatically.
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div><label className="input-label">Name</label><input placeholder="e.g. Visa Card" value={newDebt.name} onChange={(e) => setNewDebt({ ...newDebt, name: e.target.value })} className="input" required /></div>
-          <div><label className="input-label">Balance</label><input placeholder="0.00" type="number" step="0.01" value={newDebt.balance} onChange={(e) => setNewDebt({ ...newDebt, balance: e.target.value })} className="input" required /></div>
-          <div><label className="input-label">APR %</label><input placeholder="0.00" type="number" step="0.01" value={newDebt.apr} onChange={(e) => setNewDebt({ ...newDebt, apr: e.target.value })} className="input" required /></div>
-          <div><label className="input-label">Min Payment</label><input placeholder="0.00" type="number" step="0.01" value={newDebt.minimumPayment} onChange={(e) => setNewDebt({ ...newDebt, minimumPayment: e.target.value })} className="input" required /></div>
+          <div>
+            <label className="input-label">Name</label>
+            <input
+              placeholder="e.g. Visa Card"
+              value={newDebt.name}
+              onChange={(e) => setNewDebt({ ...newDebt, name: e.target.value })}
+              className="input"
+              required
+            />
+          </div>
+          <div>
+            <label className="input-label">Balance</label>
+            <input
+              placeholder="0.00"
+              type="number"
+              step="0.01"
+              value={newDebt.balance}
+              onChange={(e) => setNewDebt({ ...newDebt, balance: e.target.value })}
+              className="input"
+              required
+            />
+          </div>
+          <div>
+            <label className="input-label">APR %</label>
+            <input
+              placeholder="0.00"
+              type="number"
+              step="0.01"
+              value={newDebt.apr}
+              onChange={(e) => setNewDebt({ ...newDebt, apr: e.target.value })}
+              className="input"
+              required
+            />
+          </div>
+          <div>
+            <label className="input-label">Min Payment</label>
+            <input
+              placeholder="0.00"
+              type="number"
+              step="0.01"
+              value={newDebt.minimumPayment}
+              onChange={(e) => setNewDebt({ ...newDebt, minimumPayment: e.target.value })}
+              className="input"
+              required
+            />
+          </div>
         </div>
-        <button type="submit" className="btn-primary"><Plus size={16} /> Add Debt</button>
+        <button type="submit" className="btn-primary">
+          <Plus size={16} /> Add Debt
+        </button>
       </form>
 
       {/* Calculate */}
@@ -497,7 +700,11 @@ export default function DebtPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="input-label">Strategy</label>
-              <select value={strategy} onChange={(e) => setStrategy(e.target.value as 'snowball' | 'avalanche' | 'custom')} className="input">
+              <select
+                value={strategy}
+                onChange={(e) => setStrategy(e.target.value as 'snowball' | 'avalanche' | 'custom')}
+                className="input"
+              >
                 <option value="avalanche">Avalanche (highest APR first)</option>
                 <option value="snowball">Snowball (lowest balance first)</option>
                 <option value="custom">Custom order</option>
@@ -505,19 +712,39 @@ export default function DebtPage() {
             </div>
             <div>
               <label className="input-label">Total Monthly Payment</label>
-              <input placeholder="0.00" type="number" step="0.01" value={monthlyPayment} onChange={(e) => setMonthlyPayment(e.target.value)} className="input" />
+              <input
+                placeholder="0.00"
+                type="number"
+                step="0.01"
+                value={monthlyPayment}
+                onChange={(e) => setMonthlyPayment(e.target.value)}
+                className="input"
+              />
             </div>
             <div className="flex items-end gap-2">
-              <button onClick={() => calculateMutation.mutate()} disabled={calculateMutation.isPending} className="btn-primary">
-                <Calculator size={16} /> {calculateMutation.isPending ? 'Calculating...' : 'Calculate'}
+              <button
+                onClick={() => calculateMutation.mutate()}
+                disabled={calculateMutation.isPending}
+                className="btn-primary"
+              >
+                <Calculator size={16} />{' '}
+                {calculateMutation.isPending ? 'Calculating...' : 'Calculate'}
               </button>
-              <button onClick={() => compareMutation.mutate()} disabled={compareMutation.isPending} className="btn-secondary">
+              <button
+                onClick={() => compareMutation.mutate()}
+                disabled={compareMutation.isPending}
+                className="btn-secondary"
+              >
                 <BarChart3 size={16} /> Compare
               </button>
             </div>
           </div>
-          {calculateMutation.isError && <p className="text-sm text-accent-red">{calculateMutation.error.message}</p>}
-          {scheduleResult?.warning && <p className="text-sm text-accent-yellow">{scheduleResult.warning}</p>}
+          {calculateMutation.isError && (
+            <p className="text-sm text-accent-red">{calculateMutation.error.message}</p>
+          )}
+          {scheduleResult?.warning && (
+            <p className="text-sm text-accent-yellow">{scheduleResult.warning}</p>
+          )}
         </div>
       )}
 
@@ -525,12 +752,17 @@ export default function DebtPage() {
       {configuredDebts.length > 0 && (
         <div className="card space-y-4">
           <span className="card-title">EXPLORE STRATEGIES</span>
-          <p className="text-xs text-content-tertiary -mt-2">Compare advanced payoff approaches against your current plan.</p>
+          <p className="text-xs text-content-tertiary -mt-2">
+            Compare advanced payoff approaches against your current plan.
+          </p>
 
           {/* Tab buttons */}
           <div className="flex gap-2 flex-wrap">
             <button
-              onClick={() => { setActiveTab('standard'); baselineMutation.mutate(); }}
+              onClick={() => {
+                setActiveTab('standard');
+                baselineMutation.mutate();
+              }}
               className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors ${activeTab === 'standard' ? 'border-accent-blue bg-accent-blue/10 text-accent-blue' : 'border-edge text-content-secondary hover:border-edge-hover'}`}
             >
               <TrendingDown size={14} /> Minimum Only Baseline
@@ -553,29 +785,39 @@ export default function DebtPage() {
           {activeTab === 'standard' && (
             <div className="space-y-3">
               <p className="text-sm text-content-secondary">
-                Shows how long it takes to pay off all debts using only the minimum payments. No extra money applied.
+                Shows how long it takes to pay off all debts using only the minimum payments. No
+                extra money applied.
               </p>
               <button
                 onClick={() => baselineMutation.mutate()}
                 disabled={baselineMutation.isPending}
                 className="btn-secondary"
               >
-                <Calculator size={14} /> {baselineMutation.isPending ? 'Calculating...' : 'Calculate Baseline'}
+                <Calculator size={14} />{' '}
+                {baselineMutation.isPending ? 'Calculating...' : 'Calculate Baseline'}
               </button>
               {baselineResult && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                   <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                     <p className="text-xs text-content-tertiary uppercase">Time to Debt Free</p>
-                    <p className="text-xl font-bold text-content-primary">{baselineResult.totalMonths} months</p>
-                    <p className="text-xs text-content-tertiary">{(baselineResult.totalMonths / 12).toFixed(1)} years</p>
+                    <p className="text-xl font-bold text-content-primary">
+                      {baselineResult.totalMonths} months
+                    </p>
+                    <p className="text-xs text-content-tertiary">
+                      {(baselineResult.totalMonths / 12).toFixed(1)} years
+                    </p>
                   </div>
                   <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                     <p className="text-xs text-content-tertiary uppercase">Total Interest Paid</p>
-                    <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(baselineResult.totalInterest))}</p>
+                    <p className="text-xl font-bold text-accent-red">
+                      ${formatCurrency(parseFloat(baselineResult.totalInterest))}
+                    </p>
                   </div>
                 </div>
               )}
-              {baselineResult?.warning && <p className="text-sm text-accent-yellow">{baselineResult.warning}</p>}
+              {baselineResult?.warning && (
+                <p className="text-sm text-accent-yellow">{baselineResult.warning}</p>
+              )}
             </div>
           )}
 
@@ -583,7 +825,8 @@ export default function DebtPage() {
           {activeTab === 'consolidation' && (
             <div className="space-y-4">
               <p className="text-sm text-content-secondary">
-                Model refinancing all your debts into a single fixed-rate loan. Enter the terms you'd qualify for to see if it saves money.
+                Model refinancing all your debts into a single fixed-rate loan. Enter the terms
+                you&apos;d qualify for to see if it saves money.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
@@ -593,7 +836,9 @@ export default function DebtPage() {
                     type="number"
                     step="0.01"
                     value={consolidationParams.newApr}
-                    onChange={(e) => setConsolidationParams({ ...consolidationParams, newApr: e.target.value })}
+                    onChange={(e) =>
+                      setConsolidationParams({ ...consolidationParams, newApr: e.target.value })
+                    }
                     className="input"
                   />
                 </div>
@@ -604,7 +849,9 @@ export default function DebtPage() {
                     type="number"
                     step="1"
                     value={consolidationParams.termMonths}
-                    onChange={(e) => setConsolidationParams({ ...consolidationParams, termMonths: e.target.value })}
+                    onChange={(e) =>
+                      setConsolidationParams({ ...consolidationParams, termMonths: e.target.value })
+                    }
                     className="input"
                   />
                 </div>
@@ -615,10 +862,17 @@ export default function DebtPage() {
                     type="number"
                     step="0.01"
                     value={consolidationParams.originationFee}
-                    onChange={(e) => setConsolidationParams({ ...consolidationParams, originationFee: e.target.value })}
+                    onChange={(e) =>
+                      setConsolidationParams({
+                        ...consolidationParams,
+                        originationFee: e.target.value,
+                      })
+                    }
                     className="input"
                   />
-                  <p className="text-[10px] text-content-tertiary mt-0.5">One-time fee as % of balance</p>
+                  <p className="text-[10px] text-content-tertiary mt-0.5">
+                    One-time fee as % of balance
+                  </p>
                 </div>
                 <div className="flex items-end">
                   <button
@@ -626,38 +880,64 @@ export default function DebtPage() {
                     disabled={consolidationMutation.isPending || !consolidationParams.newApr}
                     className="btn-primary w-full"
                   >
-                    <Landmark size={14} /> {consolidationMutation.isPending ? 'Calculating...' : 'Calculate'}
+                    <Landmark size={14} />{' '}
+                    {consolidationMutation.isPending ? 'Calculating...' : 'Calculate'}
                   </button>
                 </div>
               </div>
 
-              {consolidationMutation.isError && <p className="text-sm text-accent-red">{consolidationMutation.error.message}</p>}
+              {consolidationMutation.isError && (
+                <p className="text-sm text-accent-red">{consolidationMutation.error.message}</p>
+              )}
 
               {consolidationResult && (
                 <div className="space-y-3 mt-3">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                       <p className="text-xs text-content-tertiary uppercase">Monthly Payment</p>
-                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(consolidationResult.monthlyPayment))}</p>
+                      <p className="text-xl font-bold text-content-primary">
+                        ${formatCurrency(parseFloat(consolidationResult.monthlyPayment))}
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                       <p className="text-xs text-content-tertiary uppercase">Total Interest</p>
-                      <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(consolidationResult.totalInterest))}</p>
+                      <p className="text-xl font-bold text-accent-red">
+                        ${formatCurrency(parseFloat(consolidationResult.totalInterest))}
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
-                      <p className="text-xs text-content-tertiary uppercase">Total Cost (incl. fees)</p>
-                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(consolidationResult.totalCost))}</p>
+                      <p className="text-xs text-content-tertiary uppercase">
+                        Total Cost (incl. fees)
+                      </p>
+                      <p className="text-xl font-bold text-content-primary">
+                        ${formatCurrency(parseFloat(consolidationResult.totalCost))}
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
-                      <p className="text-xs text-content-tertiary uppercase">vs. Minimum Payments</p>
+                      <p className="text-xs text-content-tertiary uppercase">
+                        vs. Minimum Payments
+                      </p>
                       {parseFloat(consolidationResult.interestSavingsVsBaseline) > 0 ? (
                         <>
-                          <p className="text-xl font-bold text-accent-green">Save ${formatCurrency(parseFloat(consolidationResult.interestSavingsVsBaseline))}</p>
-                          <p className="text-xs text-accent-green">{consolidationResult.timeSavingsVsBaseline} months faster</p>
+                          <p className="text-xl font-bold text-accent-green">
+                            Save $
+                            {formatCurrency(
+                              parseFloat(consolidationResult.interestSavingsVsBaseline),
+                            )}
+                          </p>
+                          <p className="text-xs text-accent-green">
+                            {consolidationResult.timeSavingsVsBaseline} months faster
+                          </p>
                         </>
                       ) : (
                         <>
-                          <p className="text-xl font-bold text-accent-red">Costs ${formatCurrency(Math.abs(parseFloat(consolidationResult.interestSavingsVsBaseline)))} more</p>
+                          <p className="text-xl font-bold text-accent-red">
+                            Costs $
+                            {formatCurrency(
+                              Math.abs(parseFloat(consolidationResult.interestSavingsVsBaseline)),
+                            )}{' '}
+                            more
+                          </p>
                           <p className="text-xs text-accent-red">Not recommended</p>
                         </>
                       )}
@@ -675,8 +955,9 @@ export default function DebtPage() {
           {activeTab === 'velocity' && (
             <div className="space-y-4">
               <p className="text-sm text-content-secondary">
-                Uses a HELOC (or line of credit) to make lump-sum payments against your highest-rate debt.
-                You then pay down the HELOC with your monthly disposable income and repeat the cycle.
+                Uses a HELOC (or line of credit) to make lump-sum payments against your highest-rate
+                debt. You then pay down the HELOC with your monthly disposable income and repeat the
+                cycle.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
@@ -686,7 +967,9 @@ export default function DebtPage() {
                     type="number"
                     step="100"
                     value={velocityParams.helocLimit}
-                    onChange={(e) => setVelocityParams({ ...velocityParams, helocLimit: e.target.value })}
+                    onChange={(e) =>
+                      setVelocityParams({ ...velocityParams, helocLimit: e.target.value })
+                    }
                     className="input"
                   />
                 </div>
@@ -697,7 +980,9 @@ export default function DebtPage() {
                     type="number"
                     step="0.01"
                     value={velocityParams.helocApr}
-                    onChange={(e) => setVelocityParams({ ...velocityParams, helocApr: e.target.value })}
+                    onChange={(e) =>
+                      setVelocityParams({ ...velocityParams, helocApr: e.target.value })
+                    }
                     className="input"
                   />
                 </div>
@@ -708,10 +993,17 @@ export default function DebtPage() {
                     type="number"
                     step="100"
                     value={velocityParams.monthlyDisposableIncome}
-                    onChange={(e) => setVelocityParams({ ...velocityParams, monthlyDisposableIncome: e.target.value })}
+                    onChange={(e) =>
+                      setVelocityParams({
+                        ...velocityParams,
+                        monthlyDisposableIncome: e.target.value,
+                      })
+                    }
                     className="input"
                   />
-                  <p className="text-[10px] text-content-tertiary mt-0.5">Income minus expenses (for HELOC paydown)</p>
+                  <p className="text-[10px] text-content-tertiary mt-0.5">
+                    Income minus expenses (for HELOC paydown)
+                  </p>
                 </div>
                 <div>
                   <label className="input-label">Chunk Amount</label>
@@ -720,49 +1012,85 @@ export default function DebtPage() {
                     type="number"
                     step="500"
                     value={velocityParams.chunkAmount}
-                    onChange={(e) => setVelocityParams({ ...velocityParams, chunkAmount: e.target.value })}
+                    onChange={(e) =>
+                      setVelocityParams({ ...velocityParams, chunkAmount: e.target.value })
+                    }
                     className="input"
                   />
-                  <p className="text-[10px] text-content-tertiary mt-0.5">Lump sum per cycle from HELOC</p>
+                  <p className="text-[10px] text-content-tertiary mt-0.5">
+                    Lump sum per cycle from HELOC
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => velocityMutation.mutate()}
-                disabled={velocityMutation.isPending || !velocityParams.helocLimit || !velocityParams.helocApr || !velocityParams.monthlyDisposableIncome || !velocityParams.chunkAmount}
+                disabled={
+                  velocityMutation.isPending ||
+                  !velocityParams.helocLimit ||
+                  !velocityParams.helocApr ||
+                  !velocityParams.monthlyDisposableIncome ||
+                  !velocityParams.chunkAmount
+                }
                 className="btn-primary"
               >
-                <Zap size={14} /> {velocityMutation.isPending ? 'Calculating...' : 'Calculate Velocity Banking'}
+                <Zap size={14} />{' '}
+                {velocityMutation.isPending ? 'Calculating...' : 'Calculate Velocity Banking'}
               </button>
 
-              {velocityMutation.isError && <p className="text-sm text-accent-red">{velocityMutation.error.message}</p>}
+              {velocityMutation.isError && (
+                <p className="text-sm text-accent-red">{velocityMutation.error.message}</p>
+              )}
 
               {velocityResult && (
                 <div className="space-y-3 mt-3">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                       <p className="text-xs text-content-tertiary uppercase">Time to Debt Free</p>
-                      <p className="text-xl font-bold text-content-primary">{velocityResult.totalMonths} months</p>
-                      <p className="text-xs text-content-tertiary">{(velocityResult.totalMonths / 12).toFixed(1)} years</p>
+                      <p className="text-xl font-bold text-content-primary">
+                        {velocityResult.totalMonths} months
+                      </p>
+                      <p className="text-xs text-content-tertiary">
+                        {(velocityResult.totalMonths / 12).toFixed(1)} years
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                       <p className="text-xs text-content-tertiary uppercase">Debt Interest</p>
-                      <p className="text-xl font-bold text-accent-red">${formatCurrency(parseFloat(velocityResult.totalInterest))}</p>
+                      <p className="text-xl font-bold text-accent-red">
+                        ${formatCurrency(parseFloat(velocityResult.totalInterest))}
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
                       <p className="text-xs text-content-tertiary uppercase">HELOC Interest</p>
-                      <p className="text-xl font-bold text-content-primary">${formatCurrency(parseFloat(velocityResult.helocInterest))}</p>
-                      <p className="text-xs text-content-tertiary">Combined: ${formatCurrency(parseFloat(velocityResult.combinedInterest))}</p>
+                      <p className="text-xl font-bold text-content-primary">
+                        ${formatCurrency(parseFloat(velocityResult.helocInterest))}
+                      </p>
+                      <p className="text-xs text-content-tertiary">
+                        Combined: ${formatCurrency(parseFloat(velocityResult.combinedInterest))}
+                      </p>
                     </div>
                     <div className="p-4 rounded-lg bg-surface-elevated border border-edge">
-                      <p className="text-xs text-content-tertiary uppercase">vs. Minimum Payments</p>
+                      <p className="text-xs text-content-tertiary uppercase">
+                        vs. Minimum Payments
+                      </p>
                       {parseFloat(velocityResult.interestSavingsVsBaseline) > 0 ? (
                         <>
-                          <p className="text-xl font-bold text-accent-green">Save ${formatCurrency(parseFloat(velocityResult.interestSavingsVsBaseline))}</p>
-                          <p className="text-xs text-accent-green">{velocityResult.timeSavingsVsBaseline} months faster</p>
+                          <p className="text-xl font-bold text-accent-green">
+                            Save $
+                            {formatCurrency(parseFloat(velocityResult.interestSavingsVsBaseline))}
+                          </p>
+                          <p className="text-xs text-accent-green">
+                            {velocityResult.timeSavingsVsBaseline} months faster
+                          </p>
                         </>
                       ) : (
                         <>
-                          <p className="text-xl font-bold text-accent-red">Costs ${formatCurrency(Math.abs(parseFloat(velocityResult.interestSavingsVsBaseline)))} more</p>
+                          <p className="text-xl font-bold text-accent-red">
+                            Costs $
+                            {formatCurrency(
+                              Math.abs(parseFloat(velocityResult.interestSavingsVsBaseline)),
+                            )}{' '}
+                            more
+                          </p>
                           <p className="text-xs text-accent-red">HELOC rate may be too high</p>
                         </>
                       )}
@@ -783,14 +1111,20 @@ export default function DebtPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">Strategy Comparison</span>
+              <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">
+                Strategy Comparison
+              </span>
               {parseFloat(compareResult.interestSavings) > 0 && (
                 <span className="text-xs text-accent-green bg-accent-green/10 px-2 py-0.5 rounded">
-                  Save ${formatCurrency(parseFloat(compareResult.interestSavings))} · {compareResult.timeSavings} months faster
+                  Save ${formatCurrency(parseFloat(compareResult.interestSavings))} ·{' '}
+                  {compareResult.timeSavings} months faster
                 </span>
               )}
             </div>
-            <button onClick={() => setShowSaveDialog(true)} className="btn-ghost flex items-center gap-1 text-sm text-accent-blue">
+            <button
+              onClick={() => setShowSaveDialog(true)}
+              className="btn-ghost flex items-center gap-1 text-sm text-accent-blue"
+            >
               <Save size={14} /> Save Plan
             </button>
           </div>
@@ -798,8 +1132,12 @@ export default function DebtPage() {
             {compareResult.strategies.map((s) => (
               <div key={s.strategy} className="card">
                 <span className="card-title">{s.strategy.toUpperCase()}</span>
-                <p className="text-lg font-bold tabular-nums text-content-primary">{s.result.totalMonths} months</p>
-                <p className="text-sm text-content-secondary tabular-nums">${formatCurrency(parseFloat(s.result.totalInterest))} total interest</p>
+                <p className="text-lg font-bold tabular-nums text-content-primary">
+                  {s.result.totalMonths} months
+                </p>
+                <p className="text-sm text-content-secondary tabular-nums">
+                  ${formatCurrency(parseFloat(s.result.totalInterest))} total interest
+                </p>
               </div>
             ))}
           </div>
@@ -807,160 +1145,219 @@ export default function DebtPage() {
       )}
 
       {/* Schedule Results */}
-      {scheduleResult && scheduleResult.schedules.length > 0 && (() => {
-        // Build a consolidated month-by-month view
-        const maxMonth = Math.min(scheduleResult.totalMonths, scheduleViewMax);
-        const monthRows: Array<{
-          month: number;
-          entries: Array<{ debtName: string; debtId: string; payment: string; interest: string; remainingBalance: string; paidOff: boolean }>;
-          totalPayment: number;
-          totalInterest: number;
-        }> = [];
+      {scheduleResult &&
+        scheduleResult.schedules.length > 0 &&
+        (() => {
+          // Build a consolidated month-by-month view
+          const maxMonth = Math.min(scheduleResult.totalMonths, scheduleViewMax);
+          const monthRows: Array<{
+            month: number;
+            entries: Array<{
+              debtName: string;
+              debtId: string;
+              payment: string;
+              interest: string;
+              remainingBalance: string;
+              paidOff: boolean;
+            }>;
+            totalPayment: number;
+            totalInterest: number;
+          }> = [];
 
-        for (let m = 1; m <= maxMonth; m++) {
-          const entries: typeof monthRows[number]['entries'] = [];
-          let totalPayment = 0;
-          let totalInterest = 0;
+          for (let m = 1; m <= maxMonth; m++) {
+            const entries: (typeof monthRows)[number]['entries'] = [];
+            let totalPayment = 0;
+            let totalInterest = 0;
 
-          for (const schedule of scheduleResult.schedules) {
-            const row = schedule.months.find((r) => r.month === m);
-            if (row) {
-              const payment = parseFloat(row.payment);
-              const interest = parseFloat(row.interest);
-              const balance = parseFloat(row.remainingBalance);
-              entries.push({
-                debtName: schedule.debtName,
-                debtId: schedule.debtId,
-                payment: row.payment,
-                interest: row.interest,
-                remainingBalance: row.remainingBalance,
-                paidOff: balance <= 0,
-              });
-              totalPayment += payment;
-              totalInterest += interest;
+            for (const schedule of scheduleResult.schedules) {
+              const row = schedule.months.find((r) => r.month === m);
+              if (row) {
+                const payment = parseFloat(row.payment);
+                const interest = parseFloat(row.interest);
+                const balance = parseFloat(row.remainingBalance);
+                entries.push({
+                  debtName: schedule.debtName,
+                  debtId: schedule.debtId,
+                  payment: row.payment,
+                  interest: row.interest,
+                  remainingBalance: row.remainingBalance,
+                  paidOff: balance <= 0,
+                });
+                totalPayment += payment;
+                totalInterest += interest;
+              }
+            }
+            if (entries.length > 0) {
+              monthRows.push({ month: m, entries, totalPayment, totalInterest });
             }
           }
-          if (entries.length > 0) {
-            monthRows.push({ month: m, entries, totalPayment, totalInterest });
-          }
-        }
 
-        return (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">Payoff Schedule</span>
-              <div className="flex items-center gap-3">
-                <select
-                  value={scheduleViewMax}
-                  onChange={(e) => setScheduleViewMax(parseInt(e.target.value))}
-                  className="input text-xs py-1 px-2 w-auto"
-                >
-                  <option value={12}>12 months</option>
-                  <option value={24}>24 months</option>
-                  <option value={60}>60 months</option>
-                  <option value={360}>All months</option>
-                </select>
-                <button onClick={() => setShowSaveDialog(true)} className="btn-ghost flex items-center gap-1 text-sm text-accent-blue">
-                  <Save size={14} /> Save Plan
-                </button>
+          return (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium uppercase text-content-tertiary tracking-wider">
+                  Payoff Schedule
+                </span>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={scheduleViewMax}
+                    onChange={(e) => setScheduleViewMax(parseInt(e.target.value))}
+                    className="input text-xs py-1 px-2 w-auto"
+                  >
+                    <option value={12}>12 months</option>
+                    <option value={24}>24 months</option>
+                    <option value={60}>60 months</option>
+                    <option value={360}>All months</option>
+                  </select>
+                  <button
+                    onClick={() => setShowSaveDialog(true)}
+                    className="btn-ghost flex items-center gap-1 text-sm text-accent-blue"
+                  >
+                    <Save size={14} /> Save Plan
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Summary cards per debt */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {scheduleResult.schedules.map((schedule) => (
-                <div key={schedule.debtId} className="card py-3 px-4">
-                  <p className="text-sm font-medium text-content-primary">{schedule.debtName}</p>
-                  <div className="flex items-baseline gap-4 mt-1">
-                    <span className="text-xs text-content-tertiary">
-                      Paid off: <span className="text-accent-green font-medium">Month {schedule.payoffMonth}</span>
-                    </span>
-                    <span className="text-xs text-content-tertiary">
-                      Interest: <span className="text-accent-red font-medium">${formatCurrency(parseFloat(schedule.totalInterest))}</span>
-                    </span>
+              {/* Summary cards per debt */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {scheduleResult.schedules.map((schedule) => (
+                  <div key={schedule.debtId} className="card py-3 px-4">
+                    <p className="text-sm font-medium text-content-primary">{schedule.debtName}</p>
+                    <div className="flex items-baseline gap-4 mt-1">
+                      <span className="text-xs text-content-tertiary">
+                        Paid off:{' '}
+                        <span className="text-accent-green font-medium">
+                          Month {schedule.payoffMonth}
+                        </span>
+                      </span>
+                      <span className="text-xs text-content-tertiary">
+                        Interest:{' '}
+                        <span className="text-accent-red font-medium">
+                          ${formatCurrency(parseFloat(schedule.totalInterest))}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total summary */}
+              <div className="card py-4 px-6 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-xs text-content-tertiary uppercase">Debt Free In</p>
+                    <p className="text-lg font-bold text-content-primary">
+                      {scheduleResult.totalMonths} months
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-content-tertiary uppercase">Total Interest</p>
+                    <p className="text-lg font-bold text-accent-red">
+                      ${formatCurrency(parseFloat(scheduleResult.totalInterest))}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Total summary */}
-            <div className="card py-4 px-6 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-xs text-content-tertiary uppercase">Debt Free In</p>
-                  <p className="text-lg font-bold text-content-primary">{scheduleResult.totalMonths} months</p>
-                </div>
-                <div>
-                  <p className="text-xs text-content-tertiary uppercase">Total Interest</p>
-                  <p className="text-lg font-bold text-accent-red">${formatCurrency(parseFloat(scheduleResult.totalInterest))}</p>
+                <div className="text-xs text-content-tertiary">
+                  Strategy:{' '}
+                  <span className="capitalize font-medium text-content-secondary">{strategy}</span>
                 </div>
               </div>
-              <div className="text-xs text-content-tertiary">
-                Strategy: <span className="capitalize font-medium text-content-secondary">{strategy}</span>
-              </div>
-            </div>
 
-            {/* Consolidated month-by-month table */}
-            <div className="card overflow-hidden p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-edge">
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">Month</th>
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">Debt</th>
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Payment</th>
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Interest</th>
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">Balance</th>
-                      <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthRows.map((monthRow) => (
-                      <React.Fragment key={monthRow.month}>
-                        {monthRow.entries.map((entry, i) => (
-                          <tr
-                            key={`${monthRow.month}-${entry.debtId}`}
-                            className={`hover:bg-surface-elevated transition-colors ${i === 0 ? 'border-t border-edge' : ''} ${entry.paidOff ? 'bg-accent-green/5' : ''}`}
-                          >
-                            {i === 0 ? (
-                              <td className="px-4 py-2 text-content-primary tabular-nums font-medium" rowSpan={monthRow.entries.length}>
-                                {monthRow.month}
+              {/* Consolidated month-by-month table */}
+              <div className="card overflow-hidden p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-edge">
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">
+                          Month
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase">
+                          Debt
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">
+                          Payment
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">
+                          Interest
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-right">
+                          Balance
+                        </th>
+                        <th className="px-4 py-3 text-xs font-medium text-content-tertiary uppercase text-center">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthRows.map((monthRow) => (
+                        <React.Fragment key={monthRow.month}>
+                          {monthRow.entries.map((entry, i) => (
+                            <tr
+                              key={`${monthRow.month}-${entry.debtId}`}
+                              className={`hover:bg-surface-elevated transition-colors ${i === 0 ? 'border-t border-edge' : ''} ${entry.paidOff ? 'bg-accent-green/5' : ''}`}
+                            >
+                              {i === 0 ? (
+                                <td
+                                  className="px-4 py-2 text-content-primary tabular-nums font-medium"
+                                  rowSpan={monthRow.entries.length}
+                                >
+                                  {monthRow.month}
+                                </td>
+                              ) : null}
+                              <td className="px-4 py-2 text-content-secondary text-xs">
+                                {entry.debtName}
                               </td>
-                            ) : null}
-                            <td className="px-4 py-2 text-content-secondary text-xs">{entry.debtName}</td>
-                            <td className="px-4 py-2 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(entry.payment))}</td>
-                            <td className="px-4 py-2 text-right tabular-nums text-accent-red">${formatCurrency(parseFloat(entry.interest))}</td>
-                            <td className="px-4 py-2 text-right tabular-nums text-content-primary">${formatCurrency(parseFloat(entry.remainingBalance))}</td>
-                            <td className="px-4 py-2 text-center">
-                              {entry.paidOff ? (
-                                <span className="text-xs bg-accent-green/10 text-accent-green px-2 py-0.5 rounded font-medium">Paid Off</span>
-                              ) : (
-                                <span className="text-xs text-content-tertiary">Active</span>
-                              )}
+                              <td className="px-4 py-2 text-right tabular-nums text-content-primary">
+                                ${formatCurrency(parseFloat(entry.payment))}
+                              </td>
+                              <td className="px-4 py-2 text-right tabular-nums text-accent-red">
+                                ${formatCurrency(parseFloat(entry.interest))}
+                              </td>
+                              <td className="px-4 py-2 text-right tabular-nums text-content-primary">
+                                ${formatCurrency(parseFloat(entry.remainingBalance))}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                {entry.paidOff ? (
+                                  <span className="text-xs bg-accent-green/10 text-accent-green px-2 py-0.5 rounded font-medium">
+                                    Paid Off
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-content-tertiary">Active</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Month total row */}
+                          <tr className="bg-surface-elevated/50">
+                            <td className="px-4 py-1"></td>
+                            <td className="px-4 py-1 text-xs text-content-tertiary font-medium">
+                              Month Total
                             </td>
+                            <td className="px-4 py-1 text-right tabular-nums text-xs font-medium text-content-secondary">
+                              ${formatCurrency(monthRow.totalPayment)}
+                            </td>
+                            <td className="px-4 py-1 text-right tabular-nums text-xs text-accent-red/70">
+                              ${formatCurrency(monthRow.totalInterest)}
+                            </td>
+                            <td className="px-4 py-1" colSpan={2}></td>
                           </tr>
-                        ))}
-                        {/* Month total row */}
-                        <tr className="bg-surface-elevated/50">
-                          <td className="px-4 py-1"></td>
-                          <td className="px-4 py-1 text-xs text-content-tertiary font-medium">Month Total</td>
-                          <td className="px-4 py-1 text-right tabular-nums text-xs font-medium text-content-secondary">${formatCurrency(monthRow.totalPayment)}</td>
-                          <td className="px-4 py-1 text-right tabular-nums text-xs text-accent-red/70">${formatCurrency(monthRow.totalInterest)}</td>
-                          <td className="px-4 py-1" colSpan={2}></td>
-                        </tr>
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* Save Plan Dialog */}
       {showSaveDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSaveDialog(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowSaveDialog(false)}
+        >
           <div className="card w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
             <span className="card-title">SAVE PAYOFF PLAN</span>
             <p className="text-sm text-content-secondary">
@@ -978,7 +1375,9 @@ export default function DebtPage() {
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowSaveDialog(false)} className="btn-ghost">Cancel</button>
+              <button onClick={() => setShowSaveDialog(false)} className="btn-ghost">
+                Cancel
+              </button>
               <button
                 onClick={handleSavePlan}
                 disabled={!planName.trim() || savePlanMutation.isPending}
@@ -999,11 +1398,16 @@ export default function DebtPage() {
           </span>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {savedPlans.map((plan) => (
-              <div key={plan.id} className="card space-y-2 hover:border-edge-hover transition-colors">
+              <div
+                key={plan.id}
+                className="card space-y-2 hover:border-edge-hover transition-colors"
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-content-primary">{plan.name}</p>
-                    <p className="text-xs text-content-tertiary capitalize">{plan.strategy} · {plan.accountIds.length} accounts</p>
+                    <p className="text-xs text-content-tertiary capitalize">
+                      {plan.strategy} · {plan.accountIds.length} accounts
+                    </p>
                   </div>
                   <button
                     onClick={() => deletePlanMutation.mutate(plan.id)}
@@ -1015,14 +1419,24 @@ export default function DebtPage() {
                 </div>
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <p className="text-lg font-bold tabular-nums text-content-primary">{plan.totalMonths} <span className="text-xs font-normal text-content-tertiary">months</span></p>
-                    <p className="text-xs text-content-secondary tabular-nums">${formatCurrency(parseFloat(plan.totalInterest))} interest</p>
+                    <p className="text-lg font-bold tabular-nums text-content-primary">
+                      {plan.totalMonths}{' '}
+                      <span className="text-xs font-normal text-content-tertiary">months</span>
+                    </p>
+                    <p className="text-xs text-content-secondary tabular-nums">
+                      ${formatCurrency(parseFloat(plan.totalInterest))} interest
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-content-tertiary">${formatCurrency(parseFloat(plan.totalMonthlyPayment))}/mo</p>
+                    <p className="text-xs text-content-tertiary">
+                      ${formatCurrency(parseFloat(plan.totalMonthlyPayment))}/mo
+                    </p>
                   </div>
                 </div>
-                <button onClick={() => loadPlan(plan)} className="btn-ghost text-xs w-full text-accent-blue mt-1">
+                <button
+                  onClick={() => loadPlan(plan)}
+                  className="btn-ghost text-xs w-full text-accent-blue mt-1"
+                >
                   Load this plan
                 </button>
               </div>
@@ -1037,8 +1451,8 @@ export default function DebtPage() {
           <CreditCard size={40} className="mx-auto text-content-tertiary mb-3" />
           <p className="text-content-secondary text-sm">No debts found</p>
           <p className="text-content-tertiary text-xs mt-1">
-            Add a credit card, loan, or mortgage account and it will appear here automatically.
-            You can also add debts manually for what-if scenarios.
+            Add a credit card, loan, or mortgage account and it will appear here automatically. You
+            can also add debts manually for what-if scenarios.
           </p>
         </div>
       )}
