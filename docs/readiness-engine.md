@@ -63,6 +63,8 @@ This is deliberately conservative. The curve is a liquidity-resilience model, no
 
 Wardkeep can now store user-entered active insurance policies (type, provider, premium, deductible, coverage amount, and renewal date). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered.
 
+When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
+
 For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.
 
 ## Dashboard contract
@@ -114,7 +116,7 @@ liquidity + income resilience + insurance + fixed obligations
 + exposure + dependents + estate + secondary backstops
 ```
 
-The first insurance-record and renewal-timing slice is implemented. Adequacy checks, coverage gaps, deductible-to-reserve relationships, disability/life assessment, and policy-document handling remain future work.
+The first insurance-record, renewal-timing, and recorded-deductible-to-reserve slice is implemented. Adequacy checks, coverage gaps, disability/life assessment, and policy-document handling remain future work.
 
 Available credit may reduce a short-term liquidity risk but must never be treated as cash. Missing insurance or estate information should remain unknown—not score as protected or exposed until Wardkeep has an appropriate observation.
 

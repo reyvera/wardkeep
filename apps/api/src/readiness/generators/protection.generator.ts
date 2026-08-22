@@ -2,7 +2,7 @@ import { Decimal } from 'decimal.js';
 import { AccountType, PrismaClient } from '@prisma/client';
 
 import { calculateBalance } from '@wardkeep/finance-engine';
-import { TransactionType } from '@wardkeep/shared';
+import { Transaction, TransactionStatus, TransactionType } from '@wardkeep/shared';
 import { Signal } from '@wardkeep/readiness';
 import { calculateHouseholdBurnRate } from './burn-rate';
 
@@ -36,7 +36,7 @@ export async function generateProtectionSignals(
  * deliberately not converted into an adequacy score until Wardkeep can evaluate them.
  */
 async function generateInsuranceSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
-  const policies = await prisma.insurancePolicy.findMany({ where: { userId, isActive: true }, select: { type: true, provider: true, renewalDate: true } });
+  const policies = await prisma.insurancePolicy.findMany({ where: { userId, isActive: true }, select: { type: true, provider: true, renewalDate: true, deductible: true } });
   if (policies.length === 0) return [];
 
   const today = new Date();
@@ -55,7 +55,48 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
   if (signals.length === 0) {
     signals.push({ capabilityId: 'insurance', type: 'positive', magnitude: 1, pillar: 'protection', summary: `${policies.length} active insurance ${policies.length === 1 ? 'policy is' : 'policies are'} recorded. Wardkeep does not yet assess coverage adequacy.`, weight: 0.5 });
   }
+  const recordedDeductibles = policies
+    .map((policy) => policy.deductible ? new Decimal(policy.deductible.toString()) : null)
+    .filter((deductible): deductible is Decimal => deductible !== null);
+  if (recordedDeductibles.length > 0) {
+    const totalDeductibles = recordedDeductibles.reduce((sum, deductible) => sum.add(deductible), new Decimal(0));
+    const liquidReserves = await calculateLiquidReserves(prisma, userId);
+    if (totalDeductibles.gt(liquidReserves)) {
+      signals.push({ capabilityId: 'insurance-deductibles', type: 'warning', magnitude: -3, pillar: 'protection', summary: `Recorded deductibles total $${totalDeductibles.toFixed(2)}, above $${liquidReserves.toFixed(2)} in liquid reserves. This is an out-of-pocket resilience check, not an insurance adequacy assessment.`, weight: 1 });
+    }
+  }
   return signals;
+}
+
+async function calculateLiquidReserves(prisma: PrismaClient, userId: string): Promise<Decimal> {
+  const liquidTypes: AccountType[] = [AccountType.CHECKING, AccountType.SAVINGS, AccountType.CASH];
+  const accounts = await prisma.account.findMany({
+    where: { userId, isArchived: false, type: { in: liquidTypes } },
+    include: { transactions: true, linkedBankAccounts: { select: { id: true } } },
+  });
+  return accounts.reduce((total, account) => {
+    const balance = account.linkedBankAccounts.length > 0
+      ? new Decimal(account.initialBalance.toString())
+      : calculateBalance(new Decimal(account.initialBalance.toString()), account.transactions.map((tx): Transaction => ({
+        id: tx.id,
+        userId: tx.userId,
+        accountId: tx.accountId,
+        categoryId: tx.categoryId,
+        date: tx.date,
+        amount: tx.amount.toString(),
+        type: tx.type as unknown as TransactionType,
+        status: tx.status as unknown as TransactionStatus,
+        merchant: tx.merchant,
+        description: tx.description,
+        notes: tx.notes,
+        isReconciliation: tx.isReconciliation,
+        aiCategorized: tx.aiCategorized,
+        aiConfidence: tx.aiConfidence?.toString() ?? null,
+        createdAt: tx.createdAt,
+        updatedAt: tx.updatedAt,
+      })));
+    return balance.gt(0) ? total.add(balance) : total;
+  }, new Decimal(0));
 }
 
 /**
@@ -72,37 +113,7 @@ async function generateEmergencyFundSignals(
 ): Promise<Signal[]> {
   const signals: Signal[] = [];
 
-  // Get liquid account balances (savings and checking)
-  const liquidTypes: AccountType[] = [AccountType.CHECKING, AccountType.SAVINGS, AccountType.CASH];
-  const liquidAccounts = await prisma.account.findMany({
-    where: { userId, isArchived: false, type: { in: liquidTypes } },
-    include: {
-      transactions: true,
-      linkedBankAccounts: { select: { id: true } },
-    },
-  });
-
-  let totalLiquid = new Decimal(0);
-  for (const account of liquidAccounts) {
-    let balance: Decimal;
-    if (account.linkedBankAccounts.length > 0) {
-      balance = new Decimal(account.initialBalance.toString());
-    } else {
-      balance = calculateBalance(
-        new Decimal(account.initialBalance.toString()),
-        account.transactions.map((tx) => ({
-          ...tx,
-          amount: tx.amount.toString(),
-          type: tx.type as unknown as TransactionType,
-          aiConfidence: tx.aiConfidence?.toString() ?? null,
-        })),
-      );
-    }
-    // Only count positive balances toward emergency fund
-    if (balance.gt(0)) {
-      totalLiquid = totalLiquid.add(balance);
-    }
-  }
+  const totalLiquid = await calculateLiquidReserves(prisma, userId);
 
   // TransactionType.TRANSFER records are excluded structurally. The burn-rate
   // helper additionally removes common imported transfers mislabeled as debits.

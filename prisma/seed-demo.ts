@@ -133,12 +133,68 @@ async function main() {
 
   // Create debt profiles for liability accounts (auto-sync with debt payoff)
   await prisma.debtProfile.create({
-    data: { userId: user.id, accountId: creditCard.id, apr: '0.1999', minimumPayment: '35.00', priority: 1 },
+    data: {
+      userId: user.id,
+      accountId: creditCard.id,
+      apr: '0.1999',
+      minimumPayment: '35.00',
+      priority: 1,
+    },
   });
   await prisma.debtProfile.create({
-    data: { userId: user.id, accountId: _mortgage.id, apr: '0.0675', minimumPayment: '1580.00', priority: 2 },
+    data: {
+      userId: user.id,
+      accountId: _mortgage.id,
+      apr: '0.0675',
+      minimumPayment: '1580.00',
+      priority: 2,
+    },
   });
   console.log('  ✓ Created debt profiles for liability accounts');
+
+  // Create insurance policies for the Protection dashboard. The auto renewal is
+  // intentionally near-term so the demo visibly exercises renewal awareness.
+  const renewalSoon = new Date();
+  renewalSoon.setDate(renewalSoon.getDate() + 21);
+  const homeRenewal = new Date();
+  homeRenewal.setMonth(homeRenewal.getMonth() + 6);
+  await prisma.insurancePolicy.createMany({
+    data: [
+      {
+        userId: user.id,
+        type: 'AUTO',
+        provider: 'State Farm',
+        nickname: 'Family car',
+        premium: '186.00',
+        premiumFrequency: 'MONTHLY',
+        deductible: '1000.00',
+        coverageAmount: '100000.00',
+        renewalDate: renewalSoon,
+      },
+      {
+        userId: user.id,
+        type: 'HOME',
+        provider: 'Travelers',
+        nickname: 'Homeowners',
+        premium: '2140.00',
+        premiumFrequency: 'ANNUAL',
+        deductible: '2500.00',
+        coverageAmount: '450000.00',
+        renewalDate: homeRenewal,
+      },
+      {
+        userId: user.id,
+        type: 'HEALTH',
+        provider: 'Blue Cross',
+        nickname: 'Family health plan',
+        premium: '480.00',
+        premiumFrequency: 'MONTHLY',
+        deductible: '1500.00',
+        coverageAmount: '0.00',
+      },
+    ],
+  });
+  console.log('  ✓ Created 3 insurance policies (including one upcoming renewal)');
 
   // Generate 6 months of transactions
   let txCount = 0;

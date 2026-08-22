@@ -170,6 +170,8 @@ npx tsx prisma/seed-demo.ts
 
 Login: `demo@wardkeep.app` / `DemoPassword123`
 
+The demo includes three insurance policies, including an auto policy renewing soon, so the **Policies** page and Protection renewal signal can be verified immediately.
+
 ### URLs
 
 - **Web UI:** http://localhost:3000 (redirects to /login if unauthenticated)
@@ -315,28 +317,28 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 
 ✅ = shipped · 🟡 = foundation shipped / expanding · 📋 = planned
 
-| Feature | Status |
-|---------|--------|
-| Bank auto-import (SimpleFIN) | ✅ |
-| AI chat assistant (OpenAI/Anthropic/Ollama) | ✅ |
-| Household readiness dashboard with coverage, pillar signals, recommendations, and trend | 🟡 |
-| Financial overview with actual cumulative spending pace and month-end budget projection | ✅ |
-| Monthly budgets with category progress | ✅ |
-| Transaction categorization (manual + AI) | ✅ |
-| Transfer detection & filtering | ✅ |
-| Debt payoff calculator | ✅ |
-| Cash-flow 90-day forecast | ✅ |
-| Encrypted backups | ✅ |
-| PWA / offline support | ✅ |
-| Docker self-hosted deployment | ✅ |
-| Pre-built images on GHCR | ✅ |
-| CI/CD pipeline | ✅ |
-| Readiness Engine (household decision engine) | 🟡 |
-| Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡 |
-| Capability SDK (extensible domain modules) | 📋 |
-| Coming Up timeline, change feed, and Morning Brief / Advisor | 📋 |
-| Readiness scenarios and recommendation impact previews | 📋 |
-| Multi-currency support | 📋 |
+| Feature                                                                                                                       | Status |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Bank auto-import (SimpleFIN)                                                                                                  | ✅     |
+| AI chat assistant (OpenAI/Anthropic/Ollama)                                                                                   | ✅     |
+| Household readiness dashboard with coverage, pillar signals, recommendations, and trend                                       | 🟡     |
+| Financial overview with actual cumulative spending pace and month-end budget projection                                       | ✅     |
+| Monthly budgets with category progress                                                                                        | ✅     |
+| Transaction categorization (manual + AI)                                                                                      | ✅     |
+| Transfer detection & filtering                                                                                                | ✅     |
+| Debt payoff calculator                                                                                                        | ✅     |
+| Cash-flow 90-day forecast                                                                                                     | ✅     |
+| Encrypted backups                                                                                                             | ✅     |
+| PWA / offline support                                                                                                         | ✅     |
+| Docker self-hosted deployment                                                                                                 | ✅     |
+| Pre-built images on GHCR                                                                                                      | ✅     |
+| CI/CD pipeline                                                                                                                | ✅     |
+| Readiness Engine (household decision engine)                                                                                  | 🟡     |
+| Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡     |
+| Capability SDK (extensible domain modules)                                                                                    | 📋     |
+| Coming Up timeline, change feed, and Morning Brief / Advisor                                                                  | 📋     |
+| Readiness scenarios and recommendation impact previews                                                                        | 📋     |
+| Multi-currency support                                                                                                        | 📋     |
 
 Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)
 

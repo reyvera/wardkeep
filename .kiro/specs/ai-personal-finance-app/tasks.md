@@ -519,201 +519,202 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 > Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
 
 - [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
-    - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
-    - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
-    - [~] Missing factors, account-source summary, and score evaluation time are displayed; factor-level provenance remains
+  - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
+  - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
+  - [~] Missing factors, account-source summary, and score evaluation time are displayed; factor-level provenance remains
 
 - [~] 39.2 Add data provenance and freshness
-    - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
-    - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
-    - [ ] Reduce or qualify confidence for stale/manual values according to transparent rules
+  - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
+  - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
+  - [ ] Reduce or qualify confidence for stale/manual values according to transparent rules
 
 - [ ] 39.3 Harden the Protection liquidity model
-    - Structural transfer exclusion and credit-card payment matching
-    - Distinguish essential burn rate from normal household spending
-    - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
+  - Structural transfer exclusion and credit-card payment matching
+  - Distinguish essential burn rate from normal household spending
+  - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
 
 - [~] 39.4 Add composite Protection capabilities
-    - [x] Insurance policy records (type, provider, premium, deductible, coverage amount, renewal date) and explainable renewal-timing signals
-    - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
-    - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
-    - Keep every component independently explainable; missing data remains unknown
+  - [x] Insurance policy records (type, provider, premium, deductible, coverage amount, renewal date), explainable renewal-timing signals, and recorded-deductible-to-liquid-reserve warning
+  - [x] Seed representative policies for the demo household, including an upcoming renewal
+  - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
+  - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+  - Keep every component independently explainable; missing data remains unknown
 
 - [ ] 39.5 Create durable recommendations and impact previews
-    - Rank by severity × urgency × financial impact × actionability × confidence
-    - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
+  - Rank by severity × urgency × financial impact × actionability × confidence
+  - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
 - [ ] 39.6 Establish GitHub launch tracking
-    - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
-    - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
-    - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
-    - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
+  - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
+  - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
+  - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
+  - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
 
 ### 33. Income & Spending Intelligence
 
 - [ ] 33.1 Income configuration and pay schedule
-    - Pay frequency: semi-monthly, biweekly, monthly, custom
-    - Expected net per paycheck
-    - Salary vs hourly tracking
-    - Dashboard: "Next paycheck: ~[date]"
+  - Pay frequency: semi-monthly, biweekly, monthly, custom
+  - Expected net per paycheck
+  - Salary vs hourly tracking
+  - Dashboard: "Next paycheck: ~[date]"
 
 - [ ] 33.2 Spending trends and monthly comparisons
-    - Month-over-month category spending comparison
-    - Income vs expenses and savings rate
-    - Per-category change indicators
-    - 6/12-month trend visualizations
+  - Month-over-month category spending comparison
+  - Income vs expenses and savings rate
+  - Per-category change indicators
+  - 6/12-month trend visualizations
 
 - [x] 33.3 Spending pace line visualization
-    - [x] Cumulative daily spending vs ideal pace line in Financial Overview
-    - [x] Pace indicator with dollar amount and projected month-end spending
-    - [ ] Extend the same truthful pace treatment to budget detail
+  - [x] Cumulative daily spending vs ideal pace line in Financial Overview
+  - [x] Pace indicator with dollar amount and projected month-end spending
+  - [ ] Extend the same truthful pace treatment to budget detail
 
 ### 34. Transaction Workflow
 
 - [ ] 34.1 Transaction review/inbox workflow
-    - `reviewed` boolean field (bank imports start unreviewed)
-    - "Mark as Reviewed" action (single and bulk)
-    - Unreviewed count badge in navigation
-    - Filter for unreviewed transactions
+  - `reviewed` boolean field (bank imports start unreviewed)
+  - "Mark as Reviewed" action (single and bulk)
+  - Unreviewed count badge in navigation
+  - Filter for unreviewed transactions
 
 - [ ] 34.2 Tags support
-    - Tag model with many-to-many relation to transactions
-    - CRUD endpoints, tag filter in search
-    - Rules engine can auto-apply tags
-    - Tag management UI
+  - Tag model with many-to-many relation to transactions
+  - CRUD endpoints, tag filter in search
+  - Rules engine can auto-apply tags
+  - Tag management UI
 
 - [ ] 34.3 Refund matching
-    - Detect credits from same merchant within 90 days
-    - Show matched pair for user confirmation
-    - Confirmed refunds excluded from spending totals
+  - Detect credits from same merchant within 90 days
+  - Show matched pair for user confirmation
+  - Confirmed refunds excluded from spending totals
 
 ### 35. Budgeting Enhancements
 
 - [ ] 35.1 Budget rollovers
-    - Track unspent per category at month end
-    - Roll forward to next month automatically
-    - Show rollover amount separately in UI
-    - Per-category opt-in/out
+  - Track unspent per category at month end
+  - Roll forward to next month automatically
+  - Show rollover amount separately in UI
+  - Per-category opt-in/out
 
 - [ ] 35.2 Subscription management view
-    - Dedicated /subscriptions page
-    - Group by: active, upcoming, annual renewals
-    - Total monthly subscription burn rate
-    - Alert on cancelled subscription still charging
+  - Dedicated /subscriptions page
+  - Group by: active, upcoming, annual renewals
+  - Total monthly subscription burn rate
+  - Alert on cancelled subscription still charging
 
 ### 35b. Debt Payoff Enhancements [COMPLETE]
 
 - [x] 35b.1 Improved schedule display
-    - Month-by-month consolidated view (all debts shown per month)
-    - Per-debt summary cards with payoff month and total interest
-    - Month total rows and "Paid Off" status indicators
-    - Configurable time horizon (12/24/60/all months)
+  - Month-by-month consolidated view (all debts shown per month)
+  - Per-debt summary cards with payoff month and total interest
+  - Month total rows and "Paid Off" status indicators
+  - Configurable time horizon (12/24/60/all months)
 
 - [x] 35b.2 Debt consolidation calculator
-    - Model refinancing into single fixed-rate loan
-    - Inputs: new APR, term (months), origination fee %
-    - Outputs: monthly payment, total interest, total cost
-    - Comparison against minimum-only baseline
+  - Model refinancing into single fixed-rate loan
+  - Inputs: new APR, term (months), origination fee %
+  - Outputs: monthly payment, total interest, total cost
+  - Comparison against minimum-only baseline
 
 - [x] 35b.3 Velocity banking (HELOC chunking) calculator
-    - Model using a line of credit for lump-sum debt payments
-    - Inputs: HELOC limit, HELOC APR, monthly disposable income, chunk amount
-    - Shows debt interest + HELOC interest (combined cost)
-    - Comparison against minimum-only baseline
+  - Model using a line of credit for lump-sum debt payments
+  - Inputs: HELOC limit, HELOC APR, monthly disposable income, chunk amount
+  - Shows debt interest + HELOC interest (combined cost)
+  - Comparison against minimum-only baseline
 
 - [x] 35b.4 Minimum-only baseline calculator
-    - Calculates time and interest using only minimum payments
-    - Serves as comparison benchmark for all advanced strategies
+  - Calculates time and interest using only minimum payments
+  - Serves as comparison benchmark for all advanced strategies
 
 ### 36. Investment & Asset Tracking
 
 - [ ] 36.1 Investment account support
-    - Account types: BROKERAGE, RETIREMENT, CRYPTO
-    - Holdings model: ticker, quantity, cost basis
-    - Market data API integration for live prices
-    - Portfolio value, daily change, asset allocation
-    - Include in net worth
+  - Account types: BROKERAGE, RETIREMENT, CRYPTO
+  - Holdings model: ticker, quantity, cost basis
+  - Market data API integration for live prices
+  - Portfolio value, daily change, asset allocation
+  - Include in net worth
 
 - [ ] 36.2 Real estate tracking
-    - Account type: REAL_ESTATE
-    - Property valuation (manual or API)
-    - Home equity calculation (value - mortgage)
-    - Include in net worth
+  - Account type: REAL_ESTATE
+  - Property valuation (manual or API)
+  - Home equity calculation (value - mortgage)
+  - Include in net worth
 
 ### 37. Personalization
 
 - [ ] 37.1 Custom themes and color personalization
-    - Theme engine with CSS variables
-    - Preset themes: Midnight, Slate, Ocean, Forest, Sunset, Lavender, Mono
-    - Custom accent color picker
-    - Export/import themes as JSON
-    - Accessibility contrast checks
+  - Theme engine with CSS variables
+  - Preset themes: Midnight, Slate, Ocean, Forest, Sunset, Lavender, Mono
+  - Custom accent color picker
+  - Export/import themes as JSON
+  - Accessibility contrast checks
 
 ### 38. Remote Wardkeep Backup (Peer-to-Peer Off-Site)
 
 - [ ] 38.1 Design remote backup protocol and authentication
-    - Define API endpoints on the receiving server: POST /api/remote-backup/register (pair devices), POST /api/remote-backup/push (receive encrypted backup), GET /api/remote-backup/pull (retrieve backup for restore)
-    - Pairing flow: server A generates a one-time pairing token, user enters it on server B to establish trust
-    - Store pairing as `RemoteBackupPeer` model: peerId, peerUrl, peerName, sharedSecret (for HMAC verification), status (PAIRED/REVOKED), lastSyncAt
-    - All data encrypted client-side (AES-256-GCM with user passphrase) before transmission — receiving server stores opaque blobs
-    - HMAC signature on every request using shared secret (prevents unauthorized pushes)
-    - TLS required for transport (reject plain HTTP peer URLs)
+  - Define API endpoints on the receiving server: POST /api/remote-backup/register (pair devices), POST /api/remote-backup/push (receive encrypted backup), GET /api/remote-backup/pull (retrieve backup for restore)
+  - Pairing flow: server A generates a one-time pairing token, user enters it on server B to establish trust
+  - Store pairing as `RemoteBackupPeer` model: peerId, peerUrl, peerName, sharedSecret (for HMAC verification), status (PAIRED/REVOKED), lastSyncAt
+  - All data encrypted client-side (AES-256-GCM with user passphrase) before transmission — receiving server stores opaque blobs
+  - HMAC signature on every request using shared secret (prevents unauthorized pushes)
+  - TLS required for transport (reject plain HTTP peer URLs)
 
 - [ ] 38.2 Implement RemoteBackupPeer Prisma model and migrations
-    - Add `RemoteBackupPeer` model: id, userId, peerUrl, peerName, sharedSecret (encrypted at rest), direction (PUSH/PULL/BOTH), status, lastSyncAt, lastError, createdAt, updatedAt
-    - Add `RemoteBackup` model: id, peerId, userId, filename, size, checksum (SHA-256), createdAt
-    - Relation: User hasMany RemoteBackupPeer, RemoteBackupPeer hasMany RemoteBackup
-    - Migration adds indexes on [userId, status] and [peerId, createdAt]
+  - Add `RemoteBackupPeer` model: id, userId, peerUrl, peerName, sharedSecret (encrypted at rest), direction (PUSH/PULL/BOTH), status, lastSyncAt, lastError, createdAt, updatedAt
+  - Add `RemoteBackup` model: id, peerId, userId, filename, size, checksum (SHA-256), createdAt
+  - Relation: User hasMany RemoteBackupPeer, RemoteBackupPeer hasMany RemoteBackup
+  - Migration adds indexes on [userId, status] and [peerId, createdAt]
 
 - [ ] 38.3 Implement remote backup sender service (push side)
-    - `RemoteBackupService.pushBackup(userId, peerId)`: creates encrypted backup (reuse existing createBackup logic), POSTs to peer's /api/remote-backup/push endpoint
-    - Retry with exponential backoff (3 attempts, 5s/30s/120s delays)
-    - Verify peer responds with matching checksum (SHA-256 of received blob)
-    - Update lastSyncAt on success, lastError on failure
-    - Emit audit log entry for every push attempt (success/failure)
-    - Queue-based: push jobs run via BullMQ worker (not blocking API thread)
+  - `RemoteBackupService.pushBackup(userId, peerId)`: creates encrypted backup (reuse existing createBackup logic), POSTs to peer's /api/remote-backup/push endpoint
+  - Retry with exponential backoff (3 attempts, 5s/30s/120s delays)
+  - Verify peer responds with matching checksum (SHA-256 of received blob)
+  - Update lastSyncAt on success, lastError on failure
+  - Emit audit log entry for every push attempt (success/failure)
+  - Queue-based: push jobs run via BullMQ worker (not blocking API thread)
 
 - [ ] 38.4 Implement remote backup receiver service (pull side)
-    - POST /api/remote-backup/push endpoint: validates HMAC signature, stores encrypted blob to disk/configured storage, records metadata in RemoteBackup table
-    - Enforce per-peer storage quota (configurable, default 500MB)
-    - Enforce max backup count per peer (configurable, default 10, FIFO eviction)
-    - GET /api/remote-backup/pull/:backupId endpoint: serves stored blob back to paired peer (HMAC-authenticated)
-    - GET /api/remote-backup/list endpoint: returns metadata of stored backups for a peer
+  - POST /api/remote-backup/push endpoint: validates HMAC signature, stores encrypted blob to disk/configured storage, records metadata in RemoteBackup table
+  - Enforce per-peer storage quota (configurable, default 500MB)
+  - Enforce max backup count per peer (configurable, default 10, FIFO eviction)
+  - GET /api/remote-backup/pull/:backupId endpoint: serves stored blob back to paired peer (HMAC-authenticated)
+  - GET /api/remote-backup/list endpoint: returns metadata of stored backups for a peer
 
 - [ ] 38.5 Implement pairing flow (trust establishment)
-    - POST /api/remote-backup/pair/generate: creates one-time token (UUID + shared secret), valid 15 minutes
-    - POST /api/remote-backup/pair/accept: remote server calls this with token to complete pairing
-    - Exchange: both sides store each other's URL + shared secret
-    - POST /api/remote-backup/peer/:id/revoke: terminates pairing, deletes stored backups from peer
-    - Show pairing status in UI: paired peers list with last sync time, connection health
+  - POST /api/remote-backup/pair/generate: creates one-time token (UUID + shared secret), valid 15 minutes
+  - POST /api/remote-backup/pair/accept: remote server calls this with token to complete pairing
+  - Exchange: both sides store each other's URL + shared secret
+  - POST /api/remote-backup/peer/:id/revoke: terminates pairing, deletes stored backups from peer
+  - Show pairing status in UI: paired peers list with last sync time, connection health
 
 - [ ] 38.6 Implement automatic sync scheduling
-    - Per-peer sync schedule: HOURLY, EVERY_6H, DAILY, WEEKLY (stored in RemoteBackupPeer)
-    - BullMQ repeatable job checks for peers due for sync
-    - Health check: periodic ping to peer URL (HEAD /api/remote-backup/health)
-    - Mark peer as UNREACHABLE after 3 consecutive failures, notify user
-    - Auto-resume when peer comes back online
+  - Per-peer sync schedule: HOURLY, EVERY_6H, DAILY, WEEKLY (stored in RemoteBackupPeer)
+  - BullMQ repeatable job checks for peers due for sync
+  - Health check: periodic ping to peer URL (HEAD /api/remote-backup/health)
+  - Mark peer as UNREACHABLE after 3 consecutive failures, notify user
+  - Auto-resume when peer comes back online
 
 - [ ] 38.7 Implement remote restore flow
-    - User initiates restore from remote peer: GET peer's /api/remote-backup/list, select backup, GET /api/remote-backup/pull/:id
-    - Download encrypted blob, decrypt locally with user's passphrase (same as local restore)
-    - Reuse existing restoreBackup logic after decryption
-    - Support "fresh instance" restore: new Wardkeep install can pair with friend's server and pull latest backup to bootstrap all data
+  - User initiates restore from remote peer: GET peer's /api/remote-backup/list, select backup, GET /api/remote-backup/pull/:id
+  - Download encrypted blob, decrypt locally with user's passphrase (same as local restore)
+  - Reuse existing restoreBackup logic after decryption
+  - Support "fresh instance" restore: new Wardkeep install can pair with friend's server and pull latest backup to bootstrap all data
 
 - [ ] 38.8 Implement remote backup management UI
-    - Settings → Remote Backups page
-    - Add peer: enter peer URL, initiate pairing (show token or accept token)
-    - Peer list: name, URL, status, last sync, storage used
-    - Per-peer actions: sync now, view history, change schedule, revoke
-    - Restore from remote: browse peer's stored backups, select, enter passphrase, restore
-    - Connection health indicator (green/yellow/red)
+  - Settings → Remote Backups page
+  - Add peer: enter peer URL, initiate pairing (show token or accept token)
+  - Peer list: name, URL, status, last sync, storage used
+  - Per-peer actions: sync now, view history, change schedule, revoke
+  - Restore from remote: browse peer's stored backups, select, enter passphrase, restore
+  - Connection health indicator (green/yellow/red)
 
 - [ ] 38.9 Write tests for remote backup system
-    - Unit tests: HMAC signing/verification, encryption round-trip, quota enforcement, FIFO eviction
-    - Integration tests: full push/pull cycle with mocked HTTP (Supertest for receiver endpoints)
-    - Test pairing flow: generate token → accept → verify mutual trust
-    - Test restore from remote: push backup → pull on fresh instance → verify data integrity
-    - Test error scenarios: peer offline, quota exceeded, invalid HMAC, expired pairing token
+  - Unit tests: HMAC signing/verification, encryption round-trip, quota enforcement, FIFO eviction
+  - Integration tests: full push/pull cycle with mocked HTTP (Supertest for receiver endpoints)
+  - Test pairing flow: generate token → accept → verify mutual trust
+  - Test restore from remote: push backup → pull on fresh instance → verify data integrity
+  - Test error scenarios: peer offline, quota exceeded, invalid HMAC, expired pairing token
 
 ---
 
