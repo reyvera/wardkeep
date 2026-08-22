@@ -9,12 +9,14 @@ import { AuthGuard } from './auth-guard';
 
 /** Pages that should NOT show the navigation shell */
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = ['/'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_ROUTES.some((route) => pathname?.startsWith(route));
+  const isPublicPage = PUBLIC_ROUTES.includes(pathname ?? '');
 
-  if (isAuthPage) {
+  if (isAuthPage || isPublicPage) {
     return <>{children}</>;
   }
 

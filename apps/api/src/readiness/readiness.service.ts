@@ -6,6 +6,7 @@ import {
   computePeace,
   Signal,
   PillarScores,
+  PillarAssessment,
   ReadinessSnapshot,
 } from '@wardkeep/readiness';
 
@@ -18,19 +19,46 @@ import {
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
+  /** The moment Wardkeep derived this readiness response from the available records. */
+  evaluatedAt: Date;
   overall: number;
   pillars: PillarScores;
   signals: Signal[];
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: ReadinessSnapshot[];
+  overallAssessment: PillarAssessment;
   coverage: number;
   pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
+  pillarAssessments: Record<keyof PillarScores, PillarAssessment>;
+  dataFreshness: {
+    synchronizedAccounts: number;
+    manualAccounts: number;
+    staleAccounts: number;
+    lastSynchronizedAt: Date | null;
+  };
+  recentChanges: Array<{
+    pillar: keyof PillarScores;
+    previous: number;
+    current: number;
+    delta: number;
+    comparedTo: Date;
+    reason: string | null;
+  }>;
+  changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
 @Injectable()
 export class ReadinessService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getLastDashboardView(userId: string) {
+    return this.prisma.user.findUnique({ where: { id: userId }, select: { lastDashboardViewedAt: true } });
+  }
+
+  async recordDashboardView(userId: string): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { lastDashboardViewedAt: new Date() } });
+  }
 
   /**
    * Computes the full readiness state for a user.
@@ -39,7 +67,7 @@ export class ReadinessService {
    * @param userId - The authenticated user's ID
    * @returns Complete readiness response with scores, signals, and history
    */
-  async getReadiness(userId: string): Promise<ReadinessResponse> {
+  async getReadiness(userId: string, lastViewedAt: Date | null = null): Promise<ReadinessResponse> {
     // Collect signals from all pillar generators in parallel
     const [provisionSignals, prosperitySignals, protectionSignals] = await Promise.all([
       generateProvisionSignals(this.prisma, userId),
@@ -87,6 +115,33 @@ export class ReadinessService {
       ...pillarScoresWithoutPeace,
       peace,
     };
+    const comparisonSnapshot = lastViewedAt
+      ? await this.prisma.readinessSnapshot.findFirst({ where: { userId, recordedAt: { lte: lastViewedAt } }, orderBy: { recordedAt: 'desc' } })
+      : recentSnapshots[0];
+    const changeWindow = comparisonSnapshot ? (lastViewedAt ? 'since_last_visit' : 'since_last_snapshot') : 'none';
+    const previousSignals = comparisonSnapshot
+      ? await this.prisma.readinessSignal.findMany({ where: { snapshotId: comparisonSnapshot.id } })
+      : [];
+    const recentChanges = comparisonSnapshot
+      ? (Object.keys(pillars) as Array<keyof PillarScores>)
+        .map((pillar) => {
+          const changedSignal = previousSignals.length === 0 ? undefined : allSignals.find((signal) => signal.pillar === pillar && !previousSignals.some((previous) =>
+            previous.capabilityId === signal.capabilityId
+            && previous.type.toLowerCase() === signal.type
+            && previous.magnitude === Math.round(signal.magnitude),
+          ));
+          return {
+          pillar,
+          previous: comparisonSnapshot[pillar],
+          current: pillars[pillar],
+          delta: pillars[pillar] - comparisonSnapshot[pillar],
+          comparedTo: comparisonSnapshot.recordedAt,
+          reason: changedSignal?.summary ?? null,
+        }})
+        .filter((change) => change.delta !== 0)
+        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+        .slice(0, 5)
+      : [];
 
     const directPillars = ['protection', 'provision', 'preparation', 'prosperity'] as const;
     const capabilityTargets: Record<(typeof directPillars)[number], number> = {
@@ -97,6 +152,41 @@ export class ReadinessService {
       return [pillar, Math.round(Math.min(1, evaluated / capabilityTargets[pillar]) * 100)];
     })) as ReadinessResponse['pillarCoverage'];
     const coverage = Math.round(directPillars.reduce((sum, pillar) => sum + pillarCoverage[pillar], 0) / directPillars.length);
+    const directPillarAssessments = Object.fromEntries(directPillars.map((pillar) => {
+      const evaluatedCapabilities = [...new Set(allSignals
+        .filter((signal) => signal.pillar === pillar)
+        .map((signal) => signal.capabilityId))];
+      const pillarCoverageValue = pillarCoverage[pillar];
+      return [pillar, {
+        state: evaluatedCapabilities.length === 0
+          ? 'not_evaluated'
+          : pillarCoverageValue >= 75 ? 'known' : 'partial',
+        score: evaluatedCapabilities.length === 0 ? null : pillars[pillar],
+        coverage: pillarCoverageValue,
+        evaluatedCapabilities,
+      } satisfies PillarAssessment];
+    })) as Record<(typeof directPillars)[number], PillarAssessment>;
+    const pillarAssessments: ReadinessResponse['pillarAssessments'] = {
+      ...directPillarAssessments,
+      peace: {
+        state: coverage === 0 ? 'not_evaluated' : coverage >= 75 ? 'known' : 'partial',
+        score: coverage === 0 ? null : peace,
+        coverage,
+        evaluatedCapabilities: directPillars.filter((pillar) => directPillarAssessments[pillar].state !== 'not_evaluated'),
+      },
+    };
+    const overallWeights = { protection: 0.25, provision: 0.30, preparation: 0.20, prosperity: 0.25 } as const;
+    const evaluatedPillars = directPillars.filter((pillar) => pillarAssessments[pillar].score !== null);
+    const evaluatedWeight = evaluatedPillars.reduce((sum, pillar) => sum + overallWeights[pillar], 0);
+    const observedOverallScore = evaluatedWeight === 0
+      ? null
+      : Math.round(evaluatedPillars.reduce((sum, pillar) => sum + (pillarAssessments[pillar].score ?? 0) * overallWeights[pillar], 0) / evaluatedWeight);
+    const overallAssessment: PillarAssessment = {
+      state: observedOverallScore === null ? 'not_evaluated' : coverage >= 75 ? 'known' : 'partial',
+      score: observedOverallScore,
+      coverage,
+      evaluatedCapabilities: evaluatedPillars,
+    };
 
     // Extract top risks and opportunities for quick display
     const topRisks = allSignals
@@ -109,15 +199,46 @@ export class ReadinessService {
       .sort((a, b) => b.magnitude - a.magnitude)
       .slice(0, 5);
 
+    const accounts = await this.prisma.account.findMany({
+      where: { userId, isArchived: false },
+      select: {
+        updatedAt: true,
+        linkedBankAccounts: { select: { connection: { select: { lastSyncAt: true } } } },
+      },
+    });
+    const synchronized = accounts.filter((account) => account.linkedBankAccounts.length > 0);
+    const lastSynchronizedAt = synchronized
+      .flatMap((account) => account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt))
+      .filter((date): date is Date => date !== null)
+      .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+    const staleAccounts = accounts.filter((account) => {
+      const latestSync = account.linkedBankAccounts
+        .map((linked) => linked.connection.lastSyncAt)
+        .filter((date): date is Date => date !== null)
+        .sort((a, b) => b.getTime() - a.getTime())[0] ?? account.updatedAt;
+      return Date.now() - latestSync.getTime() > 7 * 24 * 60 * 60 * 1000;
+    }).length;
+
     return {
+      evaluatedAt: new Date(),
       overall,
       pillars,
       signals: allSignals,
       topRisks,
       topOpportunities,
       history: history.reverse(),
+      overallAssessment,
       coverage,
       pillarCoverage,
+      pillarAssessments,
+      dataFreshness: {
+        synchronizedAccounts: synchronized.length,
+        manualAccounts: accounts.length - synchronized.length,
+        staleAccounts,
+        lastSynchronizedAt,
+      },
+      recentChanges,
+      changeWindow,
     };
   }
 
@@ -128,11 +249,11 @@ export class ReadinessService {
    * @param overall - Overall readiness score
    * @param pillars - Individual pillar scores
    */
-  async recordSnapshot(userId: string, overall: number, pillars: PillarScores): Promise<void> {
+  async recordSnapshot(userId: string, overall: number, pillars: PillarScores, signals: Signal[] = []): Promise<void> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    await this.prisma.readinessSnapshot.upsert({
+    const snapshot = await this.prisma.readinessSnapshot.upsert({
       where: { userId_recordedAt: { userId, recordedAt: today } },
       create: {
         userId,
@@ -153,6 +274,23 @@ export class ReadinessService {
         peace: pillars.peace,
       },
     });
+
+    await this.prisma.$transaction([
+      this.prisma.readinessSignal.deleteMany({ where: { snapshotId: snapshot.id } }),
+      this.prisma.readinessSignal.createMany({
+        data: signals.map((signal) => ({
+          userId,
+          snapshotId: snapshot.id,
+          capabilityId: signal.capabilityId,
+          type: signal.type.toUpperCase() as 'RISK' | 'OPPORTUNITY' | 'MILESTONE' | 'WARNING' | 'POSITIVE',
+          magnitude: Math.round(signal.magnitude),
+          pillar: signal.pillar.toUpperCase() as 'PROTECTION' | 'PROVISION' | 'PREPARATION' | 'PROSPERITY',
+          summary: signal.summary,
+          weight: signal.weight ?? 1,
+          expiresAt: signal.expiresAt ?? null,
+        })),
+      }),
+    ]);
   }
 
   /**

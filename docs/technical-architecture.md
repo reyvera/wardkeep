@@ -50,9 +50,9 @@ The transition is incremental, not a rewrite:
 
 1. **Finance foundation (shipped):** Accounts, transactions, budgets, debt, cash flow, recurring detection, import, bank sync, and deterministic math provide the first household observations.
 
-2. **Readiness foundation (shipped):** `packages/readiness`, finance signal generators, daily snapshots, the readiness API, coverage indicators, a graduated liquidity-resilience signal, and a readiness-focused dashboard are in place.
+2. **Readiness foundation (shipped):** `packages/readiness`, finance signal generators, daily snapshots with contributing signals, the readiness API, explicit overall/pillar assessment states, account-source freshness summaries, a graduated liquidity-resilience signal, and a readiness-focused dashboard are in place.
 
-3. **Decision engine (next):** Harden coverage and data freshness, persist explanations and recommendation state, add a timeline/change feed, and expose scenarios and impact previews.
+3. **Decision engine (next):** Harden factor-level coverage, provenance, and freshness; make causal explanations and recommendations durable; add a Coming Up timeline and impact previews.
 
 4. **Household platform (future):** Extract the Capability SDK and add insurance, estate, home, vehicle, medical, and other independently observable household domains.
 

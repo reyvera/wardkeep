@@ -499,15 +499,15 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 > Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
 
-- [ ] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
-    - Per-pillar state: `known`, `partial`, or `not_evaluated`
-    - Include evaluated factors, missing factors, data freshness, and provenance
-    - Define how overall readiness behaves when high-weight pillars are not evaluated
+- [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
+    - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
+    - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
+    - [~] Missing factors, account-source summary, and score evaluation time are displayed; factor-level provenance remains
 
-- [ ] 39.2 Add data provenance and freshness
+- [~] 39.2 Add data provenance and freshness
     - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
-    - Display account and score freshness in relevant UI
-    - Reduce or qualify confidence for stale/manual values according to transparent rules
+    - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
+    - [ ] Reduce or qualify confidence for stale/manual values according to transparent rules
 
 - [ ] 39.3 Harden the Protection liquidity model
     - Structural transfer exclusion and credit-card payment matching

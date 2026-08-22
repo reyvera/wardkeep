@@ -44,6 +44,18 @@ export interface Recommendation {
 
 export type PillarScores = Record<ReadinessPillar, number>;
 
+/** Describes whether a score is based on a sufficiently complete observation set. */
+export type ReadinessAssessmentState = 'known' | 'partial' | 'not_evaluated';
+
+/** A score and the evidence-quality state required to interpret it honestly. */
+export interface PillarAssessment {
+  state: ReadinessAssessmentState;
+  /** Null when Wardkeep has not evaluated this pillar. */
+  score: number | null;
+  coverage: number;
+  evaluatedCapabilities: string[];
+}
+
 export interface ReadinessSnapshot {
   overall: number;
   pillars: PillarScores;

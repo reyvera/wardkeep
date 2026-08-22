@@ -42,7 +42,7 @@ export class AccountsService {
       where,
       include: {
         transactions: true,
-        linkedBankAccounts: { select: { id: true } },
+        linkedBankAccounts: { select: { id: true, connection: { select: { lastSyncAt: true } } } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -66,6 +66,14 @@ export class AccountsService {
         currentBalance = computed.toFixed(2);
       }
 
+      const lastSynchronizedAt = account.linkedBankAccounts
+        .map((linked) => linked.connection.lastSyncAt)
+        .filter((date): date is Date => date !== null)
+        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+      const source = account.linkedBankAccounts.length > 0 ? 'synchronized' : 'manual';
+      const referenceDate = lastSynchronizedAt ?? account.updatedAt;
+      const freshness = Date.now() - referenceDate.getTime() > 7 * 24 * 60 * 60 * 1000 ? 'stale' : 'current';
+
       return {
         id: account.id,
         userId: account.userId,
@@ -77,6 +85,9 @@ export class AccountsService {
         isArchived: account.isArchived,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,
+        source,
+        lastUpdatedAt: referenceDate,
+        freshness,
       };
     });
   }

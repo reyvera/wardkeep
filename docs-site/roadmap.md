@@ -48,10 +48,10 @@ The amber segment is deliberately not a percentage: the decision-engine work sho
 
 | Workstream | Status | Launch outcome |
 |:--|:--|:--|
-| Readiness foundation | In progress | Deterministic scores, coverage indicators, finance signals, daily history, readiness dashboard |
-| Trust and coverage | Next | Explicit known/partial/not-evaluated states, data freshness, provenance, and hardened burn-rate calculations |
+| Readiness foundation | In progress | Deterministic scores, explicit overall and pillar assessments, coverage indicators, finance signals, signal snapshots, and readiness dashboard |
+| Trust and coverage | In progress | Explicit known/partial/not-evaluated states, account source and score freshness summaries, plus hardened burn-rate calculations; factor-level provenance remains |
 | Composite Protection | Planned | Insurance, estate, income interruption, obligations, dependents, and secondary backstops—each independently explainable |
-| Command center | Partial | Pillar explanations, Coming Up timeline, change feed, durable recommendations, and impact previews |
+| Command center | Partial | Pillar explanations and a visit-aware change feed are in place; Coming Up, durable recommendations, and impact previews remain |
 | Scenarios and planning | Planned | Deterministic what-if outcomes connected to household plans |
 
 ## Launch gates

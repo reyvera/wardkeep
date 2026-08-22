@@ -34,8 +34,13 @@ interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
+  overallAssessment: { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] };
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
+  pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
+  dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
+  recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string; reason: string | null }>;
+  changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -161,13 +166,15 @@ export default function DashboardPage() {
   }
 
   const data = readinessQuery.data!;
-  const scoreColor = getScoreColor(data.overall);
-  const scoreLabel = getScoreLabel(data.overall);
-  const scoredPillars = Object.entries(data.pillars).filter(([key, score]) => key === 'peace' || score > 0);
+  const observedOverall = data.overallAssessment.score;
+  const scoreColor = getScoreColor(observedOverall ?? 0);
+  const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
+  const scoredPillars = Object.entries(data.pillars).filter(([key]) => data.pillarAssessments[key]?.score !== null);
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
   const history = data.history.slice(-90);
-  const trendDelta = history.length > 1 ? data.overall - history[0]!.overall : 0;
+  const canCompareTrend = data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
+  const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
   const recommend = [...data.topRisks, ...data.topOpportunities].slice(0, 3);
 
   return (
@@ -193,11 +200,11 @@ export default function DashboardPage() {
                 stroke="var(--bg-elevated)"
                 strokeWidth="8"
               />
-              {data.coverage > 0 && <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${data.overall * 2.64} 264`} />}
+              {observedOverall !== null && <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${observedOverall * 2.64} 264`} />}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-content-primary">{data.coverage ? `${data.overall}%` : '—'}</span>
-              <span className="text-xs font-medium" style={{ color: scoreColor }}>{data.coverage ? scoreLabel : 'Unknown'}</span>
+              <span className="text-3xl font-bold text-content-primary">{observedOverall === null ? '—' : `${observedOverall}%`}</span>
+              <span className="text-xs font-medium" style={{ color: scoreColor }}>{scoreLabel}</span>
             </div>
           </div>
 
@@ -205,15 +212,16 @@ export default function DashboardPage() {
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-xl font-semibold text-content-primary mb-1">Household readiness</h2>
             <p className="text-sm text-content-secondary">
-              {data.coverage === 0
+              {observedOverall === null
                 ? 'Add accounts and ordinary expenses before Wardkeep can assess your readiness.'
-                : <>{strongest && <>Strongest: <span className="text-content-primary">{PILLAR_META[strongest[0]]?.label} {strongest[1]}</span>. </>}{weakest && <>Most limited: <span className="text-content-primary">{PILLAR_META[weakest[0]]?.label} {weakest[1]}</span>. </>}Scores reflect the information currently available.</>}
+                : <>{strongest && <>Strongest observed: <span className="text-content-primary">{PILLAR_META[strongest[0]]?.label} {strongest[1]}</span>. </>}{weakest && <>Most limited observed: <span className="text-content-primary">{PILLAR_META[weakest[0]]?.label} {weakest[1]}</span>. </>}This is a {data.overallAssessment.state === 'partial' ? 'partial' : 'complete'} assessment of the information currently available.</>}
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
               <span>{coverageLabel(data.coverage)} · {data.coverage}% coverage</span>
-              {history.length > 1 && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
+              <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>{data.dataFreshness.staleAccounts > 0 ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated` : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}</span>
+              {canCompareTrend && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
             </div>
-            {history.length > 1 && (
+            {canCompareTrend && (
               <svg viewBox="0 0 180 36" className="w-full max-w-xs h-9 mt-3" aria-label="Readiness trend">
                 <polyline fill="none" stroke={scoreColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={history.map((point, index) => `${(index / (history.length - 1)) * 180},${34 - point.overall * 0.32}`).join(' ')} />
               </svg>
@@ -230,24 +238,25 @@ export default function DashboardPage() {
           const Icon = meta.icon;
           const color = getScoreColor(score);
 
-          const coverage = key === 'peace' ? data.coverage : data.pillarCoverage[key as keyof ReadinessResponse['pillarCoverage']] ?? 0;
+          const assessment = data.pillarAssessments[key];
+          const coverage = assessment?.coverage ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
           return (
-            <Link href="/dashboard/details" key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
+            <Link href={`/dashboard/readiness/${key}`} key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
               <div className="flex items-center gap-2 mb-3">
                 <Icon size={16} style={{ color }} />
                 <span className="text-sm font-medium text-content-primary">{meta.label}</span>
               </div>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-2xl font-bold" style={{ color }}>{coverage ? `${score}%` : '—'}</span>
+                <span className="text-2xl font-bold" style={{ color }}>{assessment?.score === null || !assessment ? '—' : `${score}%`}</span>
               </div>
               <div className="progress-track">
                 <div
                   className="progress-fill"
-                  style={{ width: `${coverage ? score : 0}%`, backgroundColor: color }}
+                  style={{ width: `${assessment?.score === null ? 0 : score}%`, backgroundColor: color }}
                 />
               </div>
-              <p className="text-xs text-content-tertiary mt-2">{key === 'peace' ? 'Derived from your least-ready area' : `${coverageLabel(coverage)} · ${coverage}% covered`}</p>
+              <p className="text-xs text-content-tertiary mt-2">{key === 'peace' ? 'Derived from observed pillars' : `${coverageLabel(coverage)} · ${coverage}% covered`}</p>
               {pillarSignals.map((signal) => <p key={signal.capabilityId} className="text-xs text-content-secondary mt-1 line-clamp-2">{signal.summary}</p>)}
             </Link>
           );
@@ -295,6 +304,21 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      <div className="card mt-6">
+        <h3 className="card-title">{data.changeWindow === 'since_last_visit' ? 'SINCE YOUR LAST VISIT' : 'SINCE YOUR LAST RECORDED CHECK'}</h3>
+        {data.recentChanges.length === 0 ? (
+          <p className="text-sm text-content-tertiary">No readiness changes have been recorded yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {data.recentChanges.map((change) => {
+              const label = PILLAR_META[change.pillar]?.label ?? change.pillar;
+              return <li key={change.pillar} className="flex items-start justify-between gap-4 text-sm"><div><p className="text-content-primary">{label} changed from {change.previous} to {change.current}</p>{change.reason && <p className="text-xs text-content-tertiary mt-1">{change.reason}</p>}</div><span className={change.delta > 0 ? 'text-accent-green font-medium' : 'text-accent-red font-medium'}>{change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}</span></li>;
+            })}
+          </ul>
+        )}
+        <p className="text-xs text-content-tertiary mt-4">Compared with the closest daily readiness snapshot available for this period. Detailed score-change reasons are still being added.</p>
       </div>
     </div>
   );
