@@ -48,7 +48,9 @@ async function main() {
   const existing = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
   if (existing) {
     // Delete all user data (order matters for foreign key constraints)
-    await prisma.transactionTag.deleteMany({ where: { transaction: { account: { userId: existing.id } } } });
+    await prisma.transactionTag.deleteMany({
+      where: { transaction: { account: { userId: existing.id } } },
+    });
     await prisma.transaction.deleteMany({ where: { account: { userId: existing.id } } });
     await prisma.recurringTransaction.deleteMany({ where: { userId: existing.id } });
     await prisma.budgetAllocation.deleteMany({ where: { budget: { userId: existing.id } } });
@@ -56,6 +58,7 @@ async function main() {
     await prisma.debtProfile.deleteMany({ where: { userId: existing.id } });
     await prisma.linkedBankAccount.deleteMany({ where: { connection: { userId: existing.id } } });
     await prisma.bankConnection.deleteMany({ where: { userId: existing.id } });
+    await prisma.insurancePolicy.deleteMany({ where: { userId: existing.id } });
     await prisma.account.deleteMany({ where: { userId: existing.id } });
     await prisma.ruleCondition.deleteMany({ where: { rule: { userId: existing.id } } });
     await prisma.ruleAction.deleteMany({ where: { rule: { userId: existing.id } } });
