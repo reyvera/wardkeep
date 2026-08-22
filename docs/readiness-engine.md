@@ -36,14 +36,14 @@ The first readiness release is intentionally a foundation, not a comprehensive h
 | Prosperity | Net-worth state, debt-to-income, debt payoff progress | Partial | Add net-worth history, savings rate, investments, and interest burden. |
 | Peace | Derived from the least-ready observed pillar and recent volatility | Derived | Improve its explanation and make unknown upstream coverage visible. |
 
-The `GET /api/readiness` response returns `coverage` and `pillarCoverage` alongside scores, signals, ranked attention items, opportunities, and history. Coverage currently represents evaluated finance capabilities against a transparent target count; it is a confidence indicator, not a statement that a household is a particular percentage complete.
+The `GET /api/readiness` response returns coverage, per-pillar assessments, and an `overallAssessment` alongside signals, ranked attention items, opportunities, and history. Every assessment carries a `known`, `partial`, or `not_evaluated` state, nullable score, evaluated capabilities, and coverage. Coverage currently represents evaluated finance capabilities against a transparent target count; it is a confidence indicator, not a statement that a household is a particular percentage complete.
 
 ### Current scoring behavior
 
 - Signal magnitudes are bounded from -10 to +10 and aggregated with positive weights.
 - A pillar with no signals receives no readiness credit. The UI presents it as **Not evaluated**, rather than presenting a false 100.
-- Overall readiness uses the current default pillar weights: Protection 25%, Provision 30%, Preparation 20%, Prosperity 25%. Peace is derived and is not weighted into overall readiness.
-- Daily snapshots preserve overall and pillar score history. The dashboard displays up to 90 days of available trend data.
+- The observed overall score re-normalizes the current default weights across evaluated direct pillars: Protection 25%, Provision 30%, Preparation 20%, Prosperity 25%. It is `null` when no direct pillar is evaluated and is explicitly marked partial until sufficient coverage exists. Peace is derived and is not weighted into overall readiness.
+- Daily snapshots preserve overall and pillar score history as well as the contributing signals. The dashboard can show score movement since the last visit and only shows an overall trend for a sufficiently complete assessment.
 
 ## Protection: current contract
 
@@ -68,14 +68,14 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 - clickable pillar summaries with the factors Wardkeep did and did not evaluate;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
 - **Wardkeep recommends**, which connects an observation to a concrete next action;
-- eventually, **Coming up** and **Since your last visit**.
+- **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.
 
 ## API contract
 
 ```text
-GET /api/readiness              current score, pillars, signals, coverage, history
+GET /api/readiness              assessments, signals, coverage, freshness, history, and recent changes
 GET /api/readiness/history      daily snapshots for 1–90 days
 ```
 
@@ -93,7 +93,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 
 ### Harden the scoring model
 
-- [x] Scores now return an explicit **known**, **partial**, or **not evaluated** assessment state, a nullable score, coverage, and evaluated capabilities. The remaining work is to add missing factors, freshness, provenance, and an overall-score rule for unevaluated high-weight pillars.
+- [x] Scores return an explicit **known**, **partial**, or **not evaluated** assessment state, a nullable score, coverage, evaluated capabilities, and an observed-overall rule that re-normalizes across evaluated direct pillars.
+- [~] Account source state and score evaluation time are displayed. Missing factor-level provenance and capability-specific freshness rules remain.
 - Define capability-specific coverage factors and freshness rules. Manual, estimated, inferred, calculated, synchronized, stale, and unknown data must be distinguishable.
 - Exclude transfers structurally, match credit-card payments to underlying purchases, and develop essential and normal burn-rate views.
 - Add test coverage for zero to 12+ months of reserves, no expense history, transfers, duplicated card payments, large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.
@@ -111,8 +112,8 @@ Available credit may reduce a short-term liquidity risk but must never be treate
 
 ### Complete the command center
 
-- Add a pillar-detail / readiness-explanation experience with evaluated factors, missing factors, trend, and direct actions.
-- Persist meaningful score-change reasons, then add a “Since your last visit” feed.
+- [x] Add a pillar-detail / readiness-explanation experience with evaluated factors, missing factors, trend, source data, and direct actions.
+- [~] Persist signal snapshots and show a “Since your last visit” feed. Continue toward durable causal explanations, not just changed factors.
 - Create a unified timeline for bills, renewals, tax dates, maintenance, subscriptions, sinking funds, and future replacement windows; surface it as “Coming up.”
 - Turn signals into durable recommendations ranked by severity × urgency × financial impact × actionability × confidence.
 - Show impact previews before a user commits to a plan: current score, projected score, monthly contribution, and estimated completion date.
