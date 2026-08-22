@@ -547,6 +547,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
 - [ ] 39.6 Establish GitHub launch tracking
+  - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies
   - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
   - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
   - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
