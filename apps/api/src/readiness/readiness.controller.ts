@@ -24,7 +24,10 @@ export class ReadinessController {
   async getReadiness(@Req() req: ScopedRequest) {
     const userId = req.userId!;
 
-    const readiness = await this.readinessService.getReadiness(userId);
+    const user = await this.readinessService.getLastDashboardView(userId);
+    const readiness = await this.readinessService.getReadiness(userId, user?.lastDashboardViewedAt ?? null);
+
+    await this.readinessService.recordDashboardView(userId);
 
     // Record today's snapshot for historical tracking (fire-and-forget)
     this.readinessService
