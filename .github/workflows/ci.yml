@@ -29,6 +29,8 @@ jobs:
       - name: Build documentation site
         run: bundle exec jekyll build --baseurl /wardkeep
         working-directory: docs-site
+        env:
+          BUNDLE_FROZEN: "true"
 
   build:
     runs-on: ubuntu-latest

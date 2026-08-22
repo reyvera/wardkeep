@@ -51,6 +51,7 @@ jobs:
         working-directory: docs-site
         env:
           JEKYLL_ENV: production
+          BUNDLE_FROZEN: "true"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
