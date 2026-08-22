@@ -27,6 +27,7 @@ export interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: ReadinessSnapshot[];
+  overallAssessment: PillarAssessment;
   coverage: number;
   pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
   pillarAssessments: Record<keyof PillarScores, PillarAssessment>;
@@ -174,6 +175,18 @@ export class ReadinessService {
         evaluatedCapabilities: directPillars.filter((pillar) => directPillarAssessments[pillar].state !== 'not_evaluated'),
       },
     };
+    const overallWeights = { protection: 0.25, provision: 0.30, preparation: 0.20, prosperity: 0.25 } as const;
+    const evaluatedPillars = directPillars.filter((pillar) => pillarAssessments[pillar].score !== null);
+    const evaluatedWeight = evaluatedPillars.reduce((sum, pillar) => sum + overallWeights[pillar], 0);
+    const observedOverallScore = evaluatedWeight === 0
+      ? null
+      : Math.round(evaluatedPillars.reduce((sum, pillar) => sum + (pillarAssessments[pillar].score ?? 0) * overallWeights[pillar], 0) / evaluatedWeight);
+    const overallAssessment: PillarAssessment = {
+      state: observedOverallScore === null ? 'not_evaluated' : coverage >= 75 ? 'known' : 'partial',
+      score: observedOverallScore,
+      coverage,
+      evaluatedCapabilities: evaluatedPillars,
+    };
 
     // Extract top risks and opportunities for quick display
     const topRisks = allSignals
@@ -214,6 +227,7 @@ export class ReadinessService {
       topRisks,
       topOpportunities,
       history: history.reverse(),
+      overallAssessment,
       coverage,
       pillarCoverage,
       pillarAssessments,

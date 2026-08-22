@@ -34,6 +34,7 @@ interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
+  overallAssessment: { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] };
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
   pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
@@ -165,13 +166,15 @@ export default function DashboardPage() {
   }
 
   const data = readinessQuery.data!;
-  const scoreColor = getScoreColor(data.overall);
-  const scoreLabel = getScoreLabel(data.overall);
-  const scoredPillars = Object.entries(data.pillars).filter(([key, score]) => key === 'peace' || score > 0);
+  const observedOverall = data.overallAssessment.score;
+  const scoreColor = getScoreColor(observedOverall ?? 0);
+  const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
+  const scoredPillars = Object.entries(data.pillars).filter(([key]) => data.pillarAssessments[key]?.score !== null);
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
   const history = data.history.slice(-90);
-  const trendDelta = history.length > 1 ? data.overall - history[0]!.overall : 0;
+  const canCompareTrend = data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
+  const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
   const recommend = [...data.topRisks, ...data.topOpportunities].slice(0, 3);
 
   return (
@@ -197,11 +200,11 @@ export default function DashboardPage() {
                 stroke="var(--bg-elevated)"
                 strokeWidth="8"
               />
-              {data.coverage > 0 && <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${data.overall * 2.64} 264`} />}
+              {observedOverall !== null && <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${observedOverall * 2.64} 264`} />}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-content-primary">{data.coverage ? `${data.overall}%` : '—'}</span>
-              <span className="text-xs font-medium" style={{ color: scoreColor }}>{data.coverage ? scoreLabel : 'Unknown'}</span>
+              <span className="text-3xl font-bold text-content-primary">{observedOverall === null ? '—' : `${observedOverall}%`}</span>
+              <span className="text-xs font-medium" style={{ color: scoreColor }}>{scoreLabel}</span>
             </div>
           </div>
 
@@ -209,16 +212,16 @@ export default function DashboardPage() {
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-xl font-semibold text-content-primary mb-1">Household readiness</h2>
             <p className="text-sm text-content-secondary">
-              {data.coverage === 0
+              {observedOverall === null
                 ? 'Add accounts and ordinary expenses before Wardkeep can assess your readiness.'
-                : <>{strongest && <>Strongest: <span className="text-content-primary">{PILLAR_META[strongest[0]]?.label} {strongest[1]}</span>. </>}{weakest && <>Most limited: <span className="text-content-primary">{PILLAR_META[weakest[0]]?.label} {weakest[1]}</span>. </>}Scores reflect the information currently available.</>}
+                : <>{strongest && <>Strongest observed: <span className="text-content-primary">{PILLAR_META[strongest[0]]?.label} {strongest[1]}</span>. </>}{weakest && <>Most limited observed: <span className="text-content-primary">{PILLAR_META[weakest[0]]?.label} {weakest[1]}</span>. </>}This is a {data.overallAssessment.state === 'partial' ? 'partial' : 'complete'} assessment of the information currently available.</>}
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
               <span>{coverageLabel(data.coverage)} · {data.coverage}% coverage</span>
               <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>{data.dataFreshness.staleAccounts > 0 ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated` : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}</span>
-              {history.length > 1 && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
+              {canCompareTrend && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
             </div>
-            {history.length > 1 && (
+            {canCompareTrend && (
               <svg viewBox="0 0 180 36" className="w-full max-w-xs h-9 mt-3" aria-label="Readiness trend">
                 <polyline fill="none" stroke={scoreColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={history.map((point, index) => `${(index / (history.length - 1)) * 180},${34 - point.overall * 0.32}`).join(' ')} />
               </svg>
