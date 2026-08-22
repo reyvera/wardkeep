@@ -1,6 +1,6 @@
 # Wardkeep
 
-*Guard your ground.*
+_Guard your ground._
 
 A private, self-hostable household-readiness platform. Wardkeep starts with finance—spending, income, debt, savings, bills, and cash flow—and is becoming the calm command center for what a household needs to prepare for next.
 
@@ -101,11 +101,11 @@ Output: `docs/screenshots/{desktop,mobile}/*.png`
 
 Configure in Settings (http://localhost:3000/settings):
 
-| Mode | Behavior |
-|------|----------|
-| LOCAL | All AI via Ollama. Zero external network calls. Requires 8GB+ RAM. |
-| HYBRID | Sensitive data stays local. General queries can use cloud. |
-| CLOUD | All AI via OpenAI/Anthropic. Requires API key. Fast, no local resources needed. |
+| Mode   | Behavior                                                                        |
+| ------ | ------------------------------------------------------------------------------- |
+| LOCAL  | All AI via Ollama. Zero external network calls. Requires 8GB+ RAM.              |
+| HYBRID | Sensitive data stays local. General queries can use cloud.                      |
+| CLOUD  | All AI via OpenAI/Anthropic. Requires API key. Fast, no local resources needed. |
 
 ## Bank Connections (SimpleFIN)
 
@@ -169,6 +169,8 @@ npx tsx prisma/seed-demo.ts
 ```
 
 Login: `demo@wardkeep.app` / `DemoPassword123`
+
+The demo includes three insurance policies, including an auto policy renewing soon, so the **Policies** page and Protection renewal signal can be verified immediately.
 
 ### URLs
 
@@ -269,20 +271,20 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENCRYPTION_KEY` | *(required)* | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. App refuses to start with placeholder value. |
-| `POSTGRES_PASSWORD` | postgres | PostgreSQL password. Set a unique value in production. |
-| `DATABASE_URL` | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker) |
-| `REDIS_HOST` | localhost (redis in Docker) | Redis hostname |
-| `REDIS_PORT` | 6379 | Redis port |
-| `AI_PRIVACY_MODE` | LOCAL | AI routing: LOCAL, HYBRID, or CLOUD |
-| `OLLAMA_URL` | http://localhost:11434 | Ollama endpoint for local AI |
-| `SESSION_TIMEOUT` | 30 | Session inactivity timeout in minutes |
-| `PORT` | 4000 | API server port |
-| `WEB_PORT` | 3000 | Host port for web UI (prod compose) |
-| `API_PORT` | 4000 | Host port for API (prod compose) |
-| `DEMO_MODE` | false | Set to `true` to bypass ENCRYPTION_KEY safety check |
+| Variable            | Default                                                | Description                                                                                                                             |
+| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENCRYPTION_KEY`    | _(required)_                                           | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. App refuses to start with placeholder value. |
+| `POSTGRES_PASSWORD` | postgres                                               | PostgreSQL password. Set a unique value in production.                                                                                  |
+| `DATABASE_URL`      | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker)                                                                               |
+| `REDIS_HOST`        | localhost (redis in Docker)                            | Redis hostname                                                                                                                          |
+| `REDIS_PORT`        | 6379                                                   | Redis port                                                                                                                              |
+| `AI_PRIVACY_MODE`   | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD                                                                                                     |
+| `OLLAMA_URL`        | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
+| `SESSION_TIMEOUT`   | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
+| `PORT`              | 4000                                                   | API server port                                                                                                                         |
+| `WEB_PORT`          | 3000                                                   | Host port for web UI (prod compose)                                                                                                     |
+| `API_PORT`          | 4000                                                   | Host port for API (prod compose)                                                                                                        |
+| `DEMO_MODE`         | false                                                  | Set to `true` to bypass ENCRYPTION_KEY safety check                                                                                     |
 
 ### Minimum Hardware Requirements
 
@@ -315,28 +317,28 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 
 ✅ = shipped · 🟡 = foundation shipped / expanding · 📋 = planned
 
-| Feature | Status |
-|---------|--------|
-| Bank auto-import (SimpleFIN) | ✅ |
-| AI chat assistant (OpenAI/Anthropic/Ollama) | ✅ |
-| Household readiness dashboard with coverage, pillar signals, recommendations, and trend | 🟡 |
-| Financial overview with actual cumulative spending pace and month-end budget projection | ✅ |
-| Monthly budgets with category progress | ✅ |
-| Transaction categorization (manual + AI) | ✅ |
-| Transfer detection & filtering | ✅ |
-| Debt payoff calculator | ✅ |
-| Cash-flow 90-day forecast | ✅ |
-| Encrypted backups | ✅ |
-| PWA / offline support | ✅ |
-| Docker self-hosted deployment | ✅ |
-| Pre-built images on GHCR | ✅ |
-| CI/CD pipeline | ✅ |
-| Readiness Engine (household decision engine) | 🟡 |
-| Composite Protection (insurance, income resilience, estate, obligations) | 📋 |
-| Capability SDK (extensible domain modules) | 📋 |
-| Coming Up timeline, change feed, and Morning Brief / Advisor | 📋 |
-| Readiness scenarios and recommendation impact previews | 📋 |
-| Multi-currency support | 📋 |
+| Feature                                                                                                                       | Status |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Bank auto-import (SimpleFIN)                                                                                                  | ✅     |
+| AI chat assistant (OpenAI/Anthropic/Ollama)                                                                                   | ✅     |
+| Household readiness dashboard with coverage, pillar signals, recommendations, and trend                                       | 🟡     |
+| Financial overview with actual cumulative spending pace and month-end budget projection                                       | ✅     |
+| Monthly budgets with category progress                                                                                        | ✅     |
+| Transaction categorization (manual + AI)                                                                                      | ✅     |
+| Transfer detection & filtering                                                                                                | ✅     |
+| Debt payoff calculator                                                                                                        | ✅     |
+| Cash-flow 90-day forecast                                                                                                     | ✅     |
+| Encrypted backups                                                                                                             | ✅     |
+| PWA / offline support                                                                                                         | ✅     |
+| Docker self-hosted deployment                                                                                                 | ✅     |
+| Pre-built images on GHCR                                                                                                      | ✅     |
+| CI/CD pipeline                                                                                                                | ✅     |
+| Readiness Engine (household decision engine)                                                                                  | 🟡     |
+| Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡     |
+| Capability SDK (extensible domain modules)                                                                                    | 📋     |
+| Coming Up timeline, change feed, and Morning Brief / Advisor                                                                  | 📋     |
+| Readiness scenarios and recommendation impact previews                                                                        | 📋     |
+| Multi-currency support                                                                                                        | 📋     |
 
 Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)
 

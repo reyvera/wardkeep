@@ -30,7 +30,7 @@ The first readiness release is intentionally a foundation, not a comprehensive h
 
 | Pillar | Current signals | Coverage state | Direction |
 |---|---|---|---|
-| Protection | Liquid reserves compared with ordinary expense burn rate | Limited | Add income interruption, insurance, estate, obligations, dependents, medical exposure, and secondary backstops. |
+| Protection | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
 | Provision | Budget pace, cash-flow forecast, bill coverage | Partial | Add income stability, essential obligations, and recurring-payment reliability. |
 | Preparation | None | Unevaluated | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation. |
 | Prosperity | Net-worth state, debt-to-income, debt payoff progress | Partial | Add net-worth history, savings rate, investments, and interest burden. |
@@ -47,7 +47,7 @@ The `GET /api/readiness` response returns coverage, per-pillar assessments, and 
 
 ## Protection: current contract
 
-Protection presently evaluates **liquidity resilience**, not insurance or comprehensive risk protection.
+Protection presently evaluates **liquidity resilience** and limited insurance-record renewal awareness—not insurance adequacy or comprehensive risk protection.
 
 1. Wardkeep totals positive balances in active checking, savings, and cash accounts.
 2. It estimates an ordinary monthly burn rate from the most recent 90 days of debit transactions.
@@ -59,13 +59,23 @@ If Wardkeep cannot find ordinary expense history, it reports that coverage canno
 
 This is deliberately conservative. The curve is a liquidity-resilience model, not financial advice or an insurance adequacy determination.
 
+### Insurance records: first composite input
+
+Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, and renewal date). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
+
+When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
+
+Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
+
+For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.
+
 ## Dashboard contract
 
 The Dashboard is Wardkeep’s household command center. It should lead with:
 
 - household readiness, trend, and coverage;
 - the strongest and most limited observed pillars;
-- clickable pillar summaries with the factors Wardkeep did and did not evaluate;
+- clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
 - **Wardkeep recommends**, which connects an observation to a concrete next action;
 - **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
@@ -107,6 +117,8 @@ Protection must become an independently explainable model of financial shock res
 liquidity + income resilience + insurance + fixed obligations
 + exposure + dependents + estate + secondary backstops
 ```
+
+The first insurance-record, renewal-timing, and recorded-deductible-to-reserve slice is implemented. Adequacy checks, coverage gaps, disability/life assessment, and policy-document handling remain future work.
 
 Available credit may reduce a short-term liquidity risk but must never be treated as cash. Missing insurance or estate information should remain unknown—not score as protected or exposed until Wardkeep has an appropriate observation.
 

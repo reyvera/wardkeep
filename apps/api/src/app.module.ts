@@ -14,6 +14,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { DebtModule } from './debt/debt.module';
 import { ImportModule } from './import/import.module';
+import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -51,6 +52,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     SettingsModule,
     TransactionsModule,
     ImportModule,
+    InsuranceModule,
   ],
   providers: [
     {

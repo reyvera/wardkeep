@@ -13,15 +13,15 @@ const DEMO_PASSWORD = 'DemoPassword123';
 // ─── Merchants and categories ────────────────────────────────────────────────
 
 const MERCHANTS = {
-  'Groceries': ['Whole Foods', 'Trader Joes', 'Kroger', 'Safeway', 'Costco', 'Aldi'],
-  'Restaurants': ['Chipotle', 'Starbucks', 'McDonalds', 'Panera Bread', 'Olive Garden', 'Five Guys'],
-  'Transportation': ['Shell Gas', 'BP Gas', 'Uber', 'Lyft', 'Metro Transit'],
-  'Entertainment': ['Netflix', 'Spotify', 'AMC Theaters', 'Steam Games', 'Audible'],
-  'Shopping': ['Amazon', 'Target', 'Walmart', 'Best Buy', 'Nike', 'H&M'],
-  'Utilities': ['Electric Co', 'Water Utility', 'Comcast Internet', 'T-Mobile'],
-  'Healthcare': ['CVS Pharmacy', 'Dr Smith Office', 'Blue Cross'],
-  'Housing': ['Apt Rent LLC', 'State Farm Insurance'],
-  'Subscriptions': ['iCloud Storage', 'ChatGPT Plus', 'GitHub Pro', 'Notion'],
+  Groceries: ['Whole Foods', 'Trader Joes', 'Kroger', 'Safeway', 'Costco', 'Aldi'],
+  Restaurants: ['Chipotle', 'Starbucks', 'McDonalds', 'Panera Bread', 'Olive Garden', 'Five Guys'],
+  Transportation: ['Shell Gas', 'BP Gas', 'Uber', 'Lyft', 'Metro Transit'],
+  Entertainment: ['Netflix', 'Spotify', 'AMC Theaters', 'Steam Games', 'Audible'],
+  Shopping: ['Amazon', 'Target', 'Walmart', 'Best Buy', 'Nike', 'H&M'],
+  Utilities: ['Electric Co', 'Water Utility', 'Comcast Internet', 'T-Mobile'],
+  Healthcare: ['CVS Pharmacy', 'Dr Smith Office', 'Blue Cross'],
+  Housing: ['Apt Rent LLC', 'State Farm Insurance'],
+  Subscriptions: ['iCloud Storage', 'ChatGPT Plus', 'GitHub Pro', 'Notion'],
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -48,7 +48,9 @@ async function main() {
   const existing = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
   if (existing) {
     // Delete all user data (order matters for foreign key constraints)
-    await prisma.transactionTag.deleteMany({ where: { transaction: { account: { userId: existing.id } } } });
+    await prisma.transactionTag.deleteMany({
+      where: { transaction: { account: { userId: existing.id } } },
+    });
     await prisma.transaction.deleteMany({ where: { account: { userId: existing.id } } });
     await prisma.recurringTransaction.deleteMany({ where: { userId: existing.id } });
     await prisma.budgetAllocation.deleteMany({ where: { budget: { userId: existing.id } } });
@@ -56,6 +58,7 @@ async function main() {
     await prisma.debtProfile.deleteMany({ where: { userId: existing.id } });
     await prisma.linkedBankAccount.deleteMany({ where: { connection: { userId: existing.id } } });
     await prisma.bankConnection.deleteMany({ where: { userId: existing.id } });
+    await prisma.insurancePolicy.deleteMany({ where: { userId: existing.id } });
     await prisma.account.deleteMany({ where: { userId: existing.id } });
     await prisma.ruleCondition.deleteMany({ where: { rule: { userId: existing.id } } });
     await prisma.ruleAction.deleteMany({ where: { rule: { userId: existing.id } } });
@@ -85,8 +88,17 @@ async function main() {
 
   // Create categories
   const categoryNames = [
-    'Income', 'Groceries', 'Restaurants', 'Transportation', 'Entertainment',
-    'Shopping', 'Utilities', 'Healthcare', 'Housing', 'Subscriptions', 'Savings',
+    'Income',
+    'Groceries',
+    'Restaurants',
+    'Transportation',
+    'Entertainment',
+    'Shopping',
+    'Utilities',
+    'Healthcare',
+    'Housing',
+    'Subscriptions',
+    'Savings',
   ];
 
   const categories: Record<string, string> = {};
@@ -106,7 +118,12 @@ async function main() {
     data: { name: 'Ally Savings', type: 'SAVINGS', userId: user.id, initialBalance: '12000.00' },
   });
   const creditCard = await prisma.account.create({
-    data: { name: 'Amex Blue Cash', type: 'CREDIT_CARD', userId: user.id, initialBalance: '1847.32' },
+    data: {
+      name: 'Amex Blue Cash',
+      type: 'CREDIT_CARD',
+      userId: user.id,
+      initialBalance: '1847.32',
+    },
   });
   const _mortgage = await prisma.account.create({
     data: { name: 'Home Mortgage', type: 'MORTGAGE', userId: user.id, initialBalance: '245000.00' },
@@ -116,12 +133,72 @@ async function main() {
 
   // Create debt profiles for liability accounts (auto-sync with debt payoff)
   await prisma.debtProfile.create({
-    data: { userId: user.id, accountId: creditCard.id, apr: '0.1999', minimumPayment: '35.00', priority: 1 },
+    data: {
+      userId: user.id,
+      accountId: creditCard.id,
+      apr: '0.1999',
+      minimumPayment: '35.00',
+      priority: 1,
+    },
   });
   await prisma.debtProfile.create({
-    data: { userId: user.id, accountId: _mortgage.id, apr: '0.0675', minimumPayment: '1580.00', priority: 2 },
+    data: {
+      userId: user.id,
+      accountId: _mortgage.id,
+      apr: '0.0675',
+      minimumPayment: '1580.00',
+      priority: 2,
+    },
   });
   console.log('  ✓ Created debt profiles for liability accounts');
+
+  // Create insurance policies for the Protection dashboard. The auto renewal is
+  // intentionally near-term so the demo visibly exercises renewal awareness.
+  const renewalSoon = new Date();
+  renewalSoon.setDate(renewalSoon.getDate() + 21);
+  const homeRenewal = new Date();
+  homeRenewal.setMonth(homeRenewal.getMonth() + 6);
+  await prisma.insurancePolicy.createMany({
+    data: [
+      {
+        userId: user.id,
+        type: 'AUTO',
+        provider: 'State Farm',
+        nickname: 'Family car',
+        premium: '186.00',
+        premiumFrequency: 'MONTHLY',
+        deductible: '1000.00',
+        coverageAmount: '100000.00',
+        renewalDate: renewalSoon,
+      },
+      {
+        userId: user.id,
+        type: 'HOME',
+        provider: 'Travelers',
+        nickname: 'Homeowners',
+        premium: '2140.00',
+        premiumFrequency: 'ANNUAL',
+        paymentArrangement: 'MORTGAGE_ESCROW',
+        paymentAccountId: _mortgage.id,
+        propertyTaxEscrow: '420.00',
+        propertyTaxFrequency: 'MONTHLY',
+        deductible: '2500.00',
+        coverageAmount: '450000.00',
+        renewalDate: homeRenewal,
+      },
+      {
+        userId: user.id,
+        type: 'HEALTH',
+        provider: 'Blue Cross',
+        nickname: 'Family health plan',
+        premium: '480.00',
+        premiumFrequency: 'MONTHLY',
+        deductible: '1500.00',
+        coverageAmount: '0.00',
+      },
+    ],
+  });
+  console.log('  ✓ Created 3 insurance policies (including one upcoming renewal)');
 
   // Generate 6 months of transactions
   let txCount = 0;
@@ -172,16 +249,35 @@ async function main() {
 
       let amount: number;
       switch (categoryName) {
-        case 'Groceries': amount = randomBetween(15, 180); break;
-        case 'Restaurants': amount = randomBetween(5, 65); break;
-        case 'Transportation': amount = randomBetween(8, 75); break;
-        case 'Entertainment': amount = randomBetween(10, 50); break;
-        case 'Shopping': amount = randomBetween(15, 200); break;
-        case 'Utilities': amount = randomBetween(40, 150); break;
-        case 'Healthcare': amount = randomBetween(15, 250); break;
-        case 'Housing': amount = randomBetween(50, 200); break;
-        case 'Subscriptions': amount = randomBetween(5, 30); break;
-        default: amount = randomBetween(10, 100);
+        case 'Groceries':
+          amount = randomBetween(15, 180);
+          break;
+        case 'Restaurants':
+          amount = randomBetween(5, 65);
+          break;
+        case 'Transportation':
+          amount = randomBetween(8, 75);
+          break;
+        case 'Entertainment':
+          amount = randomBetween(10, 50);
+          break;
+        case 'Shopping':
+          amount = randomBetween(15, 200);
+          break;
+        case 'Utilities':
+          amount = randomBetween(40, 150);
+          break;
+        case 'Healthcare':
+          amount = randomBetween(15, 250);
+          break;
+        case 'Housing':
+          amount = randomBetween(50, 200);
+          break;
+        case 'Subscriptions':
+          amount = randomBetween(5, 30);
+          break;
+        default:
+          amount = randomBetween(10, 100);
       }
 
       await prisma.transaction.create({
