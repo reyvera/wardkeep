@@ -5,6 +5,21 @@ All notable changes to Wardkeep will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
+- **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
+- **Actual spending-pace data** — Transaction statistics now return cumulative daily spending for truthful pacing charts.
+
+### Changed
+
+- **Unknown is no longer healthy** — An unevaluated pillar is not scored as 100. Preparation is currently explicitly unevaluated because no generator exists.
+- **Protection liquidity score is graduated** — Liquid reserves progress continuously from 0 through 12 months of ordinary expenses instead of treating 3 and 12 months as equally protected.
+- **Protection burn rate excludes common transfer-like debits** — Transfer, credit-card payment, investment, savings-transfer, and principal-payment descriptors no longer automatically inflate ordinary household expense estimates.
+- **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
+
 ## [1.2.0] - 2026-08-20
 
 ### Added
