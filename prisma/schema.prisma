@@ -21,6 +21,7 @@ model User {
   failedLogins Int       @default(0)
   lockedUntil  DateTime?
   lastFailedAt DateTime?
+  lastDashboardViewedAt DateTime?
 
   accounts              Account[]
   categories            Category[]
