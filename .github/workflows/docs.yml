@@ -43,6 +43,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
+          bundler: '4.0.11'
           bundler-cache: true
           working-directory: docs-site
 
