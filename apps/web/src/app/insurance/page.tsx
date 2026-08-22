@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { Archive, Pencil, Plus, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 type PolicyType =
@@ -102,6 +102,11 @@ export default function InsurancePage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/insurance/policies/${id}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['insurance-policies'] }),
+  });
+  const setActive = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiClient.patch(`/insurance/policies/${id}`, { isActive }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['insurance-policies'] }),
   });
   const submit = (event: FormEvent) => {
@@ -330,7 +335,7 @@ export default function InsurancePage() {
       )}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {policies.data?.map((policy) => (
-          <article key={policy.id} className="card">
+          <article key={policy.id} className={`card ${policy.isActive ? '' : 'opacity-70'}`}>
             <div className="flex gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-blue/10">
                 <ShieldCheck size={18} className="text-accent-blue" />
@@ -340,6 +345,11 @@ export default function InsurancePage() {
                   <div>
                     <p className="font-medium text-content-primary">
                       {policy.nickname || label(policy.type)}
+                      {!policy.isActive && (
+                        <span className="ml-2 text-xs font-normal text-content-tertiary">
+                          Inactive
+                        </span>
+                      )}
                     </p>
                     <p className="text-sm text-content-secondary">
                       {policy.provider} · {label(policy.type)}
@@ -368,6 +378,16 @@ export default function InsurancePage() {
                       aria-label={`Edit ${policy.provider} policy`}
                     >
                       <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
+                        setActive.mutate({ id: policy.id, isActive: !policy.isActive })
+                      }
+                      className="btn-ghost p-1 text-content-tertiary hover:text-accent-blue"
+                      aria-label={`${policy.isActive ? 'Mark inactive' : 'Restore'} ${policy.provider} policy`}
+                      title={policy.isActive ? 'Mark inactive' : 'Restore policy'}
+                    >
+                      {policy.isActive ? <Archive size={16} /> : <RotateCcw size={16} />}
                     </button>
                     <button
                       onClick={() => remove.mutate(policy.id)}
