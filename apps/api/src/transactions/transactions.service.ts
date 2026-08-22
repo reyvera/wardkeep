@@ -563,12 +563,27 @@ export class TransactionsService {
       }),
     ]);
 
+    const dailyTransactions = await this.prisma.transaction.findMany({
+      where: { userId, type: 'DEBIT', date: { gte: startOfMonth, lt: startOfNext } },
+      select: { date: true, amount: true },
+      orderBy: { date: 'asc' },
+    });
+
     // Days elapsed and total days in month for pace projection
     const today = new Date();
     const daysInMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0).getDate();
     const dayOfMonth = today.getMonth() === refDate.getMonth() && today.getFullYear() === refDate.getFullYear()
       ? today.getDate()
       : daysInMonth; // if viewing past month, use full month
+
+    let cumulative = 0;
+    const dailySpending = Array.from({ length: dayOfMonth }, (_, index) => {
+      const day = index + 1;
+      for (const transaction of dailyTransactions) {
+        if (transaction.date.getDate() === day) cumulative += Number(transaction.amount);
+      }
+      return { day, actual: Math.round(cumulative * 100) / 100 };
+    });
 
     return {
       monthlyTrend,
@@ -583,6 +598,7 @@ export class TransactionsService {
         daysElapsed: dayOfMonth,
         daysInMonth,
       },
+      dailySpending,
     };
   }
 }
