@@ -75,7 +75,7 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 
 - household readiness, trend, and coverage;
 - the strongest and most limited observed pillars;
-- clickable pillar summaries with the factors Wardkeep did and did not evaluate;
+- clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
 - **Wardkeep recommends**, which connects an observation to a concrete next action;
 - **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.

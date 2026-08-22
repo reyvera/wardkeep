@@ -49,8 +49,12 @@ const PILLARS: Record<PillarKey, {
     icon: Shield,
     description: 'How well the household can absorb a financial shock.',
     sources: ['Account balances', 'Recent debit transactions'],
-    observed: [{ capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' }],
-    next: ['Income interruption resilience', 'Insurance policies and deductibles', 'Estate documents and beneficiaries', 'Dependents, fixed obligations, and secondary backstops'],
+    observed: [
+      { capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' },
+      { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
+      { capability: 'insurance-deductibles', label: 'Recorded deductibles compared with liquid reserves' },
+    ],
+    next: ['Insurance adequacy and coverage gaps', 'Income interruption resilience', 'Estate documents and beneficiaries', 'Dependents, fixed obligations, and secondary backstops'],
   },
   provision: {
     label: 'Provision',

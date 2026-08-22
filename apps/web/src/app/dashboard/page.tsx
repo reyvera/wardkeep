@@ -92,7 +92,7 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
   protection: {
     label: 'Protection',
     icon: Shield,
-    description: 'Emergency fund, insurance, security',
+    description: 'Reserves, recorded policies, and shock resilience',
   },
   provision: {
     label: 'Provision',
