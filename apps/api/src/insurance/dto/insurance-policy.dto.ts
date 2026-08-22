@@ -1,7 +1,22 @@
 import { z } from 'zod';
 
-const policyTypes = ['AUTO', 'HOME', 'RENTERS', 'HEALTH', 'LIFE', 'DISABILITY', 'UMBRELLA', 'OTHER'] as const;
+const policyTypes = [
+  'AUTO',
+  'HOME',
+  'RENTERS',
+  'HEALTH',
+  'LIFE',
+  'DISABILITY',
+  'UMBRELLA',
+  'OTHER',
+] as const;
 const premiumFrequencies = ['MONTHLY', 'QUARTERLY', 'SEMI_ANNUAL', 'ANNUAL'] as const;
+const paymentArrangements = [
+  'SEPARATE',
+  'MORTGAGE_ESCROW',
+  'LOAN_OR_LEASE',
+  'OTHER_BUNDLED',
+] as const;
 const money = z.string().regex(/^\d+(\.\d+)?$/, 'Must be a valid positive decimal amount');
 
 export const CreateInsurancePolicySchema = z.object({
@@ -10,6 +25,10 @@ export const CreateInsurancePolicySchema = z.object({
   nickname: z.string().trim().max(100).optional(),
   premium: money.optional(),
   premiumFrequency: z.enum(premiumFrequencies).optional(),
+  paymentArrangement: z.enum(paymentArrangements).optional(),
+  paymentAccountId: z.string().uuid().optional(),
+  propertyTaxEscrow: money.optional(),
+  propertyTaxFrequency: z.enum(premiumFrequencies).optional(),
   deductible: money.optional(),
   coverageAmount: money.optional(),
   renewalDate: z.string().date().optional(),
@@ -22,6 +41,9 @@ export const UpdateInsurancePolicySchema = CreateInsurancePolicySchema.partial()
   premium: money.nullable().optional(),
   deductible: money.nullable().optional(),
   coverageAmount: money.nullable().optional(),
+  paymentAccountId: z.string().uuid().nullable().optional(),
+  propertyTaxEscrow: money.nullable().optional(),
+  propertyTaxFrequency: z.enum(premiumFrequencies).nullable().optional(),
   renewalDate: z.string().date().nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),
 });
