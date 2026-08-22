@@ -127,4 +127,4 @@ Downloads the compose file, generates secure credentials, pulls pre-built images
 
 ## License
 
-Wardkeep is open source under [AGPL-3.0](https://github.com/reyvera/budgetapp/blob/main/LICENSE). Self-host it, modify it, contribute back.
+Wardkeep is open source under [AGPL-3.0](https://github.com/reyvera/wardkeep/blob/main/LICENSE). Self-host it, modify it, contribute back.

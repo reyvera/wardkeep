@@ -26,7 +26,7 @@ Get Wardkeep running locally for development in 5 minutes.
 ## 1. Clone and install
 
 ```bash
-git clone https://github.com/reyvera/budgetapp.git
+git clone https://github.com/reyvera/wardkeep.git
 cd budgetapp
 
 # Use Node 22

@@ -16,7 +16,7 @@ Run Wardkeep on your own hardware with Docker Compose.
 ## One-liner install (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/install.sh | bash
 ```
 
 This downloads the compose file, generates secure credentials, pulls pre-built images from GHCR, and starts the app. Done in under 2 minutes.
@@ -28,7 +28,7 @@ This downloads the compose file, generates secure credentials, pulls pre-built i
 ```bash
 # Create a directory and download the compose file
 mkdir ~/wardkeep && cd ~/wardkeep
-curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/docker-compose.prod.yml \
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/docker-compose.prod.yml \
   -o docker-compose.yml
 
 # Create .env with secure credentials
@@ -47,7 +47,7 @@ The app is available at [http://localhost:3000](http://localhost:3000). API heal
 ## Build from source
 
 ```bash
-git clone https://github.com/reyvera/budgetapp.git && cd budgetapp
+git clone https://github.com/reyvera/wardkeep.git && cd wardkeep
 cp .env.example .env
 # Edit .env — set ENCRYPTION_KEY to a secure value (openssl rand -hex 32)
 

@@ -203,7 +203,7 @@ cd packages/ai-engine && pnpm test
 ### One-liner install (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/install.sh | bash
 ```
 
 This downloads the compose file, generates secure credentials, pulls pre-built images from GHCR, and starts the app. Done in under 2 minutes.
@@ -213,7 +213,7 @@ This downloads the compose file, generates secure credentials, pulls pre-built i
 ```bash
 # Create a directory and download the compose file
 mkdir ~/wardkeep && cd ~/wardkeep
-curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/docker-compose.prod.yml -o docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/docker-compose.prod.yml -o docker-compose.yml
 
 # Create .env with your encryption key
 echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env
@@ -228,7 +228,7 @@ docker compose up -d
 
 ```bash
 # Clone and configure
-git clone https://github.com/reyvera/budgetapp.git && cd budgetapp
+git clone https://github.com/reyvera/wardkeep.git && cd wardkeep
 cp .env.example .env
 # Edit .env — set ENCRYPTION_KEY to a secure random value (openssl rand -hex 32)
 
