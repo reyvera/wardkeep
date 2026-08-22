@@ -4,8 +4,15 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
-  Shield, TrendingUp, Wallet, PiggyBank, Hammer,
-  AlertTriangle, Lightbulb, Activity, BarChart3,
+  Shield,
+  TrendingUp,
+  Wallet,
+  PiggyBank,
+  Hammer,
+  AlertTriangle,
+  Lightbulb,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -34,13 +41,46 @@ interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
-  overallAssessment: { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] };
+  overallAssessment: {
+    state: 'known' | 'partial' | 'not_evaluated';
+    score: number | null;
+    coverage: number;
+    evaluatedCapabilities: string[];
+  };
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
-  pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
-  dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
-  recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string; reason: string | null }>;
+  pillarAssessments: Record<
+    string,
+    {
+      state: 'known' | 'partial' | 'not_evaluated';
+      score: number | null;
+      coverage: number;
+      evaluatedCapabilities: string[];
+    }
+  >;
+  dataFreshness: {
+    synchronizedAccounts: number;
+    manualAccounts: number;
+    staleAccounts: number;
+    lastSynchronizedAt: string | null;
+  };
+  recentChanges: Array<{
+    pillar: string;
+    previous: number;
+    current: number;
+    delta: number;
+    comparedTo: string;
+    reason: string | null;
+  }>;
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
+}
+
+interface InsurancePolicySummary {
+  id: string;
+  renewalDate: string | null;
+  deductible: string | null;
+  coverageAmount: string | null;
+  isActive: boolean;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -63,21 +103,31 @@ function getScoreLabel(score: number): string {
 
 function getSignalIcon(type: Signal['type']) {
   switch (type) {
-    case 'risk': return AlertTriangle;
-    case 'warning': return AlertTriangle;
-    case 'opportunity': return Lightbulb;
-    case 'positive': return TrendingUp;
-    case 'milestone': return Activity;
+    case 'risk':
+      return AlertTriangle;
+    case 'warning':
+      return AlertTriangle;
+    case 'opportunity':
+      return Lightbulb;
+    case 'positive':
+      return TrendingUp;
+    case 'milestone':
+      return Activity;
   }
 }
 
 function getSignalColor(type: Signal['type']): string {
   switch (type) {
-    case 'risk': return 'var(--accent-red)';
-    case 'warning': return 'var(--accent-amber)';
-    case 'opportunity': return 'var(--accent-blue)';
-    case 'positive': return 'var(--accent-green)';
-    case 'milestone': return 'var(--accent-green)';
+    case 'risk':
+      return 'var(--accent-red)';
+    case 'warning':
+      return 'var(--accent-amber)';
+    case 'opportunity':
+      return 'var(--accent-blue)';
+    case 'positive':
+      return 'var(--accent-green)';
+    case 'milestone':
+      return 'var(--accent-green)';
   }
 }
 
@@ -123,6 +173,10 @@ export default function DashboardPage() {
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
   });
+  const insuranceQuery = useQuery({
+    queryKey: ['insurance-policies'],
+    queryFn: () => apiClient.get<InsurancePolicySummary[]>('/insurance/policies'),
+  });
 
   if (readinessQuery.isLoading) {
     return (
@@ -135,10 +189,14 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="grid gap-6">
-          <div className="card"><div className="skeleton h-32 w-full" /></div>
+          <div className="card">
+            <div className="skeleton h-32 w-full" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="card"><div className="skeleton h-20 w-full" /></div>
+              <div key={i} className="card">
+                <div className="skeleton h-20 w-full" />
+              </div>
             ))}
           </div>
         </div>
@@ -169,13 +227,24 @@ export default function DashboardPage() {
   const observedOverall = data.overallAssessment.score;
   const scoreColor = getScoreColor(observedOverall ?? 0);
   const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
-  const scoredPillars = Object.entries(data.pillars).filter(([key]) => data.pillarAssessments[key]?.score !== null);
+  const scoredPillars = Object.entries(data.pillars).filter(
+    ([key]) => data.pillarAssessments[key]?.score !== null,
+  );
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
   const history = data.history.slice(-90);
-  const canCompareTrend = data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
+  const canCompareTrend =
+    data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
   const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
   const recommend = [...data.topRisks, ...data.topOpportunities].slice(0, 3);
+  const activePolicies = insuranceQuery.data?.filter((policy) => policy.isActive) ?? [];
+  const policyDetailsNeeded = activePolicies.filter(
+    (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
+  ).length;
+  const policyRenewalsNeedingAttention = activePolicies.filter((policy) => {
+    if (!policy.renewalDate) return false;
+    return new Date(policy.renewalDate).getTime() - Date.now() <= 30 * 86_400_000;
+  }).length;
 
   return (
     <div>
@@ -195,16 +264,33 @@ export default function DashboardPage() {
           <div className="relative w-36 h-36 flex-shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
               <circle
-                cx="50" cy="50" r="42"
+                cx="50"
+                cy="50"
+                r="42"
                 fill="none"
                 stroke="var(--bg-elevated)"
                 strokeWidth="8"
               />
-              {observedOverall !== null && <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${observedOverall * 2.64} 264`} />}
+              {observedOverall !== null && (
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke={scoreColor}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${observedOverall * 2.64} 264`}
+                />
+              )}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-content-primary">{observedOverall === null ? '—' : `${observedOverall}%`}</span>
-              <span className="text-xs font-medium" style={{ color: scoreColor }}>{scoreLabel}</span>
+              <span className="text-3xl font-bold text-content-primary">
+                {observedOverall === null ? '—' : `${observedOverall}%`}
+              </span>
+              <span className="text-xs font-medium" style={{ color: scoreColor }}>
+                {scoreLabel}
+              </span>
             </div>
           </div>
 
@@ -212,18 +298,67 @@ export default function DashboardPage() {
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-xl font-semibold text-content-primary mb-1">Household readiness</h2>
             <p className="text-sm text-content-secondary">
-              {observedOverall === null
-                ? 'Add accounts and ordinary expenses before Wardkeep can assess your readiness.'
-                : <>{strongest && <>Strongest observed: <span className="text-content-primary">{PILLAR_META[strongest[0]]?.label} {strongest[1]}</span>. </>}{weakest && <>Most limited observed: <span className="text-content-primary">{PILLAR_META[weakest[0]]?.label} {weakest[1]}</span>. </>}This is a {data.overallAssessment.state === 'partial' ? 'partial' : 'complete'} assessment of the information currently available.</>}
+              {observedOverall === null ? (
+                'Add accounts and ordinary expenses before Wardkeep can assess your readiness.'
+              ) : (
+                <>
+                  {strongest && (
+                    <>
+                      Strongest observed:{' '}
+                      <span className="text-content-primary">
+                        {PILLAR_META[strongest[0]]?.label} {strongest[1]}
+                      </span>
+                      .{' '}
+                    </>
+                  )}
+                  {weakest && (
+                    <>
+                      Most limited observed:{' '}
+                      <span className="text-content-primary">
+                        {PILLAR_META[weakest[0]]?.label} {weakest[1]}
+                      </span>
+                      .{' '}
+                    </>
+                  )}
+                  This is a {data.overallAssessment.state === 'partial' ? 'partial' : 'complete'}{' '}
+                  assessment of the information currently available.
+                </>
+              )}
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
-              <span>{coverageLabel(data.coverage)} · {data.coverage}% coverage</span>
-              <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>{data.dataFreshness.staleAccounts > 0 ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated` : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}</span>
-              {canCompareTrend && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
+              <span>
+                {coverageLabel(data.coverage)} · {data.coverage}% coverage
+              </span>
+              <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>
+                {data.dataFreshness.staleAccounts > 0
+                  ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated`
+                  : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}
+              </span>
+              {canCompareTrend && (
+                <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>
+                  {trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days
+                </span>
+              )}
             </div>
             {canCompareTrend && (
-              <svg viewBox="0 0 180 36" className="w-full max-w-xs h-9 mt-3" aria-label="Readiness trend">
-                <polyline fill="none" stroke={scoreColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={history.map((point, index) => `${(index / (history.length - 1)) * 180},${34 - point.overall * 0.32}`).join(' ')} />
+              <svg
+                viewBox="0 0 180 36"
+                className="w-full max-w-xs h-9 mt-3"
+                aria-label="Readiness trend"
+              >
+                <polyline
+                  fill="none"
+                  stroke={scoreColor}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={history
+                    .map(
+                      (point, index) =>
+                        `${(index / (history.length - 1)) * 180},${34 - point.overall * 0.32}`,
+                    )
+                    .join(' ')}
+                />
               </svg>
             )}
           </div>
@@ -242,33 +377,81 @@ export default function DashboardPage() {
           const coverage = assessment?.coverage ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
           return (
-            <Link href={`/dashboard/readiness/${key}`} key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
+            <Link
+              href={`/dashboard/readiness/${key}`}
+              key={key}
+              className="card block transition-colors hover:border-[var(--accent-blue)]"
+            >
               <div className="flex items-center gap-2 mb-3">
                 <Icon size={16} style={{ color }} />
                 <span className="text-sm font-medium text-content-primary">{meta.label}</span>
               </div>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-2xl font-bold" style={{ color }}>{assessment?.score === null || !assessment ? '—' : `${score}%`}</span>
+                <span className="text-2xl font-bold" style={{ color }}>
+                  {assessment?.score === null || !assessment ? '—' : `${score}%`}
+                </span>
               </div>
               <div className="progress-track">
                 <div
                   className="progress-fill"
-                  style={{ width: `${assessment?.score === null ? 0 : score}%`, backgroundColor: color }}
+                  style={{
+                    width: `${assessment?.score === null ? 0 : score}%`,
+                    backgroundColor: color,
+                  }}
                 />
               </div>
-              <p className="text-xs text-content-tertiary mt-2">{key === 'peace' ? 'Derived from observed pillars' : `${coverageLabel(coverage)} · ${coverage}% covered`}</p>
-              {pillarSignals.map((signal) => <p key={signal.capabilityId} className="text-xs text-content-secondary mt-1 line-clamp-2">{signal.summary}</p>)}
+              <p className="text-xs text-content-tertiary mt-2">
+                {key === 'peace'
+                  ? 'Derived from observed pillars'
+                  : `${coverageLabel(coverage)} · ${coverage}% covered`}
+              </p>
+              {pillarSignals.map((signal) => (
+                <p
+                  key={signal.capabilityId}
+                  className="text-xs text-content-secondary mt-1 line-clamp-2"
+                >
+                  {signal.summary}
+                </p>
+              ))}
             </Link>
           );
         })}
       </div>
+
+      {!insuranceQuery.isLoading && (
+        <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Shield size={20} className="mt-0.5 text-accent-blue" />
+            <div>
+              <h2 className="text-base font-semibold text-content-primary">Policy records</h2>
+              {activePolicies.length === 0 ? (
+                <p className="mt-1 text-sm text-content-secondary">
+                  No active policies recorded. Add the policies you want Wardkeep to track.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-content-secondary">
+                  {activePolicies.length} active · {policyRenewalsNeedingAttention} renewal
+                  {policyRenewalsNeedingAttention === 1 ? '' : 's'} needing attention ·{' '}
+                  {policyDetailsNeeded} record{policyDetailsNeeded === 1 ? '' : 's'} missing key
+                  details
+                </p>
+              )}
+            </div>
+          </div>
+          <Link href="/insurance" className="btn-secondary whitespace-nowrap">
+            Review policies
+          </Link>
+        </section>
+      )}
 
       {/* Action-oriented next steps */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <h3 className="card-title">Needs attention</h3>
           {data.topRisks.length === 0 ? (
-            <p className="text-sm text-content-tertiary">No confirmed risks yet. More household information improves this assessment.</p>
+            <p className="text-sm text-content-tertiary">
+              No confirmed risks yet. More household information improves this assessment.
+            </p>
           ) : (
             <ul className="space-y-3">
               {data.topRisks.map((signal, i) => {
@@ -288,7 +471,9 @@ export default function DashboardPage() {
         <div className="card">
           <h3 className="card-title">Wardkeep recommends</h3>
           {recommend.length === 0 ? (
-            <p className="text-sm text-content-tertiary">Add accounts, expenses, and a budget to receive tailored next steps.</p>
+            <p className="text-sm text-content-tertiary">
+              Add accounts, expenses, and a budget to receive tailored next steps.
+            </p>
           ) : (
             <ul className="space-y-3">
               {recommend.map((signal, i) => {
@@ -297,7 +482,12 @@ export default function DashboardPage() {
                 return (
                   <li key={i} className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                    <div><span className="text-sm text-content-primary">{signal.summary}</span><p className="text-xs text-content-tertiary mt-0.5">{PILLAR_META[signal.pillar]?.label ?? 'Readiness'} · based on available data</p></div>
+                    <div>
+                      <span className="text-sm text-content-primary">{signal.summary}</span>
+                      <p className="text-xs text-content-tertiary mt-0.5">
+                        {PILLAR_META[signal.pillar]?.label ?? 'Readiness'} · based on available data
+                      </p>
+                    </div>
                   </li>
                 );
               })}
@@ -307,18 +497,47 @@ export default function DashboardPage() {
       </div>
 
       <div className="card mt-6">
-        <h3 className="card-title">{data.changeWindow === 'since_last_visit' ? 'SINCE YOUR LAST VISIT' : 'SINCE YOUR LAST RECORDED CHECK'}</h3>
+        <h3 className="card-title">
+          {data.changeWindow === 'since_last_visit'
+            ? 'SINCE YOUR LAST VISIT'
+            : 'SINCE YOUR LAST RECORDED CHECK'}
+        </h3>
         {data.recentChanges.length === 0 ? (
-          <p className="text-sm text-content-tertiary">No readiness changes have been recorded yet.</p>
+          <p className="text-sm text-content-tertiary">
+            No readiness changes have been recorded yet.
+          </p>
         ) : (
           <ul className="space-y-3">
             {data.recentChanges.map((change) => {
               const label = PILLAR_META[change.pillar]?.label ?? change.pillar;
-              return <li key={change.pillar} className="flex items-start justify-between gap-4 text-sm"><div><p className="text-content-primary">{label} changed from {change.previous} to {change.current}</p>{change.reason && <p className="text-xs text-content-tertiary mt-1">{change.reason}</p>}</div><span className={change.delta > 0 ? 'text-accent-green font-medium' : 'text-accent-red font-medium'}>{change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}</span></li>;
+              return (
+                <li key={change.pillar} className="flex items-start justify-between gap-4 text-sm">
+                  <div>
+                    <p className="text-content-primary">
+                      {label} changed from {change.previous} to {change.current}
+                    </p>
+                    {change.reason && (
+                      <p className="text-xs text-content-tertiary mt-1">{change.reason}</p>
+                    )}
+                  </div>
+                  <span
+                    className={
+                      change.delta > 0
+                        ? 'text-accent-green font-medium'
+                        : 'text-accent-red font-medium'
+                    }
+                  >
+                    {change.delta > 0 ? '↑' : '↓'} {Math.abs(change.delta)}
+                  </span>
+                </li>
+              );
             })}
           </ul>
         )}
-        <p className="text-xs text-content-tertiary mt-4">Compared with the closest daily readiness snapshot available for this period. Detailed score-change reasons are still being added.</p>
+        <p className="text-xs text-content-tertiary mt-4">
+          Compared with the closest daily readiness snapshot available for this period. Detailed
+          score-change reasons are still being added.
+        </p>
       </div>
     </div>
   );
