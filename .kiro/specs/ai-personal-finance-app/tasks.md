@@ -13,11 +13,12 @@
     {
       "name": "Phase 2 — Decision Engine",
       "tasks": ["19", "20", "21", "22", "23", "24", "25"],
-      "dependsOn": ["Phase 1 — Finance Platform"]
+      "dependsOn": ["Phase 1 — Finance Platform"],
+      "status": "in_progress"
     },
     {
       "name": "Ongoing Enhancements",
-      "tasks": ["33", "34", "35", "36", "37", "38"],
+      "tasks": ["33", "34", "35", "36", "37", "38", "39"],
       "dependsOn": ["Phase 1 — Finance Platform"]
     }
   ]
@@ -493,6 +494,33 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ## Ongoing Enhancements (Phase 1 Polish)
 
 > These improve the existing finance foundation. Can be tackled alongside Phase 2 work.
+
+### 39. Readiness Trust & Household Coverage [NEXT]
+
+> Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
+
+- [ ] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
+    - Per-pillar state: `known`, `partial`, or `not_evaluated`
+    - Include evaluated factors, missing factors, data freshness, and provenance
+    - Define how overall readiness behaves when high-weight pillars are not evaluated
+
+- [ ] 39.2 Add data provenance and freshness
+    - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
+    - Display account and score freshness in relevant UI
+    - Reduce or qualify confidence for stale/manual values according to transparent rules
+
+- [ ] 39.3 Harden the Protection liquidity model
+    - Structural transfer exclusion and credit-card payment matching
+    - Distinguish essential burn rate from normal household spending
+    - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
+
+- [ ] 39.4 Add composite Protection capabilities
+    - Insurance policies and renewals, disability/life coverage, deductibles, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+    - Keep every component independently explainable; missing data remains unknown
+
+- [ ] 39.5 Create durable recommendations and impact previews
+    - Rank by severity × urgency × financial impact × actionability × confidence
+    - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
 ### 33. Income & Spending Intelligence
 
