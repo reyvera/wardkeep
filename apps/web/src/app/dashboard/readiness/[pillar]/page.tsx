@@ -31,6 +31,7 @@ interface ReadinessResponse {
   history: Array<{ pillars: PillarScores; recordedAt: string }>;
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
+  pillarAssessments: Record<PillarKey, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
 }
 
 const PILLARS: Record<PillarKey, {
@@ -118,8 +119,9 @@ export default function ReadinessPillarPage() {
   }
 
   const data = readinessQuery.data!;
-  const score = data.pillars[pillar];
-  const coverage = pillar === 'peace' ? data.coverage : data.pillarCoverage[pillar];
+  const assessment = data.pillarAssessments[pillar];
+  const score = assessment.score ?? data.pillars[pillar];
+  const coverage = assessment.coverage;
   const signals = data.signals.filter((signal) => signal.pillar === pillar);
   const observedCapabilities = new Set(signals.map((signal) => signal.capabilityId));
   const history = data.history.slice(-90);
@@ -142,14 +144,14 @@ export default function ReadinessPillarPage() {
             </div>
           </div>
           <div className="md:text-right">
-            <p className="text-4xl font-bold" style={{ color }}>{coverage ? `${score}%` : '—'}</p>
+            <p className="text-4xl font-bold" style={{ color }}>{assessment.score === null ? '—' : `${score}%`}</p>
             <p className="text-sm text-content-secondary mt-1">{confidenceLabel(coverage)} · {coverage}% coverage</p>
             {trend !== null && <p className={`text-xs mt-2 ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>{trend >= 0 ? '↑' : '↓'} {Math.abs(trend)} over available history</p>}
           </div>
         </div>
       </section>
 
-      {coverage === 0 ? (
+      {assessment.state === 'not_evaluated' ? (
         <section className="card border-[var(--accent-yellow)]">
           <div className="flex gap-3"><CircleHelp size={20} className="text-accent-yellow flex-shrink-0 mt-0.5" /><div><h2 className="text-lg font-semibold text-content-primary">This area has not been evaluated yet</h2><p className="text-sm text-content-secondary mt-1">Wardkeep does not have a generator for {meta.label.toLowerCase()} yet, so it will not present a score as if the household were prepared.</p></div></div>
         </section>
