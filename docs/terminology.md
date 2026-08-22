@@ -40,9 +40,12 @@ Consistency in language shapes how people think about a product — both the tea
 | Use | Don't Use |
 |-----|-----------|
 | Household Readiness | Score, Health Check |
+| Readiness coverage | Completeness score |
 | Advisor | AI Chat, Ask AI |
 | Capabilities | Modules, Features, Plugins |
-| Morning Brief | Dashboard, Home |
+| Morning Brief | Daily digest, Home |
+| Dashboard | Passive dashboard, Home |
+| Financial Overview | Dashboard |
 | Household Timeline | Calendar, Events |
 | Provision | Budget, Money |
 | Protection | Insurance, Safety |

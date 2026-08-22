@@ -2,7 +2,7 @@
 
 ## How the Vision Maps to Code
 
-This document bridges the product philosophy and the existing repository structure. It defines how the Household Intelligence Platform architecture maps onto the current monorepo while keeping Phase 1 focused on becoming the best self-hosted finance platform.
+This document bridges the product philosophy and the repository structure. Wardkeep is evolving from a self-hosted finance foundation into a household-readiness command center: finance produces evidence, deterministic services derive explainable signals, and the product guides the next useful household action.
 
 ## Current Repository → Future Structure
 
@@ -21,7 +21,7 @@ packages/
   importers/    → File parsers (CSV, OFX, QFX)
 ```
 
-### Target (Phase 3+)
+### Current direction
 
 ```
 apps/
@@ -31,8 +31,8 @@ apps/
 
 packages/
   shared/         → Types, validation, constants
-  readiness/      → Readiness Engine (deterministic score computation)
-  advisor/        → AI layer (explains, prioritizes, cross-references)
+  readiness/      → Readiness Engine (deterministic score computation) [implemented]
+  advisor/        → AI layer (explains, prioritizes, cross-references) [planned]
   capability-sdk/ → Base interfaces and registry for Capabilities
 
 capabilities/
@@ -48,18 +48,20 @@ capabilities/
 
 The transition is incremental, not a rewrite:
 
-1. **Phase 1 (now):** Keep the current structure. The finance-engine, accounts, transactions, budgets — all of this becomes the `finance` Capability internally. No code needs to move yet.
+1. **Finance foundation (shipped):** Accounts, transactions, budgets, debt, cash flow, recurring detection, import, bank sync, and deterministic math provide the first household observations.
 
-2. **Phase 2 (AI):** Evolve `ai-engine` into `advisor`. Add Morning Brief, Weekly Brief generation. The Advisor consumes data from existing services.
+2. **Readiness foundation (shipped):** `packages/readiness`, finance signal generators, daily snapshots, the readiness API, coverage indicators, a graduated liquidity-resilience signal, and a readiness-focused dashboard are in place.
 
-3. **Phase 3 (Platform):** Extract the Capability interface. Refactor existing finance services to implement it. Create `packages/readiness` for the engine. New Capabilities (vehicle, insurance, etc.) use the SDK from day one.
+3. **Decision engine (next):** Harden coverage and data freshness, persist explanations and recommendation state, add a timeline/change feed, and expose scenarios and impact previews.
+
+4. **Household platform (future):** Extract the Capability SDK and add insurance, estate, home, vehicle, medical, and other independently observable household domains.
 
 ## Architectural Layers
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Presentation Layer (apps/web)                          │
-│  Morning Brief • Readiness View • Timeline • Advisor UI │
+│  Dashboard • Financial Overview • Readiness • Timeline • Advisor │
 ├─────────────────────────────────────────────────────────┤
 │  API Layer (apps/api)                                   │
 │  REST endpoints • Auth • Rate limiting • Orchestration  │

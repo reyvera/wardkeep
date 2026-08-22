@@ -2,9 +2,9 @@
 
 *Guard your ground.*
 
-A private, self-hostable, AI-powered personal finance app that helps you track spending, income, debt, savings, bills, subscriptions, and cash flow across all devices.
+A private, self-hostable household-readiness platform. Wardkeep starts with finance—spending, income, debt, savings, bills, and cash flow—and is becoming the calm command center for what a household needs to prepare for next.
 
-**The key difference:** instead of only showing numbers, Wardkeep explains what is happening, predicts what is coming, and recommends actions.
+**The key difference:** instead of only showing numbers, Wardkeep explains what is happening, shows how complete that picture is, anticipates what is coming, and recommends the next useful action.
 
 ## Core Principle
 
@@ -50,6 +50,7 @@ packages/
 - **AI transaction categorization** — Auto-categorize new transactions
 - **Debt payoff calculator** — Snowball, avalanche, custom strategies with what-if mode
 - **Cash-flow forecast** — 90-day projections based on recurring transactions
+- **Readiness foundations** — Deterministic Protection, Provision, Prosperity, and Peace signals with score history and explicit data coverage
 - **Encrypted backups** — AES-256-GCM with user passphrase
 - **Progressive Web App** — Offline support, installable on any device
 - **Docker Compose** — Single-command self-hosted deployment with pre-built images
@@ -58,7 +59,7 @@ packages/
 
 > Full gallery with all pages at desktop and mobile viewports coming soon via GitHub Pages. These highlight the core experience.
 
-**Dashboard** — Net worth, spending breakdown, savings projections, and recent activity at a glance.
+**Dashboard** — A household-readiness command center: readiness coverage, explainable pillars, concrete areas needing attention, and recommended next steps. The accompanying Financial Overview shows net worth, accounts, budgets, and actual spending pace.
 
 ![Dashboard](docs/screenshots/desktop/dashboard.png)
 
@@ -312,13 +313,14 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 
 ## Roadmap
 
-✅ = shipped · 📋 = planned
+✅ = shipped · 🟡 = foundation shipped / expanding · 📋 = planned
 
 | Feature | Status |
 |---------|--------|
 | Bank auto-import (SimpleFIN) | ✅ |
 | AI chat assistant (OpenAI/Anthropic/Ollama) | ✅ |
-| Dashboard with charts & savings projections | ✅ |
+| Household readiness dashboard with coverage, pillar signals, recommendations, and trend | 🟡 |
+| Financial overview with actual cumulative spending pace and month-end budget projection | ✅ |
 | Monthly budgets with category progress | ✅ |
 | Transaction categorization (manual + AI) | ✅ |
 | Transfer detection & filtering | ✅ |
@@ -329,16 +331,24 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 | Docker self-hosted deployment | ✅ |
 | Pre-built images on GHCR | ✅ |
 | CI/CD pipeline | ✅ |
-| Readiness Engine (household decision engine) | 📋 |
+| Readiness Engine (household decision engine) | 🟡 |
+| Composite Protection (insurance, income resilience, estate, obligations) | 📋 |
 | Capability SDK (extensible domain modules) | 📋 |
-| Morning Brief / Advisor | 📋 |
+| Coming Up timeline, change feed, and Morning Brief / Advisor | 📋 |
+| Readiness scenarios and recommendation impact previews | 📋 |
 | Multi-currency support | 📋 |
 
 Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)
 
-## Project Status
+## Product Direction
 
-v1.0.0 released. Self-hosted deployment verified on Dockge. Bank connections, AI chat, accounts, transactions, budgets, and settings all work end-to-end.
+Wardkeep is not trying to be another ledger or budget dashboard. Finance is the evidence layer for a household-readiness system:
+
+`observations → explainable signals → readiness + coverage → prioritized actions → plans → measured improvement`
+
+The current release has a robust finance foundation and the first readiness implementation. It intentionally does **not** claim that a score is comprehensive when the required information is absent. Protection currently measures graduated liquid-reserve resilience using a filtered ordinary-expense burn rate; insurance, estate, health, dependents, and other protection dimensions are planned capabilities rather than implied coverage.
+
+See [the readiness specification](docs/readiness-engine.md) for the scoring contract and current limits, and [the implementation plan](.kiro/specs/ai-personal-finance-app/tasks.md) for the sequenced work.
 
 ## License
 
