@@ -162,7 +162,7 @@ const modules = ...;          // NestJS uses "module" internally; we use "Capabi
 | Notification | Generic, easily ignored | Brief, Insight |
 | Plugin | Implies optional/lesser | Capability |
 | Module | Too technical for users | Capability |
-| Dashboard | Implies passive data display | Morning Brief, Readiness |
+| Dashboard | Use only for the readiness command center; do not use it for a generic metrics page | Financial Overview for detailed money data |
 | Health Score | Medical connotation | Readiness |
 | AI | Generic, overhyped | Advisor |
 | Chatbot | Implies reactive, limited | Advisor |

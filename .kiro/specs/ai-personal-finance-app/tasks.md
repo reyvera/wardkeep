@@ -363,6 +363,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Past events show completion status
     - Future events show countdown/proximity
 
+### 24.5 Financial Overview accuracy [COMPLETE]
+
+- [x] Replace reconstructed average spending pace with actual cumulative transaction totals by date
+- [x] Replace mid-month “under/over budget” wording with remaining allocation, pace against expectation, and projected month-end spending
+
 ### 25. Phase 2 Checkpoint
 
 - [ ] 25.1 Verify Readiness Engine produces correct, explainable scores
@@ -503,10 +508,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - Per-category change indicators
     - 6/12-month trend visualizations
 
-- [ ] 33.3 Spending pace line visualization
-    - Cumulative daily spending vs ideal pace line
-    - Under/over pace indicator with dollar amount
-    - Show on dashboard and budget detail
+- [x] 33.3 Spending pace line visualization
+    - [x] Cumulative daily spending vs ideal pace line in Financial Overview
+    - [x] Pace indicator with dollar amount and projected month-end spending
+    - [ ] Extend the same truthful pace treatment to budget detail
 
 ### 34. Transaction Workflow
 
