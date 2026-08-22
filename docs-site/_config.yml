@@ -1,7 +1,7 @@
 title: Wardkeep
-description: Private, self-hostable, AI-powered personal finance
+description: Private, self-hostable household-readiness platform
 url: "https://reyvera.github.io"
-baseurl: "/budgetapp"
+baseurl: "/wardkeep"
 
 remote_theme: just-the-docs/just-the-docs@v0.10.0
 
