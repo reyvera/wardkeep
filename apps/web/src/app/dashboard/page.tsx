@@ -233,7 +233,7 @@ export default function DashboardPage() {
           const coverage = key === 'peace' ? data.coverage : data.pillarCoverage[key as keyof ReadinessResponse['pillarCoverage']] ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
           return (
-            <Link href="/dashboard/details" key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
+            <Link href={`/dashboard/readiness/${key}`} key={key} className="card block transition-colors hover:border-[var(--accent-blue)]">
               <div className="flex items-center gap-2 mb-3">
                 <Icon size={16} style={{ color }} />
                 <span className="text-sm font-medium text-content-primary">{meta.label}</span>
