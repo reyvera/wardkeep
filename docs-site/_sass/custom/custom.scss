@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap');
+
+$ink: #13202a;
+$ink-soft: #43505a;
+$paper: #f5f0e7;
+$paper-deep: #ebe2d4;
+$gold: #a57b38;
+$gold-light: #d5b26f;
+$line: rgba(19, 32, 42, 0.17);
+$night: #101d26;
+
+body {
+  background: $paper;
+  color: $ink;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.side-bar, .main-header {
+  background: rgba(245, 240, 231, 0.94);
+  border-color: $line;
+}
+
+.site-title, .site-title:visited, .site-button, .nav-list-link, .nav-list-expander, .breadcrumb-nav {
+  color: $ink;
+}
+
+.site-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.site-title::before {
+  content: '◈';
+  color: $gold;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.4rem;
+  margin-right: 0.55rem;
+}
+
+.nav-list .nav-list-item .nav-list-link:hover,
+.nav-list .nav-list-item .nav-list-link.active {
+  background-image: linear-gradient(-90deg, rgba(165, 123, 56, 0.12), rgba(165, 123, 56, 0.03));
+  color: $ink;
+}
+
+.main {
+  max-width: 76rem;
+}
+
+.main-content-wrap {
+  padding-top: 3rem;
+}
+
+.main-content h1, .main-content h2, .main-content h3 {
+  color: $ink;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.main-content h2 { margin-top: 3.25rem; }
+.main-content h3 { letter-spacing: -0.02em; }
+.main-content p, .main-content li { color: $ink-soft; line-height: 1.72; }
+.main-content strong { color: $ink; }
+.main-content a { color: #76531a; }
+.main-content code { color: #6c4d1b; background: rgba(165, 123, 56, 0.11); }
+.main-content pre { border: 1px solid rgba(213, 178, 111, 0.28); box-shadow: 0 12px 30px rgba(28, 35, 37, 0.08); }
+.main-content table { border-color: $line; }
+.main-content th { color: $ink; background: rgba(213, 178, 111, 0.13); }
+.main-content td, .main-content th { border-color: $line; }
+
+.btn, .btn-primary {
+  border-radius: 3px;
+  box-shadow: none;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: $night;
+  color: #fff;
+}
+
+.btn-primary:hover { background: #243640; }
+.btn-outline { border-color: rgba(19, 32, 42, 0.45); color: $ink; background: transparent; }
+.btn-outline:hover { background: rgba(19, 32, 42, 0.07); }
+
+.wardkeep-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(26rem, 1.12fr);
+  align-items: center;
+  gap: 3.5rem;
+  min-height: 39rem;
+  margin: -1rem 0 3.5rem;
+}
+
+.wardkeep-eyebrow {
+  color: $gold !important;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.wardkeep-hero h1 {
+  font-size: clamp(3rem, 5.2vw, 5.4rem) !important;
+  line-height: 1.02;
+  margin: 1rem 0 1.5rem;
+}
+
+.wardkeep-hero-copy { font-size: 1.18rem; max-width: 31rem; }
+.wardkeep-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 2rem 0 2.6rem; }
+
+.wardkeep-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.3rem;
+  color: $ink !important;
+  font-size: 0.88rem;
+}
+
+.wardkeep-trust span { border-right: 1px solid $line; padding-right: 1.3rem; }
+.wardkeep-trust span:last-child { border: 0; padding-right: 0; }
+.wardkeep-trust b { color: $gold; font-size: 1.1rem; margin-right: 0.4rem; }
+
+.device-macbook {
+  border: 1px solid rgba(212, 191, 150, 0.55);
+  border-radius: 1.15rem;
+  background: $night;
+  box-shadow: 0 1.8rem 2.6rem rgba(38, 35, 29, 0.27), 0 0.35rem 0.9rem rgba(38, 35, 29, 0.17);
+  overflow: hidden;
+  padding: 0.65rem 0.65rem 0.8rem;
+}
+
+.device-macbook::before {
+  content: '●  ●  ●';
+  display: block;
+  color: #f07064;
+  font-size: 0.72rem;
+  letter-spacing: 0.28rem;
+  line-height: 1;
+  padding: 0.1rem 0.45rem 0.65rem;
+}
+
+.device-macbook img { display: block; width: 100%; border-radius: 0.55rem; margin: 0; }
+
+.device-ipad {
+  max-width: 43rem;
+  margin: 2rem auto;
+  padding: 1rem;
+  border-radius: 1.7rem;
+  background: #17242d;
+  border: 1px solid rgba(212, 191, 150, 0.5);
+  box-shadow: 0 1.3rem 2.4rem rgba(38, 35, 29, 0.19);
+}
+
+.device-ipad img { width: 100%; display: block; border-radius: 0.75rem; margin: 0; }
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: $line;
+  border: 1px solid $line;
+  margin: 2.25rem 0 4rem;
+}
+
+.feature-card { background: rgba(255, 253, 248, 0.5); padding: 1.6rem; }
+.feature-card h3 { margin: 0 0 0.7rem; font-size: 1.5rem; }
+.feature-card p { margin: 0; font-size: 0.92rem; }
+.feature-icon { color: $gold; font-size: 1.45rem; }
+
+.wardkeep-section-intro { max-width: 42rem; font-size: 1.08rem; }
+.screenshot-gallery .device-macbook { margin: 2.5rem 0 4rem; }
+
+.screenshot-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin: 2rem 0 4.5rem;
+}
+
+.screenshot-pair h3 { margin-top: 0; }
+.screenshot-pair .device-macbook { margin: 1.1rem 0 0; border-radius: 0.8rem; padding: 0.42rem 0.42rem 0.5rem; }
+.screenshot-pair .device-macbook::before { font-size: 0.45rem; padding: 0.05rem 0.25rem 0.4rem; }
+
+.phone-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.5rem;
+  margin: 2.5rem 0 4rem;
+}
+
+.device-phone {
+  padding: 0.5rem;
+  border-radius: 1.25rem;
+  background: #17242d;
+  border: 1px solid rgba(212, 191, 150, 0.5);
+  box-shadow: 0 1rem 1.8rem rgba(38, 35, 29, 0.16);
+}
+
+.device-phone::before { content: ''; display: block; width: 35%; height: 0.28rem; margin: 0.12rem auto 0.4rem; border-radius: 1rem; background: #65717a; }
+.device-phone img { width: 100%; display: block; border-radius: 0.76rem; margin: 0; }
+
+@media (max-width: 50rem) {
+  .wardkeep-hero { grid-template-columns: 1fr; gap: 2.25rem; min-height: auto; margin-top: 0; }
+  .wardkeep-hero h1 { font-size: 3.25rem !important; }
+  .feature-grid { grid-template-columns: 1fr; }
+  .screenshot-pair { grid-template-columns: 1fr; }
+  .phone-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wardkeep-trust { gap: 0.75rem; }
+  .wardkeep-trust span { border: 0; padding-right: 0; }
+}

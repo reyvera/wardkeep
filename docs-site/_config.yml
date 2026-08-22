@@ -11,7 +11,7 @@ plugins:
   - jekyll-sitemap
   - jekyll-include-cache
 
-color_scheme: dark
+color_scheme: wardkeep
 
 # logo: "/assets/images/logo.svg"  # Uncomment when logo is added
 

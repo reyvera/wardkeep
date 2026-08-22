@@ -5,61 +5,43 @@ nav_order: 1
 permalink: /
 ---
 
-# A clearer view of your household.
-{: .fs-9 }
+<section class="wardkeep-hero">
+  <div>
+    <p class="wardkeep-eyebrow">Private household command center</p>
+    <h1>Guard your ground.<br>Know what your household needs next.</h1>
+    <p class="wardkeep-hero-copy">Wardkeep turns your finances into a clear picture of readiness—what is covered, what needs attention, and the next useful action.</p>
+    <div class="wardkeep-actions">
+      <a class="btn btn-primary" href="{{ site.baseurl }}/quick-start">Start your private command center</a>
+      <a class="btn btn-outline" href="{{ site.baseurl }}/screenshots">Explore the dashboard →</a>
+    </div>
+    <p class="wardkeep-trust"><span><b>⌂</b> Self-hosted</span><span><b>⌑</b> Your data stays yours</span><span><b>✓</b> Clear next actions</span></p>
+  </div>
+  <div class="device-macbook">
+    <img src="{{ site.baseurl }}/assets/screenshots/desktop/dashboard.png?v={{ site.time | date: '%s' }}" alt="Wardkeep dashboard shown in a desktop device frame">
+  </div>
+</section>
 
-Know what matters today. Feel more ready for what comes next.
-{: .fs-6 .fw-300 }
+## Your money is part of the picture. Your household is the point.
 
-Wardkeep is a private, self-hostable home for your money and the responsibilities it supports. It brings spending, bills, savings, debt, and cash flow into one calm place—then helps you see what deserves attention before it becomes urgent.
-{: .fs-5 .fw-300 }
+<p class="wardkeep-section-intro">Most finance apps stop at transactions. Wardkeep helps you understand the practical questions behind them, without pretending a household can be reduced to one perfect score.</p>
 
-[Get started]({{ site.baseurl }}/quick-start){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Self-host Wardkeep]({{ site.baseurl }}/deployment){: .btn .fs-5 .mb-4 .mb-md-0 }
+<div class="feature-grid">
+  <div class="feature-card"><div class="feature-icon">◈</div><h3>See the whole picture</h3><p>Accounts, spending, budgets, debt, and recurring bills together instead of spread across tools.</p></div>
+  <div class="feature-card"><div class="feature-icon">⌁</div><h3>Understand what matters</h3><p>A plain-language readiness view that separates what Wardkeep knows from what it has not evaluated.</p></div>
+  <div class="feature-card"><div class="feature-icon">→</div><h3>Take the next right step</h3><p>Clear signals about spending pace, cash flow, and resilience before small issues become bigger surprises.</p></div>
+</div>
 
-Private by design. Your data stays under your control.
-{: .fs-3 .text-grey-dk-000 }
+## Start where you are
 
----
+Connect or import your accounts, organize transactions, and set a budget when you are ready. Wardkeep becomes more useful as your picture becomes clearer; missing information is never treated as proof that everything is fine.
 
-## Money is part of the picture. Your household is the point.
-
-Most finance apps stop at transactions. Wardkeep helps you understand the practical questions behind them:
-
-| See the whole picture | Understand what matters | Take the next right step |
-|:--|:--|:--|
-| Accounts, spending, budgets, debt, and recurring bills together instead of spread across tools. | A plain-language readiness view that distinguishes what Wardkeep knows from what it has not evaluated yet. | Clear signals about spending pace, cash flow, and financial resilience—without pretending your situation can be reduced to one perfect score. |
-
-### Start where you are
-
-Connect or import your accounts, organize your transactions, and set a budget when you are ready. Wardkeep becomes more useful as your picture becomes clearer; it never treats missing information as proof that everything is fine.
-
-### Stay ahead of ordinary life
-
-Track bills, subscriptions, debt payoff, savings, and cash flow in one place. See actual spending pace and a truthful month-end projection, not a chart that fills in the blanks.
-
-### Build readiness, not anxiety
-
-The Dashboard highlights your household’s observed strengths, gaps, and next actions. Today it is grounded in finance data; insurance, estate planning, home, vehicle, timelines, and planning tools are being added carefully over time.
-
-[See the product direction]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
-
----
-
-## What Wardkeep can help with today
-
-- **Bring your accounts together** with SimpleFIN bank import or CSV, OFX, and QFX files.
-- **See where your money is going** with categories, search, rules, and transaction review.
-- **Plan a month with confidence** using budgets, real spending pace, recurring payments, and cash-flow forecasts.
-- **Work through debt deliberately** with snowball, avalanche, and custom payoff comparisons.
-- **Understand financial readiness honestly** with coverage, contributing factors, and an explicit “not evaluated” state when Wardkeep lacks evidence.
-- **Keep control of your information** with self-hosting, encrypted backups, and local or optional cloud AI.
-
----
+<div class="device-ipad">
+  <img src="{{ site.baseurl }}/assets/screenshots/desktop/transactions.png?v={{ site.time | date: '%s' }}" alt="Wardkeep transactions shown in a tablet device frame">
+</div>
 
 ## Built for privacy and clarity
 
-Wardkeep can run entirely in your own environment. Deterministic calculations—not AI—handle balances, forecasts, budgets, debt math, and readiness signals. AI is optional and can help explain, categorize, summarize, and surface patterns.
+Wardkeep can run in your own environment. Deterministic calculations—not AI—handle balances, forecasts, budgets, debt math, and readiness signals. AI is optional and can help explain, categorize, summarize, and surface patterns.
 
 | Your preference | Wardkeep supports |
 |:--|:--|
@@ -67,17 +49,18 @@ Wardkeep can run entirely in your own environment. Deterministic calculations—
 | Use a mix | Sensitive data stays local while general prompts can use a cloud provider |
 | Move quickly | Optional OpenAI or Anthropic integrations |
 
-[Install Wardkeep]({{ site.baseurl }}/deployment){: .btn .btn-primary }
+[Self-host Wardkeep]({{ site.baseurl }}/deployment){: .btn .btn-primary }
+[See the product direction]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
 
 ---
 
 ## Want the details?
 
-Wardkeep is open source. Technical material is here when you need it—not required to understand the product.
+Wardkeep is open source. The technical material is here when you need it—not required to understand the product.
 
 [Quick start]({{ site.baseurl }}/quick-start){: .btn .btn-outline }
 [Release roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
-[Screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
+[All screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
 [Readiness model](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md){: .btn .btn-outline }
 [Source on GitHub](https://github.com/reyvera/wardkeep){: .btn .btn-outline }
 

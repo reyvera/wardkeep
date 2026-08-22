@@ -5,138 +5,53 @@ nav_order: 4
 permalink: /screenshots
 ---
 
-# Screenshots
+# Wardkeep, in your hands.
 {: .fs-9 }
 
-See Wardkeep in action — desktop and mobile.
+The actual product, shown across desktop, tablet, and mobile.
 {: .fs-6 .fw-300 }
 
----
+<div class="screenshot-gallery">
 
-## Desktop
-
-### Dashboard
+## Dashboard
 
 Household readiness, coverage, explainable pillar signals, areas needing attention, and recommended next steps.
 
-![Dashboard — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/dashboard.png?v={{ site.time | date: '%s' }})
+<div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/dashboard.png?v={{ site.time | date: '%s' }}" alt="Wardkeep dashboard in a MacBook frame"></div>
 
----
+## Everyday money, clearly organized
 
-### Transactions
+<div class="screenshot-pair">
+  <div><h3>Transactions</h3><p>Search, filter by category, date, or account, and manage your activity in one place.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/transactions.png?v={{ site.time | date: '%s' }}" alt="Transactions in a MacBook frame"></div></div>
+  <div><h3>Budget</h3><p>Monthly category allocations, progress, and overspend alerts—based on actual spending.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/budget.png?v={{ site.time | date: '%s' }}" alt="Budget in a MacBook frame"></div></div>
+</div>
 
-Search, filter by category/date/account, and bulk-manage transactions.
+<div class="screenshot-pair">
+  <div><h3>Accounts</h3><p>Checking, savings, credit cards, loans, and cash in one household view.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/accounts.png?v={{ site.time | date: '%s' }}" alt="Accounts in a MacBook frame"></div></div>
+  <div><h3>Debt payoff</h3><p>Compare snowball, avalanche, consolidation, and custom payoff strategies.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/debt.png?v={{ site.time | date: '%s' }}" alt="Debt payoff in a MacBook frame"></div></div>
+</div>
 
-![Transactions — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/transactions.png?v={{ site.time | date: '%s' }})
+## Connected and ready for real life
 
----
+<div class="screenshot-pair">
+  <div><h3>Bank connections</h3><p>Connect through SimpleFIN and bring your financial picture together.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/bank-connections.png?v={{ site.time | date: '%s' }}" alt="Bank connections in a MacBook frame"></div></div>
+  <div><h3>Recurring bills</h3><p>Recognize subscriptions and recurring payments before they surprise you.</p><div class="device-macbook"><img src="{{ site.baseurl }}/assets/screenshots/desktop/recurring.png?v={{ site.time | date: '%s' }}" alt="Recurring payments in a MacBook frame"></div></div>
+</div>
 
-### Budget
+## Mobile, when you are away from your desk
 
-Monthly allocations per category with progress bars and overspend alerts.
+<div class="phone-grid">
+  <div class="device-phone"><img src="{{ site.baseurl }}/assets/screenshots/mobile/dashboard.png?v={{ site.time | date: '%s' }}" alt="Mobile dashboard"></div>
+  <div class="device-phone"><img src="{{ site.baseurl }}/assets/screenshots/mobile/transactions.png?v={{ site.time | date: '%s' }}" alt="Mobile transactions"></div>
+  <div class="device-phone"><img src="{{ site.baseurl }}/assets/screenshots/mobile/budget.png?v={{ site.time | date: '%s' }}" alt="Mobile budget"></div>
+  <div class="device-phone"><img src="{{ site.baseurl }}/assets/screenshots/mobile/chat.png?v={{ site.time | date: '%s' }}" alt="Mobile chat"></div>
+</div>
 
-![Budget — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/budget.png?v={{ site.time | date: '%s' }})
-
----
-
-### AI Chat
-
-Ask natural-language questions about your finances. Runs locally or via cloud APIs.
-
-![AI Chat — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/chat.png?v={{ site.time | date: '%s' }})
-
----
-
-### Debt Payoff
-
-Snowball, avalanche, consolidation, and velocity banking calculators with month-by-month schedules.
-
-![Debt Payoff — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/debt.png?v={{ site.time | date: '%s' }})
-
----
-
-### Accounts
-
-All your accounts in one view — checking, savings, credit cards, loans, cash.
-
-![Accounts — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/accounts.png?v={{ site.time | date: '%s' }})
-
----
-
-### Categories
-
-Hierarchical categories with icons, colors, and AI auto-categorization.
-
-![Categories — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/categories.png?v={{ site.time | date: '%s' }})
-
----
-
-### Bank Connections
-
-Connect your bank via SimpleFIN and sync transactions automatically.
-
-![Bank Connections — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/bank-connections.png?v={{ site.time | date: '%s' }})
-
----
-
-### Import
-
-CSV, OFX, and QFX import with column mapping and preview.
-
-![Import — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/import.png?v={{ site.time | date: '%s' }})
-
----
-
-### Recurring Transactions
-
-Auto-detected recurring bills and subscriptions.
-
-![Recurring — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/recurring.png?v={{ site.time | date: '%s' }})
-
----
-
-### Rules Engine
-
-Automatic categorization based on merchant, amount, or description.
-
-![Rules — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/rules.png?v={{ site.time | date: '%s' }})
-
----
-
-### Settings
-
-Per-user AI mode, session timeout, backup schedule, and encryption keys.
-
-![Settings — Desktop]({{ site.baseurl }}/assets/screenshots/desktop/settings.png?v={{ site.time | date: '%s' }})
-
----
-
-## Mobile
-
-Fully responsive PWA. Installable on any device.
-{: .fs-5 .fw-300 }
-
-| Dashboard | Transactions | Budget |
-|:---------:|:------------:|:------:|
-| ![Dashboard]({{ site.baseurl }}/assets/screenshots/mobile/dashboard.png?v={{ site.time | date: '%s' }}) | ![Transactions]({{ site.baseurl }}/assets/screenshots/mobile/transactions.png?v={{ site.time | date: '%s' }}) | ![Budget]({{ site.baseurl }}/assets/screenshots/mobile/budget.png?v={{ site.time | date: '%s' }}) |
-
-| AI Chat | Debt Payoff | Accounts |
-|:-------:|:-----------:|:--------:|
-| ![Chat]({{ site.baseurl }}/assets/screenshots/mobile/chat.png?v={{ site.time | date: '%s' }}) | ![Debt]({{ site.baseurl }}/assets/screenshots/mobile/debt.png?v={{ site.time | date: '%s' }}) | ![Accounts]({{ site.baseurl }}/assets/screenshots/mobile/accounts.png?v={{ site.time | date: '%s' }}) |
-
-| Categories | Bank Connections | Import |
-|:----------:|:----------------:|:------:|
-| ![Categories]({{ site.baseurl }}/assets/screenshots/mobile/categories.png?v={{ site.time | date: '%s' }}) | ![Bank Connections]({{ site.baseurl }}/assets/screenshots/mobile/bank-connections.png?v={{ site.time | date: '%s' }}) | ![Import]({{ site.baseurl }}/assets/screenshots/mobile/import.png?v={{ site.time | date: '%s' }}) |
-
-| Recurring | Rules | Settings |
-|:---------:|:-----:|:--------:|
-| ![Recurring]({{ site.baseurl }}/assets/screenshots/mobile/recurring.png?v={{ site.time | date: '%s' }}) | ![Rules]({{ site.baseurl }}/assets/screenshots/mobile/rules.png?v={{ site.time | date: '%s' }}) | ![Settings]({{ site.baseurl }}/assets/screenshots/mobile/settings.png?v={{ site.time | date: '%s' }}) |
-
----
+</div>
 
 ## Regenerating screenshots
 
-Screenshots are auto-captured with Playwright against the demo user's data:
+Screenshots are captured with Playwright against demo data:
 
 ```bash
 # Prerequisites: dev servers running, demo user seeded
@@ -144,4 +59,4 @@ npx playwright install chromium   # one-time
 pnpm screenshots
 ```
 
-Output lands in `docs/screenshots/{desktop,mobile}/*.png`.
+Output lands in `docs/screenshots/{desktop,mobile}/*.png` and is published by the GitHub Pages workflow.
