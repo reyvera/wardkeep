@@ -6,7 +6,10 @@ on:
     paths:
       - 'docs-site/**'
       - 'docs/screenshots/**'
+      - 'docs/**'
+      - 'README.md'
       - 'CHANGELOG.md'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
