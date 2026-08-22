@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 type PolicyType =
@@ -15,6 +15,7 @@ interface Policy {
   premium: string | null;
   premiumFrequency: string;
   paymentArrangement: string;
+  paymentAccountId: string | null;
   paymentAccount: { name: string } | null;
   propertyTaxEscrow: string | null;
   deductible: string | null;
@@ -42,22 +43,24 @@ const label = (value: string) =>
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const emptyForm = {
+  type: 'AUTO' as PolicyType,
+  provider: '',
+  nickname: '',
+  renewalDate: '',
+  premium: '',
+  deductible: '',
+  coverageAmount: '',
+  paymentArrangement: 'SEPARATE',
+  paymentAccountId: '',
+  propertyTaxEscrow: '',
+};
 
 export default function InsurancePage() {
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    type: 'AUTO' as PolicyType,
-    provider: '',
-    nickname: '',
-    renewalDate: '',
-    premium: '',
-    deductible: '',
-    coverageAmount: '',
-    paymentArrangement: 'SEPARATE',
-    paymentAccountId: '',
-    propertyTaxEscrow: '',
-  });
+  const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState<Policy | null>(null);
   const policies = useQuery({
     queryKey: ['insurance-policies'],
     queryFn: () => apiClient.get<Policy[]>('/insurance/policies'),
@@ -66,27 +69,22 @@ export default function InsurancePage() {
     queryKey: ['accounts'],
     queryFn: () => apiClient.get<Account[]>('/accounts'),
   });
-  const create = useMutation({
+  const save = useMutation({
     mutationFn: () =>
-      apiClient.post(
-        '/insurance/policies',
-        Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
-      ),
+      editing
+        ? apiClient.patch(
+            `/insurance/policies/${editing.id}`,
+            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
+          )
+        : apiClient.post(
+            '/insurance/policies',
+            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
+          ),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['insurance-policies'] });
       setOpen(false);
-      setForm({
-        type: 'AUTO',
-        provider: '',
-        nickname: '',
-        renewalDate: '',
-        premium: '',
-        deductible: '',
-        coverageAmount: '',
-        paymentArrangement: 'SEPARATE',
-        paymentAccountId: '',
-        propertyTaxEscrow: '',
-      });
+      setEditing(null);
+      setForm(emptyForm);
     },
   });
   const remove = useMutation({
@@ -95,7 +93,7 @@ export default function InsurancePage() {
   });
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    create.mutate();
+    save.mutate();
   };
 
   return (
@@ -108,7 +106,14 @@ export default function InsurancePage() {
             does not yet determine whether your coverage is adequate.
           </p>
         </div>
-        <button className="btn-primary w-fit" onClick={() => setOpen(!open)}>
+        <button
+          className="btn-primary w-fit"
+          onClick={() => {
+            setEditing(null);
+            setForm(emptyForm);
+            setOpen(!open);
+          }}
+        >
           <Plus size={16} />
           Add policy
         </button>
@@ -187,35 +192,58 @@ export default function InsurancePage() {
           </div>
           <div>
             <label className="input-label">How is this premium paid?</label>
-            <select className="input" value={form.paymentArrangement} onChange={(e) => setForm({ ...form, paymentArrangement: e.target.value })}>
+            <select
+              className="input"
+              value={form.paymentArrangement}
+              onChange={(e) => setForm({ ...form, paymentArrangement: e.target.value })}
+            >
               <option value="SEPARATE">Paid separately</option>
               <option value="MORTGAGE_ESCROW">Included in mortgage escrow</option>
               <option value="LOAN_OR_LEASE">Included in loan or lease payment</option>
               <option value="OTHER_BUNDLED">Included in another payment</option>
             </select>
           </div>
-          {form.paymentArrangement !== 'SEPARATE' && <>
-            <div>
-              <label className="input-label">Bundled payment account</label>
-              <select className="input" required value={form.paymentAccountId} onChange={(e) => setForm({ ...form, paymentAccountId: e.target.value })}>
-                <option value="">Select an account</option>
-                {accounts.data?.map((account) => <option key={account.id} value={account.id}>{account.name} · {label(account.type)}</option>)}
-              </select>
-            </div>
-            {form.type === 'HOME' && <div>
-              <label className="input-label">Property-tax escrow amount (optional)</label>
-              <input className="input" inputMode="decimal" value={form.propertyTaxEscrow} onChange={(e) => setForm({ ...form, propertyTaxEscrow: e.target.value })} placeholder="0.00" />
-            </div>}
-          </>}
+          {form.paymentArrangement !== 'SEPARATE' && (
+            <>
+              <div>
+                <label className="input-label">Bundled payment account</label>
+                <select
+                  className="input"
+                  required
+                  value={form.paymentAccountId}
+                  onChange={(e) => setForm({ ...form, paymentAccountId: e.target.value })}
+                >
+                  <option value="">Select an account</option>
+                  {accounts.data?.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} · {label(account.type)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {form.type === 'HOME' && (
+                <div>
+                  <label className="input-label">Property-tax escrow amount (optional)</label>
+                  <input
+                    className="input"
+                    inputMode="decimal"
+                    value={form.propertyTaxEscrow}
+                    onChange={(e) => setForm({ ...form, propertyTaxEscrow: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+              )}
+            </>
+          )}
           <div className="flex items-end gap-2">
-            <button className="btn-primary" disabled={create.isPending}>
-              {create.isPending ? 'Saving…' : 'Save policy'}
+            <button className="btn-primary" disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : editing ? 'Save changes' : 'Save policy'}
             </button>
             <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
               Cancel
             </button>
           </div>
-          {create.isError && (
+          {save.isError && (
             <p className="text-sm text-accent-red md:col-span-2">
               Unable to save this policy. Check the entered values and try again.
             </p>
@@ -254,13 +282,37 @@ export default function InsurancePage() {
                       {policy.provider} · {label(policy.type)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => remove.mutate(policy.id)}
-                    className="btn-ghost p-1 text-content-tertiary hover:text-accent-red"
-                    aria-label={`Delete ${policy.provider} policy`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setEditing(policy);
+                        setForm({
+                          type: policy.type,
+                          provider: policy.provider,
+                          nickname: policy.nickname ?? '',
+                          renewalDate: policy.renewalDate?.slice(0, 10) ?? '',
+                          premium: policy.premium ?? '',
+                          deductible: policy.deductible ?? '',
+                          coverageAmount: policy.coverageAmount ?? '',
+                          paymentArrangement: policy.paymentArrangement,
+                          paymentAccountId: policy.paymentAccountId ?? '',
+                          propertyTaxEscrow: policy.propertyTaxEscrow ?? '',
+                        });
+                        setOpen(true);
+                      }}
+                      className="btn-ghost p-1 text-content-tertiary hover:text-accent-blue"
+                      aria-label={`Edit ${policy.provider} policy`}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => remove.mutate(policy.id)}
+                      className="btn-ghost p-1 text-content-tertiary hover:text-accent-red"
+                      aria-label={`Delete ${policy.provider} policy`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-content-secondary">
                   <span>
@@ -287,7 +339,9 @@ export default function InsurancePage() {
                       <br />
                       <b className="text-content-primary">
                         Included in {policy.paymentAccount?.name ?? 'a bundled payment'}
-                        {policy.propertyTaxEscrow ? ` · $${policy.propertyTaxEscrow} property-tax escrow` : ''}
+                        {policy.propertyTaxEscrow
+                          ? ` · $${policy.propertyTaxEscrow} property-tax escrow`
+                          : ''}
                       </b>
                     </span>
                   )}
