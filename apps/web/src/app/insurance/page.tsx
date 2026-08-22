@@ -390,7 +390,15 @@ export default function InsurancePage() {
                       {policy.isActive ? <Archive size={16} /> : <RotateCcw size={16} />}
                     </button>
                     <button
-                      onClick={() => remove.mutate(policy.id)}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete ${policy.nickname || `${policy.provider} ${label(policy.type)}`} permanently? This cannot be undone.`,
+                          )
+                        ) {
+                          remove.mutate(policy.id);
+                        }
+                      }}
                       className="btn-ghost p-1 text-content-tertiary hover:text-accent-red"
                       aria-label={`Delete ${policy.provider} policy`}
                     >
