@@ -39,6 +39,7 @@ interface ReadinessResponse {
   pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
   dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
   recentChanges: Array<{ pillar: string; previous: number; current: number; delta: number; comparedTo: string }>;
+  changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -303,7 +304,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="card mt-6">
-        <h3 className="card-title">SINCE YOUR LAST RECORDED CHECK</h3>
+        <h3 className="card-title">{data.changeWindow === 'since_last_visit' ? 'SINCE YOUR LAST VISIT' : 'SINCE YOUR LAST RECORDED CHECK'}</h3>
         {data.recentChanges.length === 0 ? (
           <p className="text-sm text-content-tertiary">No readiness changes have been recorded yet.</p>
         ) : (
@@ -314,7 +315,7 @@ export default function DashboardPage() {
             })}
           </ul>
         )}
-        <p className="text-xs text-content-tertiary mt-4">Compared with the most recent daily readiness snapshot. Visit-specific change tracking is planned next.</p>
+        <p className="text-xs text-content-tertiary mt-4">Compared with the closest daily readiness snapshot available for this period. Detailed score-change reasons are still being added.</p>
       </div>
     </div>
   );
