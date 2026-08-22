@@ -32,6 +32,7 @@ interface ReadinessResponse {
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
   pillarAssessments: Record<PillarKey, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
+  dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
 }
 
 const PILLARS: Record<PillarKey, {
@@ -170,7 +171,7 @@ export default function ReadinessPillarPage() {
         <section className="card">
           <h2 className="card-title">STILL NEEDED FOR A COMPLETE PICTURE</h2>
           <ul className="space-y-3">{meta.next.map((factor) => <li key={factor} className="flex gap-2 text-sm"><CircleHelp size={16} className="text-content-tertiary flex-shrink-0" /><span className="text-content-secondary">{factor}</span></li>)}</ul>
-          <p className="text-xs text-content-tertiary mt-4">Data freshness and source provenance are not tracked yet, so this view does not infer confidence beyond evaluated coverage.</p>
+          <p className="text-xs text-content-tertiary mt-4">Account sources: {data.dataFreshness.synchronizedAccounts} synchronized · {data.dataFreshness.manualAccounts} manual{data.dataFreshness.staleAccounts > 0 ? ` · ${data.dataFreshness.staleAccounts} may be outdated` : ''}. Pillar-specific freshness rules are still being defined.</p>
         </section>
       </div>
     </div>

@@ -37,6 +37,7 @@ interface ReadinessResponse {
   coverage: number;
   pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
   pillarAssessments: Record<string, { state: 'known' | 'partial' | 'not_evaluated'; score: number | null; coverage: number; evaluatedCapabilities: string[] }>;
+  dataFreshness: { synchronizedAccounts: number; manualAccounts: number; staleAccounts: number; lastSynchronizedAt: string | null };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -212,6 +213,7 @@ export default function DashboardPage() {
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
               <span>{coverageLabel(data.coverage)} · {data.coverage}% coverage</span>
+              <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>{data.dataFreshness.staleAccounts > 0 ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated` : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}</span>
               {history.length > 1 && <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>{trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days</span>}
             </div>
             {history.length > 1 && (

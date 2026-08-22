@@ -13,6 +13,9 @@ interface Account {
   type: string;
   currentBalance: string;
   isArchived: boolean;
+  source: 'synchronized' | 'manual';
+  lastUpdatedAt: string;
+  freshness: 'current' | 'stale';
 }
 
 interface DebtProfile {
@@ -242,7 +245,7 @@ export default function AccountsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-content-primary truncate">{account.name}</p>
-                    <p className="text-xs text-content-tertiary">{formatAccountType(account.type)}</p>
+                    <p className="text-xs text-content-tertiary">{formatAccountType(account.type)} · {account.source === 'synchronized' ? 'Synced' : 'Manual'}{account.freshness === 'stale' ? ' · may be outdated' : ''}</p>
                   </div>
                   <p className={`text-base font-bold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}>
                     {isDebt ? '-' : ''}${formatCurrency(Math.abs(bal))}
