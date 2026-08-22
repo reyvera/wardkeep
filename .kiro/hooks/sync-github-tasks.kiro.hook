@@ -8,6 +8,6 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "source ~/.bashrc 2>/dev/null; cd /home/prosoft/random/budgetapp && bash scripts/sync-tasks-to-github.sh"
+    "command": "source ~/.bashrc 2>/dev/null; bash scripts/sync-tasks-to-github.sh"
   }
 }

@@ -7,8 +7,8 @@
 # Requires: gh CLI installed and authenticated.
 # ============================================================================
 
-export PATH="/home/prosoft/.nvm/versions/node/v22.23.1/bin:$PATH"
-cd /home/prosoft/random/budgetapp || exit 0
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.." || exit 0
 
 # Check if gh is available and authenticated
 if ! command -v gh &>/dev/null; then
