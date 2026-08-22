@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Upload,
   Link2,
+  ShieldCheck,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/rules', label: 'Rules', icon: Sparkles },
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
+  { href: '/insurance', label: 'Policies', icon: ShieldCheck },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/bank-connections', label: 'Bank Connections', icon: Link2 },
