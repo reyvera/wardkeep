@@ -74,7 +74,7 @@ The transition is incremental, not a rewrite:
 │  PostgreSQL • Redis • Encrypted at-rest                 │
 ├─────────────────────────────────────────────────────────┤
 │  Background Layer (apps/worker)                         │
-│  Signal computation • AI categorization • Sync • Backup │
+│  Snapshotting • signal computation • AI categorization • sync • backup │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -88,6 +88,8 @@ The Readiness Engine lives in `packages/readiness`. It is:
 - Independent of AI — computes scores from signals alone
 - Uses Decimal.js for any financial calculations that feed into scores
 
+It also has an explicit honesty contract: an unevaluated pillar is not healthy. The API and UI expose readiness coverage separately from the score. See [readiness-engine.md](readiness-engine.md) for the current scoring behavior and limitations.
+
 The AI layer (Advisor) only explains and prioritizes. It never modifies scores.
 
 ### 2. Capabilities are Self-Contained
@@ -99,17 +101,23 @@ Each Capability:
 - Registers itself with the CapabilityRegistry at startup
 - Can be enabled/disabled per household
 
-### 3. Signal Pipeline is Event-Driven
+### 3. Signal pipeline: current and target
 
 ```
+Current:
+User request or dashboard load
+  → finance generators derive current signals
+  → Readiness Engine computes pillars and coverage
+  → API records a daily snapshot asynchronously
+  → frontend renders the score, factors, coverage, and history
+
+Target:
 User action or scheduled job
   → Capability recalculates observations
-  → Capability emits signals to Redis stream
-  → Worker picks up signal events
-  → Readiness Engine recomputes affected pillar scores
-  → Updated scores stored in PostgreSQL
-  → If significant change: Advisor generates insight
-  → Frontend receives update via polling or WebSocket
+  → Capability emits versioned signals and score-change reasons
+  → worker recomputes affected pillars and snapshots
+  → recommendation/timeline services prioritize relevant changes
+  → frontend receives a concise command-center update
 ```
 
 ### 4. The Advisor is Stateless Per-Request
@@ -127,29 +135,25 @@ Every query includes `householdId`. There is no way to access another household'
 - Repository-level WHERE clauses (never optional)
 - Database-level RLS (Row Level Security) as a secondary guard in production
 
-## Phase 1 Implementation: Finance Capability
+## Implemented finance-readiness foundation
 
 The current codebase already implements the finance Capability. Here's how existing code maps to the Capability interface:
 
 | Capability Method | Current Implementation |
 |-------------------|----------------------|
 | `observations()` | AccountsService.findAll(), TransactionsService.findAll() |
-| `signals()` | To be added — derives from budget adherence, debt ratios, cashflow projections |
-| `recommendations()` | To be added — "pay extra on highest-interest debt", "increase emergency fund" |
-| `dashboardCards()` | Currently: raw account list. Target: "Provision: Good", "Net Worth: $X" |
+| `signals()` | Implemented generators for budget pace, cash flow, bill coverage, net worth, debt, and liquid reserves |
+| `recommendations()` | Dashboard presents signal-derived next steps; durable prioritized recommendations are next |
+| `dashboardCards()` | Implemented household readiness hero and explainable pillar cards; Financial Overview retains raw financial detail |
 | `timelineEvents()` | RecurringService (bills), projected payments, goal milestones |
 
-### What to Build Now (Phase 1 Additions)
+### Next implementation priorities
 
-1. **Signal generation for finance** — Convert existing finance-engine outputs (budget overspend, debt-to-income ratio, emergency fund months, cashflow forecast) into typed Signals.
-
-2. **Readiness computation** — Implement the scoring logic in `packages/readiness`. Initially only the Provision and Prosperity pillars have data.
-
-3. **Morning Brief endpoint** — API route that returns today's priorities, upcoming events, and top recommendation. Initially powered by deterministic logic, later enhanced by AI.
-
-4. **Household Timeline endpoint** — Aggregate recurring bills, goal milestones, and projected events into a single chronological feed.
-
-5. **Readiness dashboard** — Frontend component that shows overall score, pillar breakdown, and trend chart.
+1. **Reliable data and coverage** — Model freshness, provenance, and known/partial/unknown explicitly. Keep scores and coverage coherent when accounts are manual, synchronized, estimated, or stale.
+2. **Composite Protection** — Add data models and generators for insurance, estate, income interruption, fixed obligations, dependents, and secondary backstops. Maintain independent, explainable signals.
+3. **Recommendation and explanation services** — Persist score-change reasons and rank actions by severity, urgency, financial impact, actionability, and confidence.
+4. **Household Timeline and change feed** — Aggregate bills, renewals, maintenance, taxes, sinking-fund targets, and replacement windows into “Coming up” and “Since your last visit.”
+5. **Scenarios and planning** — Model deterministic what-ifs, show impact previews, and connect recommendations to plans and measured outcomes.
 
 ## API Design
 

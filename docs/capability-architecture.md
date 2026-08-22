@@ -244,7 +244,7 @@ These ship as part of the core platform:
 | `cashflow` | Forward-looking income vs. expenses |
 | `recurring` | Bills, subscriptions, predictable expenses |
 | `goals` | Savings targets and progress |
-| `emergency-fund` | Emergency preparedness tracking |
+| `emergency-fund` | Current liquid-reserve resilience signal; not a substitute for comprehensive Protection |
 
 ## Future Capabilities (Phase 3+)
 

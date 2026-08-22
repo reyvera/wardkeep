@@ -189,13 +189,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ---
 
-## Phase 2 — The Decision Engine [NEXT]
+## Phase 2 — The Decision Engine [IN PROGRESS]
 
 > Goal: Transform the finance app into a decision engine. Build the Readiness Engine, Advisor, and Household Timeline. This is what makes Wardkeep fundamentally different from every other finance app.
 
-### 19. Readiness Engine Core (packages/readiness)
+### 19. Readiness Engine Core (packages/readiness) [FOUNDATION SHIPPED]
 
-- [ ] 19.1 Create packages/readiness with core types and scoring logic
+- [x] 19.1 Create packages/readiness with core types and scoring logic
     - Define Signal, Observation, Recommendation, ReadinessSnapshot types
     - Define ReadinessPillar enum (protection, provision, preparation, prosperity, peace)
     - Implement `computePillarScore(pillar, signals)` — deterministic, pure function
@@ -204,50 +204,49 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - All functions pure, no I/O, fully property-testable
     - Use Decimal.js where financial values feed into scores
 
-- [ ] 19.2 Implement signal aggregation and snapshot storage
-    - Create SignalService in apps/api that collects signals from Capabilities
-    - Store signals in PostgreSQL (Signal model from technical-architecture.md)
-    - Create ReadinessSnapshot model — daily score persistence
-    - Implement snapshot creation job (daily via BullMQ)
-    - API endpoint: GET /api/readiness — returns current score + pillar breakdown
+- [~] 19.2 Implement signal aggregation and snapshot storage
+    - [x] ReadinessService collects current finance-generator signals
+    - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
+    - [x] ReadinessSnapshot model — daily score persistence
+    - [ ] Move snapshot creation to a daily BullMQ job; the endpoint currently records the daily snapshot asynchronously
+    - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
 
-- [ ] 19.3 Implement readiness explainability
-    - Create ReadinessExplanation type with pillar details and contributing signals
-    - API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
-    - Every point deducted or added traceable to a specific Capability and observation
-    - Include trend data (improving/stable/declining per pillar)
+- [~] 19.3 Implement readiness explainability
+    - [x] Current response includes contributing signals and dashboard surfaces their summaries
+    - [ ] Create a ReadinessExplanation type with pillar details, evaluated/missing factors, and score-change reasons
+    - [ ] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
+    - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
 
-- [ ] 19.4 Implement readiness history and trends
-    - API endpoint: GET /api/readiness/history — score snapshots over time
-    - Store 365 days of daily snapshots per household
-    - Compute 7-day, 30-day, 90-day trend indicators
-    - Detect seasonal patterns (optional, AI-enhanced later)
+- [~] 19.4 Implement readiness history and trends
+    - [x] API endpoint: GET /api/readiness/history — score snapshots over time
+    - [x] Dashboard renders up to 90 days of available score history
+    - [ ] Define retention and store 365 days of snapshots per household
+    - [ ] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
+    - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
-- [ ] 19.5 Write property tests for Readiness Engine
+- [~] 19.5 Write property tests for Readiness Engine
     - **Property 34: Pillar score is deterministic given same signals**
     - **Property 35: Overall readiness is weighted average of pillar scores**
     - **Property 36: Peace score derives from minimum pillar and volatility**
-    - **Property 37: No signals implies no penalty (score = 100)**
+    - **Property 37: No signals is never treated as perfect readiness; the API/UI must mark it not evaluated**
     - **Property 38: Signal magnitude bounded to [-10, +10] clamps correctly**
     - Generate random signal sets; verify deterministic, bounded, explainable output
 
-### 20. Finance Capability Signals
+### 20. Finance Capability Signals [PARTIAL]
 
-- [ ] 20.1 Define finance signal generators
+- [~] 20.1 Define finance signal generators
     - Budget adherence signal: risk when >90% spent, opportunity when consistently under
-    - Emergency fund signal: risk when <3 months expenses, positive when ≥6 months
+    - [x] Graduated liquid-reserve signal from 0 through 12 months of filtered ordinary expenses
+    - [ ] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
     - Debt-to-income ratio signal: risk when >36%, warning when >28%
     - Cashflow forecast signal: risk when projected negative within 30 days
     - Net worth trend signal: positive when growing month-over-month
     - Recurring payment reliability signal: risk when missed payments detected
 
-- [ ] 20.2 Wire existing finance services to emit signals
-    - On budget recalculation → emit budget adherence signal
-    - On account balance change → recalculate emergency fund and net worth signals
-    - On cashflow projection → emit forecast signal
-    - On debt change → emit debt-to-income signal
-    - On recurring miss → emit reliability signal
-    - Signals stored in DB and fed to Readiness Engine
+- [~] 20.2 Wire existing finance services to emit signals
+    - [x] Current generators derive signals on readiness evaluation
+    - [ ] Recompute signals on relevant writes and scheduled syncs
+    - [ ] Store signals/observations in DB and feed them through a versioned pipeline
 
 - [ ] 20.3 Implement Capability interface for finance
     - Create FinanceCapability class implementing the Capability interface
