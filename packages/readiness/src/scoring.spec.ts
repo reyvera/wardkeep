@@ -36,8 +36,8 @@ describe('Readiness Engine scoring', () => {
     ])).toBe(60);
   });
 
-  it('returns 100 when a pillar has no signals', () => {
-    expect(computePillarScore('provision', [])).toBe(100);
+  it('does not treat an unevaluated pillar as perfectly ready', () => {
+    expect(computePillarScore('provision', [])).toBe(0);
   });
 
   it('bounds all signal magnitudes and resulting scores', () => {

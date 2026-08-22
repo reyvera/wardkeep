@@ -30,7 +30,8 @@ function usableWeight(weight: number | undefined): number {
 }
 
 /**
- * Computes a pillar score from its signals. An absence of known risks receives no penalty.
+ * Computes a pillar score from its signals. A missing observation is not evidence that a
+ * household is prepared, so an unevaluated pillar receives 0 until a generator can assess it.
  * Signal magnitudes are deliberately bounded so an erroneous generator cannot dominate a score.
  */
 export function computePillarScore(
@@ -38,7 +39,7 @@ export function computePillarScore(
   signals: readonly Signal[],
 ): number {
   const applicable = signals.filter((signal) => signal.pillar === pillar);
-  if (applicable.length === 0) return SCORE_MAX;
+  if (applicable.length === 0) return SCORE_MIN;
 
   let weightedImpact = 0;
   let totalWeight = 0;
