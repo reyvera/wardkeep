@@ -12,6 +12,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { SignalProvenance, withSignalProvenance } from './signal-provenance';
+import { summarizeDataFreshness } from './data-freshness';
 import {
   generateProvisionSignals,
   generateProsperitySignals,
@@ -264,26 +265,14 @@ export class ReadinessService {
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
       select: {
-        updatedAt: true,
         linkedBankAccounts: { select: { connection: { select: { lastSyncAt: true } } } },
       },
     });
-    const synchronized = accounts.filter((account) => account.linkedBankAccounts.length > 0);
-    const lastSynchronizedAt =
-      synchronized
-        .flatMap((account) =>
-          account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
-        )
-        .filter((date): date is Date => date !== null)
-        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
-    const staleAccounts = accounts.filter((account) => {
-      const latestSync =
-        account.linkedBankAccounts
-          .map((linked) => linked.connection.lastSyncAt)
-          .filter((date): date is Date => date !== null)
-          .sort((a, b) => b.getTime() - a.getTime())[0] ?? account.updatedAt;
-      return Date.now() - latestSync.getTime() > 7 * 24 * 60 * 60 * 1000;
-    }).length;
+    const dataFreshness = summarizeDataFreshness(
+      accounts.map((account) => ({
+        linkedSyncTimes: account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
+      })),
+    );
 
     return {
       evaluatedAt: new Date(),
@@ -297,12 +286,7 @@ export class ReadinessService {
       coverage,
       pillarCoverage,
       pillarAssessments,
-      dataFreshness: {
-        synchronizedAccounts: synchronized.length,
-        manualAccounts: accounts.length - synchronized.length,
-        staleAccounts,
-        lastSynchronizedAt,
-      },
+      dataFreshness,
       recentChanges,
       changeWindow,
     };
