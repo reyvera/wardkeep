@@ -91,12 +91,13 @@ const PILLARS: Record<
       { capability: 'estate-documents', label: 'Entered estate-planning records and review timing' },
       { capability: 'income-sources', label: 'Entered income sources and review timing' },
       { capability: 'secondary-liquidity', label: 'Recorded available credit when nearly exhausted' },
+      { capability: 'fixed-obligations', label: 'Recorded debt minimums compared with liquid reserves' },
     ],
     next: [
       'Insurance adequacy and coverage gaps',
       'Income interruption resilience beyond entered source records',
       'Beneficiary designations and document adequacy',
-      'Dependents and fixed obligations',
+      'Dependents and unrecorded fixed obligations',
     ],
   },
   provision: {
