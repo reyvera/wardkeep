@@ -348,6 +348,9 @@ export default function DashboardPage() {
   ]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
+  const nextExpectedIncome = (incomeSourcesQuery.data ?? [])
+    .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0)
+    .sort((a, b) => new Date(a.nextExpectedDate!).getTime() - new Date(b.nextExpectedDate!).getTime())[0];
 
   return (
     <div>
@@ -545,6 +548,24 @@ export default function DashboardPage() {
           <Link href="/insurance" className="btn-secondary whitespace-nowrap">
             Review policies
           </Link>
+        </section>
+      )}
+
+      {!incomeSourcesQuery.isLoading && (
+        <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-content-primary">Next expected income</h2>
+            {nextExpectedIncome?.nextExpectedDate ? (
+              <p className="mt-1 text-sm text-content-secondary">
+                {nextExpectedIncome.name} · {new Date(nextExpectedIncome.nextExpectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                {nextExpectedIncome.expectedNetAmount ? ` · $${Number(nextExpectedIncome.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''}
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-content-secondary">No next expected income date recorded.</p>
+            )}
+            <p className="mt-1 text-xs text-content-tertiary">Recorded household planning context; not a predicted paycheck.</p>
+          </div>
+          <Link href="/income-sources" className="btn-secondary whitespace-nowrap">Review income</Link>
         </section>
       )}
 

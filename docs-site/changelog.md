@@ -31,6 +31,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Low available-credit warning** — A recorded card that is at least 90% used can surface a modest Protection warning, without treating credit as readiness credit.
 - **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
 - **Dependent planning reminders** — Optional non-identifying household records can carry a review date, without assessing care needs or coverage adequacy.
+- **Recorded income dates** — Income-source records can include a next expected date, surfaced on the Dashboard and Coming Up without predicting a paycheck.
 - **Capability-specific next actions** — Dashboard risks and recommendations link directly to the related household workflow instead of stopping at static advice.
 - **Credit-card payment matching** — Matching household card-payment pairs no longer double-count as ordinary spending in Protection’s burn-rate calculation.
 - **One-time expense control** — A household can visibly mark a debit as one-time to exclude only that user-designated transaction from recurring Protection burn-rate calculations.
