@@ -1,6 +1,6 @@
 {
   "name": "wardkeep",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "license": "AGPL-3.0-or-later",
   "author": "Reymundo A Vera",
@@ -19,6 +19,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:baseline": "node scripts/baseline-prisma-migrations.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
     "screenshots": "npx tsx scripts/capture-screenshots.ts",

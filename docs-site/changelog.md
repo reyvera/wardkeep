@@ -20,6 +20,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Added
 
+- **Verified migration baseline** — Existing development databases without Prisma migration history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Insurance policies** — Record policy details, renewal dates, deductibles, coverage amounts, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Wardkeep can flag upcoming or overdue recorded renewals and compare recorded deductibles with liquid reserves. These are explainable records checks, not insurance-adequacy advice.
 - **Policy dashboard summary** — The Dashboard and Protection page show policy attention and incomplete records with a direct Policies action.
@@ -47,6 +48,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Changed
 
+- **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
 - **Direct-pillar dashboard summary** — The Dashboard now compares only directly evaluated pillars when naming the strongest and most limited observed area.
 - **Peace respects missing evidence** — Derived Peace now uses only pillars with observed signals rather than treating an unevaluated pillar as zero.
 - **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as fully used rather than overspent in Provision and recommendations.

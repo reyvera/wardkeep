@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Release versioning** — The workspace is aligned to 2.1.0, with a release guard that rejects mismatched `vX.Y.Z` tags.
+- **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
+- **Release versioning** — The workspace is aligned to 2.1.1, with a release guard that rejects mismatched `vX.Y.Z` tags.
 - **Development images** — Pushes to `develop` now publish separate `develop` and commit-specific Docker images, keeping development deployment tags distinct from releases.
 
 ### Added
 
+- **Verified migration baseline** — Existing development databases without Prisma history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
 - **Capability-specific next actions** — Dashboard risks and recommendations now link directly to the relevant accounts, policies, budget, cash-flow, recurring-bills, debt, or readiness-factor workflow.

@@ -63,8 +63,8 @@ if [ "$1" = "--reset" ]; then
   until $COMPOSE exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
     sleep 1
   done
-  log "Pushing schema..."
-  npx prisma db push
+  log "Applying checked-in migrations..."
+  npx prisma migrate deploy
   log "Seeding demo data..."
   npx tsx prisma/seed-demo.ts
   success "Database reset complete. Demo login: demo@wardkeep.app / DemoPassword123"
@@ -104,9 +104,13 @@ success "Redis ready."
 
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public"
 
-log "Syncing database schema..."
-npx prisma db push --skip-generate
-success "Database schema synced."
+log "Applying checked-in migrations..."
+if ! npx prisma migrate deploy; then
+  error "Migration history is missing or the database schema differs from this revision."
+  error "No data was changed. See: pnpm db:baseline"
+  exit 1
+fi
+success "Database migrations applied."
 
 # ─── Generate Prisma client ─────────────────────────────────────────────────
 
