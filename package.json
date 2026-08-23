@@ -21,7 +21,8 @@
     "prisma:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
-    "screenshots": "npx tsx scripts/capture-screenshots.ts"
+    "screenshots": "npx tsx scripts/capture-screenshots.ts",
+    "release:check": "node scripts/check-release-version.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0"
