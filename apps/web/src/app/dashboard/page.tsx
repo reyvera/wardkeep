@@ -103,6 +103,8 @@ interface Recommendation {
   actionHref: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
   assumptions: string;
+  impactPreview: string;
+  projectedPillarDelta: number | null;
   status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
 }
 
@@ -602,6 +604,9 @@ export default function DashboardPage() {
                       </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
                         {recommendation.priority} priority · {recommendation.assumptions}
+                      </p>
+                      <p className="mt-1 text-xs text-content-secondary">
+                        {recommendation.impactPreview}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         <Link
