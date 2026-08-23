@@ -100,7 +100,8 @@ Planned API additions:
 ```text
 GET  /api/readiness/explain     structured pillar factors, gaps, and score-change reasons
 POST /api/readiness/scenario    deterministic what-if result
-GET  /api/recommendations       ranked recommendations with effort and impact preview
+GET  /api/recommendations       persisted risk/warning recommendations, status, action link, priority, and assumptions
+PATCH /api/recommendations/:id  mark a recommendation completed or dismissed
 GET  /api/timeline/upcoming     upcoming bills, renewals, maintenance, and planned costs
 GET  /api/changes               meaningful changes since the user’s last visit
 ```
@@ -133,7 +134,7 @@ Available credit may reduce a short-term liquidity risk but must never be treate
 - [x] Add a pillar-detail / readiness-explanation experience with evaluated factors, missing factors, trend, source data, and direct actions.
 - [~] Persist signal snapshots and show a “Since your last visit” feed. Continue toward durable causal explanations, not just changed factors.
 - Create a unified timeline for bills, renewals, tax dates, maintenance, subscriptions, sinking funds, and future replacement windows; surface it as “Coming up.”
-- Turn signals into durable recommendations ranked by severity × urgency × financial impact × actionability × confidence.
+- Extend durable recommendations with financial-impact weighting, monthly amount, time-to-completion, and a user-facing impact preview. Current ranking uses severity, urgency, actionability, and evidence freshness; it does not infer financial impact that has not been modeled.
 - Show impact previews before a user commits to a plan: current score, projected score, monthly contribution, and estimated completion date.
 - Add scenarios such as income interruption, a surprise expense, debt payoff, vehicle purchase, and retirement-contribution changes.
 

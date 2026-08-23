@@ -546,10 +546,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
   - Keep every component independently explainable; missing data remains unknown
 
-- [ ] 39.5 Create durable recommendations and impact previews
+- [~] 39.5 Create durable recommendations and impact previews
   - [x] Link each current dashboard signal to its relevant household workflow (accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor)
-  - Rank by severity × urgency × financial impact × actionability × confidence
-  - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
+  - [x] Persist active risk and warning recommendations with stable source-signal fingerprints; preserve dismissed/completed state and resolve only active recommendations whose source signal disappears
+  - [x] Expose `GET /api/recommendations` and completion/dismissal updates, ranked deterministically by severity, urgency, actionability, and evidence freshness
+  - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and a user-facing impact-preview interface
 
 - [x] 39.6 Establish GitHub launch tracking
   - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies
