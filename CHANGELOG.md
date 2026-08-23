@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Release versioning** — The workspace is aligned to 2.1.0, with a release guard that rejects mismatched `vX.Y.Z` tags.
+- **Development images** — Pushes to `develop` now publish separate `develop` and commit-specific Docker images, keeping development deployment tags distinct from releases.
 
 ### Added
 

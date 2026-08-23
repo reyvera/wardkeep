@@ -360,6 +360,8 @@ pnpm release:check
 
 Create a matching `vX.Y.Z` tag only from the tested release commit. The image workflow rejects a version tag that does not match the root and workspace package versions. A manually dispatched non-version tag such as `latest` remains supported for operational image rebuilds.
 
+Pushes to `develop` publish development images tagged `develop` and `develop-<commit-sha>`. Use those for test deployments. Reserve final `vX.Y.Z` tags for immutable releases; use a matching prerelease package version and tag (for example `2.2.0-rc.1` / `v2.2.0-rc.1`) when a release candidate needs its own image.
+
 See [the readiness specification](docs/readiness-engine.md) for the scoring contract and current limits, and [the implementation plan](.kiro/specs/ai-personal-finance-app/tasks.md) for the sequenced work.
 
 ## License
