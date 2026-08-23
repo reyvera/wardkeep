@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Durable recommendations foundation** — Risk and warning signals now create stable, source-linked recommendation records with deterministic priority, action links, assumptions, and completed/dismissed/resolved state.
 - **Actionable recommendation dashboard** — The Dashboard now shows active durable recommendations with direct workflow links and controls to complete or dismiss each action.
 - **Recommendation history** — A dedicated Recommendations page keeps active actions and completed, dismissed, or automatically resolved history visible and reviewable.
+- **Current recommendation workspace** — Opening Recommendations refreshes readiness before loading actions, so the list reflects current signals rather than a prior dashboard visit.
 - **Coming Up** — The Dashboard now lists recorded recurring-payment dates and policy renewals in the next 30 days, with direct links to the source workflow.
 - **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
 - **Reversible policy lifecycle** — Cancelled or replaced policies can be marked inactive and restored later; inactive policies do not affect current readiness signals.
