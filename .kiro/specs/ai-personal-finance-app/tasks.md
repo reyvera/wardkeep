@@ -571,7 +571,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 33. Income & Spending Intelligence
 
 - [ ] 33.1 Income configuration and pay schedule
-  - Pay frequency: semi-monthly, biweekly, monthly, custom
+  - [x] Record pay frequency and an optional next expected income date; show only recorded income dates in Dashboard Coming Up
   - Expected net per paycheck
   - Salary vs hourly tracking
   - Dashboard: "Next paycheck: ~[date]"
