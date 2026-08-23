@@ -42,6 +42,7 @@ function burnRate(monthlyExpenses: number, usesNormalFallback = false): Househol
     essentialMonthly: new Decimal(monthlyExpenses),
     usesNormalFallback,
     excludedTransferLikeCount: 0,
+    excludedOneTimeCount: 0,
   };
 }
 

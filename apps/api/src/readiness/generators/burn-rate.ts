@@ -5,6 +5,7 @@ export interface BurnRateTransaction {
   categoryName?: string | null;
   merchant?: string | null;
   description?: string | null;
+  tags?: readonly string[];
 }
 
 export interface HouseholdBurnRate {
@@ -13,10 +14,13 @@ export interface HouseholdBurnRate {
   /** True when category/merchant data was too incomplete to isolate essentials safely. */
   usesNormalFallback: boolean;
   excludedTransferLikeCount: number;
+  excludedOneTimeCount: number;
 }
 
-const TRANSFER_LIKE = /\b(transfer|payment to|credit card payment|cc payment|card payment|investment|brokerage|savings transfer|principal payment)\b/i;
-const ESSENTIAL = /\b(rent|mortgage|utility|utilities|electric|water|gas|insurance|grocery|groceries|health|medical|pharmacy|transport|fuel|gas station|childcare|child care|internet|phone|debt payment)\b/i;
+const TRANSFER_LIKE =
+  /\b(transfer|payment to|credit card payment|cc payment|card payment|investment|brokerage|savings transfer|principal payment)\b/i;
+const ESSENTIAL =
+  /\b(rent|mortgage|utility|utilities|electric|water|gas|insurance|grocery|groceries|health|medical|pharmacy|transport|fuel|gas station|childcare|child care|internet|phone|debt payment)\b/i;
 
 function transactionText(transaction: BurnRateTransaction): string {
   return [transaction.categoryName, transaction.merchant, transaction.description]
@@ -34,12 +38,19 @@ export function calculateHouseholdBurnRate(
   monthsInWindow = 3,
 ): HouseholdBurnRate {
   const months = Math.max(monthsInWindow, 1);
-  const householdTransactions = transactions.filter((transaction) => !TRANSFER_LIKE.test(transactionText(transaction)));
+  const nonTransferTransactions = transactions.filter(
+    (transaction) => !TRANSFER_LIKE.test(transactionText(transaction)),
+  );
+  const householdTransactions = nonTransferTransactions.filter(
+    (transaction) => !transaction.tags?.some((tag) => tag.trim().toLowerCase() === 'one-time'),
+  );
   const normalTotal = householdTransactions.reduce(
     (total, transaction) => total.add(new Decimal(transaction.amount)),
     new Decimal(0),
   );
-  const essentialTransactions = householdTransactions.filter((transaction) => ESSENTIAL.test(transactionText(transaction)));
+  const essentialTransactions = householdTransactions.filter((transaction) =>
+    ESSENTIAL.test(transactionText(transaction)),
+  );
   const essentialTotal = essentialTransactions.reduce(
     (total, transaction) => total.add(new Decimal(transaction.amount)),
     new Decimal(0),
@@ -50,6 +61,7 @@ export function calculateHouseholdBurnRate(
     normalMonthly: normalTotal.div(months),
     essentialMonthly: (usesNormalFallback ? normalTotal : essentialTotal).div(months),
     usesNormalFallback,
-    excludedTransferLikeCount: transactions.length - householdTransactions.length,
+    excludedTransferLikeCount: transactions.length - nonTransferTransactions.length,
+    excludedOneTimeCount: nonTransferTransactions.length - householdTransactions.length,
   };
 }
