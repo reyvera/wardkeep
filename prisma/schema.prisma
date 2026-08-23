@@ -37,6 +37,7 @@ model User {
   bankConnections       BankConnection[]
   insurancePolicies     InsurancePolicy[]
   estateDocuments       EstateDocument[]
+  incomeSources         IncomeSource[]
   recommendations       Recommendation[]
 }
 
@@ -215,6 +216,43 @@ model EstateDocument {
   notes      String?            @db.VarChar(1000)
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, reviewDate])
+}
+
+enum IncomeFrequency {
+  WEEKLY
+  BIWEEKLY
+  SEMI_MONTHLY
+  MONTHLY
+  CUSTOM
+}
+
+enum IncomeSourceKind {
+  EMPLOYMENT
+  SELF_EMPLOYMENT
+  BENEFIT
+  SUPPORT
+  OTHER
+}
+
+/// Household-entered income planning context, not evidence of employment or payment continuity.
+model IncomeSource {
+  id                String           @id @default(uuid())
+  userId            String
+  name              String           @db.VarChar(100)
+  kind              IncomeSourceKind @default(EMPLOYMENT)
+  frequency         IncomeFrequency
+  expectedNetAmount Decimal?         @db.Decimal(19, 4)
+  nextExpectedDate  DateTime?        @db.Date
+  reviewDate        DateTime?        @db.Date
+  isActive          Boolean          @default(true)
+  notes             String?          @db.VarChar(1000)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
