@@ -167,6 +167,26 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
   },
 };
 
+const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
+  'emergency-fund': { href: '/accounts', label: 'Review liquid accounts' },
+  insurance: { href: '/insurance', label: 'Review policies' },
+  'insurance-deductibles': { href: '/insurance', label: 'Review deductibles' },
+  budgets: { href: '/budget', label: 'Review budget' },
+  cashflow: { href: '/dashboard/details', label: 'Review cash flow' },
+  recurring: { href: '/recurring', label: 'Review recurring bills' },
+  accounts: { href: '/accounts', label: 'Review accounts' },
+  debt: { href: '/debt', label: 'Review debt' },
+};
+
+function signalAction(signal: Signal): { href: string; label: string } {
+  return (
+    SIGNAL_ACTIONS[signal.capabilityId] ?? {
+      href: `/dashboard/readiness/${signal.pillar}`,
+      label: 'View readiness factor',
+    }
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -459,10 +479,19 @@ export default function DashboardPage() {
               {data.topRisks.map((signal, i) => {
                 const Icon = getSignalIcon(signal.type);
                 const color = getSignalColor(signal.type);
+                const action = signalAction(signal);
                 return (
                   <li key={i} className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                    <span className="text-sm text-content-primary">{signal.summary}</span>
+                    <div>
+                      <p className="text-sm text-content-primary">{signal.summary}</p>
+                      <Link
+                        href={action.href}
+                        className="mt-1 inline-block text-xs text-accent-blue hover:underline"
+                      >
+                        {action.label}
+                      </Link>
+                    </div>
                   </li>
                 );
               })}
@@ -481,6 +510,7 @@ export default function DashboardPage() {
               {recommend.map((signal, i) => {
                 const Icon = getSignalIcon(signal.type);
                 const color = getSignalColor(signal.type);
+                const action = signalAction(signal);
                 return (
                   <li key={i} className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
@@ -489,6 +519,12 @@ export default function DashboardPage() {
                       <p className="text-xs text-content-tertiary mt-0.5">
                         {PILLAR_META[signal.pillar]?.label ?? 'Readiness'} · based on available data
                       </p>
+                      <Link
+                        href={action.href}
+                        className="mt-1 inline-block text-xs text-accent-blue hover:underline"
+                      >
+                        {action.label}
+                      </Link>
                     </div>
                   </li>
                 );
