@@ -29,6 +29,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Income-source context** — Record expected income frequency, optional net amount, and review timing without predicting income continuity or job security.
 - **Visible secondary liquidity** — Credit-card accounts can record a credit limit and show available borrowing capacity, clearly separated from cash reserves.
 - **Low available-credit warning** — A recorded card that is at least 90% used can surface a modest Protection warning, without treating credit as readiness credit.
+- **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
 - **Capability-specific next actions** — Dashboard risks and recommendations link directly to the related household workflow instead of stopping at static advice.
 - **Credit-card payment matching** — Matching household card-payment pairs no longer double-count as ordinary spending in Protection’s burn-rate calculation.
 - **One-time expense control** — A household can visibly mark a debit as one-time to exclude only that user-designated transaction from recurring Protection burn-rate calculations.
