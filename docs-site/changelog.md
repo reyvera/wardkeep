@@ -28,6 +28,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Capability-specific next actions** — Dashboard risks and recommendations link directly to the related household workflow instead of stopping at static advice.
 - **Credit-card payment matching** — Matching household card-payment pairs no longer double-count as ordinary spending in Protection’s burn-rate calculation.
 - **One-time expense control** — A household can visibly mark a debit as one-time to exclude only that user-designated transaction from recurring Protection burn-rate calculations.
+- **Truthful freshness status** — Manual accounts are reported as manual data rather than stale connected data; only overdue or never-completed bank syncs require a readiness freshness review.
 
 ### Changed
 

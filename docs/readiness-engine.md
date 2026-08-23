@@ -84,6 +84,8 @@ The Financial Overview is distinct from the Dashboard. It contains accounts, net
 
 Coverage and freshness are separate. Coverage reports how many currently supported factors Wardkeep evaluated. If one or more connected accounts are stale, Dashboard and pillar confidence are qualified as **Freshness needs review** without changing the underlying score or hiding the coverage percentage.
 
+Manual accounts are reported as manual source data, not stale connected data: Wardkeep cannot infer when a person last verified a manual balance. Only a connected account whose synchronization is overdue or has never completed triggers the freshness warning.
+
 ## API contract
 
 ```text
