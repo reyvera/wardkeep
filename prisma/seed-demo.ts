@@ -203,6 +203,16 @@ async function main() {
   });
   console.log('  ✓ Created 3 insurance policies (including one upcoming renewal)');
 
+  const estateReview = new Date();
+  estateReview.setMonth(estateReview.getMonth() + 9);
+  await prisma.estateDocument.createMany({
+    data: [
+      { userId: user.id, type: 'WILL', title: 'Family will', reviewDate: estateReview, notes: 'Demo record only; document contents are not stored in Wardkeep.' },
+      { userId: user.id, type: 'FINANCIAL_POWER_OF_ATTORNEY', title: 'Financial power of attorney', reviewDate: estateReview },
+    ],
+  });
+  console.log('  ✓ Created 2 estate-planning reminder records');
+
   // Generate 6 months of transactions
   let txCount = 0;
   for (let monthOffset = 5; monthOffset >= 0; monthOffset--) {
