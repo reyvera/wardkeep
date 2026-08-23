@@ -13,6 +13,8 @@ import {
   Lightbulb,
   Activity,
   BarChart3,
+  Check,
+  X,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -278,7 +280,9 @@ export default function DashboardPage() {
   const canCompareTrend =
     data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
   const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
-  const recommend = [...data.topRisks, ...data.topOpportunities].slice(0, 3);
+  const activeRecommendations = (recommendationsQuery.data ?? [])
+    .filter((recommendation) => recommendation.status === 'ACTIVE')
+    .slice(0, 3);
   const activePolicies = insuranceQuery.data?.filter((policy) => policy.isActive) ?? [];
   const policyDetailsNeeded = activePolicies.filter(
     (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
@@ -522,30 +526,73 @@ export default function DashboardPage() {
 
         <div className="card">
           <h3 className="card-title">Wardkeep recommends</h3>
-          {recommend.length === 0 ? (
+          {recommendationsQuery.isLoading ? (
+            <p className="text-sm text-content-tertiary">Updating your recommendations…</p>
+          ) : activeRecommendations.length === 0 ? (
             <p className="text-sm text-content-tertiary">
-              Add accounts, expenses, and a budget to receive tailored next steps.
+              {recommendationsQuery.isError
+                ? 'Recommendations are unavailable right now. Review the readiness factors above for current next steps.'
+                : 'No active recommendations right now. Add more household information for a broader assessment.'}
             </p>
           ) : (
             <ul className="space-y-3">
-              {recommend.map((signal, i) => {
-                const Icon = getSignalIcon(signal.type);
-                const color = getSignalColor(signal.type);
-                const action = signalAction(signal);
+              {activeRecommendations.map((recommendation) => {
+                const priorityColor =
+                  recommendation.priority === 'critical'
+                    ? 'var(--accent-red)'
+                    : recommendation.priority === 'high'
+                      ? 'var(--accent-orange)'
+                      : recommendation.priority === 'medium'
+                        ? 'var(--accent-yellow)'
+                        : 'var(--accent-blue)';
                 return (
-                  <li key={i} className="flex items-start gap-3">
-                    <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                    <div>
-                      <span className="text-sm text-content-primary">{signal.summary}</span>
+                  <li key={recommendation.id} className="flex items-start gap-3">
+                    <Lightbulb
+                      size={16}
+                      className="mt-0.5 flex-shrink-0"
+                      style={{ color: priorityColor }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm text-content-primary">
+                        {recommendation.signalSummary}
+                      </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
-                        {PILLAR_META[signal.pillar]?.label ?? 'Readiness'} · based on available data
+                        {recommendation.priority} priority · {recommendation.assumptions}
                       </p>
-                      <Link
-                        href={action.href}
-                        className="mt-1 inline-block text-xs text-accent-blue hover:underline"
-                      >
-                        {action.label}
-                      </Link>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Link
+                          href={recommendation.actionHref}
+                          className="text-xs text-accent-blue hover:underline"
+                        >
+                          {recommendation.action}
+                        </Link>
+                        <button
+                          onClick={() =>
+                            updateRecommendationMutation.mutate({
+                              id: recommendation.id,
+                              status: 'COMPLETED',
+                            })
+                          }
+                          className="btn-ghost p-1 text-content-tertiary hover:text-accent-green"
+                          title="Mark recommendation complete"
+                          aria-label="Mark recommendation complete"
+                        >
+                          <Check size={13} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateRecommendationMutation.mutate({
+                              id: recommendation.id,
+                              status: 'DISMISSED',
+                            })
+                          }
+                          className="btn-ghost p-1 text-content-tertiary hover:text-content-primary"
+                          title="Dismiss recommendation"
+                          aria-label="Dismiss recommendation"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
                     </div>
                   </li>
                 );
