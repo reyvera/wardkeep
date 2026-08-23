@@ -128,7 +128,7 @@ export class RecommendationsService {
     });
   }
 
-  async updateStatus(userId: string, id: string, status: 'DISMISSED' | 'COMPLETED') {
+  async updateStatus(userId: string, id: string, status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED') {
     const recommendation = await this.prisma.recommendation.findFirst({ where: { id, userId } });
     if (!recommendation) throw new NotFoundException('Recommendation not found');
     const now = new Date();
@@ -138,6 +138,7 @@ export class RecommendationsService {
         status,
         dismissedAt: status === 'DISMISSED' ? now : null,
         completedAt: status === 'COMPLETED' ? now : null,
+        resolvedAt: null,
       },
     });
   }

@@ -15,7 +15,9 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import { ScopedRequest, UserScopeInterceptor } from '../common/interceptors/user-scope.interceptor';
 import { RecommendationsService } from './recommendations.service';
 
-const UpdateRecommendationStatusSchema = z.object({ status: z.enum(['DISMISSED', 'COMPLETED']) });
+const UpdateRecommendationStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'DISMISSED', 'COMPLETED']),
+});
 
 @Controller('recommendations')
 @UseGuards(AuthGuard)

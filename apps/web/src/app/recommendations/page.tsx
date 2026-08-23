@@ -46,7 +46,7 @@ export default function RecommendationsPage() {
     enabled: readinessQuery.isSuccess,
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'COMPLETED' | 'DISMISSED' }) =>
+    mutationFn: ({ id, status }: { id: string; status: 'ACTIVE' | 'COMPLETED' | 'DISMISSED' }) =>
       apiClient.patch(`/recommendations/${id}`, { status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
   });
@@ -182,6 +182,17 @@ export default function RecommendationsPage() {
                           {statusLabel(recommendation.status)} · updated{' '}
                           {new Date(recommendation.updatedAt).toLocaleDateString()}
                         </p>
+                        {(recommendation.status === 'COMPLETED' ||
+                          recommendation.status === 'DISMISSED') && (
+                          <button
+                            onClick={() =>
+                              updateMutation.mutate({ id: recommendation.id, status: 'ACTIVE' })
+                            }
+                            className="btn-ghost mt-2 text-xs"
+                          >
+                            Reopen
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
