@@ -97,6 +97,7 @@ interface RecurringTransactionSummary {
 }
 
 interface IncomeSourceSummary { id: string; name: string; nextExpectedDate: string | null; expectedNetAmount: string | null; }
+interface SpendingStatsSummary { monthlyTrend: Array<{ month: string; income: number; expenses: number }>; }
 
 interface Recommendation {
   id: string;
@@ -236,6 +237,7 @@ export default function DashboardPage() {
     queryFn: () => apiClient.get<RecurringTransactionSummary[]>('/recurring'),
   });
   const incomeSourcesQuery = useQuery({ queryKey: ['income-sources'], queryFn: () => apiClient.get<IncomeSourceSummary[]>('/income-sources') });
+  const spendingStatsQuery = useQuery({ queryKey: ['spending-stats'], queryFn: () => apiClient.get<SpendingStatsSummary>('/transactions/stats') });
   const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
     queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
@@ -351,6 +353,10 @@ export default function DashboardPage() {
   const nextExpectedIncome = (incomeSourcesQuery.data ?? [])
     .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0)
     .sort((a, b) => new Date(a.nextExpectedDate!).getTime() - new Date(b.nextExpectedDate!).getTime())[0];
+  const recentSpending = spendingStatsQuery.data?.monthlyTrend.slice(-2) ?? [];
+  const currentSpending = recentSpending[1];
+  const previousSpending = recentSpending[0];
+  const spendingDelta = currentSpending && previousSpending ? currentSpending.expenses - previousSpending.expenses : null;
 
   return (
     <div>
@@ -566,6 +572,12 @@ export default function DashboardPage() {
             <p className="mt-1 text-xs text-content-tertiary">Recorded household planning context; not a predicted paycheck.</p>
           </div>
           <Link href="/income-sources" className="btn-secondary whitespace-nowrap">Review income</Link>
+        </section>
+      )}
+
+      {!spendingStatsQuery.isLoading && currentSpending && (
+        <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p><p className="mt-1 text-xs text-content-tertiary">Based on recorded debit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
         </section>
       )}
 
