@@ -30,8 +30,34 @@ export async function generateProtectionSignals(
   const incomeSources = await prisma.incomeSource.findMany({ where: { userId, isActive: true }, select: { name: true, reviewDate: true } });
   const incomeSignals = incomeSources.map((source) => incomeSourceReviewSignal(source, new Date())).filter((signal): signal is Signal => signal !== null);
   if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
-  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals);
+  const secondaryLiquiditySignals = await generateSecondaryLiquiditySignals(prisma, userId);
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals);
 
+  return signals;
+}
+
+/**
+ * A nearly exhausted recorded credit line is a modest warning. Available credit
+ * is deliberately not counted as cash or a positive emergency-fund contribution.
+ */
+async function generateSecondaryLiquiditySignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const cards = await prisma.account.findMany({
+    where: { userId, isArchived: false, type: AccountType.CREDIT_CARD, creditLimit: { not: null } },
+    include: { transactions: true, linkedBankAccounts: { select: { id: true } } },
+  });
+  const signals: Signal[] = [];
+  for (const card of cards) {
+    const limit = new Decimal(card.creditLimit!.toString());
+    if (limit.lte(0)) continue;
+    const balance = card.linkedBankAccounts.length > 0
+      ? new Decimal(card.initialBalance.toString())
+      : calculateBalance(new Decimal(card.initialBalance.toString()), card.transactions.map((transaction) => ({ ...transaction, amount: transaction.amount.toString(), aiConfidence: transaction.aiConfidence?.toString() ?? null })));
+    const available = Decimal.max(0, limit.sub(Decimal.max(0, balance.abs())));
+    if (available.div(limit).lte(0.1)) signals.push({
+      capabilityId: 'secondary-liquidity', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5,
+      summary: `${card.name} has $${available.toFixed(2)} of $${limit.toFixed(2)} in recorded available credit. This is borrowing capacity, not cash reserves.`,
+    });
+  }
   return signals;
 }
 

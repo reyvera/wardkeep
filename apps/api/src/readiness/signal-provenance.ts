@@ -37,6 +37,7 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     evidenceState: 'manual',
   },
   'income-sources': { sources: ['User-entered income-source records'], method: 'Checks recorded income-context review dates and record presence.', limitation: 'Wardkeep does not infer job security, payment continuity, or income interruption resilience.', evidenceState: 'manual' },
+  'secondary-liquidity': { sources: ['Credit-card limits', 'Current account balances'], method: 'Warns only when a recorded card has 10% or less of its limit available.', limitation: 'Available credit is borrowing capacity, not cash; it never increases emergency-fund coverage.', evidenceState: 'mixed' },
   budgets: {
     sources: ['Current-month budget allocations', 'Current-month debit transactions'],
     method: 'Compares actual spending and budget pace with the current allocation.',
