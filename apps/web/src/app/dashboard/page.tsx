@@ -289,7 +289,7 @@ export default function DashboardPage() {
   const scoreColor = getScoreColor(observedOverall ?? 0);
   const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
   const scoredPillars = Object.entries(data.pillars).filter(
-    ([key]) => data.pillarAssessments[key]?.score !== null,
+    ([key]) => key !== 'peace' && data.pillarAssessments[key]?.score !== null,
   );
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
