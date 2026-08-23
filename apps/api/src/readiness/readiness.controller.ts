@@ -1,17 +1,18 @@
 import { Controller, Get, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 
 import { AuthGuard } from '../common/guards/auth.guard';
-import {
-  UserScopeInterceptor,
-  ScopedRequest,
-} from '../common/interceptors/user-scope.interceptor';
+import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { ReadinessService } from './readiness.service';
+import { RecommendationsService } from '../recommendations/recommendations.service';
 
 @Controller('readiness')
 @UseGuards(AuthGuard)
 @UseInterceptors(UserScopeInterceptor)
 export class ReadinessController {
-  constructor(private readonly readinessService: ReadinessService) {}
+  constructor(
+    private readonly readinessService: ReadinessService,
+    private readonly recommendations: RecommendationsService,
+  ) {}
 
   /**
    * Returns the current readiness state for the authenticated user.
@@ -25,7 +26,12 @@ export class ReadinessController {
     const userId = req.userId!;
 
     const user = await this.readinessService.getLastDashboardView(userId);
-    const readiness = await this.readinessService.getReadiness(userId, user?.lastDashboardViewedAt ?? null);
+    const readiness = await this.readinessService.getReadiness(
+      userId,
+      user?.lastDashboardViewedAt ?? null,
+    );
+
+    await this.recommendations.synchronize(userId, readiness.signals);
 
     await this.readinessService.recordDashboardView(userId);
 
