@@ -532,7 +532,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Structurally exclude transfer records and remove common imported transfer, credit-card-payment, investment, savings-transfer, and principal-payment debits from burn rate
   - [x] Distinguish categorized essential burn rate from ordinary household spending, and disclose the ordinary-spending fallback
   - [x] Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months plus no-expense history with deterministic scoring tests
-  - [ ] Add credit-card payment matching and large one-time-expense treatment instead of relying on descriptor exclusion alone
+  - [x] Match a checking/savings debit with an equal household credit-card credit within three days; exclude only the matched debit and test duplicate-payment handling
+  - [ ] Add large one-time-expense treatment instead of relying on ordinary-spending averages alone
 
 - [~] 39.4 Add composite Protection capabilities
   - [x] Insurance policy records (type, provider, premium and frequency, deductible, coverage amount, renewal date), explainable renewal-timing signals, and recorded-deductible-to-liquid-reserve warning

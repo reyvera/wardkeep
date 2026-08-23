@@ -108,8 +108,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 - [x] Scores return an explicit **known**, **partial**, or **not evaluated** assessment state, a nullable score, coverage, evaluated capabilities, and an observed-overall rule that re-normalizes across evaluated direct pillars.
 - [~] Account source state and score evaluation time are displayed. Missing factor-level provenance and capability-specific freshness rules remain.
 - Define capability-specific coverage factors and freshness rules. Manual, estimated, inferred, calculated, synchronized, stale, and unknown data must be distinguishable.
-- Exclude transfers structurally, match credit-card payments to underlying purchases, and develop essential and normal burn-rate views.
-- Add test coverage for zero to 12+ months of reserves, no expense history, transfers, duplicated card payments, large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.
+- Continue to develop essential and normal burn-rate views, including cautious treatment of large one-time expenses.
+- Add test coverage for large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.
 
 ### Make Protection composite
 
