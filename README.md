@@ -325,7 +325,9 @@ Wardkeep will never automatically synchronize a non-empty database with `db push
 
 ```bash
 # From the Wardkeep revision that last wrote this database, after taking a backup.
-pnpm db:baseline
+# Local Compose database:
+pnpm db:baseline:local
+# Another database: set its DATABASE_URL explicitly before using db:baseline.
 ```
 
 `db:baseline` is read-only until it confirms the live database exactly matches that revision's Prisma schema. Only then does it record the checked-in migrations; it never runs schema SQL or changes household data. If it reports a difference, stop: use the older Wardkeep revision that matches the database, baseline there, and then upgrade normally.

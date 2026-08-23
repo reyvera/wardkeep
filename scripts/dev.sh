@@ -107,7 +107,7 @@ export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?sche
 log "Applying checked-in migrations..."
 if ! npx prisma migrate deploy; then
   error "Migration history is missing or the database schema differs from this revision."
-  error "No data was changed. See: pnpm db:baseline"
+  error "No data was changed. For this local database, run: pnpm db:baseline:local"
   exit 1
 fi
 success "Database migrations applied."

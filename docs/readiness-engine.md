@@ -91,7 +91,7 @@ Preparation remains unknown until the household records a planned expense with a
 
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
-Wardkeep uses checked-in, forward-only Prisma migrations in every environment. An existing development database without Prisma Migrate history must be baselined with `pnpm db:baseline` only after a backup; the command refuses to write history unless its schema exactly matches the current revision. `pnpm prisma db push` is not an upgrade path for an existing household database because it can make unreviewed schema changes.
+Wardkeep uses checked-in, forward-only Prisma migrations in every environment. An existing local Compose database without Prisma Migrate history must be baselined with `pnpm db:baseline:local` only after a backup; for another database, set its `DATABASE_URL` explicitly and run `pnpm db:baseline`. The command refuses to write history unless its schema exactly matches the current revision. `pnpm prisma db push` is not an upgrade path for an existing household database because it can make unreviewed schema changes.
 
 ## Dashboard contract
 

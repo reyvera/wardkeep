@@ -21,6 +21,7 @@
     "prisma:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:baseline": "node scripts/baseline-prisma-migrations.mjs",
+    "db:baseline:local": "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public node scripts/baseline-prisma-migrations.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
     "screenshots": "npx tsx scripts/capture-screenshots.ts",

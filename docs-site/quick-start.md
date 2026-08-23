@@ -64,7 +64,7 @@ pnpm db:seed
 
 If this is an existing development database made by an older Wardkeep build and
 Prisma reports missing migration history, do not use `db push`. Back it up, then
-run `pnpm db:baseline` from the Wardkeep revision that last wrote the database.
+run `pnpm db:baseline:local` from the Wardkeep revision that last wrote the database.
 The command verifies the schema before recording migration history and does not
 change household data.
 
