@@ -23,6 +23,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Protection insurance signals** — Wardkeep can flag upcoming or overdue recorded renewals and compare recorded deductibles with liquid reserves. These are explainable records checks, not insurance-adequacy advice.
 - **Policy dashboard summary** — The Dashboard and Protection page show policy attention and incomplete records with a direct Policies action.
 - **Mortgage escrow estimate** — Home policies can show the recorded insurance and property-tax escrow component of a linked mortgage payment.
+- **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
 
 ### Changed
 

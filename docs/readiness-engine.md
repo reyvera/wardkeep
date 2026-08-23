@@ -61,7 +61,7 @@ This is deliberately conservative. The curve is a liquidity-resilience model, no
 
 ### Insurance records: first composite input
 
-Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, and renewal date). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
+Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, renewal date, and optional household notes). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
 
 When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
 
