@@ -528,6 +528,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
   - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
   - [x] Treat manual accounts as a separate source state rather than calling them stale solely because their record is older; only overdue or never-completed connected-account syncs affect freshness confidence
+  - [x] Show a per-factor evidence state (synchronized, manual, mixed, stale, calculated, or unknown) alongside sources, method, and limitation
 
 - [x] 39.3 Harden the Protection liquidity model
   - [x] Structurally exclude transfer records and remove common imported transfer, credit-card-payment, investment, savings-transfer, and principal-payment debits from burn rate

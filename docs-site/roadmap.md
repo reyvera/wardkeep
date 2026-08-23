@@ -46,13 +46,13 @@ The amber segment is deliberately not a percentage: the decision-engine work sho
 
 ## Current release: Decision Engine
 
-| Workstream             | Status      | Launch outcome                                                                                                                                                                                                      |
-| :--------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Readiness foundation   | In progress | Deterministic scores, explicit overall and pillar assessments, coverage indicators, finance signals, signal snapshots, and readiness dashboard                                                                      |
-| Trust and coverage     | In progress | Explicit known/partial/not-evaluated states, factor-level provenance, truthful manual-versus-synchronized freshness summaries, and hardened burn-rate calculations are live; source-specific freshness rules remain |
-| Composite Protection   | Partial     | Insurance records, renewal attention, deductible-to-reserve checks, and bundled-payment context are live. Adequacy, income interruption, estate, obligations, dependents, and secondary backstops remain.           |
-| Command center         | Partial     | Pillar explanations, a visit-aware change feed, and capability-specific next-action links are in place; Coming Up, durable recommendations, and impact previews remain                                              |
-| Scenarios and planning | Planned     | Deterministic what-if outcomes connected to household plans                                                                                                                                                         |
+| Workstream             | Status      | Launch outcome                                                                                                                                                                                                                          |
+| :--------------------- | :---------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Readiness foundation   | In progress | Deterministic scores, explicit overall and pillar assessments, coverage indicators, finance signals, signal snapshots, and readiness dashboard                                                                                          |
+| Trust and coverage     | In progress | Explicit known/partial/not-evaluated states, factor-level provenance and evidence states, truthful manual-versus-synchronized freshness summaries, and hardened burn-rate calculations are live; source-specific freshness rules remain |
+| Composite Protection   | Partial     | Insurance records, renewal attention, deductible-to-reserve checks, and bundled-payment context are live. Adequacy, income interruption, estate, obligations, dependents, and secondary backstops remain.                               |
+| Command center         | Partial     | Pillar explanations, a visit-aware change feed, and capability-specific next-action links are in place; Coming Up, durable recommendations, and impact previews remain                                                                  |
+| Scenarios and planning | Planned     | Deterministic what-if outcomes connected to household plans                                                                                                                                                                             |
 
 ## Launch gates
 

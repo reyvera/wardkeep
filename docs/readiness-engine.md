@@ -86,6 +86,8 @@ Coverage and freshness are separate. Coverage reports how many currently support
 
 Manual accounts are reported as manual source data, not stale connected data: Wardkeep cannot infer when a person last verified a manual balance. Only a connected account whose synchronization is overdue or has never completed triggers the freshness warning.
 
+Every displayed factor also names its evidence state. Current states are **synchronized**, **manual**, **mixed**, **stale**, **calculated**, and **unknown**. This describes the evidence behind that factor, independently from score coverage; it does not turn an inferred or missing input into evidence.
+
 ## API contract
 
 ```text
