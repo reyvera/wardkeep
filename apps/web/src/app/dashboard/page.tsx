@@ -97,7 +97,7 @@ interface RecurringTransactionSummary {
 }
 
 interface IncomeSourceSummary { id: string; name: string; nextExpectedDate: string | null; expectedNetAmount: string | null; }
-interface SpendingStatsSummary { monthlyTrend: Array<{ month: string; income: number; expenses: number }>; }
+interface SpendingStatsSummary { monthlyTrend: Array<{ month: string; income: number; expenses: number }>; categoryChanges: Array<{ categoryId: string | null; name: string; amount: number; previousAmount: number; change: number }>; }
 
 interface Recommendation {
   id: string;
@@ -357,6 +357,7 @@ export default function DashboardPage() {
   const currentSpending = recentSpending[1];
   const previousSpending = recentSpending[0];
   const spendingDelta = currentSpending && previousSpending ? currentSpending.expenses - previousSpending.expenses : null;
+  const largestCategoryChange = spendingStatsQuery.data?.categoryChanges[0];
 
   return (
     <div>
@@ -577,7 +578,7 @@ export default function DashboardPage() {
 
       {!spendingStatsQuery.isLoading && currentSpending && (
         <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p><p className="mt-1 text-xs text-content-tertiary">Based on recorded debit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
+          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p>{largestCategoryChange && <p className="mt-1 text-xs text-content-secondary">Largest category change: {largestCategoryChange.name} · {largestCategoryChange.change >= 0 ? '$' : '-$'}{Math.abs(largestCategoryChange.change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}<p className="mt-1 text-xs text-content-tertiary">Based on recorded debit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
         </section>
       )}
 
