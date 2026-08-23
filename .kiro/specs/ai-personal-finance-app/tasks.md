@@ -543,6 +543,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Keep every component independently explainable; missing data remains unknown
 
 - [ ] 39.5 Create durable recommendations and impact previews
+  - [x] Link each current dashboard signal to its relevant household workflow (accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor)
   - Rank by severity × urgency × financial impact × actionability × confidence
   - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
