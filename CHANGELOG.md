@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
+- **Capability-specific next actions** — Dashboard risks and recommendations now link directly to the relevant accounts, policies, budget, cash-flow, recurring-bills, debt, or readiness-factor workflow.
 - **Actual spending-pace data** — Transaction statistics now return cumulative daily spending for truthful pacing charts.
 - **Insurance policies** — Record policy type, provider, premium frequency, deductible, coverage amount, renewal date, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Protection can flag upcoming or overdue recorded renewals and warn when recorded deductibles exceed liquid reserves, without claiming insurance adequacy.
@@ -20,9 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Direct-pillar dashboard summary** — “Strongest observed” and “most limited observed” now compare only directly evaluated pillars; derived Peace is no longer presented as an independently observed weakness.
+- **Peace respects missing evidence** — The derived Peace score now uses only pillars with observed signals, so an unevaluated pillar does not force Peace to 0%.
+- **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as a warning-level fully used category, not counted as overspent in Provision or recommendations.
 - **Unknown is no longer healthy** — An unevaluated pillar is not scored as 100. Preparation is currently explicitly unevaluated because no generator exists.
 - **Protection liquidity score is graduated** — Liquid reserves progress continuously from 0 through 12 months of ordinary expenses instead of treating 3 and 12 months as equally protected.
 - **Protection burn rate excludes common transfer-like debits** — Transfer, credit-card payment, investment, savings-transfer, and principal-payment descriptors no longer automatically inflate ordinary household expense estimates.
+- **Credit-card payment matching** — An equal checking or savings debit and household credit-card credit within three days are treated as one internal payment, preventing duplicate burn-rate spending without removing unmatched transactions.
+- **One-time expense control** — Transactions can be visibly marked one-time to exclude only that user-designated debit from recurring Protection burn-rate calculations.
+- **Truthful freshness status** — Manual accounts are no longer labeled stale based on record age; only overdue or never-completed connected-account syncs qualify readiness confidence for review.
+- **Factor evidence states** — Pillar factors now identify whether their evidence is synchronized, manual, mixed, stale, calculated, or unknown alongside their sources, method, and limitation.
+- **Durable recommendations foundation** — Risk and warning signals now create stable, source-linked recommendation records with deterministic priority, action links, assumptions, and completed/dismissed/resolved state.
+- **Actionable recommendation dashboard** — The Dashboard now shows active durable recommendations with direct workflow links and controls to complete or dismiss each action.
+- **Recommendation history** — A dedicated Recommendations page keeps active actions and completed, dismissed, or automatically resolved history visible and reviewable.
+- **Current recommendation workspace** — Opening Recommendations refreshes readiness before loading actions, so the list reflects current signals rather than a prior dashboard visit.
+- **Qualified recommendation impact previews** — When a source risk can be removed while other pillar factors remain, Wardkeep shows the resulting pillar-only score estimate; otherwise it states that the change will be measured after records update.
+- **Coming Up** — The Dashboard now lists recorded recurring-payment dates and policy renewals in the next 30 days, with direct links to the source workflow.
 - **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
 - **Reversible policy lifecycle** — Cancelled or replaced policies can be marked inactive and restored later; inactive policies do not affect current readiness signals.
 

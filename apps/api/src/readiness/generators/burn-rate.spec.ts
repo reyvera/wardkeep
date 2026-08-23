@@ -13,6 +13,7 @@ describe('calculateHouseholdBurnRate', () => {
     expect(result.normalMonthly.toFixed(2)).toBe('100.00');
     expect(result.essentialMonthly.toFixed(2)).toBe('100.00');
     expect(result.excludedTransferLikeCount).toBe(2);
+    expect(result.excludedOneTimeCount).toBe(0);
   });
 
   it('uses categorized essential spending for resilience coverage', () => {
@@ -32,5 +33,15 @@ describe('calculateHouseholdBurnRate', () => {
 
     expect(result.essentialMonthly.toFixed(2)).toBe('150.00');
     expect(result.usesNormalFallback).toBe(true);
+  });
+
+  it('excludes only an explicitly marked one-time expense from the burn rate', () => {
+    const result = calculateHouseholdBurnRate([
+      { amount: '3000', categoryName: 'Mortgage' },
+      { amount: '800', merchant: 'Water heater replacement', tags: ['one-time'] },
+    ]);
+
+    expect(result.essentialMonthly.toFixed(2)).toBe('1000.00');
+    expect(result.excludedOneTimeCount).toBe(1);
   });
 });

@@ -518,7 +518,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 > Readiness must become more complete without ever overstating certainty. This work precedes assigning broad meaning to a household score.
 
-- [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
+- [x] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
   - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
   - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
   - [x] Missing factors, account-source summary, score evaluation time, and factor-level provenance (sources, method, and limitation) are displayed
@@ -527,11 +527,15 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
   - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
+  - [x] Treat manual accounts as a separate source state rather than calling them stale solely because their record is older; only overdue or never-completed connected-account syncs affect freshness confidence
+  - [x] Show a per-factor evidence state (synchronized, manual, mixed, stale, calculated, or unknown) alongside sources, method, and limitation
 
-- [ ] 39.3 Harden the Protection liquidity model
-  - Structural transfer exclusion and credit-card payment matching
-  - Distinguish essential burn rate from normal household spending
-  - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
+- [x] 39.3 Harden the Protection liquidity model
+  - [x] Structurally exclude transfer records and remove common imported transfer, credit-card-payment, investment, savings-transfer, and principal-payment debits from burn rate
+  - [x] Distinguish categorized essential burn rate from ordinary household spending, and disclose the ordinary-spending fallback
+  - [x] Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months plus no-expense history with deterministic scoring tests
+  - [x] Match a checking/savings debit with an equal household credit-card credit within three days; exclude only the matched debit and test duplicate-payment handling
+  - [x] Let a household explicitly and reversibly mark a debit as `one-time`; exclude only that marked transaction from burn-rate calculations and display its status in Transactions
 
 - [~] 39.4 Add composite Protection capabilities
   - [x] Insurance policy records (type, provider, premium and frequency, deductible, coverage amount, renewal date), explainable renewal-timing signals, and recorded-deductible-to-liquid-reserve warning
@@ -542,9 +546,15 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
   - Keep every component independently explainable; missing data remains unknown
 
-- [ ] 39.5 Create durable recommendations and impact previews
-  - Rank by severity × urgency × financial impact × actionability × confidence
-  - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
+- [~] 39.5 Create durable recommendations and impact previews
+  - [x] Link each current dashboard signal to its relevant household workflow (accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor)
+  - [x] Persist active risk and warning recommendations with stable source-signal fingerprints; preserve dismissed/completed state and resolve only active recommendations whose source signal disappears
+  - [x] Expose `GET /api/recommendations` and completion/dismissal updates, ranked deterministically by severity, urgency, actionability, and evidence freshness
+  - [x] Display active persisted recommendations in the Dashboard with direct actions and completed/dismissed controls
+  - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
+  - [x] Show a truthful 30-day Coming Up view from recorded recurring-payment dates and policy renewals, without inventing unrecorded events
+  - [x] Show a qualified pillar-only impact preview when removing a source risk leaves other observed pillar factors; otherwise state that Wardkeep will measure rather than predict the change
+  - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
 
 - [x] 39.6 Establish GitHub launch tracking
   - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies

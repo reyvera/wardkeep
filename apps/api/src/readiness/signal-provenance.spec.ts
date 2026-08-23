@@ -30,4 +30,31 @@ describe('withSignalProvenance', () => {
     expect(signal.provenance.sources).toEqual(['Current Wardkeep records']);
     expect(signal.provenance.limitation).toContain('currently evaluate');
   });
+
+  it('marks account-derived evidence stale when a connected account needs review', () => {
+    const signal = withSignalProvenance(
+      {
+        capabilityId: 'emergency-fund',
+        type: 'warning',
+        magnitude: -4,
+        pillar: 'protection',
+        summary: 'Example reserves.',
+      },
+      { synchronizedAccounts: 1, manualAccounts: 0, staleAccounts: 1, lastSynchronizedAt: null },
+    );
+
+    expect(signal.provenance.evidenceState).toBe('stale');
+  });
+
+  it('identifies insurance records as manual evidence', () => {
+    const signal = withSignalProvenance({
+      capabilityId: 'insurance',
+      type: 'positive',
+      magnitude: 1,
+      pillar: 'protection',
+      summary: 'Example policy.',
+    });
+
+    expect(signal.provenance.evidenceState).toBe('manual');
+  });
 });

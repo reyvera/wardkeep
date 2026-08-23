@@ -15,6 +15,7 @@ import {
   Upload,
   Link2,
   ShieldCheck,
+  ListChecks,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -30,14 +31,13 @@ const navItems = [
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
   { href: '/insurance', label: 'Policies', icon: ShieldCheck },
+  { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/bank-connections', label: 'Bank Connections', icon: Link2 },
 ];
 
-const bottomNavItems = [
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
+const bottomNavItems = [{ href: '/settings', label: 'Settings', icon: Settings }];
 
 export function Sidebar() {
   const pathname = usePathname();

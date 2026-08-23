@@ -6,6 +6,7 @@ permalink: /changelog
 ---
 
 # Changelog
+
 {: .fs-9 }
 
 All notable changes to Wardkeep.
@@ -24,9 +25,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Policy dashboard summary** — The Dashboard and Protection page show policy attention and incomplete records with a direct Policies action.
 - **Mortgage escrow estimate** — Home policies can show the recorded insurance and property-tax escrow component of a linked mortgage payment.
 - **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
+- **Capability-specific next actions** — Dashboard risks and recommendations link directly to the related household workflow instead of stopping at static advice.
+- **Credit-card payment matching** — Matching household card-payment pairs no longer double-count as ordinary spending in Protection’s burn-rate calculation.
+- **One-time expense control** — A household can visibly mark a debit as one-time to exclude only that user-designated transaction from recurring Protection burn-rate calculations.
+- **Truthful freshness status** — Manual accounts are reported as manual data rather than stale connected data; only overdue or never-completed bank syncs require a readiness freshness review.
+- **Factor evidence states** — Each pillar factor now identifies the state of its evidence alongside its sources, method, and limitation.
+- **Durable recommendations foundation** — Risk and warning signals now create source-linked recommendation records with deterministic priority, action links, assumptions, and completed/dismissed/resolved state.
+- **Actionable recommendation dashboard** — The Dashboard now shows active durable recommendations with direct workflow links and controls to complete or dismiss each action.
+- **Recommendation history** — A dedicated Recommendations page keeps active actions and completed, dismissed, or automatically resolved history visible and reviewable.
+- **Current recommendation workspace** — Opening Recommendations refreshes readiness before loading actions, so the list reflects current signals rather than a prior dashboard visit.
+- **Qualified recommendation impact previews** — When a source risk can be removed while other pillar factors remain, Wardkeep shows the resulting pillar-only score estimate; otherwise it states that the change will be measured after records update.
+- **Coming Up** — The Dashboard now lists recorded recurring-payment dates and policy renewals in the next 30 days, with direct links to the source workflow.
 
 ### Changed
 
+- **Direct-pillar dashboard summary** — The Dashboard now compares only directly evaluated pillars when naming the strongest and most limited observed area.
+- **Peace respects missing evidence** — Derived Peace now uses only pillars with observed signals rather than treating an unevaluated pillar as zero.
+- **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as fully used rather than overspent in Provision and recommendations.
 - **Policy lifecycle** — Cancelled or replaced policies can be marked inactive and later restored. Inactive policies do not affect current readiness signals.
 - **Documentation delivery** — CI validates the Pages site before merge; the public site redeploys when documentation, screenshots, or the README change.
 
@@ -48,11 +63,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### New API endpoints
 
-| Endpoint | Description |
-|:---------|:------------|
-| `POST /api/debt/consolidation` | Debt consolidation scenario calculator |
+| Endpoint                          | Description                                  |
+| :-------------------------------- | :------------------------------------------- |
+| `POST /api/debt/consolidation`    | Debt consolidation scenario calculator       |
 | `POST /api/debt/velocity-banking` | Velocity banking (HELOC chunking) calculator |
-| `POST /api/debt/minimum-only` | Minimum-payment-only baseline calculator |
+| `POST /api/debt/minimum-only`     | Minimum-payment-only baseline calculator     |
 
 ---
 

@@ -12,6 +12,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { SignalProvenance, withSignalProvenance } from './signal-provenance';
+import { summarizeDataFreshness } from './data-freshness';
 import {
   generateProvisionSignals,
   generateProsperitySignals,
@@ -83,7 +84,6 @@ export class ReadinessService {
     ]);
 
     const allSignals: Signal[] = [...provisionSignals, ...prosperitySignals, ...protectionSignals];
-    const signalsWithProvenance = allSignals.map(withSignalProvenance);
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);
@@ -112,7 +112,12 @@ export class ReadinessService {
       recordedAt: s.recordedAt,
     }));
 
-    const peace = computePeace(pillarScoresWithoutPeace, history);
+    const observedPillarScores = Object.fromEntries(
+      (Object.keys(pillarScoresWithoutPeace) as Array<keyof typeof pillarScoresWithoutPeace>)
+        .filter((pillar) => allSignals.some((signal) => signal.pillar === pillar))
+        .map((pillar) => [pillar, pillarScoresWithoutPeace[pillar]]),
+    );
+    const peace = computePeace(observedPillarScores, history);
     const overall = computeOverallReadiness(pillarScoresWithoutPeace);
 
     const pillars: PillarScores = {
@@ -250,40 +255,33 @@ export class ReadinessService {
       evaluatedCapabilities: evaluatedPillars,
     };
 
-    // Extract top risks and opportunities for quick display
-    const topRisks = signalsWithProvenance
-      .filter((s) => s.type === 'risk' || s.type === 'warning')
-      .sort((a, b) => a.magnitude - b.magnitude)
-      .slice(0, 5);
-
-    const topOpportunities = signalsWithProvenance
-      .filter((s) => s.type === 'opportunity' || s.type === 'positive' || s.type === 'milestone')
-      .sort((a, b) => b.magnitude - a.magnitude)
-      .slice(0, 5);
-
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
       select: {
-        updatedAt: true,
         linkedBankAccounts: { select: { connection: { select: { lastSyncAt: true } } } },
       },
     });
-    const synchronized = accounts.filter((account) => account.linkedBankAccounts.length > 0);
-    const lastSynchronizedAt =
-      synchronized
-        .flatMap((account) =>
-          account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
-        )
-        .filter((date): date is Date => date !== null)
-        .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
-    const staleAccounts = accounts.filter((account) => {
-      const latestSync =
-        account.linkedBankAccounts
-          .map((linked) => linked.connection.lastSyncAt)
-          .filter((date): date is Date => date !== null)
-          .sort((a, b) => b.getTime() - a.getTime())[0] ?? account.updatedAt;
-      return Date.now() - latestSync.getTime() > 7 * 24 * 60 * 60 * 1000;
-    }).length;
+    const dataFreshness = summarizeDataFreshness(
+      accounts.map((account) => ({
+        linkedSyncTimes: account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
+      })),
+    );
+    const signalsWithProvenance = allSignals.map((signal) =>
+      withSignalProvenance(signal, dataFreshness),
+    );
+    const topRisks = signalsWithProvenance
+      .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
+      .sort((a, b) => a.magnitude - b.magnitude)
+      .slice(0, 5);
+    const topOpportunities = signalsWithProvenance
+      .filter(
+        (signal) =>
+          signal.type === 'opportunity' ||
+          signal.type === 'positive' ||
+          signal.type === 'milestone',
+      )
+      .sort((a, b) => b.magnitude - a.magnitude)
+      .slice(0, 5);
 
     return {
       evaluatedAt: new Date(),
@@ -297,12 +295,7 @@ export class ReadinessService {
       coverage,
       pillarCoverage,
       pillarAssessments,
-      dataFreshness: {
-        synchronizedAccounts: synchronized.length,
-        manualAccounts: accounts.length - synchronized.length,
-        staleAccounts,
-        lastSynchronizedAt,
-      },
+      dataFreshness,
       recentChanges,
       changeWindow,
     };

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
   Shield,
@@ -13,6 +13,9 @@ import {
   Lightbulb,
   Activity,
   BarChart3,
+  Check,
+  X,
+  CalendarDays,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -77,10 +80,32 @@ interface ReadinessResponse {
 
 interface InsurancePolicySummary {
   id: string;
+  provider: string;
+  type: string;
   renewalDate: string | null;
   deductible: string | null;
   coverageAmount: string | null;
   isActive: boolean;
+}
+
+interface RecurringTransactionSummary {
+  id: string;
+  merchant: string;
+  expectedAmount: string;
+  frequency: string;
+  nextExpected: string;
+}
+
+interface Recommendation {
+  id: string;
+  signalSummary: string;
+  action: string;
+  actionHref: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  assumptions: string;
+  impactPreview: string;
+  projectedPillarDelta: number | null;
+  status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -167,9 +192,30 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
   },
 };
 
+const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
+  'emergency-fund': { href: '/accounts', label: 'Review liquid accounts' },
+  insurance: { href: '/insurance', label: 'Review policies' },
+  'insurance-deductibles': { href: '/insurance', label: 'Review deductibles' },
+  budgets: { href: '/budget', label: 'Review budget' },
+  cashflow: { href: '/dashboard/details', label: 'Review cash flow' },
+  recurring: { href: '/recurring', label: 'Review recurring bills' },
+  accounts: { href: '/accounts', label: 'Review accounts' },
+  debt: { href: '/debt', label: 'Review debt' },
+};
+
+function signalAction(signal: Signal): { href: string; label: string } {
+  return (
+    SIGNAL_ACTIONS[signal.capabilityId] ?? {
+      href: `/dashboard/readiness/${signal.pillar}`,
+      label: 'View readiness factor',
+    }
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient();
   const readinessQuery = useQuery({
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
@@ -177,6 +223,20 @@ export default function DashboardPage() {
   const insuranceQuery = useQuery({
     queryKey: ['insurance-policies'],
     queryFn: () => apiClient.get<InsurancePolicySummary[]>('/insurance/policies'),
+  });
+  const recurringQuery = useQuery({
+    queryKey: ['recurring-transactions'],
+    queryFn: () => apiClient.get<RecurringTransactionSummary[]>('/recurring'),
+  });
+  const recommendationsQuery = useQuery({
+    queryKey: ['recommendations'],
+    queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
+    enabled: readinessQuery.isSuccess,
+  });
+  const updateRecommendationMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'COMPLETED' | 'DISMISSED' }) =>
+      apiClient.patch(`/recommendations/${id}`, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
   });
 
   if (readinessQuery.isLoading) {
@@ -229,7 +289,7 @@ export default function DashboardPage() {
   const scoreColor = getScoreColor(observedOverall ?? 0);
   const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
   const scoredPillars = Object.entries(data.pillars).filter(
-    ([key]) => data.pillarAssessments[key]?.score !== null,
+    ([key]) => key !== 'peace' && data.pillarAssessments[key]?.score !== null,
   );
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
@@ -237,7 +297,9 @@ export default function DashboardPage() {
   const canCompareTrend =
     data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
   const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
-  const recommend = [...data.topRisks, ...data.topOpportunities].slice(0, 3);
+  const activeRecommendations = (recommendationsQuery.data ?? [])
+    .filter((recommendation) => recommendation.status === 'ACTIVE')
+    .slice(0, 3);
   const activePolicies = insuranceQuery.data?.filter((policy) => policy.isActive) ?? [];
   const policyDetailsNeeded = activePolicies.filter(
     (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
@@ -246,6 +308,35 @@ export default function DashboardPage() {
     if (!policy.renewalDate) return false;
     return new Date(policy.renewalDate).getTime() - Date.now() <= 30 * 86_400_000;
   }).length;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntil = (date: string) =>
+    Math.ceil((new Date(date).getTime() - today.getTime()) / 86_400_000);
+  const comingUp = [
+    ...activePolicies
+      .filter((policy) => policy.renewalDate && daysUntil(policy.renewalDate) <= 30)
+      .map((policy) => ({
+        id: `policy-${policy.id}`,
+        date: policy.renewalDate!,
+        title: `${policy.provider} ${policy.type.toLowerCase().replace('_', ' ')} renewal`,
+        detail: 'Recorded policy renewal',
+        href: '/insurance',
+      })),
+    ...(recurringQuery.data ?? [])
+      .filter(
+        (transaction) =>
+          daysUntil(transaction.nextExpected) >= 0 && daysUntil(transaction.nextExpected) <= 30,
+      )
+      .map((transaction) => ({
+        id: `recurring-${transaction.id}`,
+        date: transaction.nextExpected,
+        title: transaction.merchant,
+        detail: `$${Number(transaction.expectedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected ${transaction.frequency.toLowerCase()}`,
+        href: '/recurring',
+      })),
+  ]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5);
 
   return (
     <div>
@@ -459,10 +550,19 @@ export default function DashboardPage() {
               {data.topRisks.map((signal, i) => {
                 const Icon = getSignalIcon(signal.type);
                 const color = getSignalColor(signal.type);
+                const action = signalAction(signal);
                 return (
                   <li key={i} className="flex items-start gap-3">
                     <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                    <span className="text-sm text-content-primary">{signal.summary}</span>
+                    <div>
+                      <p className="text-sm text-content-primary">{signal.summary}</p>
+                      <Link
+                        href={action.href}
+                        className="mt-1 inline-block text-xs text-accent-blue hover:underline"
+                      >
+                        {action.label}
+                      </Link>
+                    </div>
                   </li>
                 );
               })}
@@ -472,23 +572,76 @@ export default function DashboardPage() {
 
         <div className="card">
           <h3 className="card-title">Wardkeep recommends</h3>
-          {recommend.length === 0 ? (
+          {recommendationsQuery.isLoading ? (
+            <p className="text-sm text-content-tertiary">Updating your recommendations…</p>
+          ) : activeRecommendations.length === 0 ? (
             <p className="text-sm text-content-tertiary">
-              Add accounts, expenses, and a budget to receive tailored next steps.
+              {recommendationsQuery.isError
+                ? 'Recommendations are unavailable right now. Review the readiness factors above for current next steps.'
+                : 'No active recommendations right now. Add more household information for a broader assessment.'}
             </p>
           ) : (
             <ul className="space-y-3">
-              {recommend.map((signal, i) => {
-                const Icon = getSignalIcon(signal.type);
-                const color = getSignalColor(signal.type);
+              {activeRecommendations.map((recommendation) => {
+                const priorityColor =
+                  recommendation.priority === 'critical'
+                    ? 'var(--accent-red)'
+                    : recommendation.priority === 'high'
+                      ? 'var(--accent-orange)'
+                      : recommendation.priority === 'medium'
+                        ? 'var(--accent-yellow)'
+                        : 'var(--accent-blue)';
                 return (
-                  <li key={i} className="flex items-start gap-3">
-                    <Icon size={16} className="mt-0.5 flex-shrink-0" style={{ color }} />
-                    <div>
-                      <span className="text-sm text-content-primary">{signal.summary}</span>
+                  <li key={recommendation.id} className="flex items-start gap-3">
+                    <Lightbulb
+                      size={16}
+                      className="mt-0.5 flex-shrink-0"
+                      style={{ color: priorityColor }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm text-content-primary">
+                        {recommendation.signalSummary}
+                      </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
-                        {PILLAR_META[signal.pillar]?.label ?? 'Readiness'} · based on available data
+                        {recommendation.priority} priority · {recommendation.assumptions}
                       </p>
+                      <p className="mt-1 text-xs text-content-secondary">
+                        {recommendation.impactPreview}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Link
+                          href={recommendation.actionHref}
+                          className="text-xs text-accent-blue hover:underline"
+                        >
+                          {recommendation.action}
+                        </Link>
+                        <button
+                          onClick={() =>
+                            updateRecommendationMutation.mutate({
+                              id: recommendation.id,
+                              status: 'COMPLETED',
+                            })
+                          }
+                          className="btn-ghost p-1 text-content-tertiary hover:text-accent-green"
+                          title="Mark recommendation complete"
+                          aria-label="Mark recommendation complete"
+                        >
+                          <Check size={13} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateRecommendationMutation.mutate({
+                              id: recommendation.id,
+                              status: 'DISMISSED',
+                            })
+                          }
+                          className="btn-ghost p-1 text-content-tertiary hover:text-content-primary"
+                          title="Dismiss recommendation"
+                          aria-label="Dismiss recommendation"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
                     </div>
                   </li>
                 );
@@ -540,6 +693,43 @@ export default function DashboardPage() {
           Compared with the closest daily readiness snapshot available for this period. Detailed
           score-change reasons are still being added.
         </p>
+      </div>
+
+      <div className="card mt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="card-title">COMING UP</h3>
+            <p className="text-xs text-content-tertiary">Recorded dates in the next 30 days</p>
+          </div>
+          <CalendarDays size={19} className="text-accent-blue" />
+        </div>
+        {recurringQuery.isLoading || insuranceQuery.isLoading ? (
+          <div className="skeleton mt-4 h-16 w-full" />
+        ) : comingUp.length === 0 ? (
+          <p className="mt-4 text-sm text-content-tertiary">
+            No upcoming recorded bills or policy renewals in the next 30 days.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {comingUp.map((event) => (
+              <li key={event.id} className="flex items-start justify-between gap-4 text-sm">
+                <div>
+                  <p className="text-content-primary">{event.title}</p>
+                  <p className="mt-0.5 text-xs text-content-tertiary">{event.detail}</p>
+                </div>
+                <Link
+                  href={event.href}
+                  className="whitespace-nowrap text-xs text-accent-blue hover:underline"
+                >
+                  {new Date(event.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

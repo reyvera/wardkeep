@@ -105,7 +105,7 @@ success "Redis ready."
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public"
 
 log "Syncing database schema..."
-npx prisma db push --skip-generate > /dev/null 2>&1
+npx prisma db push --skip-generate
 success "Database schema synced."
 
 # ─── Generate Prisma client ─────────────────────────────────────────────────
@@ -143,4 +143,4 @@ export ENCRYPTION_KEY=dev-local-key-not-for-production
 export AI_PRIVACY_MODE=LOCAL
 export OLLAMA_URL=http://localhost:11434
 
-exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web' --parallel
+exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web'

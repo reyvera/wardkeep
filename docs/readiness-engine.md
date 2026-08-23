@@ -28,13 +28,13 @@ AI may explain, summarize, and prioritize this information. It never supplies fa
 
 The first readiness release is intentionally a foundation, not a comprehensive household assessment.
 
-| Pillar | Current signals | Coverage state | Direction |
-|---|---|---|---|
-| Protection | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
-| Provision | Budget pace, cash-flow forecast, bill coverage | Partial | Add income stability, essential obligations, and recurring-payment reliability. |
-| Preparation | None | Unevaluated | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation. |
-| Prosperity | Net-worth state, debt-to-income, debt payoff progress | Partial | Add net-worth history, savings rate, investments, and interest burden. |
-| Peace | Derived from the least-ready observed pillar and recent volatility | Derived | Improve its explanation and make unknown upstream coverage visible. |
+| Pillar      | Current signals                                                                                               | Coverage state | Direction                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited        | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
+| Provision   | Budget pace, cash-flow forecast, bill coverage                                                                | Partial        | Add income stability, essential obligations, and recurring-payment reliability.                                          |
+| Preparation | None                                                                                                          | Unevaluated    | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation.                                          |
+| Prosperity  | Net-worth state, debt-to-income, debt payoff progress                                                         | Partial        | Add net-worth history, savings rate, investments, and interest burden.                                                   |
+| Peace       | Derived from the least-ready observed pillar and recent volatility                                            | Derived        | Improve its explanation and make unknown upstream coverage visible.                                                      |
 
 The `GET /api/readiness` response returns coverage, per-pillar assessments, and an `overallAssessment` alongside signals, ranked attention items, opportunities, and history. Every assessment carries a `known`, `partial`, or `not_evaluated` state, nullable score, evaluated capabilities, and coverage. Coverage currently represents evaluated finance capabilities against a transparent target count; it is a confidence indicator, not a statement that a household is a particular percentage complete.
 
@@ -51,7 +51,7 @@ Protection presently evaluates **liquidity resilience** and limited insurance-re
 
 1. Wardkeep totals positive balances in active checking, savings, and cash accounts.
 2. It estimates an ordinary monthly burn rate from the most recent 90 days of debit transactions.
-3. The estimate excludes transfer records and filters common transfer-like descriptions, including credit-card payments, investments, savings transfers, and debt-principal payments. Unknown transactions remain included to avoid understating obligations.
+3. The estimate excludes transfer records and filters common transfer-like descriptions, including credit-card payments, investments, savings transfers, and debt-principal payments. It also removes a checking or savings debit only when an equal credit on a recorded household credit-card account appears within three days; each card credit can match only one debit. A household can explicitly mark a debit as `one-time` in Transactions to omit it from this recurring burn-rate estimate; unmarked transactions remain included to avoid understating obligations.
 4. It divides liquid reserves by that monthly burn rate to derive months of coverage.
 5. The result follows a graduated curve: approximately 10 at zero months, 18 at one month, 33 at three months, 55 at six months, and 100 at twelve months. Progress between milestones is visible.
 
@@ -77,12 +77,16 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 - the strongest and most limited observed pillars;
 - clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks. Every current factor identifies its data sources, calculation method, and known limitation;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
-- **Wardkeep recommends**, which connects an observation to a concrete next action;
-- **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
+- **Wardkeep recommends**, a durable, prioritized list of active risk and warning actions that connects an observation to the relevant household workflow (such as accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor). The Dashboard and Recommendations workspace refresh readiness before showing actions. People can complete or dismiss a recommendation, and review completed, dismissed, or resolved action history. When other observed factors remain, Wardkeep can show a qualified pillar-only score-change preview; financial amounts, overall-score projections, and time-to-completion remain forthcoming;
+- **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and **Coming Up**, limited to recorded recurring-payment dates and policy renewals in the next 30 days.
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.
 
 Coverage and freshness are separate. Coverage reports how many currently supported factors Wardkeep evaluated. If one or more connected accounts are stale, Dashboard and pillar confidence are qualified as **Freshness needs review** without changing the underlying score or hiding the coverage percentage.
+
+Manual accounts are reported as manual source data, not stale connected data: Wardkeep cannot infer when a person last verified a manual balance. Only a connected account whose synchronization is overdue or has never completed triggers the freshness warning.
+
+Every displayed factor also names its evidence state. Current states are **synchronized**, **manual**, **mixed**, **stale**, **calculated**, and **unknown**. This describes the evidence behind that factor, independently from score coverage; it does not turn an inferred or missing input into evidence.
 
 ## API contract
 
@@ -96,7 +100,8 @@ Planned API additions:
 ```text
 GET  /api/readiness/explain     structured pillar factors, gaps, and score-change reasons
 POST /api/readiness/scenario    deterministic what-if result
-GET  /api/recommendations       ranked recommendations with effort and impact preview
+GET  /api/recommendations       persisted risk/warning recommendations, status, action link, priority, and assumptions
+PATCH /api/recommendations/:id  mark a recommendation completed or dismissed
 GET  /api/timeline/upcoming     upcoming bills, renewals, maintenance, and planned costs
 GET  /api/changes               meaningful changes since the user’s last visit
 ```
@@ -108,8 +113,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 - [x] Scores return an explicit **known**, **partial**, or **not evaluated** assessment state, a nullable score, coverage, evaluated capabilities, and an observed-overall rule that re-normalizes across evaluated direct pillars.
 - [~] Account source state and score evaluation time are displayed. Missing factor-level provenance and capability-specific freshness rules remain.
 - Define capability-specific coverage factors and freshness rules. Manual, estimated, inferred, calculated, synchronized, stale, and unknown data must be distinguishable.
-- Exclude transfers structurally, match credit-card payments to underlying purchases, and develop essential and normal burn-rate views.
-- Add test coverage for zero to 12+ months of reserves, no expense history, transfers, duplicated card payments, large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.
+- Continue to develop essential and normal burn-rate views, including cautious treatment of large one-time expenses.
+- Add test coverage for large one-time expenses, stale/manual data, and multiple simultaneous Protection signals.
 
 ### Make Protection composite
 
@@ -129,7 +134,7 @@ Available credit may reduce a short-term liquidity risk but must never be treate
 - [x] Add a pillar-detail / readiness-explanation experience with evaluated factors, missing factors, trend, source data, and direct actions.
 - [~] Persist signal snapshots and show a “Since your last visit” feed. Continue toward durable causal explanations, not just changed factors.
 - Create a unified timeline for bills, renewals, tax dates, maintenance, subscriptions, sinking funds, and future replacement windows; surface it as “Coming up.”
-- Turn signals into durable recommendations ranked by severity × urgency × financial impact × actionability × confidence.
+- Extend durable recommendations with financial-impact weighting, monthly amount, overall-score projections, and time-to-completion. Current ranking uses severity, urgency, actionability, and evidence freshness; current impact previews hold the other observed pillar factors constant and do not infer financial impact that has not been modeled.
 - Show impact previews before a user commits to a plan: current score, projected score, monthly contribution, and estimated completion date.
 - Add scenarios such as income interruption, a surprise expense, debt payoff, vehicle purchase, and retirement-contribution changes.
 

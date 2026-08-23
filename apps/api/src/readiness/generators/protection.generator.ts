@@ -4,7 +4,8 @@ import { AccountType, PrismaClient } from '@prisma/client';
 import { calculateBalance } from '@wardkeep/finance-engine';
 import { Transaction, TransactionStatus, TransactionType } from '@wardkeep/shared';
 import { Signal } from '@wardkeep/readiness';
-import { calculateHouseholdBurnRate } from './burn-rate';
+import { calculateHouseholdBurnRate, HouseholdBurnRate } from './burn-rate';
+import { excludeMatchedCreditCardPayments } from './payment-matching';
 
 /** A full year is deliberately required for a maximum liquidity score. */
 const MAXIMUM_MONTHS = 12;
@@ -160,8 +161,6 @@ async function generateEmergencyFundSignals(
   prisma: PrismaClient,
   userId: string,
 ): Promise<Signal[]> {
-  const signals: Signal[] = [];
-
   const totalLiquid = await calculateLiquidReserves(prisma, userId);
 
   // TransactionType.TRANSFER records are excluded structurally. The burn-rate
@@ -175,17 +174,55 @@ async function generateEmergencyFundSignals(
       type: TransactionType.DEBIT,
       date: { gte: ninetyDaysAgo },
     },
-    include: { category: { select: { name: true } } },
+    include: {
+      account: { select: { type: true } },
+      category: { select: { name: true } },
+      tags: { select: { tag: true } },
+    },
   });
+  const cardPaymentCredits = await prisma.transaction.findMany({
+    where: {
+      userId,
+      type: TransactionType.CREDIT,
+      date: { gte: ninetyDaysAgo },
+      account: { type: AccountType.CREDIT_CARD, isArchived: false },
+    },
+    select: { id: true, amount: true, date: true },
+  });
+  const possibleCardPaymentDebits = debitTransactions.filter(
+    (transaction) =>
+      transaction.account.type === AccountType.CHECKING ||
+      transaction.account.type === AccountType.SAVINGS,
+  );
+  const retainedCardPaymentDebitIds = new Set(
+    excludeMatchedCreditCardPayments(possibleCardPaymentDebits, cardPaymentCredits).map(
+      (transaction) => transaction.id,
+    ),
+  );
+  const householdDebits = debitTransactions.filter(
+    (transaction) =>
+      !possibleCardPaymentDebits.some((candidate) => candidate.id === transaction.id) ||
+      retainedCardPaymentDebitIds.has(transaction.id),
+  );
 
   const burnRate = calculateHouseholdBurnRate(
-    debitTransactions.map((transaction) => ({
+    householdDebits.map((transaction) => ({
       amount: transaction.amount.toString(),
       categoryName: transaction.category?.name,
       merchant: transaction.merchant,
       description: transaction.description,
+      tags: transaction.tags.map((tag) => tag.tag),
     })),
   );
+  return emergencyFundSignal(totalLiquid, burnRate);
+}
+
+/**
+ * Produces the explainable liquidity signal from already-calculated reserves and burn rate.
+ * Exported for deterministic coverage-band tests; it deliberately does not make advice claims.
+ */
+export function emergencyFundSignal(totalLiquid: Decimal, burnRate: HouseholdBurnRate): Signal[] {
+  const signals: Signal[] = [];
   const monthlyExpenses = burnRate.essentialMonthly;
 
   if (monthlyExpenses.isZero()) {
