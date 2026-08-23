@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Truthful freshness status** — Manual accounts are no longer labeled stale based on record age; only overdue or never-completed connected-account syncs qualify readiness confidence for review.
 - **Factor evidence states** — Pillar factors now identify whether their evidence is synchronized, manual, mixed, stale, calculated, or unknown alongside their sources, method, and limitation.
 - **Durable recommendations foundation** — Risk and warning signals now create stable, source-linked recommendation records with deterministic priority, action links, assumptions, and completed/dismissed/resolved state.
+- **Actionable recommendation dashboard** — The Dashboard now shows active durable recommendations with direct workflow links and controls to complete or dismiss each action.
 - **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
 - **Reversible policy lifecycle** — Cancelled or replaced policies can be marked inactive and restored later; inactive policies do not affect current readiness signals.
 
