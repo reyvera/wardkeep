@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Insurance policies** — Record policy type, provider, premium frequency, deductible, coverage amount, renewal date, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Protection can flag upcoming or overdue recorded renewals and warn when recorded deductibles exceed liquid reserves, without claiming insurance adequacy.
 - **Policy dashboard summary** — The Dashboard and Protection detail page now surface active policy count, renewals needing attention, incomplete records, and a direct Policies action.
+- **Mortgage escrow estimate** — Home policies can show the combined monthly insurance and property-tax escrow component, clearly identified as included in the linked mortgage payment.
 
 ### Changed
 
