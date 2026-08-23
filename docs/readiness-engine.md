@@ -51,7 +51,7 @@ Protection presently evaluates **liquidity resilience** and limited insurance-re
 
 1. Wardkeep totals positive balances in active checking, savings, and cash accounts.
 2. It estimates an ordinary monthly burn rate from the most recent 90 days of debit transactions.
-3. The estimate excludes transfer records and filters common transfer-like descriptions, including credit-card payments, investments, savings transfers, and debt-principal payments. It also removes a checking or savings debit only when an equal credit on a recorded household credit-card account appears within three days; each card credit can match only one debit. Unknown transactions remain included to avoid understating obligations.
+3. The estimate excludes transfer records and filters common transfer-like descriptions, including credit-card payments, investments, savings transfers, and debt-principal payments. It also removes a checking or savings debit only when an equal credit on a recorded household credit-card account appears within three days; each card credit can match only one debit. A household can explicitly mark a debit as `one-time` in Transactions to omit it from this recurring burn-rate estimate; unmarked transactions remain included to avoid understating obligations.
 4. It divides liquid reserves by that monthly burn rate to derive months of coverage.
 5. The result follows a graduated curve: approximately 10 at zero months, 18 at one month, 33 at three months, 55 at six months, and 100 at twelve months. Progress between milestones is visible.
 
