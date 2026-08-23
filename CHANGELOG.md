@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
+- **Capability-specific next actions** — Dashboard risks and recommendations now link directly to the relevant accounts, policies, budget, cash-flow, recurring-bills, debt, or readiness-factor workflow.
 - **Actual spending-pace data** — Transaction statistics now return cumulative daily spending for truthful pacing charts.
 - **Insurance policies** — Record policy type, provider, premium frequency, deductible, coverage amount, renewal date, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Protection can flag upcoming or overdue recorded renewals and warn when recorded deductibles exceed liquid reserves, without claiming insurance adequacy.

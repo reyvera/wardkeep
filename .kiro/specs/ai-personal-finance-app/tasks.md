@@ -528,10 +528,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
   - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
 
-- [ ] 39.3 Harden the Protection liquidity model
-  - Structural transfer exclusion and credit-card payment matching
-  - Distinguish essential burn rate from normal household spending
-  - Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months; no expenses; transfers; duplicate card payments; and large one-time expenses with tests
+- [~] 39.3 Harden the Protection liquidity model
+  - [x] Structurally exclude transfer records and remove common imported transfer, credit-card-payment, investment, savings-transfer, and principal-payment debits from burn rate
+  - [x] Distinguish categorized essential burn rate from ordinary household spending, and disclose the ordinary-spending fallback
+  - [x] Cover zero, <1, 1–3, 3–6, 6–12, and 12+ months plus no-expense history with deterministic scoring tests
+  - [ ] Add credit-card payment matching and large one-time-expense treatment instead of relying on descriptor exclusion alone
 
 - [~] 39.4 Add composite Protection capabilities
   - [x] Insurance policy records (type, provider, premium and frequency, deductible, coverage amount, renewal date), explainable renewal-timing signals, and recorded-deductible-to-liquid-reserve warning

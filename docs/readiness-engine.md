@@ -28,13 +28,13 @@ AI may explain, summarize, and prioritize this information. It never supplies fa
 
 The first readiness release is intentionally a foundation, not a comprehensive household assessment.
 
-| Pillar | Current signals | Coverage state | Direction |
-|---|---|---|---|
-| Protection | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
-| Provision | Budget pace, cash-flow forecast, bill coverage | Partial | Add income stability, essential obligations, and recurring-payment reliability. |
-| Preparation | None | Unevaluated | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation. |
-| Prosperity | Net-worth state, debt-to-income, debt payoff progress | Partial | Add net-worth history, savings rate, investments, and interest burden. |
-| Peace | Derived from the least-ready observed pillar and recent volatility | Derived | Improve its explanation and make unknown upstream coverage visible. |
+| Pillar      | Current signals                                                                                               | Coverage state | Direction                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited        | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
+| Provision   | Budget pace, cash-flow forecast, bill coverage                                                                | Partial        | Add income stability, essential obligations, and recurring-payment reliability.                                          |
+| Preparation | None                                                                                                          | Unevaluated    | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation.                                          |
+| Prosperity  | Net-worth state, debt-to-income, debt payoff progress                                                         | Partial        | Add net-worth history, savings rate, investments, and interest burden.                                                   |
+| Peace       | Derived from the least-ready observed pillar and recent volatility                                            | Derived        | Improve its explanation and make unknown upstream coverage visible.                                                      |
 
 The `GET /api/readiness` response returns coverage, per-pillar assessments, and an `overallAssessment` alongside signals, ranked attention items, opportunities, and history. Every assessment carries a `known`, `partial`, or `not_evaluated` state, nullable score, evaluated capabilities, and coverage. Coverage currently represents evaluated finance capabilities against a transparent target count; it is a confidence indicator, not a statement that a household is a particular percentage complete.
 
@@ -77,7 +77,7 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 - the strongest and most limited observed pillars;
 - clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks. Every current factor identifies its data sources, calculation method, and known limitation;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
-- **Wardkeep recommends**, which connects an observation to a concrete next action;
+- **Wardkeep recommends**, which connects an observation to the relevant household workflow (such as accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor). Durable, prioritized recommendations and impact previews are still forthcoming;
 - **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.

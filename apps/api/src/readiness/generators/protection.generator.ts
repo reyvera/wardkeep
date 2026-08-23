@@ -4,7 +4,7 @@ import { AccountType, PrismaClient } from '@prisma/client';
 import { calculateBalance } from '@wardkeep/finance-engine';
 import { Transaction, TransactionStatus, TransactionType } from '@wardkeep/shared';
 import { Signal } from '@wardkeep/readiness';
-import { calculateHouseholdBurnRate } from './burn-rate';
+import { calculateHouseholdBurnRate, HouseholdBurnRate } from './burn-rate';
 
 /** A full year is deliberately required for a maximum liquidity score. */
 const MAXIMUM_MONTHS = 12;
@@ -160,8 +160,6 @@ async function generateEmergencyFundSignals(
   prisma: PrismaClient,
   userId: string,
 ): Promise<Signal[]> {
-  const signals: Signal[] = [];
-
   const totalLiquid = await calculateLiquidReserves(prisma, userId);
 
   // TransactionType.TRANSFER records are excluded structurally. The burn-rate
@@ -186,6 +184,15 @@ async function generateEmergencyFundSignals(
       description: transaction.description,
     })),
   );
+  return emergencyFundSignal(totalLiquid, burnRate);
+}
+
+/**
+ * Produces the explainable liquidity signal from already-calculated reserves and burn rate.
+ * Exported for deterministic coverage-band tests; it deliberately does not make advice claims.
+ */
+export function emergencyFundSignal(totalLiquid: Decimal, burnRate: HouseholdBurnRate): Signal[] {
+  const signals: Signal[] = [];
   const monthlyExpenses = burnRate.essentialMonthly;
 
   if (monthlyExpenses.isZero()) {
