@@ -546,7 +546,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Estate-planning records with reversible lifecycle, optional review dates, a limited review-timing signal, dashboard action, demo data, and explicit legal-adequacy limits
   - [x] Income-source planning records with expected net amount, frequency, optional review date, a limited review-timing signal, dashboard action, and demo data
   - [x] Record a credit-card limit and show calculated available borrowing capacity without treating it as cash reserves; warn modestly when a recorded line is 90% used without granting Protection credit
-  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependents, true income-interruption resilience, and fixed obligations
+  - [x] Compare recorded monthly debt minimums with liquid reserves and warn only when the recorded minimums exceed current reserves
+  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependents, true income-interruption resilience, and unrecorded or variable fixed obligations
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
