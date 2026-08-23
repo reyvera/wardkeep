@@ -1,9 +1,14 @@
 import { Signal } from '@wardkeep/readiness';
+import { DataFreshnessSummary } from './data-freshness';
+
+export type EvidenceState =
+  'synchronized' | 'manual' | 'mixed' | 'stale' | 'calculated' | 'unknown';
 
 export interface SignalProvenance {
   sources: string[];
   method: string;
   limitation: string;
+  evidenceState: EvidenceState;
 }
 
 const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {

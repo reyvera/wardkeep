@@ -37,6 +37,7 @@ interface Signal {
     sources: string[];
     method: string;
     limitation: string;
+    evidenceState: 'synchronized' | 'manual' | 'mixed' | 'stale' | 'calculated' | 'unknown';
   };
 }
 
