@@ -78,7 +78,7 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 - clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks. Every current factor identifies its data sources, calculation method, and known limitation;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
 - **Wardkeep recommends**, a durable, prioritized list of active risk and warning actions that connects an observation to the relevant household workflow (such as accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor). People can complete or dismiss a recommendation, and review completed, dismissed, or resolved action history; financial impact previews are still forthcoming;
-- **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
+- **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and **Coming Up**, limited to recorded recurring-payment dates and policy renewals in the next 30 days.
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.
 

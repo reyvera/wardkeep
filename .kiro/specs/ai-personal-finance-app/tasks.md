@@ -552,6 +552,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Expose `GET /api/recommendations` and completion/dismissal updates, ranked deterministically by severity, urgency, actionability, and evidence freshness
   - [x] Display active persisted recommendations in the Dashboard with direct actions and completed/dismissed controls
   - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
+  - [x] Show a truthful 30-day Coming Up view from recorded recurring-payment dates and policy renewals, without inventing unrecorded events
   - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
 
 - [x] 39.6 Establish GitHub launch tracking
