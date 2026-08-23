@@ -177,6 +177,7 @@ async function generateEmergencyFundSignals(
     include: {
       account: { select: { type: true } },
       category: { select: { name: true } },
+      tags: { select: { tag: true } },
     },
   });
   const cardPaymentCredits = await prisma.transaction.findMany({
@@ -210,6 +211,7 @@ async function generateEmergencyFundSignals(
       categoryName: transaction.category?.name,
       merchant: transaction.merchant,
       description: transaction.description,
+      tags: transaction.tags.map((tag) => tag.tag),
     })),
   );
   return emergencyFundSignal(totalLiquid, burnRate);
