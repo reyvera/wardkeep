@@ -3,7 +3,17 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Plus, Search, ChevronLeft, ChevronRight, X, ArrowLeftRight, Clock, Zap } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  ArrowLeftRight,
+  Clock,
+  Zap,
+  CircleOff,
+} from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 import { CreateRuleModal } from '@/components/create-rule-modal';
 
@@ -17,6 +27,7 @@ interface Transaction {
   type: string;
   status?: string;
   accountId: string;
+  tags?: Array<{ tag: string }>;
 }
 
 interface Category {
@@ -78,7 +89,16 @@ export default function TransactionsPage() {
   if (hideTransfers) params.set('excludeType', 'TRANSFER');
 
   const txQuery = useQuery({
-    queryKey: ['transactions', page, search, accountFilter, categoryFilter, dateFrom, dateTo, hideTransfers],
+    queryKey: [
+      'transactions',
+      page,
+      search,
+      accountFilter,
+      categoryFilter,
+      dateFrom,
+      dateTo,
+      hideTransfers,
+    ],
     queryFn: () => apiClient.get<TransactionsResponse>(`/transactions?${params.toString()}`),
   });
 
@@ -99,8 +119,13 @@ export default function TransactionsPage() {
   });
 
   const markTransferMutation = useMutation({
-    mutationFn: (txId: string) =>
-      apiClient.patch(`/transactions/${txId}`, { type: 'TRANSFER' }),
+    mutationFn: (txId: string) => apiClient.patch(`/transactions/${txId}`, { type: 'TRANSFER' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
+
+  const toggleOneTimeMutation = useMutation({
+    mutationFn: ({ txId, tags }: { txId: string; tags: string[] }) =>
+      apiClient.patch(`/transactions/${txId}`, { tags }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 
@@ -113,7 +138,14 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       setShowForm(false);
-      setNewTx({ merchant: '', amount: '', date: new Date().toISOString().split('T')[0], category: '', type: 'expense', accountId: '' });
+      setNewTx({
+        merchant: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        category: '',
+        type: 'expense',
+        accountId: '',
+      });
     },
   });
 
@@ -135,32 +167,69 @@ export default function TransactionsPage() {
           onClick={() => setShowForm(!showForm)}
           className={showForm ? 'btn-secondary' : 'btn-primary'}
         >
-          {showForm ? <><X size={16} /> Cancel</> : <><Plus size={16} /> Add</>}
+          {showForm ? (
+            <>
+              <X size={16} /> Cancel
+            </>
+          ) : (
+            <>
+              <Plus size={16} /> Add
+            </>
+          )}
         </button>
       </div>
 
       {/* Create Form */}
       {showForm && (
-        <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="card space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createMutation.mutate();
+          }}
+          className="card space-y-4"
+        >
           {createMutation.isError && (
             <p className="text-sm text-accent-red">{createMutation.error.message}</p>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div>
               <label className="input-label">Merchant</label>
-              <input placeholder="e.g. Walmart" value={newTx.merchant} onChange={(e) => setNewTx({ ...newTx, merchant: e.target.value })} className="input" required />
+              <input
+                placeholder="e.g. Walmart"
+                value={newTx.merchant}
+                onChange={(e) => setNewTx({ ...newTx, merchant: e.target.value })}
+                className="input"
+                required
+              />
             </div>
             <div>
               <label className="input-label">Amount</label>
-              <input placeholder="0.00" type="number" step="0.01" value={newTx.amount} onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })} className="input" required />
+              <input
+                placeholder="0.00"
+                type="number"
+                step="0.01"
+                value={newTx.amount}
+                onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })}
+                className="input"
+                required
+              />
             </div>
             <div>
               <label className="input-label">Date</label>
-              <input type="date" value={newTx.date} onChange={(e) => setNewTx({ ...newTx, date: e.target.value })} className="input" />
+              <input
+                type="date"
+                value={newTx.date}
+                onChange={(e) => setNewTx({ ...newTx, date: e.target.value })}
+                className="input"
+              />
             </div>
             <div>
               <label className="input-label">Type</label>
-              <select value={newTx.type} onChange={(e) => setNewTx({ ...newTx, type: e.target.value })} className="input">
+              <select
+                value={newTx.type}
+                onChange={(e) => setNewTx({ ...newTx, type: e.target.value })}
+                className="input"
+              >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
                 <option value="transfer">Transfer</option>
@@ -168,16 +237,32 @@ export default function TransactionsPage() {
             </div>
             <div>
               <label className="input-label">Account</label>
-              <select value={newTx.accountId} onChange={(e) => setNewTx({ ...newTx, accountId: e.target.value })} className="input">
+              <select
+                value={newTx.accountId}
+                onChange={(e) => setNewTx({ ...newTx, accountId: e.target.value })}
+                className="input"
+              >
                 <option value="">Select account</option>
-                {(accountsQuery.data ?? []).map((acc) => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                {(accountsQuery.data ?? []).map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="input-label">Category</label>
-              <select value={newTx.category} onChange={(e) => setNewTx({ ...newTx, category: e.target.value })} className="input">
+              <select
+                value={newTx.category}
+                onChange={(e) => setNewTx({ ...newTx, category: e.target.value })}
+                className="input"
+              >
                 <option value="">Uncategorized</option>
-                {(categoriesQuery.data ?? []).map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                {(categoriesQuery.data ?? []).map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -191,27 +276,79 @@ export default function TransactionsPage() {
       <div className="card py-3 px-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-content-tertiary" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-content-tertiary"
+            />
             <input
               placeholder="Search transactions..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="input pl-8 py-2"
             />
           </div>
-          <select value={accountFilter} onChange={(e) => { setAccountFilter(e.target.value); setPage(1); }} className="input w-auto py-2">
+          <select
+            value={accountFilter}
+            onChange={(e) => {
+              setAccountFilter(e.target.value);
+              setPage(1);
+            }}
+            className="input w-auto py-2"
+          >
             <option value="">All Accounts</option>
-            {(accountsQuery.data ?? []).map((acc) => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+            {(accountsQuery.data ?? []).map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name}
+              </option>
+            ))}
           </select>
-          <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }} className="input w-auto py-2">
+          <select
+            value={categoryFilter}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setPage(1);
+            }}
+            className="input w-auto py-2"
+          >
             <option value="">All Categories</option>
             <option value="NONE">Uncategorized</option>
-            {(categoriesQuery.data ?? []).map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            {(categoriesQuery.data ?? []).map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
           </select>
-          <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="input w-auto py-2" />
-          <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="input w-auto py-2" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              setPage(1);
+            }}
+            className="input w-auto py-2"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              setPage(1);
+            }}
+            className="input w-auto py-2"
+          />
           <label className="flex items-center gap-2 text-xs text-content-secondary cursor-pointer whitespace-nowrap">
-            <input type="checkbox" checked={hideTransfers} onChange={(e) => { setHideTransfers(e.target.checked); setPage(1); }} className="rounded border-edge" />
+            <input
+              type="checkbox"
+              checked={hideTransfers}
+              onChange={(e) => {
+                setHideTransfers(e.target.checked);
+                setPage(1);
+              }}
+              className="rounded border-edge"
+            />
             Hide transfers
           </label>
         </div>
@@ -234,7 +371,9 @@ export default function TransactionsPage() {
       )}
 
       {txQuery.isError && (
-        <div className="card"><p className="text-accent-red text-sm">{txQuery.error.message}</p></div>
+        <div className="card">
+          <p className="text-accent-red text-sm">{txQuery.error.message}</p>
+        </div>
       )}
 
       {txQuery.data && (
@@ -245,8 +384,13 @@ export default function TransactionsPage() {
               const isCredit = tx.type === 'CREDIT';
               const isTransfer = tx.type === 'TRANSFER';
               const isPending = tx.status === 'PENDING';
+              const isOneTime =
+                tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
               const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
-              const dateStr = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              const dateStr = new Date(tx.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              });
 
               return (
                 <div
@@ -255,7 +399,10 @@ export default function TransactionsPage() {
                 >
                   {/* Pending indicator */}
                   {isPending && (
-                    <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent-yellow" title="Pending" />
+                    <div
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent-yellow"
+                      title="Pending"
+                    />
                   )}
 
                   {/* Category Icon */}
@@ -270,7 +417,8 @@ export default function TransactionsPage() {
                       <span className="text-[10px] text-content-tertiary">{dateStr}</span>
                       {isPending && (
                         <span className="category-pill text-[10px] bg-accent-yellow/10 text-accent-yellow">
-                          <Clock size={8} className="inline mr-0.5" />Pending
+                          <Clock size={8} className="inline mr-0.5" />
+                          Pending
                         </span>
                       )}
                       {catName && (
@@ -289,11 +437,18 @@ export default function TransactionsPage() {
                           Transfer
                         </span>
                       )}
+                      {isOneTime && (
+                        <span className="category-pill text-[10px] bg-accent-purple/10 text-accent-purple">
+                          One-time
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Amount */}
-                  <span className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}>
+                  <span
+                    className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}
+                  >
                     {isCredit ? '+' : '-'}${formatCurrency(amt)}
                   </span>
 
@@ -301,12 +456,21 @@ export default function TransactionsPage() {
                   <div className="flex items-center gap-1 ml-1">
                     <select
                       value={tx.categoryId ?? ''}
-                      onChange={(e) => updateCategoryMutation.mutate({ txId: tx.id, categoryId: e.target.value || null })}
+                      onChange={(e) =>
+                        updateCategoryMutation.mutate({
+                          txId: tx.id,
+                          categoryId: e.target.value || null,
+                        })
+                      }
                       className="input w-auto py-1 px-1.5 text-[10px] max-w-[80px]"
                       title="Change category"
                     >
                       <option value="">—</option>
-                      {(categoriesQuery.data ?? []).map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                      {(categoriesQuery.data ?? []).map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
                     {!isTransfer && (
                       <button
@@ -315,6 +479,27 @@ export default function TransactionsPage() {
                         title="Mark as transfer"
                       >
                         <ArrowLeftRight size={12} />
+                      </button>
+                    )}
+                    {tx.type === 'DEBIT' && (
+                      <button
+                        onClick={() => {
+                          const tags = (tx.tags ?? []).map((tag) => tag.tag);
+                          toggleOneTimeMutation.mutate({
+                            txId: tx.id,
+                            tags: isOneTime
+                              ? tags.filter((tag) => tag.toLowerCase() !== 'one-time')
+                              : [...tags, 'one-time'],
+                          });
+                        }}
+                        className={`btn-ghost p-1 ${isOneTime ? 'text-accent-purple' : 'text-content-tertiary hover:text-accent-purple'}`}
+                        title={
+                          isOneTime
+                            ? 'Include in readiness burn rate'
+                            : 'Mark as one-time for readiness'
+                        }
+                      >
+                        <CircleOff size={12} />
                       </button>
                     )}
                     <button
