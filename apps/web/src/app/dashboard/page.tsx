@@ -97,6 +97,7 @@ interface RecurringTransactionSummary {
 }
 
 interface IncomeSourceSummary { id: string; name: string; nextExpectedDate: string | null; expectedNetAmount: string | null; }
+interface PlannedExpenseSummary { id: string; name: string; amount: string | null; fundedAmount: string | null; dueDate: string | null; }
 interface SpendingStatsSummary { monthlyTrend: Array<{ month: string; income: number; expenses: number }>; categoryChanges: Array<{ categoryId: string | null; name: string; amount: number; previousAmount: number; change: number }>; }
 
 interface Recommendation {
@@ -240,6 +241,7 @@ export default function DashboardPage() {
   });
   const incomeSourcesQuery = useQuery({ queryKey: ['income-sources'], queryFn: () => apiClient.get<IncomeSourceSummary[]>('/income-sources') });
   const spendingStatsQuery = useQuery({ queryKey: ['spending-stats'], queryFn: () => apiClient.get<SpendingStatsSummary>('/transactions/stats') });
+  const plannedExpensesQuery = useQuery({ queryKey: ['planned-expenses'], queryFn: () => apiClient.get<PlannedExpenseSummary[]>('/planned-expenses') });
   const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
     queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
@@ -349,6 +351,9 @@ export default function DashboardPage() {
     ...(incomeSourcesQuery.data ?? [])
       .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0 && daysUntil(source.nextExpectedDate) <= 30)
       .map((source) => ({ id: `income-${source.id}`, date: source.nextExpectedDate!, title: source.name, detail: `${source.expectedNetAmount ? `$${Number(source.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected income` : 'Recorded expected income date'}`, href: '/income-sources' })),
+    ...(plannedExpensesQuery.data ?? [])
+      .filter((expense) => expense.dueDate && daysUntil(expense.dueDate) >= 0 && daysUntil(expense.dueDate) <= 30)
+      .map((expense) => ({ id: `planned-${expense.id}`, date: expense.dueDate!, title: expense.name, detail: `${expense.amount ? `$${Number(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} planned` : 'Planned expense'}${expense.amount && Number(expense.fundedAmount ?? 0) < Number(expense.amount) ? ` · $${(Number(expense.amount) - Number(expense.fundedAmount ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} not marked set aside` : ''}`, href: '/planned-expenses' })),
   ]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
@@ -752,11 +757,11 @@ export default function DashboardPage() {
           </div>
           <CalendarDays size={19} className="text-accent-blue" />
         </div>
-        {recurringQuery.isLoading || insuranceQuery.isLoading || incomeSourcesQuery.isLoading ? (
+        {recurringQuery.isLoading || insuranceQuery.isLoading || incomeSourcesQuery.isLoading || plannedExpensesQuery.isLoading ? (
           <div className="skeleton mt-4 h-16 w-full" />
         ) : comingUp.length === 0 ? (
           <p className="mt-4 text-sm text-content-tertiary">
-            No upcoming recorded bills, income dates, or policy renewals in the next 30 days.
+            No upcoming recorded bills, income dates, planned expenses, or policy renewals in the next 30 days.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
