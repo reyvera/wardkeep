@@ -32,10 +32,15 @@ export async function generateProtectionSignals(
   if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
   const secondaryLiquiditySignals = await generateSecondaryLiquiditySignals(prisma, userId);
   const fixedObligationSignals = await generateFixedObligationSignals(prisma, userId);
-  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals);
+  const dependents = await prisma.dependent.findMany({ where: { userId, isActive: true }, select: { label: true, relationship: true, reviewDate: true } });
+  const dependentSignals = dependents.map((dependent) => dependentReviewSignal(dependent, new Date())).filter((signal): signal is Signal => signal !== null);
+  if (dependents.length > 0 && dependentSignals.length === 0) dependentSignals.push({ capabilityId: 'dependents', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${dependents.length} active dependent ${dependents.length === 1 ? 'record is' : 'records are'} entered. Wardkeep does not assess care needs, coverage adequacy, or financial responsibility.` });
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals, ...dependentSignals);
 
   return signals;
 }
+
+export function dependentReviewSignal(dependent: { label: string | null; relationship: string; reviewDate: Date | null }, now: Date): Signal | null { if (!dependent.reviewDate) return null; const today = new Date(now); today.setHours(0, 0, 0, 0); const days = Math.ceil((dependent.reviewDate.getTime() - today.getTime()) / 86_400_000); const name = dependent.label || dependent.relationship.toLowerCase(); if (days < 0) return { capabilityId: 'dependents', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${name} has a review date that has passed. Confirm household planning context is current.` }; if (days <= 30) return { capabilityId: 'dependents', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${name} is due for a household-planning review in ${days} days.` }; return null; }
 
 /** Checks only recorded debt minimums against liquid cash; it does not assume missing obligations. */
 async function generateFixedObligationSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
