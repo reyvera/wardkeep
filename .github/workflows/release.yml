@@ -19,16 +19,19 @@ env:
   #   ghcr.io/reyvera/wardkeep-web
   #   ghcr.io/reyvera/wardkeep-worker
 
+# Serialize separate release runs for the same ref, but keep the API, web, and
+# worker matrix jobs together. Job-level concurrency would make those three
+# jobs cancel one another.
+concurrency:
+  group: release-images-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
-    concurrency:
-      group: release-images-${{ github.ref }}
-      cancel-in-progress: false
 
     strategy:
       matrix:
