@@ -96,6 +96,8 @@ interface RecurringTransactionSummary {
   nextExpected: string;
 }
 
+interface IncomeSourceSummary { id: string; name: string; nextExpectedDate: string | null; expectedNetAmount: string | null; }
+
 interface Recommendation {
   id: string;
   signalSummary: string;
@@ -233,6 +235,7 @@ export default function DashboardPage() {
     queryKey: ['recurring-transactions'],
     queryFn: () => apiClient.get<RecurringTransactionSummary[]>('/recurring'),
   });
+  const incomeSourcesQuery = useQuery({ queryKey: ['income-sources'], queryFn: () => apiClient.get<IncomeSourceSummary[]>('/income-sources') });
   const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
     queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
@@ -339,6 +342,9 @@ export default function DashboardPage() {
         detail: `$${Number(transaction.expectedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected ${transaction.frequency.toLowerCase()}`,
         href: '/recurring',
       })),
+    ...(incomeSourcesQuery.data ?? [])
+      .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0 && daysUntil(source.nextExpectedDate) <= 30)
+      .map((source) => ({ id: `income-${source.id}`, date: source.nextExpectedDate!, title: source.name, detail: `${source.expectedNetAmount ? `$${Number(source.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected income` : 'Recorded expected income date'}`, href: '/income-sources' })),
   ]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
@@ -708,11 +714,11 @@ export default function DashboardPage() {
           </div>
           <CalendarDays size={19} className="text-accent-blue" />
         </div>
-        {recurringQuery.isLoading || insuranceQuery.isLoading ? (
+        {recurringQuery.isLoading || insuranceQuery.isLoading || incomeSourcesQuery.isLoading ? (
           <div className="skeleton mt-4 h-16 w-full" />
         ) : comingUp.length === 0 ? (
           <p className="mt-4 text-sm text-content-tertiary">
-            No upcoming recorded bills or policy renewals in the next 30 days.
+            No upcoming recorded bills, income dates, or policy renewals in the next 30 days.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
