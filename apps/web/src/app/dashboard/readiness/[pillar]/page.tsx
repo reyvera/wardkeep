@@ -33,6 +33,11 @@ interface Signal {
   magnitude: number;
   pillar: PillarKey;
   summary: string;
+  provenance?: {
+    sources: string[];
+    method: string;
+    limitation: string;
+  };
 }
 
 interface ReadinessResponse {
@@ -284,8 +289,20 @@ export default function ReadinessPillarPage() {
                   <div>
                     <p className="text-sm text-content-primary">{signal.summary}</p>
                     <p className="text-xs text-content-tertiary mt-1">
-                      {signal.capabilityId.replace(/-/g, ' ')} · current calculation
+                      {signal.provenance
+                        ? `Sources: ${signal.provenance.sources.join(' · ')}`
+                        : `${signal.capabilityId.replace(/-/g, ' ')} · current calculation`}
                     </p>
+                    {signal.provenance && (
+                      <>
+                        <p className="text-xs text-content-secondary mt-1">
+                          {signal.provenance.method}
+                        </p>
+                        <p className="text-xs text-content-tertiary mt-1">
+                          Limit: {signal.provenance.limitation}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </li>
               ))}

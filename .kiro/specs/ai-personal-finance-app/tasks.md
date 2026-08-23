@@ -521,7 +521,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
   - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
   - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
-  - [~] Missing factors, account-source summary, and score evaluation time are displayed; factor-level provenance remains
+  - [x] Missing factors, account-source summary, score evaluation time, and factor-level provenance (sources, method, and limitation) are displayed
 
 - [~] 39.2 Add data provenance and freshness
   - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
