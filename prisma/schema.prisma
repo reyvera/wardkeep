@@ -36,6 +36,10 @@ model User {
   resetTokens           PasswordResetToken[]
   bankConnections       BankConnection[]
   insurancePolicies     InsurancePolicy[]
+  estateDocuments       EstateDocument[]
+  incomeSources         IncomeSource[]
+  dependents            Dependent[]
+  plannedExpenses       PlannedExpense[]
   recommendations       Recommendation[]
 }
 
@@ -112,6 +116,7 @@ model Account {
   type           AccountType
   currency       String      @default("USD") @db.VarChar(3)
   initialBalance Decimal     @db.Decimal(19, 4)
+  creditLimit    Decimal?    @db.Decimal(19, 4)
   isArchived     Boolean     @default(false)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
@@ -191,6 +196,112 @@ model InsurancePolicy {
   @@index([userId, isActive])
   @@index([userId, renewalDate])
   @@index([paymentAccountId])
+}
+
+enum EstateDocumentType {
+  WILL
+  TRUST
+  FINANCIAL_POWER_OF_ATTORNEY
+  HEALTHCARE_DIRECTIVE
+  BENEFICIARY_REVIEW
+  OTHER
+}
+
+/// A record that a household has identified a planning document. Wardkeep stores
+/// the review reminder, not document contents or legal advice about its adequacy.
+model EstateDocument {
+  id         String             @id @default(uuid())
+  userId     String
+  type       EstateDocumentType
+  title      String?            @db.VarChar(100)
+  reviewDate DateTime?          @db.Date
+  isActive   Boolean            @default(true)
+  notes      String?            @db.VarChar(1000)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, reviewDate])
+}
+
+enum IncomeFrequency {
+  WEEKLY
+  BIWEEKLY
+  SEMI_MONTHLY
+  MONTHLY
+  CUSTOM
+}
+
+enum IncomeSourceKind {
+  EMPLOYMENT
+  SELF_EMPLOYMENT
+  BENEFIT
+  SUPPORT
+  OTHER
+}
+
+/// Household-entered income planning context, not evidence of employment or payment continuity.
+model IncomeSource {
+  id                String           @id @default(uuid())
+  userId            String
+  name              String           @db.VarChar(100)
+  kind              IncomeSourceKind @default(EMPLOYMENT)
+  frequency         IncomeFrequency
+  expectedNetAmount Decimal?         @db.Decimal(19, 4)
+  nextExpectedDate  DateTime?        @db.Date
+  reviewDate        DateTime?        @db.Date
+  isActive          Boolean          @default(true)
+  notes             String?          @db.VarChar(1000)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, reviewDate])
+}
+
+enum DependentRelationship {
+  CHILD
+  ADULT
+  OTHER
+}
+
+/// Minimal household planning context; Wardkeep does not request identities or assess care needs.
+model Dependent {
+  id           String                @id @default(uuid())
+  userId       String
+  label        String?               @db.VarChar(100)
+  relationship DependentRelationship @default(OTHER)
+  reviewDate   DateTime?             @db.Date
+  isActive     Boolean               @default(true)
+  notes        String?               @db.VarChar(1000)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, reviewDate])
+}
+
+model PlannedExpense {
+  id           String    @id @default(uuid())
+  userId       String
+  name         String    @db.VarChar(100)
+  amount       Decimal?  @db.Decimal(19, 4)
+  fundedAmount Decimal?  @db.Decimal(19, 4)
+  dueDate      DateTime? @db.Date
+  isActive     Boolean   @default(true)
+  notes        String?   @db.VarChar(1000)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, dueDate])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────

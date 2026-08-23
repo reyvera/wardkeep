@@ -20,11 +20,20 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Added
 
+- **Verified migration baseline** — Existing development databases without Prisma migration history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Insurance policies** — Record policy details, renewal dates, deductibles, coverage amounts, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Wardkeep can flag upcoming or overdue recorded renewals and compare recorded deductibles with liquid reserves. These are explainable records checks, not insurance-adequacy advice.
 - **Policy dashboard summary** — The Dashboard and Protection page show policy attention and incomplete records with a direct Policies action.
 - **Mortgage escrow estimate** — Home policies can show the recorded insurance and property-tax escrow component of a linked mortgage payment.
 - **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
+- **Estate-planning reminders** — Record planning document types and review dates without storing document contents. Protection can remind about a recorded review date without making legal-validity or adequacy claims.
+- **Income-source context** — Record expected income frequency, optional net amount, and review timing without predicting income continuity or job security.
+- **Visible secondary liquidity** — Credit-card accounts can record a credit limit and show available borrowing capacity, clearly separated from cash reserves.
+- **Low available-credit warning** — A recorded card that is at least 90% used can surface a modest Protection warning, without treating credit as readiness credit.
+- **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
+- **Dependent planning reminders** — Optional non-identifying household records can carry a review date, without assessing care needs or coverage adequacy.
+- **Recorded income dates** — Income-source records can include a next expected date, surfaced on the Dashboard and Coming Up without predicting a paycheck.
+- **Planned-expense funding** — Record a known future cost, due date, and funds explicitly set aside; upcoming shortfalls appear in Preparation and Coming Up.
 - **Capability-specific next actions** — Dashboard risks and recommendations link directly to the related household workflow instead of stopping at static advice.
 - **Credit-card payment matching** — Matching household card-payment pairs no longer double-count as ordinary spending in Protection’s burn-rate calculation.
 - **One-time expense control** — A household can visibly mark a debit as one-time to exclude only that user-designated transaction from recurring Protection burn-rate calculations.
@@ -39,6 +48,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Changed
 
+- **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
 - **Direct-pillar dashboard summary** — The Dashboard now compares only directly evaluated pillars when naming the strongest and most limited observed area.
 - **Peace respects missing evidence** — Derived Peace now uses only pillars with observed signals rather than treating an unevaluated pillar as zero.
 - **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as fully used rather than overspent in Provision and recommendations.

@@ -21,6 +21,7 @@ export const CreateAccountSchema = z.object({
   initialBalance: z
     .string()
     .regex(/^-?\d+(\.\d+)?$/, 'Initial balance must be a valid decimal string'),
+  creditLimit: z.string().regex(/^\d+(\.\d+)?$/, 'Credit limit must be a valid decimal string').optional(),
 });
 
 export type CreateAccountDto = z.infer<typeof CreateAccountSchema>;

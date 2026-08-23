@@ -6,6 +6,7 @@ permalink: /quick-start
 ---
 
 # Quick Start
+
 {: .fs-9 }
 
 Get Wardkeep running locally for development in 5 minutes.
@@ -15,11 +16,11 @@ Get Wardkeep running locally for development in 5 minutes.
 
 ## Prerequisites
 
-| Requirement | Version | Notes |
-|:------------|:--------|:------|
-| Node.js | v22+ | Use nvm: `nvm install 22 && nvm use 22` |
-| Docker & Compose | v2+ | For Postgres and Redis |
-| pnpm | 8.15.9 | Auto-installed via corepack from `packageManager` field |
+| Requirement      | Version | Notes                                                   |
+| :--------------- | :------ | :------------------------------------------------------ |
+| Node.js          | v22+    | Use nvm: `nvm install 22 && nvm use 22`                 |
+| Docker & Compose | v2+     | For Postgres and Redis                                  |
+| pnpm             | 8.15.9  | Auto-installed via corepack from `packageManager` field |
 
 ---
 
@@ -51,8 +52,8 @@ This starts PostgreSQL 15 and Redis 7 in the background.
 ## 3. Set up the database
 
 ```bash
-# Apply schema
-npx prisma db push
+# Apply reviewed migrations
+npx prisma migrate deploy
 
 # Generate Prisma client
 npx prisma generate
@@ -60,6 +61,12 @@ npx prisma generate
 # Seed default categories
 pnpm db:seed
 ```
+
+If this is an existing development database made by an older Wardkeep build and
+Prisma reports missing migration history, do not use `db push`. Back it up, then
+run `pnpm db:baseline` from the Wardkeep revision that last wrote the database.
+The command verifies the schema before recording migration history and does not
+change household data.
 
 ---
 
@@ -97,10 +104,10 @@ pnpm dev
 
 ## 6. Open the app
 
-| Service | URL |
-|:--------|:----|
-| Web UI | [http://localhost:3000](http://localhost:3000) |
-| API | [http://localhost:4000](http://localhost:4000) |
+| Service      | URL                                                                  |
+| :----------- | :------------------------------------------------------------------- |
+| Web UI       | [http://localhost:3000](http://localhost:3000)                       |
+| API          | [http://localhost:4000](http://localhost:4000)                       |
 | Health check | [http://localhost:4000/api/health](http://localhost:4000/api/health) |
 
 ---

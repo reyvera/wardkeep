@@ -142,7 +142,7 @@ pnpm install
 docker compose up -d postgres redis
 
 # 4. Set up database (first time only)
-npx prisma db push
+npx prisma migrate deploy
 npx prisma generate
 pnpm db:seed
 
@@ -308,10 +308,29 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 - **NODE_PATH:** Required for pnpm's hoisted dependency resolution. Set to `/app/node_modules/.pnpm/node_modules:/app/apps/{app}/node_modules` so Node can find both hoisted transitive deps (like `express`, `reflect-metadata`) and workspace packages (like `@wardkeep/shared`).
 - **Next.js standalone in monorepos:** The standalone output places `server.js` at `apps/web/server.js` (not the root), with static files and public assets relative to that path. The web Dockerfile accounts for this.
 - **Worker entry point:** Due to the worker tsconfig's `paths` referencing workspace packages, `tsc` outputs with the full directory structure: `apps/worker/dist/apps/worker/src/main.js`.
-- **Prisma in Docker:** Requires `openssl` package in Alpine images. The entrypoint runs `prisma migrate deploy` (or falls back to `prisma db push`) before starting the API.
+- **Prisma in Docker:** Requires `openssl` package in Alpine images. The entrypoint runs only checked-in `prisma migrate deploy` migrations. It never runs `db push`, never accepts data loss, and refuses to start if a migration fails.
 - **Postgres version:** Dev compose uses postgres:15-alpine. Prod compose uses postgres:16-alpine. Existing data volumes initialized with one version are NOT compatible with the other — you'll see "database files are incompatible" if mismatched.
 - **ENCRYPTION_KEY safety:** The API entrypoint refuses to start if `ENCRYPTION_KEY=change-me-in-production` (unless `DEMO_MODE=true`).
-- **Image updates:** Always `docker rmi` the old images before pulling, or use `docker compose pull --ignore-pull-failures` — Docker may cache `latest` tags and not re-pull.
+- **Image updates:** Use immutable release tags in production. `:develop` is for a disposable staging copy, not the live household database. Pull explicitly with `docker compose pull`; do not remove images as part of a normal update.
+
+### Safe database upgrades and development-image testing
+
+Every released and development image uses the same forward-only Prisma migration contract:
+
+1. Back up the database before changing an image tag.
+2. Start the new API image. It runs `prisma migrate deploy`, which only applies checked-in forward migrations.
+3. If you later return to an older image, it does **not** delete newer columns or data. The older application simply runs against the compatible superset schema. Upgrade again to return to the newer version.
+
+Wardkeep will never automatically synchronize a non-empty database with `db push` or seed demo data. This protects real households, but databases created by older development builds may not have Prisma migration history. For that one-time case:
+
+```bash
+# From the Wardkeep revision that last wrote this database, after taking a backup.
+pnpm db:baseline
+```
+
+`db:baseline` is read-only until it confirms the live database exactly matches that revision's Prisma schema. Only then does it record the checked-in migrations; it never runs schema SQL or changes household data. If it reports a difference, stop: use the older Wardkeep revision that matches the database, baseline there, and then upgrade normally.
+
+For a containerized one-time baseline, set `WARDKEEP_BASELINE_EXISTING_DATABASE=true` on the **API only**, deploy it once, confirm it starts, then remove the variable. Do this only after a backup. The image uses the same strict schema check and exits without changes when it cannot prove the database matches.
 
 ## Roadmap
 
@@ -349,6 +368,18 @@ Wardkeep is not trying to be another ledger or budget dashboard. Finance is the 
 `observations → explainable signals → readiness + coverage → prioritized actions → plans → measured improvement`
 
 The current release has a robust finance foundation and the first readiness implementation. It intentionally does **not** claim that a score is comprehensive when the required information is absent. Protection currently measures graduated liquid-reserve resilience using a filtered ordinary-expense burn rate. Matching household credit-card payment pairs are excluded so one payment is not counted as new spending twice, and a household can explicitly mark a one-time debit to exclude it from recurring burn-rate estimates; limited insurance-record renewal and deductible-to-reserve checks are also included. Insurance adequacy, estate, health, dependents, income interruption, and other protection dimensions remain planned capabilities rather than implied coverage.
+
+## Releases
+
+Wardkeep uses one workspace version. Before creating a release tag, run:
+
+```bash
+pnpm release:check
+```
+
+Create a matching `vX.Y.Z` tag only from the tested release commit. The image workflow rejects a version tag that does not match the root and workspace package versions. A manually dispatched non-version tag such as `latest` remains supported for operational image rebuilds.
+
+After CI succeeds on `develop`, Wardkeep publishes development images tagged `develop` and `develop-<commit-sha>`. Use those for test deployments. Reserve final `vX.Y.Z` tags for immutable releases; use a matching prerelease package version and tag (for example `2.2.0-rc.1` / `v2.2.0-rc.1`) when a release candidate needs its own image.
 
 See [the readiness specification](docs/readiness-engine.md) for the scoring contract and current limits, and [the implementation plan](.kiro/specs/ai-personal-finance-app/tasks.md) for the sequenced work.
 

@@ -75,6 +75,7 @@ export class AccountsService {
         type: account.type,
         currency: account.currency,
         initialBalance: account.initialBalance.toString(),
+        creditLimit: account.creditLimit?.toString() ?? null,
         currentBalance,
         isArchived: account.isArchived,
         createdAt: account.createdAt,
@@ -117,6 +118,7 @@ export class AccountsService {
         type: dto.type,
         currency: dto.currency ?? 'USD',
         initialBalance: new Decimal(dto.initialBalance),
+        creditLimit: dto.creditLimit ? new Decimal(dto.creditLimit) : null,
       },
     });
 
@@ -141,6 +143,7 @@ export class AccountsService {
       type: account.type,
       currency: account.currency,
       initialBalance: account.initialBalance.toString(),
+      creditLimit: account.creditLimit?.toString() ?? null,
       currentBalance: new Decimal(account.initialBalance.toString()).toFixed(2),
       isArchived: account.isArchived,
       createdAt: account.createdAt,
@@ -184,6 +187,7 @@ export class AccountsService {
         ...(dto.initialBalance !== undefined && {
           initialBalance: new Decimal(dto.initialBalance),
         }),
+        ...(dto.creditLimit !== undefined && { creditLimit: dto.creditLimit ? new Decimal(dto.creditLimit) : null }),
       },
       include: {
         transactions: true,
@@ -238,6 +242,7 @@ export class AccountsService {
       type: updated.type,
       currency: updated.currency,
       initialBalance: updated.initialBalance.toString(),
+      creditLimit: updated.creditLimit?.toString() ?? null,
       currentBalance,
       isArchived: updated.isArchived,
       createdAt: updated.createdAt,

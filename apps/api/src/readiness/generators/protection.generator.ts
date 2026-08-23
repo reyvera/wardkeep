@@ -26,9 +26,122 @@ export async function generateProtectionSignals(
 
   const emergencyFundSignals = await generateEmergencyFundSignals(prisma, userId);
   const insuranceSignals = await generateInsuranceSignals(prisma, userId);
-  signals.push(...emergencyFundSignals, ...insuranceSignals);
+  const estateDocumentSignals = await generateEstateDocumentSignals(prisma, userId);
+  const incomeSources = await prisma.incomeSource.findMany({ where: { userId, isActive: true }, select: { name: true, reviewDate: true } });
+  const incomeSignals = incomeSources.map((source) => incomeSourceReviewSignal(source, new Date())).filter((signal): signal is Signal => signal !== null);
+  if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
+  const secondaryLiquiditySignals = await generateSecondaryLiquiditySignals(prisma, userId);
+  const fixedObligationSignals = await generateFixedObligationSignals(prisma, userId);
+  const dependents = await prisma.dependent.findMany({ where: { userId, isActive: true }, select: { label: true, relationship: true, reviewDate: true } });
+  const dependentSignals = dependents.map((dependent) => dependentReviewSignal(dependent, new Date())).filter((signal): signal is Signal => signal !== null);
+  if (dependents.length > 0 && dependentSignals.length === 0) dependentSignals.push({ capabilityId: 'dependents', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${dependents.length} active dependent ${dependents.length === 1 ? 'record is' : 'records are'} entered. Wardkeep does not assess care needs, coverage adequacy, or financial responsibility.` });
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals, ...dependentSignals);
 
   return signals;
+}
+
+export function dependentReviewSignal(dependent: { label: string | null; relationship: string; reviewDate: Date | null }, now: Date): Signal | null { if (!dependent.reviewDate) return null; const today = new Date(now); today.setHours(0, 0, 0, 0); const days = Math.ceil((dependent.reviewDate.getTime() - today.getTime()) / 86_400_000); const name = dependent.label || dependent.relationship.toLowerCase(); if (days < 0) return { capabilityId: 'dependents', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${name} has a review date that has passed. Confirm household planning context is current.` }; if (days <= 30) return { capabilityId: 'dependents', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${name} is due for a household-planning review in ${days} days.` }; return null; }
+
+/** Checks only recorded debt minimums against liquid cash; it does not assume missing obligations. */
+async function generateFixedObligationSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const profiles = await prisma.debtProfile.findMany({ where: { userId }, select: { minimumPayment: true } });
+  const monthlyMinimums = profiles.reduce((total, profile) => total.add(new Decimal(profile.minimumPayment.toString())), new Decimal(0));
+  if (monthlyMinimums.lte(0)) return [];
+  const reserves = await calculateLiquidReserves(prisma, userId);
+  if (monthlyMinimums.gt(reserves)) return [{ capabilityId: 'fixed-obligations', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.75, summary: `Recorded debt minimums total $${monthlyMinimums.toFixed(2)} per month, above $${reserves.toFixed(2)} in liquid reserves. This does not include unrecorded household obligations.` }];
+  return [];
+}
+
+/**
+ * A nearly exhausted recorded credit line is a modest warning. Available credit
+ * is deliberately not counted as cash or a positive emergency-fund contribution.
+ */
+async function generateSecondaryLiquiditySignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const cards = await prisma.account.findMany({
+    where: { userId, isArchived: false, type: AccountType.CREDIT_CARD, creditLimit: { not: null } },
+    include: { transactions: true, linkedBankAccounts: { select: { id: true } } },
+  });
+  const signals: Signal[] = [];
+  for (const card of cards) {
+    const limit = new Decimal(card.creditLimit!.toString());
+    if (limit.lte(0)) continue;
+    const balance = card.linkedBankAccounts.length > 0
+      ? new Decimal(card.initialBalance.toString())
+      : calculateBalance(new Decimal(card.initialBalance.toString()), card.transactions.map((transaction) => ({ ...transaction, amount: transaction.amount.toString(), aiConfidence: transaction.aiConfidence?.toString() ?? null })));
+    const available = Decimal.max(0, limit.sub(Decimal.max(0, balance.abs())));
+    if (available.div(limit).lte(0.1)) signals.push({
+      capabilityId: 'secondary-liquidity', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5,
+      summary: `${card.name} has $${available.toFixed(2)} of $${limit.toFixed(2)} in recorded available credit. This is borrowing capacity, not cash reserves.`,
+    });
+  }
+  return signals;
+}
+
+/** Reminds about a household-entered income-context review, not income security. */
+export function incomeSourceReviewSignal(source: { name: string; reviewDate: Date | null }, now: Date): Signal | null {
+  if (!source.reviewDate) return null;
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((source.reviewDate.getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return { capabilityId: 'income-sources', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${source.name} has a review date that has passed. Confirm your income context is still current.` };
+  if (days <= 30) return { capabilityId: 'income-sources', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${source.name} is due for review in ${days} days.` };
+  return null;
+}
+
+/**
+ * Records document-review timing only. A listed document is not evidence that it
+ * is valid, current, accessible, or appropriate for the household.
+ */
+async function generateEstateDocumentSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const documents = await prisma.estateDocument.findMany({
+    where: { userId, isActive: true },
+    select: { type: true, title: true, reviewDate: true },
+  });
+  if (documents.length === 0) return [];
+
+  const reviewSignals = documents
+    .map((document) => estateDocumentReviewSignal(document, new Date()))
+    .filter((signal): signal is Signal => signal !== null);
+  if (reviewSignals.length > 0) return reviewSignals;
+
+  return [{
+    capabilityId: 'estate-documents',
+    type: 'positive',
+    magnitude: 1,
+    pillar: 'protection',
+    summary: `${documents.length} active estate-planning ${documents.length === 1 ? 'record is' : 'records are'} recorded. Wardkeep does not assess legal validity, beneficiary choices, or adequacy.`,
+    weight: 0.5,
+  }];
+}
+
+/** Classifies a recorded review date without making a legal-adequacy claim. */
+export function estateDocumentReviewSignal(
+  document: { type: string; title: string | null; reviewDate: Date | null },
+  now: Date,
+): Signal | null {
+  if (!document.reviewDate) return null;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const daysUntilReview = Math.ceil(
+    (document.reviewDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+  );
+  const documentName = document.title || document.type.toLowerCase().replace(/_/g, ' ');
+  if (daysUntilReview < 0) return {
+    capabilityId: 'estate-documents',
+    type: 'warning',
+    magnitude: -3,
+    pillar: 'protection',
+    summary: `${documentName} has a review date that has passed. Consider reviewing it with the appropriate professional.`,
+    weight: 0.75,
+  };
+  if (daysUntilReview <= 30) return {
+    capabilityId: 'estate-documents',
+    type: 'warning',
+    magnitude: -2,
+    pillar: 'protection',
+    summary: `${documentName} is due for review in ${daysUntilReview} days.`,
+    weight: 0.75,
+  };
+  return null;
 }
 
 /**
@@ -39,7 +152,7 @@ export async function generateProtectionSignals(
 async function generateInsuranceSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
   const policies = await prisma.insurancePolicy.findMany({
     where: { userId, isActive: true },
-    select: { type: true, provider: true, renewalDate: true, deductible: true },
+    select: { type: true, provider: true, renewalDate: true, deductible: true, coverageAmount: true },
   });
   if (policies.length === 0) return [];
 
@@ -56,6 +169,19 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
       pillar: 'protection',
       summary: `${policies.length} active insurance ${policies.length === 1 ? 'policy is' : 'policies are'} recorded. Wardkeep does not yet assess coverage adequacy.`,
       weight: 0.5,
+    });
+  }
+  const incompletePolicies = policies.filter(
+    (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
+  );
+  if (incompletePolicies.length > 0) {
+    signals.push({
+      capabilityId: 'insurance-record-details',
+      type: 'warning',
+      magnitude: -2,
+      pillar: 'protection',
+      summary: `${incompletePolicies.length} recorded insurance ${incompletePolicies.length === 1 ? 'policy is' : 'policies are'} missing a renewal date, deductible, or coverage amount. This requests record detail; it does not determine coverage adequacy.`,
+      weight: 0.75,
     });
   }
   const recordedDeductibles = policies

@@ -537,6 +537,18 @@ export class TransactionsService {
       amount: Number(c._sum.amount ?? 0),
     }));
 
+    const previousMonthStart = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1);
+    const previousMonthEnd = startOfMonth;
+    const previousCategorySpending = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: { userId, type: 'DEBIT', date: { gte: previousMonthStart, lt: previousMonthEnd }, categoryId: { not: null } },
+      _sum: { amount: true },
+    });
+    const previousCategoryAmounts = new Map(previousCategorySpending.map((item) => [item.categoryId, Number(item._sum.amount ?? 0)]));
+    const categoryChanges = spendingByCategory
+      .map((category) => ({ ...category, previousAmount: previousCategoryAmounts.get(category.categoryId) ?? 0, change: category.amount - (previousCategoryAmounts.get(category.categoryId) ?? 0) }))
+      .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
+
     // Top merchants this month
     const topMerchants = await this.prisma.transaction.groupBy({
       by: ['merchant'],
@@ -588,6 +600,7 @@ export class TransactionsService {
     return {
       monthlyTrend,
       spendingByCategory,
+      categoryChanges,
       topMerchants: topMerchants.map((m) => ({
         merchant: m.merchant ?? 'Unknown',
         amount: Number(m._sum.amount ?? 0),

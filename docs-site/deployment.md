@@ -6,6 +6,7 @@ permalink: /deployment
 ---
 
 # Self-Hosted Deployment
+
 {: .fs-9 }
 
 Run Wardkeep on your own hardware with Docker Compose.
@@ -70,29 +71,29 @@ cd wardkeep && git pull && docker compose up -d --build
 
 ## Hardware requirements
 
-| Setup | RAM | CPU | Storage |
-|:------|:----|:----|:--------|
-| Without local AI | 2 GB | 2 cores | 10 GB |
-| With local AI (Ollama) | 8 GB | 4 cores | 20 GB |
+| Setup                  | RAM  | CPU     | Storage |
+| :--------------------- | :--- | :------ | :------ |
+| Without local AI       | 2 GB | 2 cores | 10 GB   |
+| With local AI (Ollama) | 8 GB | 4 cores | 20 GB   |
 
 ---
 
 ## Environment variables
 
-| Variable | Default | Description |
-|:---------|:--------|:------------|
-| `ENCRYPTION_KEY` | *(required)* | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. |
-| `POSTGRES_PASSWORD` | postgres | PostgreSQL password. Set a unique value in production. |
-| `DATABASE_URL` | auto-constructed | PostgreSQL connection string |
-| `REDIS_HOST` | redis | Redis hostname |
-| `REDIS_PORT` | 6379 | Redis port |
-| `AI_PRIVACY_MODE` | LOCAL | AI routing: LOCAL, HYBRID, or CLOUD |
-| `OLLAMA_URL` | http://ollama:11434 | Ollama endpoint for local AI |
-| `SESSION_TIMEOUT` | 30 | Session inactivity timeout in minutes |
-| `PORT` | 4000 | API server port |
-| `WEB_PORT` | 3000 | Host port for web UI |
-| `API_PORT` | 4000 | Host port for API |
-| `DEMO_MODE` | false | Set to `true` to bypass ENCRYPTION_KEY safety check |
+| Variable            | Default             | Description                                                                                |
+| :------------------ | :------------------ | :----------------------------------------------------------------------------------------- |
+| `ENCRYPTION_KEY`    | _(required)_        | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. |
+| `POSTGRES_PASSWORD` | postgres            | PostgreSQL password. Set a unique value in production.                                     |
+| `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                               |
+| `REDIS_HOST`        | redis               | Redis hostname                                                                             |
+| `REDIS_PORT`        | 6379                | Redis port                                                                                 |
+| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD                                                        |
+| `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                               |
+| `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                      |
+| `PORT`              | 4000                | API server port                                                                            |
+| `WEB_PORT`          | 3000                | Host port for web UI                                                                       |
+| `API_PORT`          | 4000                | Host port for API                                                                          |
+| `DEMO_MODE`         | false               | Set to `true` to bypass ENCRYPTION_KEY safety check                                        |
 
 {: .warning }
 The app refuses to start if `ENCRYPTION_KEY` is left as the placeholder value `change-me-in-production` (unless `DEMO_MODE=true`).
@@ -140,7 +141,7 @@ If you use a Docker management UI:
                     │  PostgreSQL │      │    Redis    │
                     │    (5432)   │      │   (6379)    │
                     └─────────────┘      └─────────────┘
-                                          
+
                     ┌─────────────┐
                     │   Ollama    │  (optional)
                     │  (11434)    │
@@ -148,6 +149,7 @@ If you use a Docker management UI:
 ```
 
 Three container images built from the repo:
+
 - **wardkeep-api** — NestJS REST API with Prisma. Runs migrations on startup.
 - **wardkeep-web** — Next.js standalone server.
 - **wardkeep-worker** — BullMQ consumer for background jobs (AI categorization, imports, backups).
@@ -159,18 +161,18 @@ Three container images built from the repo:
 - **pnpm workspace symlinks:** Dockerfiles copy the entire workspace structure to preserve `node_modules/@wardkeep/*` symlinks, then strip source files in the runner stage.
 - **NODE_PATH:** Set in containers for pnpm's hoisted dependency resolution.
 - **Next.js standalone:** In monorepos, standalone outputs at `apps/web/server.js` (not root).
-- **Prisma in Alpine:** Requires `openssl` package. Entrypoint runs `prisma migrate deploy` before starting.
+- **Prisma in Alpine:** Requires `openssl` package. Entrypoint runs only checked-in `prisma migrate deploy` migrations before starting. It never falls back to `db push`, accepts data loss, or seeds demo data.
 - **Postgres versions:** Dev compose uses postgres:15, prod uses postgres:16. Data volumes are NOT compatible between versions.
 
 ---
 
 ## Compose variants
 
-| File | Use case |
-|:-----|:---------|
-| `docker-compose.yml` | Build from source (dev). Postgres 15. |
-| `docker-compose.prod.yml` | Pre-built GHCR images. Postgres 16. |
-| `docker-compose.demo.yml` | Lightweight demo. No AI/worker. |
+| File                      | Use case                              |
+| :------------------------ | :------------------------------------ |
+| `docker-compose.yml`      | Build from source (dev). Postgres 15. |
+| `docker-compose.prod.yml` | Pre-built GHCR images. Postgres 16.   |
+| `docker-compose.demo.yml` | Lightweight demo. No AI/worker.       |
 
 ---
 
@@ -187,12 +189,33 @@ docker compose restart api
 
 ### Database incompatibility error
 
-You can't mix Postgres 15 and 16 data volumes. If switching compose files:
+You can't attach a Postgres 15 data volume directly to a Postgres 16 container.
+Do not run `docker compose down -v`: that deletes the data volume. Keep the
+Postgres major version unchanged, or use PostgreSQL's documented dump/restore
+upgrade process after taking a verified backup.
+
+### Safe Wardkeep image upgrade
+
+Before changing an image tag, create a database backup. The API only applies
+forward, checked-in migrations and stops if one fails; it will not make an
+unreviewed schema change to get itself running.
 
 ```bash
-docker compose down -v   # removes volumes (DATA LOSS)
-docker compose up -d     # fresh start
+docker compose exec -T postgres pg_dump -U postgres wardkeep > wardkeep-backup.sql
+docker compose pull
+docker compose up -d
 ```
+
+Switching back to an older Wardkeep image does not remove newer columns or
+household data. Test `:develop` images against a separate, restored copy of the
+database—not the live household stack.
+
+If a database made by a prior development build has no Prisma migration
+history, set `WARDKEEP_BASELINE_EXISTING_DATABASE=true` on the API for one
+deployment only. It records migration history only after verifying the database
+schema exactly matches that image. Remove the variable after the API starts. If
+the check reports any difference, stop and use the Wardkeep revision that last
+wrote the database to baseline it first.
 
 ### Images not updating
 

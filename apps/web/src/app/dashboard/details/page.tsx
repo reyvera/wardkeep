@@ -44,6 +44,7 @@ interface BudgetSummary {
 interface SpendingStats {
   monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
   spendingByCategory: Array<{ categoryId: string; name: string; amount: number }>;
+  categoryChanges: Array<{ categoryId: string | null; name: string; change: number }>;
   topMerchants: Array<{ merchant: string; amount: number }>;
   monthTotals: {
     income: number;
@@ -360,17 +361,16 @@ export default function DashboardPage() {
           <span className="card-title">TOP CATEGORIES</span>
           {statsQuery.data && statsQuery.data.spendingByCategory.length > 0 ? (
             <div className="space-y-2.5 mt-2">
-              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat) => (
-                <div key={cat.categoryId} className="flex items-center justify-between">
+              {statsQuery.data.spendingByCategory.slice(0, 6).map((cat) => {
+                const change = statsQuery.data!.categoryChanges.find((item) => item.categoryId === cat.categoryId)?.change;
+                return <div key={cat.categoryId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CategoryIcon name={cat.name} size="sm" />
                     <span className="text-sm text-content-primary truncate max-w-[120px]">{cat.name}</span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums text-content-primary">
-                    ${formatCurrency(cat.amount)}
-                  </span>
+                  <div className="text-right"><span className="text-sm font-semibold tabular-nums text-content-primary">${formatCurrency(cat.amount)}</span>{change !== undefined && <p className={`text-xs ${change > 0 ? 'text-accent-red' : change < 0 ? 'text-accent-green' : 'text-content-tertiary'}`}>{change > 0 ? '+' : ''}${formatCurrency(change)} vs last month</p>}</div>
                 </div>
-              ))}
+              })}
             </div>
           ) : (
             <p className="text-sm text-content-tertiary mt-2">No spending data</p>

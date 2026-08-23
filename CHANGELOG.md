@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
+- **Release versioning** — The workspace is aligned to 2.1.1, with a release guard that rejects mismatched `vX.Y.Z` tags.
+- **Development images** — Pushes to `develop` now publish separate `develop` and commit-specific Docker images, keeping development deployment tags distinct from releases.
+
 ### Added
 
+- **Verified migration baseline** — Existing development databases without Prisma history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.
 - **Capability-specific next actions** — Dashboard risks and recommendations now link directly to the relevant accounts, policies, budget, cash-flow, recurring-bills, debt, or readiness-factor workflow.
@@ -18,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Policy dashboard summary** — The Dashboard and Protection detail page now surface active policy count, renewals needing attention, incomplete records, and a direct Policies action.
 - **Mortgage escrow estimate** — Home policies can show the combined monthly insurance and property-tax escrow component, clearly identified as included in the linked mortgage payment.
 - **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
+- **Estate-planning reminders** — Record planning document types and optional review dates without storing document contents. Protection can surface an overdue or upcoming review, while explicitly avoiding legal-validity or adequacy claims.
+- **Income-source context** — Record expected income frequency, optional net amount, and review timing. These records support planning reminders without predicting income continuity or job security.
+- **Visible secondary liquidity** — Credit-card accounts can record a credit limit and show available borrowing capacity, clearly separated from cash reserves.
+- **Low available-credit warning** — A recorded card that is at least 90% used can surface a modest Protection warning, without treating credit as readiness credit.
+- **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
+- **Dependent planning reminders** — Optional non-identifying household records can carry a review date, without assessing care needs or coverage adequacy.
+- **Recorded income dates** — Income-source records can include a next expected date, shown in Dashboard Coming Up without predicting a paycheck.
+- **Planned-expense funding** — Record a known future cost, due date, and funds explicitly set aside; upcoming shortfalls appear in Preparation and Coming Up.
 
 ### Changed
 

@@ -11,13 +11,25 @@ if [ "$ENCRYPTION_KEY" = "change-me-in-production" ] && [ "$DEMO_MODE" != "true"
   exit 1
 fi
 
-echo "Running database migrations..."
-node node_modules/prisma/build/index.js migrate deploy 2>/dev/null || \
-  node node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss 2>/dev/null || \
-  echo "WARNING: Database migration/sync failed — starting anyway"
+echo "Running checked-in database migrations..."
+if ! node node_modules/prisma/build/index.js migrate deploy; then
+  if [ "$WARDKEEP_BASELINE_EXISTING_DATABASE" = "true" ]; then
+    echo "Baselining an existing database after a strict schema check..."
+    node scripts/baseline-prisma-migrations.mjs
+    echo "Rechecking recorded database migrations..."
+    node node_modules/prisma/build/index.js migrate deploy
+  else
+  echo ""
+  echo "ERROR: Database migrations failed. Wardkeep will not start because continuing could risk data."
+  echo "If this database was created by an older development image without migration history,"
+  echo "restore/verify a backup and run once with WARDKEEP_BASELINE_EXISTING_DATABASE=true."
+  echo "That operation only records migration history after confirming the schema is an exact match."
+  exit 1
+  fi
+fi
 
-echo "Seeding default data (skipped if already exists)..."
-node prisma/seed-demo.js 2>/dev/null || true
+# Demo data is never seeded automatically in an application image. It is an
+# explicit local-development action so an update can never alter a household.
 
 echo "Starting API server..."
 exec "$@"

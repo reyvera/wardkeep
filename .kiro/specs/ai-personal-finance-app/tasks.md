@@ -543,7 +543,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Record separate versus mortgage/loan/other bundled premiums, linked payment account, and home property-tax escrow to prevent future cash-flow double counting
   - [x] Surface policy completeness and renewal attention on the dashboard and Protection detail page; support reversible inactive/restore lifecycle for cancelled or replaced policies
   - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
-  - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+  - [x] Estate-planning records with reversible lifecycle, optional review dates, a limited review-timing signal, dashboard action, demo data, and explicit legal-adequacy limits
+  - [x] Income-source planning records with expected net amount, frequency, optional review date, a limited review-timing signal, dashboard action, and demo data
+  - [x] Record a credit-card limit and show calculated available borrowing capacity without treating it as cash reserves; warn modestly when a recorded line is 90% used without granting Protection credit
+  - [x] Compare recorded monthly debt minimums with liquid reserves and warn only when the recorded minimums exceed current reserves
+  - [x] Dependent planning records with optional labels and review dates, limited review-timing signals, and explicit care/coverage adequacy limits
+  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependent needs, true income-interruption resilience, and unrecorded or variable fixed obligations
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
@@ -566,12 +571,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 33. Income & Spending Intelligence
 
 - [ ] 33.1 Income configuration and pay schedule
-  - Pay frequency: semi-monthly, biweekly, monthly, custom
+  - [x] Record pay frequency and an optional next expected income date; show only recorded income dates in Dashboard Coming Up
   - Expected net per paycheck
   - Salary vs hourly tracking
   - Dashboard: "Next paycheck: ~[date]"
 
 - [ ] 33.2 Spending trends and monthly comparisons
+  - [x] Show current-month recorded income, spending, net, and income-relative savings rate on the dashboard
   - Month-over-month category spending comparison
   - Income vs expenses and savings rate
   - Per-category change indicators

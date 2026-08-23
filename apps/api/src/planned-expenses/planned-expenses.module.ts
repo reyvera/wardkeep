@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common'; import { PlannedExpensesController } from './planned-expenses.controller'; import { PlannedExpensesService } from './planned-expenses.service'; @Module({ controllers: [PlannedExpensesController], providers: [PlannedExpensesService] }) export class PlannedExpensesModule {}

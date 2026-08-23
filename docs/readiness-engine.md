@@ -28,13 +28,13 @@ AI may explain, summarize, and prioritize this information. It never supplies fa
 
 The first readiness release is intentionally a foundation, not a comprehensive household assessment.
 
-| Pillar      | Current signals                                                                                               | Coverage state | Direction                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited        | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
-| Provision   | Budget pace, cash-flow forecast, bill coverage                                                                | Partial        | Add income stability, essential obligations, and recurring-payment reliability.                                          |
-| Preparation | None                                                                                                          | Unevaluated    | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation.                                          |
-| Prosperity  | Net-worth state, debt-to-income, debt payoff progress                                                         | Partial        | Add net-worth history, savings rate, investments, and interest burden.                                                   |
-| Peace       | Derived from the least-ready observed pillar and recent volatility                                            | Derived        | Improve its explanation and make unknown upstream coverage visible.                                                      |
+| Pillar      | Current signals                                                                                                                     | Coverage state | Direction                                                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policies and estate-planning records with review timing | Limited        | Add insurance adequacy, income interruption, estate adequacy, obligations, dependents, medical exposure, and secondary backstops. |
+| Provision   | Budget pace, cash-flow forecast, bill coverage                                                                                      | Partial        | Add income stability, essential obligations, and recurring-payment reliability.                                                   |
+| Preparation | None                                                                                                                                | Unevaluated    | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation.                                                   |
+| Prosperity  | Net-worth state, debt-to-income, debt payoff progress                                                                               | Partial        | Add net-worth history, savings rate, investments, and interest burden.                                                            |
+| Peace       | Derived from the least-ready observed pillar and recent volatility                                                                  | Derived        | Improve its explanation and make unknown upstream coverage visible.                                                               |
 
 The `GET /api/readiness` response returns coverage, per-pillar assessments, and an `overallAssessment` alongside signals, ranked attention items, opportunities, and history. Every assessment carries a `known`, `partial`, or `not_evaluated` state, nullable score, evaluated capabilities, and coverage. Coverage currently represents evaluated finance capabilities against a transparent target count; it is a confidence indicator, not a statement that a household is a particular percentage complete.
 
@@ -47,7 +47,7 @@ The `GET /api/readiness` response returns coverage, per-pillar assessments, and 
 
 ## Protection: current contract
 
-Protection presently evaluates **liquidity resilience** and limited insurance-record renewal awareness—not insurance adequacy or comprehensive risk protection.
+Protection presently evaluates **liquidity resilience**, limited insurance-record renewal awareness, and estate-record review timing—not insurance or estate adequacy, or comprehensive risk protection.
 
 1. Wardkeep totals positive balances in active checking, savings, and cash accounts.
 2. It estimates an ordinary monthly burn rate from the most recent 90 days of debit transactions.
@@ -65,9 +65,33 @@ Wardkeep can now store user-entered active insurance policies (type, provider, p
 
 When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
 
+### Estate-planning records: review reminders, not legal evaluation
+
+Wardkeep can record a document type, optional label, next review date, and non-sensitive reminder notes for wills, trusts, powers of attorney, healthcare directives, and beneficiary reviews. A past or upcoming recorded review date produces an explainable reminder. Otherwise, the presence of active records contributes only a small manual-evidence signal. Wardkeep does **not** store document contents or infer legal validity, beneficiary choices, accessibility, completeness, or adequacy. No estate record is interpreted as unknown—not a negative score or evidence that the household lacks a plan.
+
+### Income-source context: planning records, not continuity prediction
+
+Wardkeep can also record an expected income source, frequency, optional expected net amount, and review date. This produces a small manual-evidence signal or a reminder when the record is due for review. It does **not** determine that income will arrive, assess employment stability, or measure a household’s ability to withstand income interruption. No source record remains unknown rather than a negative readiness finding.
+
+### Secondary liquidity: entered borrowing capacity only
+
+Credit-card accounts can retain an optional credit limit and show available credit using the current recorded balance. This is presented as **borrowing capacity, not cash**. When a recorded line is at least 90% used, Protection adds a modest warning; otherwise it does not grant any Protection or emergency-fund credit. It does not evaluate interest cost, approval risk, or whether borrowing is appropriate.
+
+### Fixed obligations: recorded debt minimums only
+
+Protection compares recorded monthly debt minimums with liquid reserves and warns when those minimums alone exceed current reserves. It does not assume other bills, include variable obligations, or infer income; those missing inputs remain outside this factor.
+
+### Dependents: household-planning context only
+
+Optional dependent records can retain a broad relationship, non-identifying label, and review date. A due review is an explainable planning reminder. Wardkeep never treats absent records as evidence that a household has no dependents, and does not evaluate care needs, coverage adequacy, or financial responsibility.
+
+## Preparation: initial contract
+
+Preparation remains unknown until the household records a planned expense with a due date in the next 30 days. Wardkeep compares its amount with only the funds the household explicitly marks as set aside, and surfaces any recorded shortfall. It does not infer affordability, verify that funds exist in an account, or evaluate unrecorded future costs.
+
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
-For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.
+Wardkeep uses checked-in, forward-only Prisma migrations in every environment. An existing development database without Prisma Migrate history must be baselined with `pnpm db:baseline` only after a backup; the command refuses to write history unless its schema exactly matches the current revision. `pnpm prisma db push` is not an upgrade path for an existing household database because it can make unreviewed schema changes.
 
 ## Dashboard contract
 

@@ -203,6 +203,71 @@ async function main() {
   });
   console.log('  ✓ Created 3 insurance policies (including one upcoming renewal)');
 
+  const estateReview = new Date();
+  estateReview.setMonth(estateReview.getMonth() + 9);
+  await prisma.estateDocument.createMany({
+    data: [
+      { userId: user.id, type: 'WILL', title: 'Family will', reviewDate: estateReview, notes: 'Demo record only; document contents are not stored in Wardkeep.' },
+      { userId: user.id, type: 'FINANCIAL_POWER_OF_ATTORNEY', title: 'Financial power of attorney', reviewDate: estateReview },
+    ],
+  });
+  console.log('  ✓ Created 2 estate-planning reminder records');
+
+  const incomeReview = new Date();
+  incomeReview.setMonth(incomeReview.getMonth() + 6);
+  const nextIncome = new Date();
+  nextIncome.setDate(nextIncome.getDate() + 7);
+  await prisma.incomeSource.create({
+    data: {
+      userId: user.id,
+      name: 'Primary employment',
+      kind: 'EMPLOYMENT',
+      frequency: 'SEMI_MONTHLY',
+      expectedNetAmount: '4250.00',
+      nextExpectedDate: nextIncome,
+      reviewDate: incomeReview,
+      notes: 'Demo planning context only; this record does not predict future income.',
+    },
+  });
+  console.log('  ✓ Created 1 income-source planning record');
+
+  const dependentReview = new Date();
+  dependentReview.setMonth(dependentReview.getMonth() + 6);
+  await prisma.dependent.create({
+    data: {
+      userId: user.id,
+      label: 'Child',
+      relationship: 'CHILD',
+      reviewDate: dependentReview,
+      notes: 'Demo planning record; no identifying details are stored.',
+    },
+  });
+
+  const propertyTaxDue = new Date();
+  propertyTaxDue.setDate(propertyTaxDue.getDate() + 18);
+  const vehicleRegistrationDue = new Date();
+  vehicleRegistrationDue.setMonth(vehicleRegistrationDue.getMonth() + 3);
+  await prisma.plannedExpense.createMany({
+    data: [
+      {
+        userId: user.id,
+        name: 'Property tax installment',
+        amount: '1800.00',
+        fundedAmount: '600.00',
+        dueDate: propertyTaxDue,
+        notes: 'Demo: intentionally partially funded to exercise Preparation shortfall behavior.',
+      },
+      {
+        userId: user.id,
+        name: 'Vehicle registration',
+        amount: '420.00',
+        fundedAmount: '420.00',
+        dueDate: vehicleRegistrationDue,
+      },
+    ],
+  });
+  console.log('  ✓ Created dependent and planned-expense demo records');
+
   // Generate 6 months of transactions
   let txCount = 0;
   for (let monthOffset = 5; monthOffset >= 0; monthOffset--) {
