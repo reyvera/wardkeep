@@ -75,7 +75,7 @@ Wardkeep can also record an expected income source, frequency, optional expected
 
 ### Secondary liquidity: entered borrowing capacity only
 
-Credit-card accounts can retain an optional credit limit and show available credit using the current recorded balance. This is presented as **borrowing capacity, not cash**. It is not currently used to increase Protection or emergency-fund coverage, and does not evaluate interest cost, approval risk, or whether borrowing is appropriate.
+Credit-card accounts can retain an optional credit limit and show available credit using the current recorded balance. This is presented as **borrowing capacity, not cash**. When a recorded line is at least 90% used, Protection adds a modest warning; otherwise it does not grant any Protection or emergency-fund credit. It does not evaluate interest cost, approval risk, or whether borrowing is appropriate.
 
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
