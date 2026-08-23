@@ -34,6 +34,7 @@ const navItems = [
   { href: '/estate-documents', label: 'Estate planning', icon: ShieldCheck },
   { href: '/income-sources', label: 'Income sources', icon: Wallet },
   { href: '/dependents', label: 'Dependents', icon: ShieldCheck },
+  { href: '/planned-expenses', label: 'Planned expenses', icon: Wallet },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
