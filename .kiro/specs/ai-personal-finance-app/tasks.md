@@ -333,25 +333,24 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - "ARM adjustment in March + planned vacation → build extra buffer"
   - Store generated insights; deduplicate similar insights within 7 days
 
-### 23. Household Timeline
+### 23. Household Timeline [PARTIAL]
 
-- [ ] 23.1 Implement Timeline service and API
-  - API endpoint: GET /api/timeline — unified chronological view
-  - GET /api/timeline/upcoming — next 30 days of events from all Capabilities
+- [~] 23.1 Implement Timeline service and API
+  - [x] GET /api/timeline/upcoming — chronological recorded events for 1–365 days
+  - [ ] API endpoint: GET /api/timeline — unified chronological view with future capability sources
   - GET /api/timeline/history — past events (what happened)
   - Each event: title, date, capability source, actionRequired flag, status
 
-- [ ] 23.2 Wire finance events into Timeline
-  - Recurring bills → upcoming timeline events
-  - Payday → upcoming event
-  - Goal milestones → past/upcoming events
+- [~] 23.2 Wire finance events into Timeline
+  - [x] Confirmed recurring bills, recorded policy renewals, expected income dates, and planned expenses → upcoming events
+  - [ ] Goal milestones → past/upcoming events
   - Budget period start/end → recurring events
   - Debt payoff milestones → upcoming events
 
-- [ ] 23.3 Implement Timeline UI
-  - Scrollable vertical timeline: past ← today → future
-  - Color-coded by Capability source
-  - Action-required events highlighted
+- [~] 23.3 Implement Timeline UI
+  - [x] Scrollable, grouped upcoming timeline with 30/90/365-day views and direct source links
+  - [ ] Past ← today → future view
+  - [ ] Color-code capability sources and highlight action-required events when source semantics support it
   - Click event → navigate to relevant Capability view
   - Mobile-friendly: swipeable, compact cards
 

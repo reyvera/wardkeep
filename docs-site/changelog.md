@@ -20,6 +20,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Added
 
+- **Household Timeline** — A single chronological view now brings together recorded recurring bills, policy renewals, expected income dates, and planned expenses, with direct links back to each source record.
 - **Verified migration baseline** — Existing development databases without Prisma migration history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Insurance policies** — Record policy details, renewal dates, deductibles, coverage amounts, and whether payments are separate or bundled into a mortgage, loan, lease, or another account.
 - **Protection insurance signals** — Wardkeep can flag upcoming or overdue recorded renewals and compare recorded deductibles with liquid reserves. These are explainable records checks, not insurance-adequacy advice.

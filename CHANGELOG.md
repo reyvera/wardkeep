@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Household Timeline** — A single, chronological view now brings together recorded recurring bills, policy renewals, expected income dates, and planned expenses for the next 30, 90, or 365 days, with direct links back to each source record.
 - **Verified migration baseline** — Existing development databases without Prisma history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
 - **Readiness coverage** — The readiness API and dashboard now expose how much of the household picture Wardkeep has evaluated. Pillars show their evaluated coverage and confidence rather than implying complete knowledge.
 - **Readiness command-center dashboard** — Household readiness now includes a trend, explainable pillar gateways, a Needs attention section, and action-oriented recommendations.

@@ -130,6 +130,8 @@ GET  /api/timeline/upcoming     upcoming bills, renewals, maintenance, and plann
 GET  /api/changes               meaningful changes since the user’s last visit
 ```
 
+`GET /api/timeline/upcoming?days=30` is available now. It returns only recorded confirmed recurring bills, policy renewals, expected income dates, and planned expenses for the next 1–365 days. It does not generate recurring occurrences, infer obligations, or predict income.
+
 ## Required next work
 
 ### Harden the scoring model
