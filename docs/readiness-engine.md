@@ -30,7 +30,7 @@ The first readiness release is intentionally a foundation, not a comprehensive h
 
 | Pillar      | Current signals                                                                                               | Coverage state | Direction                                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policy records and renewal timing | Limited        | Add insurance adequacy, income interruption, estate, obligations, dependents, medical exposure, and secondary backstops. |
+| Protection  | Liquid reserves compared with ordinary expense burn rate; entered insurance policies and estate-planning records with review timing | Limited        | Add insurance adequacy, income interruption, estate adequacy, obligations, dependents, medical exposure, and secondary backstops. |
 | Provision   | Budget pace, cash-flow forecast, bill coverage                                                                | Partial        | Add income stability, essential obligations, and recurring-payment reliability.                                          |
 | Preparation | None                                                                                                          | Unevaluated    | Add goals, sinking funds, planned expenses, home, vehicle, and tax preparation.                                          |
 | Prosperity  | Net-worth state, debt-to-income, debt payoff progress                                                         | Partial        | Add net-worth history, savings rate, investments, and interest burden.                                                   |
@@ -47,7 +47,7 @@ The `GET /api/readiness` response returns coverage, per-pillar assessments, and 
 
 ## Protection: current contract
 
-Protection presently evaluates **liquidity resilience** and limited insurance-record renewal awareness—not insurance adequacy or comprehensive risk protection.
+Protection presently evaluates **liquidity resilience**, limited insurance-record renewal awareness, and estate-record review timing—not insurance or estate adequacy, or comprehensive risk protection.
 
 1. Wardkeep totals positive balances in active checking, savings, and cash accounts.
 2. It estimates an ordinary monthly burn rate from the most recent 90 days of debit transactions.
@@ -64,6 +64,10 @@ This is deliberately conservative. The curve is a liquidity-resilience model, no
 Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, renewal date, and optional household notes). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
 
 When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
+
+### Estate-planning records: review reminders, not legal evaluation
+
+Wardkeep can record a document type, optional label, next review date, and non-sensitive reminder notes for wills, trusts, powers of attorney, healthcare directives, and beneficiary reviews. A past or upcoming recorded review date produces an explainable reminder. Otherwise, the presence of active records contributes only a small manual-evidence signal. Wardkeep does **not** store document contents or infer legal validity, beneficiary choices, accessibility, completeness, or adequacy. No estate record is interpreted as unknown—not a negative score or evidence that the household lacks a plan.
 
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Policy dashboard summary** — The Dashboard and Protection detail page now surface active policy count, renewals needing attention, incomplete records, and a direct Policies action.
 - **Mortgage escrow estimate** — Home policies can show the combined monthly insurance and property-tax escrow component, clearly identified as included in the linked mortgage payment.
 - **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
+- **Estate-planning reminders** — Record planning document types and optional review dates without storing document contents. Protection can surface an overdue or upcoming review, while explicitly avoiding legal-validity or adequacy claims.
 
 ### Changed
 
