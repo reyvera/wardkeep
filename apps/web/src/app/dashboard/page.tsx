@@ -79,10 +79,20 @@ interface ReadinessResponse {
 
 interface InsurancePolicySummary {
   id: string;
+  provider: string;
+  type: string;
   renewalDate: string | null;
   deductible: string | null;
   coverageAmount: string | null;
   isActive: boolean;
+}
+
+interface RecurringTransactionSummary {
+  id: string;
+  merchant: string;
+  expectedAmount: string;
+  frequency: string;
+  nextExpected: string;
 }
 
 interface Recommendation {
@@ -210,6 +220,10 @@ export default function DashboardPage() {
   const insuranceQuery = useQuery({
     queryKey: ['insurance-policies'],
     queryFn: () => apiClient.get<InsurancePolicySummary[]>('/insurance/policies'),
+  });
+  const recurringQuery = useQuery({
+    queryKey: ['recurring-transactions'],
+    queryFn: () => apiClient.get<RecurringTransactionSummary[]>('/recurring'),
   });
   const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
