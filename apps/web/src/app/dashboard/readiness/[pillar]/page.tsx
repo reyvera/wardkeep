@@ -299,6 +299,11 @@ export default function ReadinessPillarPage() {
                     </p>
                     {signal.provenance && (
                       <>
+                        <p
+                          className={`text-xs mt-1 ${signal.provenance.evidenceState === 'stale' ? 'text-accent-yellow' : 'text-content-secondary'}`}
+                        >
+                          Evidence: {signal.provenance.evidenceState.replace(/_/g, ' ')}
+                        </p>
                         <p className="text-xs text-content-secondary mt-1">
                           {signal.provenance.method}
                         </p>
