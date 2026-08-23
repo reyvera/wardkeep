@@ -358,6 +358,8 @@ export default function DashboardPage() {
   const previousSpending = recentSpending[0];
   const spendingDelta = currentSpending && previousSpending ? currentSpending.expenses - previousSpending.expenses : null;
   const largestCategoryChange = spendingStatsQuery.data?.categoryChanges[0];
+  const recordedNet = currentSpending ? currentSpending.income - currentSpending.expenses : null;
+  const savingsRate = currentSpending && currentSpending.income > 0 ? recordedNet! / currentSpending.income : null;
 
   return (
     <div>
@@ -578,7 +580,7 @@ export default function DashboardPage() {
 
       {!spendingStatsQuery.isLoading && currentSpending && (
         <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p>{largestCategoryChange && <p className="mt-1 text-xs text-content-secondary">Largest category change: {largestCategoryChange.name} · {largestCategoryChange.change >= 0 ? '$' : '-$'}{Math.abs(largestCategoryChange.change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}<p className="mt-1 text-xs text-content-tertiary">Based on recorded debit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
+          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p>{recordedNet !== null && <p className={`mt-1 text-xs ${recordedNet >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>Recorded net: {recordedNet >= 0 ? '+' : '-'}${Math.abs(recordedNet).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{savingsRate !== null ? ` · ${(savingsRate * 100).toFixed(0)}% of recorded income` : ''}</p>}{largestCategoryChange && <p className="mt-1 text-xs text-content-secondary">Largest category change: {largestCategoryChange.name} · {largestCategoryChange.change >= 0 ? '$' : '-$'}{Math.abs(largestCategoryChange.change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}<p className="mt-1 text-xs text-content-tertiary">Based on recorded debit and credit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
         </section>
       )}
 

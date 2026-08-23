@@ -577,6 +577,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Dashboard: "Next paycheck: ~[date]"
 
 - [ ] 33.2 Spending trends and monthly comparisons
+  - [x] Show current-month recorded income, spending, net, and income-relative savings rate on the dashboard
   - Month-over-month category spending comparison
   - Income vs expenses and savings rate
   - Per-category change indicators
