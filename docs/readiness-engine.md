@@ -85,6 +85,10 @@ Protection compares recorded monthly debt minimums with liquid reserves and warn
 
 Optional dependent records can retain a broad relationship, non-identifying label, and review date. A due review is an explainable planning reminder. Wardkeep never treats absent records as evidence that a household has no dependents, and does not evaluate care needs, coverage adequacy, or financial responsibility.
 
+## Preparation: initial contract
+
+Preparation remains unknown until the household records a planned expense with a due date in the next 30 days. That timing creates a limited, explainable reminder; it does not imply that the expense is funded, estimate affordability, or evaluate unrecorded future costs.
+
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
 For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.

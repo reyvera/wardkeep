@@ -117,11 +117,13 @@ const PILLARS: Record<
     label: 'Preparation',
     icon: Hammer,
     description: 'How ready the household is for known future costs and responsibilities.',
-    sources: [],
-    observed: [],
+    sources: ['User-entered planned expenses'],
+    observed: [
+      { capability: 'planned-expenses', label: 'Recorded future expense due dates' },
+    ],
     next: [
       'Goals and sinking funds',
-      'Known future expenses and taxes',
+      'Funds set aside for planned expenses',
       'Home and vehicle maintenance',
       'Replacement planning',
     ],
