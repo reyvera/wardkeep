@@ -13,14 +13,14 @@ datasource db {
 // ─── User & Auth ────────────────────────────────────────────────────────────────
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  failedLogins Int       @default(0)
-  lockedUntil  DateTime?
-  lastFailedAt DateTime?
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  failedLogins          Int       @default(0)
+  lockedUntil           DateTime?
+  lastFailedAt          DateTime?
   lastDashboardViewedAt DateTime?
 
   accounts              Account[]
@@ -36,6 +36,42 @@ model User {
   resetTokens           PasswordResetToken[]
   bankConnections       BankConnection[]
   insurancePolicies     InsurancePolicy[]
+  recommendations       Recommendation[]
+}
+
+// ─── Durable household actions ────────────────────────────────────────────────
+
+enum RecommendationStatus {
+  ACTIVE
+  DISMISSED
+  COMPLETED
+  RESOLVED
+}
+
+model Recommendation {
+  id            String               @id @default(uuid())
+  userId        String
+  fingerprint   String               @db.VarChar(191)
+  capabilityId  String               @db.VarChar(100)
+  pillar        String               @db.VarChar(30)
+  signalSummary String               @db.VarChar(1000)
+  action        String               @db.VarChar(240)
+  actionHref    String               @db.VarChar(240)
+  reasoning     String               @db.VarChar(1500)
+  priority      String               @db.VarChar(20)
+  priorityScore Int
+  assumptions   String               @db.VarChar(1500)
+  status        RecommendationStatus @default(ACTIVE)
+  dismissedAt   DateTime?
+  completedAt   DateTime?
+  resolvedAt    DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fingerprint])
+  @@index([userId, status, priorityScore])
 }
 
 model Session {
