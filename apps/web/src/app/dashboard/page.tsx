@@ -198,6 +198,7 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
 const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   'emergency-fund': { href: '/accounts', label: 'Review liquid accounts' },
   insurance: { href: '/insurance', label: 'Review policies' },
+  'insurance-record-details': { href: '/insurance', label: 'Complete policy details' },
   'insurance-deductibles': { href: '/insurance', label: 'Review deductibles' },
   'estate-documents': { href: '/estate-documents', label: 'Review estate plans' },
   'income-sources': { href: '/income-sources', label: 'Review income sources' },

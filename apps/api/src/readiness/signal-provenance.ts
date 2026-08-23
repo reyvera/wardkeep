@@ -30,6 +30,12 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     limitation: 'Unrecorded deductibles and worst-case simultaneous losses are not assumed.',
     evidenceState: 'mixed',
   },
+  'insurance-record-details': {
+    sources: ['User-entered active insurance policies'],
+    method: 'Checks whether each entered policy includes a renewal date, deductible, and coverage amount.',
+    limitation: 'Complete records do not prove insurance adequacy; unentered policy types remain unknown.',
+    evidenceState: 'manual',
+  },
   'estate-documents': {
     sources: ['User-entered estate-planning records'],
     method: 'Checks recorded document review dates and record presence.',

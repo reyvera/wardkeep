@@ -84,6 +84,7 @@ const PILLARS: Record<
     observed: [
       { capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' },
       { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
+      { capability: 'insurance-record-details', label: 'Completeness of entered insurance policy details' },
       {
         capability: 'insurance-deductibles',
         label: 'Recorded deductibles compared with liquid reserves',

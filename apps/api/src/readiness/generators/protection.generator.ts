@@ -152,7 +152,7 @@ export function estateDocumentReviewSignal(
 async function generateInsuranceSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
   const policies = await prisma.insurancePolicy.findMany({
     where: { userId, isActive: true },
-    select: { type: true, provider: true, renewalDate: true, deductible: true },
+    select: { type: true, provider: true, renewalDate: true, deductible: true, coverageAmount: true },
   });
   if (policies.length === 0) return [];
 
@@ -169,6 +169,19 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
       pillar: 'protection',
       summary: `${policies.length} active insurance ${policies.length === 1 ? 'policy is' : 'policies are'} recorded. Wardkeep does not yet assess coverage adequacy.`,
       weight: 0.5,
+    });
+  }
+  const incompletePolicies = policies.filter(
+    (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
+  );
+  if (incompletePolicies.length > 0) {
+    signals.push({
+      capabilityId: 'insurance-record-details',
+      type: 'warning',
+      magnitude: -2,
+      pillar: 'protection',
+      summary: `${incompletePolicies.length} recorded insurance ${incompletePolicies.length === 1 ? 'policy is' : 'policies are'} missing a renewal date, deductible, or coverage amount. This requests record detail; it does not determine coverage adequacy.`,
+      weight: 0.75,
     });
   }
   const recordedDeductibles = policies
