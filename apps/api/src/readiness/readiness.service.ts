@@ -84,7 +84,6 @@ export class ReadinessService {
     ]);
 
     const allSignals: Signal[] = [...provisionSignals, ...prosperitySignals, ...protectionSignals];
-    const signalsWithProvenance = allSignals.map(withSignalProvenance);
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);
@@ -251,17 +250,6 @@ export class ReadinessService {
       evaluatedCapabilities: evaluatedPillars,
     };
 
-    // Extract top risks and opportunities for quick display
-    const topRisks = signalsWithProvenance
-      .filter((s) => s.type === 'risk' || s.type === 'warning')
-      .sort((a, b) => a.magnitude - b.magnitude)
-      .slice(0, 5);
-
-    const topOpportunities = signalsWithProvenance
-      .filter((s) => s.type === 'opportunity' || s.type === 'positive' || s.type === 'milestone')
-      .sort((a, b) => b.magnitude - a.magnitude)
-      .slice(0, 5);
-
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
       select: {
@@ -273,6 +261,22 @@ export class ReadinessService {
         linkedSyncTimes: account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
       })),
     );
+    const signalsWithProvenance = allSignals.map((signal) =>
+      withSignalProvenance(signal, dataFreshness),
+    );
+    const topRisks = signalsWithProvenance
+      .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
+      .sort((a, b) => a.magnitude - b.magnitude)
+      .slice(0, 5);
+    const topOpportunities = signalsWithProvenance
+      .filter(
+        (signal) =>
+          signal.type === 'opportunity' ||
+          signal.type === 'positive' ||
+          signal.type === 'milestone',
+      )
+      .sort((a, b) => b.magnitude - a.magnitude)
+      .slice(0, 5);
 
     return {
       evaluatedAt: new Date(),
