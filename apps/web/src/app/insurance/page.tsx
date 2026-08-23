@@ -21,6 +21,7 @@ interface Policy {
   deductible: string | null;
   coverageAmount: string | null;
   renewalDate: string | null;
+  notes: string | null;
   isActive: boolean;
 }
 interface Account {
@@ -89,6 +90,7 @@ const emptyForm = {
   paymentArrangement: 'SEPARATE',
   paymentAccountId: '',
   propertyTaxEscrow: '',
+  notes: '',
 };
 
 export default function InsurancePage() {
@@ -104,17 +106,32 @@ export default function InsurancePage() {
     queryKey: ['accounts'],
     queryFn: () => apiClient.get<Account[]>('/accounts'),
   });
+  const policyPayload = () => {
+    const payload: Record<string, string | null> = Object.fromEntries(
+      Object.entries(form).filter(([, value]) => value !== ''),
+    );
+    if (!editing) return payload;
+
+    for (const field of [
+      'nickname',
+      'renewalDate',
+      'premium',
+      'deductible',
+      'coverageAmount',
+      'notes',
+    ]) {
+      payload[field] = form[field as keyof typeof form] || null;
+    }
+    if (form.paymentArrangement === 'SEPARATE') payload.paymentAccountId = null;
+    if (form.paymentArrangement !== 'MORTGAGE_ESCROW') payload.propertyTaxEscrow = null;
+    else payload.propertyTaxEscrow = form.propertyTaxEscrow || null;
+    return payload;
+  };
   const save = useMutation({
     mutationFn: () =>
       editing
-        ? apiClient.patch(
-            `/insurance/policies/${editing.id}`,
-            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
-          )
-        : apiClient.post(
-            '/insurance/policies',
-            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
-          ),
+        ? apiClient.patch(`/insurance/policies/${editing.id}`, policyPayload())
+        : apiClient.post('/insurance/policies', policyPayload()),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['insurance-policies'] });
       setOpen(false);
@@ -280,6 +297,16 @@ export default function InsurancePage() {
               placeholder="0.00"
             />
           </div>
+          <div className="md:col-span-2">
+            <label className="input-label">Notes (optional)</label>
+            <textarea
+              className="input min-h-20 resize-y"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              maxLength={1000}
+              placeholder="Renewal instructions, policy document location, or other context"
+            />
+          </div>
           <div>
             <label className="input-label">How is this premium paid?</label>
             <select
@@ -393,6 +420,7 @@ export default function InsurancePage() {
                           paymentArrangement: policy.paymentArrangement,
                           paymentAccountId: policy.paymentAccountId ?? '',
                           propertyTaxEscrow: policy.propertyTaxEscrow ?? '',
+                          notes: policy.notes ?? '',
                         });
                         setOpen(true);
                       }}
@@ -487,6 +515,15 @@ export default function InsurancePage() {
                       <small className="mt-1 block text-content-tertiary">
                         Included in the linked mortgage payment
                       </small>
+                    </span>
+                  )}
+                  {policy.notes && (
+                    <span className="col-span-2">
+                      Notes
+                      <br />
+                      <span className="whitespace-pre-wrap text-content-primary">
+                        {policy.notes}
+                      </span>
                     </span>
                   )}
                 </div>
