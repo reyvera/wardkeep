@@ -39,6 +39,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Changed
 
+- **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as fully used rather than overspent in Provision and recommendations.
 - **Policy lifecycle** — Cancelled or replaced policies can be marked inactive and later restored. Inactive policies do not affect current readiness signals.
 - **Documentation delivery** — CI validates the Pages site before merge; the public site redeploys when documentation, screenshots, or the README change.
 
