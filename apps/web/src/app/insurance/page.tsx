@@ -55,6 +55,17 @@ const monthlyPremium = (policy: Policy) => {
           : 1;
   return Number(policy.premium) / divisor;
 };
+const renewalStatus = (policy: Policy) => {
+  if (!policy.renewalDate) return null;
+  const days = Math.ceil((new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000);
+  if (days < 0) return { label: 'Renewal overdue', className: 'text-accent-red' };
+  if (days <= 30)
+    return {
+      label: days === 0 ? 'Renews today' : `Renews in ${days} days`,
+      className: 'text-accent-yellow',
+    };
+  return null;
+};
 const emptyForm = {
   type: 'AUTO' as PolicyType,
   provider: '',
@@ -415,6 +426,11 @@ export default function InsurancePage() {
                         ? new Date(policy.renewalDate).toLocaleDateString()
                         : 'Not recorded'}
                     </b>
+                    {renewalStatus(policy) && (
+                      <small className={`mt-1 block ${renewalStatus(policy)!.className}`}>
+                        {renewalStatus(policy)!.label}
+                      </small>
+                    )}
                   </span>
                   <span>
                     Premium
