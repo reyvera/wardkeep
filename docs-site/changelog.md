@@ -34,6 +34,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 - **Actionable recommendation dashboard** — The Dashboard now shows active durable recommendations with direct workflow links and controls to complete or dismiss each action.
 - **Recommendation history** — A dedicated Recommendations page keeps active actions and completed, dismissed, or automatically resolved history visible and reviewable.
 - **Current recommendation workspace** — Opening Recommendations refreshes readiness before loading actions, so the list reflects current signals rather than a prior dashboard visit.
+- **Qualified recommendation impact previews** — When a source risk can be removed while other pillar factors remain, Wardkeep shows the resulting pillar-only score estimate; otherwise it states that the change will be measured after records update.
 - **Coming Up** — The Dashboard now lists recorded recurring-payment dates and policy renewals in the next 30 days, with direct links to the source workflow.
 
 ### Changed

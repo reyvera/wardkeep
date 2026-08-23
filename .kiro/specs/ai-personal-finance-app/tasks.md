@@ -553,6 +553,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Display active persisted recommendations in the Dashboard with direct actions and completed/dismissed controls
   - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
   - [x] Show a truthful 30-day Coming Up view from recorded recurring-payment dates and policy renewals, without inventing unrecorded events
+  - [x] Show a qualified pillar-only impact preview when removing a source risk leaves other observed pillar factors; otherwise state that Wardkeep will measure rather than predict the change
   - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
 
 - [x] 39.6 Establish GitHub launch tracking
