@@ -21,6 +21,7 @@ interface Policy {
   deductible: string | null;
   coverageAmount: string | null;
   renewalDate: string | null;
+  notes: string | null;
   isActive: boolean;
 }
 interface Account {
@@ -55,6 +56,28 @@ const monthlyPremium = (policy: Policy) => {
           : 1;
   return Number(policy.premium) / divisor;
 };
+const monthlyMortgageEscrow = (policy: Policy) => {
+  const premium = monthlyPremium(policy);
+  if (
+    premium === null ||
+    !policy.propertyTaxEscrow ||
+    policy.paymentArrangement !== 'MORTGAGE_ESCROW'
+  ) {
+    return null;
+  }
+  return premium + Number(policy.propertyTaxEscrow);
+};
+const renewalStatus = (policy: Policy) => {
+  if (!policy.renewalDate) return null;
+  const days = Math.ceil((new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000);
+  if (days < 0) return { label: 'Renewal overdue', className: 'text-accent-red' };
+  if (days <= 30)
+    return {
+      label: days === 0 ? 'Renews today' : `Renews in ${days} days`,
+      className: 'text-accent-yellow',
+    };
+  return null;
+};
 const emptyForm = {
   type: 'AUTO' as PolicyType,
   provider: '',
@@ -67,6 +90,7 @@ const emptyForm = {
   paymentArrangement: 'SEPARATE',
   paymentAccountId: '',
   propertyTaxEscrow: '',
+  notes: '',
 };
 
 export default function InsurancePage() {
@@ -82,17 +106,32 @@ export default function InsurancePage() {
     queryKey: ['accounts'],
     queryFn: () => apiClient.get<Account[]>('/accounts'),
   });
+  const policyPayload = () => {
+    const payload: Record<string, string | null> = Object.fromEntries(
+      Object.entries(form).filter(([, value]) => value !== ''),
+    );
+    if (!editing) return payload;
+
+    for (const field of [
+      'nickname',
+      'renewalDate',
+      'premium',
+      'deductible',
+      'coverageAmount',
+      'notes',
+    ]) {
+      payload[field] = form[field as keyof typeof form] || null;
+    }
+    if (form.paymentArrangement === 'SEPARATE') payload.paymentAccountId = null;
+    if (form.paymentArrangement !== 'MORTGAGE_ESCROW') payload.propertyTaxEscrow = null;
+    else payload.propertyTaxEscrow = form.propertyTaxEscrow || null;
+    return payload;
+  };
   const save = useMutation({
     mutationFn: () =>
       editing
-        ? apiClient.patch(
-            `/insurance/policies/${editing.id}`,
-            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
-          )
-        : apiClient.post(
-            '/insurance/policies',
-            Object.fromEntries(Object.entries(form).filter(([, value]) => value !== '')),
-          ),
+        ? apiClient.patch(`/insurance/policies/${editing.id}`, policyPayload())
+        : apiClient.post('/insurance/policies', policyPayload()),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['insurance-policies'] });
       setOpen(false);
@@ -117,10 +156,10 @@ export default function InsurancePage() {
   const detailsNeeded = activePolicies.filter(
     (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
   ).length;
-  const renewalsSoon = activePolicies.filter((policy) => {
+  const renewalsNeedingAttention = activePolicies.filter((policy) => {
     if (!policy.renewalDate) return false;
     const days = (new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000;
-    return days >= 0 && days <= 30;
+    return days <= 30;
   }).length;
 
   return (
@@ -154,11 +193,11 @@ export default function InsurancePage() {
           <div className="card py-4">
             <p className="card-title">RENEWAL ATTENTION</p>
             <p
-              className={`text-2xl font-bold ${renewalsSoon > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
+              className={`text-2xl font-bold ${renewalsNeedingAttention > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
             >
-              {renewalsSoon}
+              {renewalsNeedingAttention}
             </p>
-            <p className="mt-1 text-xs text-content-tertiary">Due within 30 days</p>
+            <p className="mt-1 text-xs text-content-tertiary">Due within 30 days or overdue</p>
           </div>
           <div className="card py-4">
             <p className="card-title">DETAILS STILL NEEDED</p>
@@ -256,6 +295,16 @@ export default function InsurancePage() {
               value={form.coverageAmount}
               onChange={(e) => setForm({ ...form, coverageAmount: e.target.value })}
               placeholder="0.00"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="input-label">Notes (optional)</label>
+            <textarea
+              className="input min-h-20 resize-y"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              maxLength={1000}
+              placeholder="Renewal instructions, policy document location, or other context"
             />
           </div>
           <div>
@@ -371,6 +420,7 @@ export default function InsurancePage() {
                           paymentArrangement: policy.paymentArrangement,
                           paymentAccountId: policy.paymentAccountId ?? '',
                           propertyTaxEscrow: policy.propertyTaxEscrow ?? '',
+                          notes: policy.notes ?? '',
                         });
                         setOpen(true);
                       }}
@@ -415,6 +465,11 @@ export default function InsurancePage() {
                         ? new Date(policy.renewalDate).toLocaleDateString()
                         : 'Not recorded'}
                     </b>
+                    {renewalStatus(policy) && (
+                      <small className={`mt-1 block ${renewalStatus(policy)!.className}`}>
+                        {renewalStatus(policy)!.label}
+                      </small>
+                    )}
                   </span>
                   <span>
                     Premium
@@ -447,6 +502,28 @@ export default function InsurancePage() {
                           ? ' · already included above'
                           : ''}
                       </b>
+                    </span>
+                  )}
+                  {monthlyMortgageEscrow(policy) !== null && (
+                    <span className="col-span-2">
+                      Estimated monthly escrow
+                      <br />
+                      <b className="text-content-primary">
+                        ${monthlyMortgageEscrow(policy)!.toFixed(2)} / month · insurance + property
+                        tax
+                      </b>
+                      <small className="mt-1 block text-content-tertiary">
+                        Included in the linked mortgage payment
+                      </small>
+                    </span>
+                  )}
+                  {policy.notes && (
+                    <span className="col-span-2">
+                      Notes
+                      <br />
+                      <span className="whitespace-pre-wrap text-content-primary">
+                        {policy.notes}
+                      </span>
                     </span>
                   )}
                 </div>

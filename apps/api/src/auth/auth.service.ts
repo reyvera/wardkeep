@@ -121,15 +121,11 @@ export class AuthService {
 
     if (!passwordValid) {
       const now = new Date();
-      const windowStart = new Date(
-        now.getTime() - FAILED_LOGIN_WINDOW_MINUTES * 60 * 1000,
-      );
+      const windowStart = new Date(now.getTime() - FAILED_LOGIN_WINDOW_MINUTES * 60 * 1000);
 
       // Reset counter if the last failure was outside the 10-minute window
       const currentFailedLogins =
-        user.lastFailedAt && user.lastFailedAt > windowStart
-          ? user.failedLogins
-          : 0;
+        user.lastFailedAt && user.lastFailedAt > windowStart ? user.failedLogins : 0;
 
       const failedLogins = currentFailedLogins + 1;
       const updateData: {
@@ -143,15 +139,8 @@ export class AuthService {
 
       // Lock account if max failed attempts reached within window
       if (failedLogins >= MAX_FAILED_LOGINS) {
-        updateData.lockedUntil = new Date(
-          now.getTime() + LOCKOUT_DURATION_MINUTES * 60 * 1000,
-        );
-        await this.auditService.log(
-          user.id,
-          'auth.account_locked',
-          { failedLogins, email },
-          ip,
-        );
+        updateData.lockedUntil = new Date(now.getTime() + LOCKOUT_DURATION_MINUTES * 60 * 1000);
+        await this.auditService.log(user.id, 'auth.account_locked', { failedLogins, email }, ip);
       }
 
       await this.prisma.user.update({
@@ -159,12 +148,7 @@ export class AuthService {
         data: updateData,
       });
 
-      await this.auditService.log(
-        user.id,
-        'auth.login_failed',
-        { email, failedLogins },
-        ip,
-      );
+      await this.auditService.log(user.id, 'auth.login_failed', { email, failedLogins }, ip);
 
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -186,7 +170,7 @@ export class AuthService {
    * Invalidate a session by deleting it.
    * @param token - The session token to invalidate
    * @param userId - Optional user ID for audit logging
-   * @param ip - Optional IP address for audit logging
+   * @param _ip - Optional IP address for audit logging
    */
   async logout(token: string, userId?: string, ip?: string): Promise<void> {
     await this.prisma.session.deleteMany({ where: { token } });
@@ -233,13 +217,15 @@ export class AuthService {
     }
 
     // Update lastActive timestamp
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { lastActive: now },
-    }).catch(() => {
-      // Session was deleted by another request
-      throw new UnauthorizedException('Invalid or expired session');
-    });
+    await this.prisma.session
+      .update({
+        where: { id: session.id },
+        data: { lastActive: now },
+      })
+      .catch(() => {
+        // Session was deleted by another request
+        throw new UnauthorizedException('Invalid or expired session');
+      });
 
     return session.user;
   }
@@ -251,14 +237,12 @@ export class AuthService {
    * @param ip - Optional IP address for audit logging
    * @returns Generic success message regardless of whether the email exists
    */
-  async forgotPassword(email: string, ip?: string): Promise<{ message: string }> {
+  async forgotPassword(email: string, _ip?: string): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (user) {
       const token = randomUUID();
-      const expiresAt = new Date(
-        Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000,
-      );
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
 
       await this.prisma.passwordResetToken.create({
         data: {
@@ -269,9 +253,7 @@ export class AuthService {
       });
 
       // In production, send the token via email. For now, log it.
-      this.logger.log(
-        `Password reset token generated for ${email}: ${token}`,
-      );
+      this.logger.log(`Password reset token generated for ${email}: ${token}`);
     }
 
     return { message: 'If an account exists, a reset link has been sent' };
@@ -344,13 +326,9 @@ export class AuthService {
    * @param userId - The ID of the user to create a session for
    * @returns Session token and expiry timestamp
    */
-  private async createSession(
-    userId: string,
-  ): Promise<{ token: string; expiresAt: Date }> {
+  private async createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
     const token = randomUUID();
-    const expiresAt = new Date(
-      Date.now() + SESSION_EXPIRY_HOURS * 60 * 60 * 1000,
-    );
+    const expiresAt = new Date(Date.now() + SESSION_EXPIRY_HOURS * 60 * 60 * 1000);
 
     await this.prisma.session.create({
       data: {

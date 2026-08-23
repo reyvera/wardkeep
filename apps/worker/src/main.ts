@@ -11,6 +11,10 @@ import { processRecurringDetection } from './processors/recurring-detection.proc
 
 const workers: Worker[] = [];
 
+function log(message: string): void {
+  process.stdout.write(`[wardkeep-worker] ${message}\n`);
+}
+
 async function bootstrap(): Promise<void> {
   const connection = redisConfig;
 
@@ -22,28 +26,24 @@ async function bootstrap(): Promise<void> {
   workers.push(aiWorker);
 
   // Recurring detection worker
-  const recurringWorker = new Worker(
-    QUEUE_NAMES.RECURRING_DETECTION,
-    processRecurringDetection,
-    {
-      connection,
-      concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.RECURRING_DETECTION],
-    },
-  );
+  const recurringWorker = new Worker(QUEUE_NAMES.RECURRING_DETECTION, processRecurringDetection, {
+    connection,
+    concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.RECURRING_DETECTION],
+  });
   workers.push(recurringWorker);
 
-  console.log('Worker started. Listening for jobs...');
+  log('Started. Listening for jobs...');
 }
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
+  log('SIGTERM received. Shutting down gracefully...');
   await Promise.all(workers.map((w) => w.close()));
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received. Shutting down gracefully...');
+  log('SIGINT received. Shutting down gracefully...');
   await Promise.all(workers.map((w) => w.close()));
   process.exit(0);
 });

@@ -6,7 +6,10 @@ on:
     paths:
       - 'docs-site/**'
       - 'docs/screenshots/**'
+      - 'docs/**'
+      - 'README.md'
       - 'CHANGELOG.md'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -40,6 +43,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
+          bundler: '4.0.11'
           bundler-cache: true
           working-directory: docs-site
 
@@ -48,6 +52,7 @@ jobs:
         working-directory: docs-site
         env:
           JEKYLL_ENV: production
+          BUNDLE_FROZEN: "true"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

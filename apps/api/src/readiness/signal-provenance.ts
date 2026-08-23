@@ -1,0 +1,65 @@
+import { Signal } from '@wardkeep/readiness';
+
+export interface SignalProvenance {
+  sources: string[];
+  method: string;
+  limitation: string;
+}
+
+const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
+  'emergency-fund': {
+    sources: ['Liquid account balances', 'Recent debit transactions'],
+    method: 'Compares liquid reserves with a filtered ordinary-expense burn rate.',
+    limitation: 'This measures cash resilience only; it is not a complete Protection assessment.',
+  },
+  insurance: {
+    sources: ['User-entered active insurance policies'],
+    method: 'Checks recorded renewal dates and policy-record presence.',
+    limitation: 'Wardkeep does not yet assess policy limits, affordability, or coverage adequacy.',
+  },
+  'insurance-deductibles': {
+    sources: ['User-entered policy deductibles', 'Liquid account balances'],
+    method: 'Compares the sum of recorded deductibles with current liquid reserves.',
+    limitation: 'Unrecorded deductibles and worst-case simultaneous losses are not assumed.',
+  },
+  budgets: {
+    sources: ['Current-month budget allocations', 'Current-month debit transactions'],
+    method: 'Compares actual spending and budget pace with the current allocation.',
+    limitation: 'Uncategorized or missing transactions can make the pace incomplete.',
+  },
+  cashflow: {
+    sources: ['Account balances', 'Recurring transactions'],
+    method: 'Projects account balances over the next 30 days.',
+    limitation:
+      'The projection includes recorded recurring items, not unrecorded future spending or income.',
+  },
+  recurring: {
+    sources: ['Upcoming recurring transactions', 'Liquid account balances'],
+    method: 'Compares upcoming 14-day recurring bills with liquid funds.',
+    limitation: 'Only recurring items Wardkeep has recorded are included.',
+  },
+  accounts: {
+    sources: ['Account balances', 'Account transactions', 'Readiness snapshots'],
+    method: 'Calculates net-worth position and compares it with available history.',
+    limitation: 'Asset values and historical snapshots are limited to records in Wardkeep.',
+  },
+  debt: {
+    sources: ['Debt accounts', 'Recent credit transactions', 'Saved debt payoff plans'],
+    method: 'Evaluates debt position, payment burden, and recorded payoff progress.',
+    limitation: 'Income and debt data not recorded in Wardkeep are not included.',
+  },
+};
+
+const FALLBACK_PROVENANCE: SignalProvenance = {
+  sources: ['Current Wardkeep records'],
+  method: 'Derives an explainable readiness signal from available data.',
+  limitation: 'Coverage is limited to the records Wardkeep can currently evaluate.',
+};
+
+/** Adds user-visible evidence context without changing a signal's score. */
+export function withSignalProvenance(signal: Signal): Signal & { provenance: SignalProvenance } {
+  return {
+    ...signal,
+    provenance: PROVENANCE_BY_CAPABILITY[signal.capabilityId] ?? FALLBACK_PROVENANCE,
+  };
+}

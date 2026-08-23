@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 
 import './globals.css';
 import { Providers } from './providers';
@@ -10,10 +11,13 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Wardkeep - Personal Finance',
   description: 'Self-hosted, AI-powered personal finance. Guard your ground.',
   manifest: '/manifest.json',
+};
+
+export const viewport: Viewport = {
   themeColor: '#0d0f12',
 };
 

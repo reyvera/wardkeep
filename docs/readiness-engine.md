@@ -61,11 +61,11 @@ This is deliberately conservative. The curve is a liquidity-resilience model, no
 
 ### Insurance records: first composite input
 
-Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, and renewal date). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
+Wardkeep can now store user-entered active insurance policies (type, provider, premium and payment frequency, deductible, coverage amount, renewal date, and optional household notes). A policy nearing or past its recorded renewal date contributes an explainable Protection warning. Recorded policies with no imminent renewal contribute only a small evidence signal; Wardkeep does **not** infer that a policy is adequate, nor penalize a household for policy types it has not entered. Cancelled or replaced policies can be retained as inactive records and do not contribute to current readiness signals.
 
 When one or more active policies include a deductible, Wardkeep also compares the sum of those recorded deductibles with liquid reserves. It warns only when recorded deductibles exceed currently available liquid reserves; it does not assume policies without a deductible have none, and it does not add deductibles to determine a household’s worst-case insurance exposure.
 
-Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
+Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
 For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.
 
@@ -75,12 +75,14 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 
 - household readiness, trend, and coverage;
 - the strongest and most limited observed pillars;
-- clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks;
+- clickable pillar summaries with the factors Wardkeep did and did not evaluate, including entered insurance records, renewal timing, and recorded deductible-to-reserve checks. Every current factor identifies its data sources, calculation method, and known limitation;
 - **Needs attention**, ranked by severity, urgency, financial impact, actionability, and confidence;
 - **Wardkeep recommends**, which connects an observation to a concrete next action;
 - **Since your last visit**, including a recorded score delta and a factor summary when the preceding signal snapshot supports one; and eventually **Coming up**.
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.
+
+Coverage and freshness are separate. Coverage reports how many currently supported factors Wardkeep evaluated. If one or more connected accounts are stale, Dashboard and pillar confidence are qualified as **Freshness needs review** without changing the underlying score or hiding the coverage percentage.
 
 ## API contract
 

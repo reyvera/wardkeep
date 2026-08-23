@@ -4,17 +4,18 @@ inclusion: auto
 
 ## Commit Messages and Issue References
 
-When committing work that relates to a GitHub issue or roadmap feature, include the issue reference in the commit message body or use keywords that the sync script can match:
+When committing work that completes a GitHub issue, include an explicit closing reference in the commit message body:
 
-- Use `closes #N` or `fixes #N` in commit messages when you know the issue number
-- The automated sync script (`scripts/sync-tasks-to-github.sh`) matches commit messages to open issues by keyword
+- Use `Closes #N`, `Fixes #N`, or `Resolves #N` only when the work is genuinely complete.
+- Plain `#N` references are informational and do not change issue status.
+- `scripts/sync-tasks-to-github.sh` is report-only by default. Run it with `--close` only after the referenced commit is verified on the remote.
 
 ## After Completing Work
 
 After completing a feature or fix:
 1. Update `tasks.md` status (mark as `[x]`)
-2. Commit with a descriptive message matching the feature name
-3. The agentStop hook will attempt to close matching GitHub issues
+2. Commit with an explicit `Closes #N` reference when applicable
+3. Verify the commit is on the remote, then deliberately close or update the explicitly referenced issue and Project status
 
 ## When Creating New Tasks
 

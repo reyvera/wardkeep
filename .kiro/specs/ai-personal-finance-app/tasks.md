@@ -521,12 +521,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 39.1 Replace numeric unknown sentinels with an explicit readiness assessment contract
   - [x] Per-pillar state: `known`, `partial`, or `not_evaluated`, with nullable scores and evaluated capabilities returned by `GET /api/readiness`
   - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
-  - [~] Missing factors, account-source summary, and score evaluation time are displayed; factor-level provenance remains
+  - [x] Missing factors, account-source summary, score evaluation time, and factor-level provenance (sources, method, and limitation) are displayed
 
 - [~] 39.2 Add data provenance and freshness
   - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
-  - [ ] Reduce or qualify confidence for stale/manual values according to transparent rules
+  - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
 
 - [ ] 39.3 Harden the Protection liquidity model
   - Structural transfer exclusion and credit-card payment matching
@@ -546,11 +546,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Rank by severity × urgency × financial impact × actionability × confidence
   - Show projected pillar/overall impact, monthly amount, time to completion, and the assumptions used
 
-- [ ] 39.6 Establish GitHub launch tracking
-  - Create a **Decision Engine / Launch Readiness** GitHub Project with the public release phases and launch gates
-  - Create one issue per independently reviewable outcome; link it to the detailed task-plan section and its acceptance criteria
-  - Apply consistent `phase/*`, `area/*`, `priority/*`, and `status/*` labels; use milestones for release gates
-  - Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
+- [x] 39.6 Establish GitHub launch tracking
+  - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies
+  - [x] Create the public **Decision Engine / Launch Readiness** GitHub Project with the active launch gates
+  - [x] Seed the current independently reviewable launch outcomes with task-plan links and acceptance criteria
+  - [x] Apply `phase/*`, `area/*`, `priority/*`, and `status/*` labels to those issues; add milestones as release gates become defined
+  - [x] Repair the legacy task-sync scripts and hooks so they use the Wardkeep repository and explicit issue references rather than keyword-only matching
 
 ### 33. Income & Spending Intelligence
 

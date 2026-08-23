@@ -1,13 +1,13 @@
 {
   "enabled": true,
   "name": "Sync Tasks to GitHub on Stop",
-  "description": "After agent execution, runs the sync script to close any GitHub issues that match the latest commit message keywords.",
+  "description": "After agent execution, reports only explicit Wardkeep issue-closing references from the latest commit. It never closes issues automatically.",
   "version": "1.0.0",
   "when": {
     "type": "agentStop"
   },
   "then": {
     "type": "runCommand",
-    "command": "source ~/.bashrc 2>/dev/null; bash scripts/sync-tasks-to-github.sh"
+    "command": "bash scripts/sync-tasks-to-github.sh"
   }
 }

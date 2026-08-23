@@ -170,6 +170,7 @@ async function main() {
         deductible: '1000.00',
         coverageAmount: '100000.00',
         renewalDate: renewalSoon,
+        notes: 'Review renewal offer and compare the deductible before the renewal date.',
       },
       {
         userId: user.id,
@@ -185,6 +186,7 @@ async function main() {
         deductible: '2500.00',
         coverageAmount: '450000.00',
         renewalDate: homeRenewal,
+        notes: 'Annual premium and property taxes are paid through mortgage escrow.',
       },
       {
         userId: user.id,
@@ -195,6 +197,7 @@ async function main() {
         premiumFrequency: 'MONTHLY',
         deductible: '1500.00',
         coverageAmount: '0.00',
+        notes: 'Confirm in-network providers and annual out-of-pocket maximum during enrollment.',
       },
     ],
   });
