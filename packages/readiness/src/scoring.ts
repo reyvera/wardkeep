@@ -8,8 +8,8 @@ import type {
 
 export const DEFAULT_PILLAR_WEIGHTS: Required<PillarWeights> = {
   protection: 0.25,
-  provision: 0.30,
-  preparation: 0.20,
+  provision: 0.3,
+  preparation: 0.2,
   prosperity: 0.25,
 };
 
@@ -60,7 +60,9 @@ export function computeOverallReadiness(
   let total = 0;
   let totalWeight = 0;
 
-  for (const pillar of Object.keys(DEFAULT_PILLAR_WEIGHTS) as Array<Exclude<ReadinessPillar, 'peace'>>) {
+  for (const pillar of Object.keys(DEFAULT_PILLAR_WEIGHTS) as Array<
+    Exclude<ReadinessPillar, 'peace'>
+  >) {
     const weight = weights[pillar] ?? DEFAULT_PILLAR_WEIGHTS[pillar];
     if (!Number.isFinite(weight) || weight <= 0) continue;
     total += clampScore(pillarScores[pillar]) * weight;

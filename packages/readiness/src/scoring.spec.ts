@@ -41,10 +41,12 @@ describe('Readiness Engine scoring', () => {
   });
 
   it('bounds all signal magnitudes and resulting scores', () => {
-    fc.assert(fc.property(fc.array(signalArbitrary), (signals) => {
-      const score = computePillarScore('prosperity', signals);
-      expect(score).toBeGreaterThanOrEqual(0);
-      expect(score).toBeLessThanOrEqual(100);
-    }));
+    fc.assert(
+      fc.property(fc.array(signalArbitrary), (signals) => {
+        const score = computePillarScore('prosperity', signals);
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(100);
+      }),
+    );
   });
 });
