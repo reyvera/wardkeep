@@ -13,6 +13,7 @@ const navItems = [
   { href: '/rules', label: 'Rules', icon: '⚙️' },
   { href: '/debt', label: 'Debt', icon: '💰' },
   { href: '/recurring', label: 'Cash Flow', icon: '🔄' },
+  { href: '/recommendations', label: 'Recommendations', icon: '✅' },
   { href: '/chat', label: 'Chat', icon: '🤖' },
   { href: '/import', label: 'Import', icon: '📥' },
   { href: '/bank-connections', label: 'Bank Connections', icon: '🔗' },
