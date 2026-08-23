@@ -92,12 +92,13 @@ const PILLARS: Record<
       { capability: 'income-sources', label: 'Entered income sources and review timing' },
       { capability: 'secondary-liquidity', label: 'Recorded available credit when nearly exhausted' },
       { capability: 'fixed-obligations', label: 'Recorded debt minimums compared with liquid reserves' },
+      { capability: 'dependents', label: 'Entered dependent records and review timing' },
     ],
     next: [
       'Insurance adequacy and coverage gaps',
       'Income interruption resilience beyond entered source records',
       'Beneficiary designations and document adequacy',
-      'Dependents and unrecorded fixed obligations',
+      'Dependent needs and unrecorded fixed obligations',
     ],
   },
   provision: {

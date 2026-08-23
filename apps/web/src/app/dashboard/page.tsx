@@ -200,6 +200,7 @@ const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   'income-sources': { href: '/income-sources', label: 'Review income sources' },
   'secondary-liquidity': { href: '/accounts', label: 'Review available credit' },
   'fixed-obligations': { href: '/debt', label: 'Review debt minimums' },
+  dependents: { href: '/dependents', label: 'Review dependents' },
   budgets: { href: '/budget', label: 'Review budget' },
   cashflow: { href: '/dashboard/details', label: 'Review cash flow' },
   recurring: { href: '/recurring', label: 'Review recurring bills' },
