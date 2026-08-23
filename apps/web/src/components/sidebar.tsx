@@ -16,6 +16,7 @@ import {
   Link2,
   ShieldCheck,
   ListChecks,
+  CalendarDays,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -36,6 +37,7 @@ const navItems = [
   { href: '/income-sources', label: 'Income sources', icon: Wallet },
   { href: '/dependents', label: 'Dependents', icon: ShieldCheck },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
+  { href: '/timeline', label: 'Timeline', icon: CalendarDays },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/bank-connections', label: 'Bank Connections', icon: Link2 },
