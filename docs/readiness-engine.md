@@ -87,7 +87,7 @@ Optional dependent records can retain a broad relationship, non-identifying labe
 
 ## Preparation: initial contract
 
-Preparation remains unknown until the household records a planned expense with a due date in the next 30 days. That timing creates a limited, explainable reminder; it does not imply that the expense is funded, estimate affordability, or evaluate unrecorded future costs.
+Preparation remains unknown until the household records a planned expense with a due date in the next 30 days. Wardkeep compares its amount with only the funds the household explicitly marks as set aside, and surfaces any recorded shortfall. It does not infer affordability, verify that funds exist in an account, or evaluate unrecorded future costs.
 
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
