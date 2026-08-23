@@ -80,7 +80,7 @@ const PILLARS: Record<
     label: 'Protection',
     icon: Shield,
     description: 'How well the household can absorb a financial shock.',
-    sources: ['Account balances', 'Recent debit transactions', 'Insurance policy records'],
+    sources: ['Account balances', 'Recent debit transactions', 'Insurance and estate-planning records'],
     observed: [
       { capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' },
       { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
@@ -88,11 +88,12 @@ const PILLARS: Record<
         capability: 'insurance-deductibles',
         label: 'Recorded deductibles compared with liquid reserves',
       },
+      { capability: 'estate-documents', label: 'Entered estate-planning records and review timing' },
     ],
     next: [
       'Insurance adequacy and coverage gaps',
       'Income interruption resilience',
-      'Estate documents and beneficiaries',
+      'Beneficiary designations and document adequacy',
       'Dependents, fixed obligations, and secondary backstops',
     ],
   },

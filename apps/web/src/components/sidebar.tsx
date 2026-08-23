@@ -31,6 +31,7 @@ const navItems = [
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
   { href: '/insurance', label: 'Policies', icon: ShieldCheck },
+  { href: '/estate-documents', label: 'Estate planning', icon: ShieldCheck },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
