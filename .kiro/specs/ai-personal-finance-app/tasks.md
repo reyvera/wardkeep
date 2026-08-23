@@ -551,6 +551,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Persist active risk and warning recommendations with stable source-signal fingerprints; preserve dismissed/completed state and resolve only active recommendations whose source signal disappears
   - [x] Expose `GET /api/recommendations` and completion/dismissal updates, ranked deterministically by severity, urgency, actionability, and evidence freshness
   - [x] Display active persisted recommendations in the Dashboard with direct actions and completed/dismissed controls
+  - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
   - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
 
 - [x] 39.6 Establish GitHub launch tracking
