@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
   Shield,
@@ -81,6 +81,16 @@ interface InsurancePolicySummary {
   deductible: string | null;
   coverageAmount: string | null;
   isActive: boolean;
+}
+
+interface Recommendation {
+  id: string;
+  signalSummary: string;
+  action: string;
+  actionHref: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  assumptions: string;
+  status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -190,6 +200,7 @@ function signalAction(signal: Signal): { href: string; label: string } {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient();
   const readinessQuery = useQuery({
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
@@ -197,6 +208,16 @@ export default function DashboardPage() {
   const insuranceQuery = useQuery({
     queryKey: ['insurance-policies'],
     queryFn: () => apiClient.get<InsurancePolicySummary[]>('/insurance/policies'),
+  });
+  const recommendationsQuery = useQuery({
+    queryKey: ['recommendations'],
+    queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
+    enabled: readinessQuery.isSuccess,
+  });
+  const updateRecommendationMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'COMPLETED' | 'DISMISSED' }) =>
+      apiClient.patch(`/recommendations/${id}`, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
   });
 
   if (readinessQuery.isLoading) {
