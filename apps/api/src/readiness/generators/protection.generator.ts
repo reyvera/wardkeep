@@ -31,9 +31,20 @@ export async function generateProtectionSignals(
   const incomeSignals = incomeSources.map((source) => incomeSourceReviewSignal(source, new Date())).filter((signal): signal is Signal => signal !== null);
   if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
   const secondaryLiquiditySignals = await generateSecondaryLiquiditySignals(prisma, userId);
-  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals);
+  const fixedObligationSignals = await generateFixedObligationSignals(prisma, userId);
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals);
 
   return signals;
+}
+
+/** Checks only recorded debt minimums against liquid cash; it does not assume missing obligations. */
+async function generateFixedObligationSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const profiles = await prisma.debtProfile.findMany({ where: { userId }, select: { minimumPayment: true } });
+  const monthlyMinimums = profiles.reduce((total, profile) => total.add(new Decimal(profile.minimumPayment.toString())), new Decimal(0));
+  if (monthlyMinimums.lte(0)) return [];
+  const reserves = await calculateLiquidReserves(prisma, userId);
+  if (monthlyMinimums.gt(reserves)) return [{ capabilityId: 'fixed-obligations', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.75, summary: `Recorded debt minimums total $${monthlyMinimums.toFixed(2)} per month, above $${reserves.toFixed(2)} in liquid reserves. This does not include unrecorded household obligations.` }];
+  return [];
 }
 
 /**
