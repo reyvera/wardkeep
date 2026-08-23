@@ -112,7 +112,12 @@ export class ReadinessService {
       recordedAt: s.recordedAt,
     }));
 
-    const peace = computePeace(pillarScoresWithoutPeace, history);
+    const observedPillarScores = Object.fromEntries(
+      (Object.keys(pillarScoresWithoutPeace) as Array<keyof typeof pillarScoresWithoutPeace>)
+        .filter((pillar) => allSignals.some((signal) => signal.pillar === pillar))
+        .map((pillar) => [pillar, pillarScoresWithoutPeace[pillar]]),
+    );
+    const peace = computePeace(observedPillarScores, history);
     const overall = computeOverallReadiness(pillarScoresWithoutPeace);
 
     const pillars: PillarScores = {

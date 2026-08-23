@@ -77,10 +77,14 @@ export function computeOverallReadiness(
  * A volatile score is less reassuring even when the current point-in-time score looks healthy.
  */
 export function computePeace(
-  pillarScores: Pick<PillarScores, Exclude<ReadinessPillar, 'peace'>>,
+  pillarScores: Partial<Pick<PillarScores, Exclude<ReadinessPillar, 'peace'>>>,
   history: readonly ReadinessSnapshot[] = [],
 ): number {
-  const lowestPillar = Math.min(...Object.values(pillarScores).map(clampScore));
+  const observedScores = Object.values(pillarScores).filter(
+    (score): score is number => typeof score === 'number',
+  );
+  if (observedScores.length === 0) return SCORE_MIN;
+  const lowestPillar = Math.min(...observedScores.map(clampScore));
   if (history.length < 2) return Math.round(lowestPillar);
 
   const recent = history.slice(-7);

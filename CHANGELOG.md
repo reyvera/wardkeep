@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Direct-pillar dashboard summary** — “Strongest observed” and “most limited observed” now compare only directly evaluated pillars; derived Peace is no longer presented as an independently observed weakness.
+- **Peace respects missing evidence** — The derived Peace score now uses only pillars with observed signals, so an unevaluated pillar does not force Peace to 0%.
 - **Exact budget allocations are on budget** — A category spent exactly to its allocation is now shown as a warning-level fully used category, not counted as overspent in Provision or recommendations.
 - **Unknown is no longer healthy** — An unevaluated pillar is not scored as 100. Preparation is currently explicitly unevaluated because no generator exists.
 - **Protection liquidity score is graduated** — Liquid reserves progress continuously from 0 through 12 months of ordinary expenses instead of treating 3 and 12 months as equally protected.
