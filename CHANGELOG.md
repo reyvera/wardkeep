@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unknown is no longer healthy** — An unevaluated pillar is not scored as 100. Preparation is currently explicitly unevaluated because no generator exists.
 - **Protection liquidity score is graduated** — Liquid reserves progress continuously from 0 through 12 months of ordinary expenses instead of treating 3 and 12 months as equally protected.
 - **Protection burn rate excludes common transfer-like debits** — Transfer, credit-card payment, investment, savings-transfer, and principal-payment descriptors no longer automatically inflate ordinary household expense estimates.
+- **Credit-card payment matching** — An equal checking or savings debit and household credit-card credit within three days are treated as one internal payment, preventing duplicate burn-rate spending without removing unmatched transactions.
 - **Budget pacing is truthful mid-month** — Financial Overview reports remaining budget, pace against the expected date, and projected month-end spending rather than calling all unspent allocation “under budget.”
 - **Reversible policy lifecycle** — Cancelled or replaced policies can be marked inactive and restored later; inactive policies do not affect current readiness signals.
 
