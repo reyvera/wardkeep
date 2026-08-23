@@ -143,4 +143,4 @@ export ENCRYPTION_KEY=dev-local-key-not-for-production
 export AI_PRIVACY_MODE=LOCAL
 export OLLAMA_URL=http://localhost:11434
 
-exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web' --parallel
+exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web'
