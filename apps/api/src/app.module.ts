@@ -28,6 +28,7 @@ import { RecurringModule } from './recurring/recurring.module';
 import { RulesModule } from './rules/rules.module';
 import { SettingsModule } from './settings/settings.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { TimelineModule } from './timeline/timeline.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     RulesModule,
     SettingsModule,
     TransactionsModule,
+    TimelineModule,
     ImportModule,
     IncomeSourcesModule,
     PlannedExpensesModule,
