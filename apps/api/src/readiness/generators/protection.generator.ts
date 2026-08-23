@@ -5,6 +5,7 @@ import { calculateBalance } from '@wardkeep/finance-engine';
 import { Transaction, TransactionStatus, TransactionType } from '@wardkeep/shared';
 import { Signal } from '@wardkeep/readiness';
 import { calculateHouseholdBurnRate, HouseholdBurnRate } from './burn-rate';
+import { excludeMatchedCreditCardPayments } from './payment-matching';
 
 /** A full year is deliberately required for a maximum liquidity score. */
 const MAXIMUM_MONTHS = 12;
@@ -173,11 +174,38 @@ async function generateEmergencyFundSignals(
       type: TransactionType.DEBIT,
       date: { gte: ninetyDaysAgo },
     },
-    include: { category: { select: { name: true } } },
+    include: {
+      account: { select: { type: true } },
+      category: { select: { name: true } },
+    },
   });
+  const cardPaymentCredits = await prisma.transaction.findMany({
+    where: {
+      userId,
+      type: TransactionType.CREDIT,
+      date: { gte: ninetyDaysAgo },
+      account: { type: AccountType.CREDIT_CARD, isArchived: false },
+    },
+    select: { id: true, amount: true, date: true },
+  });
+  const possibleCardPaymentDebits = debitTransactions.filter(
+    (transaction) =>
+      transaction.account.type === AccountType.CHECKING ||
+      transaction.account.type === AccountType.SAVINGS,
+  );
+  const retainedCardPaymentDebitIds = new Set(
+    excludeMatchedCreditCardPayments(possibleCardPaymentDebits, cardPaymentCredits).map(
+      (transaction) => transaction.id,
+    ),
+  );
+  const householdDebits = debitTransactions.filter(
+    (transaction) =>
+      !possibleCardPaymentDebits.some((candidate) => candidate.id === transaction.id) ||
+      retainedCardPaymentDebitIds.has(transaction.id),
+  );
 
   const burnRate = calculateHouseholdBurnRate(
-    debitTransactions.map((transaction) => ({
+    householdDebits.map((transaction) => ({
       amount: transaction.amount.toString(),
       categoryName: transaction.category?.name,
       merchant: transaction.merchant,
