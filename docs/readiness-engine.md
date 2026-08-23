@@ -73,6 +73,10 @@ Wardkeep can record a document type, optional label, next review date, and non-s
 
 Wardkeep can also record an expected income source, frequency, optional expected net amount, and review date. This produces a small manual-evidence signal or a reminder when the record is due for review. It does **not** determine that income will arrive, assess employment stability, or measure a household’s ability to withstand income interruption. No source record remains unknown rather than a negative readiness finding.
 
+### Secondary liquidity: entered borrowing capacity only
+
+Credit-card accounts can retain an optional credit limit and show available credit using the current recorded balance. This is presented as **borrowing capacity, not cash**. It is not currently used to increase Protection or emergency-fund coverage, and does not evaluate interest cost, approval risk, or whether borrowing is appropriate.
+
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
 For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.

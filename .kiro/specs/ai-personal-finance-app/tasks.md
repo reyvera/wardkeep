@@ -545,7 +545,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
   - [x] Estate-planning records with reversible lifecycle, optional review dates, a limited review-timing signal, dashboard action, demo data, and explicit legal-adequacy limits
   - [x] Income-source planning records with expected net amount, frequency, optional review date, a limited review-timing signal, dashboard action, and demo data
-  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependents, true income-interruption resilience, fixed obligations, and secondary liquidity
+  - [x] Record a credit-card limit and show the calculated available borrowing capacity without treating it as cash reserves
+  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependents, true income-interruption resilience, fixed obligations, and a scored secondary-liquidity model
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews

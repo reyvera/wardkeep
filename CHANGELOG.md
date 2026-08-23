@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Policy notes** — Policies can retain renewal instructions, document locations, and other household context.
 - **Estate-planning reminders** — Record planning document types and optional review dates without storing document contents. Protection can surface an overdue or upcoming review, while explicitly avoiding legal-validity or adequacy claims.
 - **Income-source context** — Record expected income frequency, optional net amount, and review timing. These records support planning reminders without predicting income continuity or job security.
+- **Visible secondary liquidity** — Credit-card accounts can record a credit limit and show available borrowing capacity, clearly separated from cash reserves.
 
 ### Changed
 
