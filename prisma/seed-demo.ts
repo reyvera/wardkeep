@@ -213,6 +213,21 @@ async function main() {
   });
   console.log('  ✓ Created 2 estate-planning reminder records');
 
+  const incomeReview = new Date();
+  incomeReview.setMonth(incomeReview.getMonth() + 6);
+  await prisma.incomeSource.create({
+    data: {
+      userId: user.id,
+      name: 'Primary employment',
+      kind: 'EMPLOYMENT',
+      frequency: 'SEMI_MONTHLY',
+      expectedNetAmount: '4250.00',
+      reviewDate: incomeReview,
+      notes: 'Demo planning context only; this record does not predict future income.',
+    },
+  });
+  console.log('  ✓ Created 1 income-source planning record');
+
   // Generate 6 months of transactions
   let txCount = 0;
   for (let monthOffset = 5; monthOffset >= 0; monthOffset--) {

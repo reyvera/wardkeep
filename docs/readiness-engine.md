@@ -69,6 +69,10 @@ When one or more active policies include a deductible, Wardkeep also compares th
 
 Wardkeep can record a document type, optional label, next review date, and non-sensitive reminder notes for wills, trusts, powers of attorney, healthcare directives, and beneficiary reviews. A past or upcoming recorded review date produces an explainable reminder. Otherwise, the presence of active records contributes only a small manual-evidence signal. Wardkeep does **not** store document contents or infer legal validity, beneficiary choices, accessibility, completeness, or adequacy. No estate record is interpreted as unknown—not a negative score or evidence that the household lacks a plan.
 
+### Income-source context: planning records, not continuity prediction
+
+Wardkeep can also record an expected income source, frequency, optional expected net amount, and review date. This produces a small manual-evidence signal or a reminder when the record is due for review. It does **not** determine that income will arrive, assess employment stability, or measure a household’s ability to withstand income interruption. No source record remains unknown rather than a negative readiness finding.
+
 Policies also record whether their premium is separate or bundled into a mortgage escrow, loan/lease, or other account. The interface shows a normalized monthly equivalent and labels bundled amounts as already included in their linked payment. Home policies can include a property-tax escrow amount; when both are recorded, Wardkeep shows their combined monthly escrow estimate as a component of the mortgage payment. These fields identify an existing payment relationship so future cash-flow logic does not double-count a premium or tax already included in the linked payment; they do not currently alter transaction totals.
 
 For an existing local development database created without Prisma Migrate history, use `pnpm prisma db push` to synchronize this schema. `pnpm prisma migrate deploy` is for a new or already-baselined production database.
