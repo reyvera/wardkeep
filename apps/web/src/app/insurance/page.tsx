@@ -117,10 +117,10 @@ export default function InsurancePage() {
   const detailsNeeded = activePolicies.filter(
     (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
   ).length;
-  const renewalsSoon = activePolicies.filter((policy) => {
+  const renewalsNeedingAttention = activePolicies.filter((policy) => {
     if (!policy.renewalDate) return false;
     const days = (new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000;
-    return days >= 0 && days <= 30;
+    return days <= 30;
   }).length;
 
   return (
@@ -154,11 +154,11 @@ export default function InsurancePage() {
           <div className="card py-4">
             <p className="card-title">RENEWAL ATTENTION</p>
             <p
-              className={`text-2xl font-bold ${renewalsSoon > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
+              className={`text-2xl font-bold ${renewalsNeedingAttention > 0 ? 'text-accent-yellow' : 'text-accent-green'}`}
             >
-              {renewalsSoon}
+              {renewalsNeedingAttention}
             </p>
-            <p className="mt-1 text-xs text-content-tertiary">Due within 30 days</p>
+            <p className="mt-1 text-xs text-content-tertiary">Due within 30 days or overdue</p>
           </div>
           <div className="card py-4">
             <p className="card-title">DETAILS STILL NEEDED</p>
