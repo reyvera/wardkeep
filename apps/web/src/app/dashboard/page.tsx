@@ -15,6 +15,7 @@ import {
   BarChart3,
   Check,
   X,
+  CalendarDays,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -687,6 +688,43 @@ export default function DashboardPage() {
           Compared with the closest daily readiness snapshot available for this period. Detailed
           score-change reasons are still being added.
         </p>
+      </div>
+
+      <div className="card mt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="card-title">COMING UP</h3>
+            <p className="text-xs text-content-tertiary">Recorded dates in the next 30 days</p>
+          </div>
+          <CalendarDays size={19} className="text-accent-blue" />
+        </div>
+        {recurringQuery.isLoading || insuranceQuery.isLoading ? (
+          <div className="skeleton mt-4 h-16 w-full" />
+        ) : comingUp.length === 0 ? (
+          <p className="mt-4 text-sm text-content-tertiary">
+            No upcoming recorded bills or policy renewals in the next 30 days.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {comingUp.map((event) => (
+              <li key={event.id} className="flex items-start justify-between gap-4 text-sm">
+                <div>
+                  <p className="text-content-primary">{event.title}</p>
+                  <p className="mt-0.5 text-xs text-content-tertiary">{event.detail}</p>
+                </div>
+                <Link
+                  href={event.href}
+                  className="whitespace-nowrap text-xs text-accent-blue hover:underline"
+                >
+                  {new Date(event.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
