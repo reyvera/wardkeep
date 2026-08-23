@@ -55,6 +55,17 @@ const monthlyPremium = (policy: Policy) => {
           : 1;
   return Number(policy.premium) / divisor;
 };
+const monthlyMortgageEscrow = (policy: Policy) => {
+  const premium = monthlyPremium(policy);
+  if (
+    premium === null ||
+    !policy.propertyTaxEscrow ||
+    policy.paymentArrangement !== 'MORTGAGE_ESCROW'
+  ) {
+    return null;
+  }
+  return premium + Number(policy.propertyTaxEscrow);
+};
 const renewalStatus = (policy: Policy) => {
   if (!policy.renewalDate) return null;
   const days = Math.ceil((new Date(policy.renewalDate).getTime() - Date.now()) / 86_400_000);
@@ -463,6 +474,19 @@ export default function InsurancePage() {
                           ? ' · already included above'
                           : ''}
                       </b>
+                    </span>
+                  )}
+                  {monthlyMortgageEscrow(policy) !== null && (
+                    <span className="col-span-2">
+                      Estimated monthly escrow
+                      <br />
+                      <b className="text-content-primary">
+                        ${monthlyMortgageEscrow(policy)!.toFixed(2)} / month · insurance + property
+                        tax
+                      </b>
+                      <small className="mt-1 block text-content-tertiary">
+                        Included in the linked mortgage payment
+                      </small>
                     </span>
                   )}
                 </div>
