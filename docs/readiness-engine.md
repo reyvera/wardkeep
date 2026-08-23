@@ -82,6 +82,8 @@ The Dashboard is Wardkeep’s household command center. It should lead with:
 
 The Financial Overview is distinct from the Dashboard. It contains accounts, net worth, budgets, transactions, and spending analysis. Its spending-pace chart must use cumulative transaction totals by date—never a straight line reconstructed from today’s average. A mid-month budget must distinguish remaining allocation, pace versus expectation, and projected month-end result.
 
+Coverage and freshness are separate. Coverage reports how many currently supported factors Wardkeep evaluated. If one or more connected accounts are stale, Dashboard and pillar confidence are qualified as **Freshness needs review** without changing the underlying score or hiding the coverage percentage.
+
 ## API contract
 
 ```text

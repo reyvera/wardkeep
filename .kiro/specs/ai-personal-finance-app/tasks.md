@@ -526,7 +526,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 39.2 Add data provenance and freshness
   - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
-  - [ ] Reduce or qualify confidence for stale/manual values according to transparent rules
+  - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
 
 - [ ] 39.3 Harden the Protection liquidity model
   - Structural transfer exclusion and credit-card payment matching

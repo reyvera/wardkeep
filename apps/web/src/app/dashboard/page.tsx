@@ -131,7 +131,8 @@ function getSignalColor(type: Signal['type']): string {
   }
 }
 
-function coverageLabel(coverage: number): string {
+function coverageLabel(coverage: number, staleAccounts = 0): string {
+  if (staleAccounts > 0) return 'Freshness needs review';
   if (coverage >= 75) return 'High confidence';
   if (coverage >= 40) return 'Moderate confidence';
   if (coverage > 0) return 'Limited confidence';
@@ -326,8 +327,9 @@ export default function DashboardPage() {
               )}
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
-              <span>
-                {coverageLabel(data.coverage)} · {data.coverage}% coverage
+              <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>
+                {coverageLabel(data.coverage, data.dataFreshness.staleAccounts)} · {data.coverage}%
+                coverage
               </span>
               <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>
                 {data.dataFreshness.staleAccounts > 0
@@ -403,7 +405,7 @@ export default function DashboardPage() {
               <p className="text-xs text-content-tertiary mt-2">
                 {key === 'peace'
                   ? 'Derived from observed pillars'
-                  : `${coverageLabel(coverage)} · ${coverage}% covered`}
+                  : `${coverageLabel(coverage, data.dataFreshness.staleAccounts)} · ${coverage}% covered`}
               </p>
               {pillarSignals.map((signal) => (
                 <p

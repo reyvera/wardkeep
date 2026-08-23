@@ -154,7 +154,8 @@ function scoreColor(score: number) {
   return 'var(--accent-red)';
 }
 
-function confidenceLabel(coverage: number) {
+function confidenceLabel(coverage: number, staleAccounts = 0) {
+  if (staleAccounts > 0) return 'Freshness needs review';
   if (coverage >= 75) return 'High confidence';
   if (coverage >= 40) return 'Moderate confidence';
   if (coverage > 0) return 'Limited confidence';
@@ -243,8 +244,10 @@ export default function ReadinessPillarPage() {
             <p className="text-4xl font-bold" style={{ color }}>
               {assessment.score === null ? '—' : `${score}%`}
             </p>
-            <p className="text-sm text-content-secondary mt-1">
-              {confidenceLabel(coverage)} · {coverage}% coverage
+            <p
+              className={`text-sm mt-1 ${data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : 'text-content-secondary'}`}
+            >
+              {confidenceLabel(coverage, data.dataFreshness.staleAccounts)} · {coverage}% coverage
             </p>
             {trend !== null && (
               <p className={`text-xs mt-2 ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
