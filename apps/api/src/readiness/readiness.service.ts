@@ -17,6 +17,7 @@ import {
   generateProvisionSignals,
   generateProsperitySignals,
   generateProtectionSignals,
+  generatePreparationSignals,
 } from './generators';
 
 /** Response shape for the readiness endpoint. */
@@ -77,19 +78,20 @@ export class ReadinessService {
    */
   async getReadiness(userId: string, lastViewedAt: Date | null = null): Promise<ReadinessResponse> {
     // Collect signals from all pillar generators in parallel
-    const [provisionSignals, prosperitySignals, protectionSignals] = await Promise.all([
+    const [provisionSignals, prosperitySignals, protectionSignals, preparationSignals] = await Promise.all([
       generateProvisionSignals(this.prisma, userId),
       generateProsperitySignals(this.prisma, userId),
       generateProtectionSignals(this.prisma, userId),
+      generatePreparationSignals(this.prisma, userId),
     ]);
 
-    const allSignals: Signal[] = [...provisionSignals, ...prosperitySignals, ...protectionSignals];
+    const allSignals: Signal[] = [...provisionSignals, ...prosperitySignals, ...protectionSignals, ...preparationSignals];
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);
     const prosperity = computePillarScore('prosperity', allSignals);
     const protection = computePillarScore('protection', allSignals);
-    const preparation = 0; // No generator means unknown, never "perfect"
+    const preparation = computePillarScore('preparation', allSignals);
 
     const pillarScoresWithoutPeace = { protection, provision, preparation, prosperity };
 
