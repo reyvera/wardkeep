@@ -17,6 +17,7 @@ import { DependentsModule } from './dependents/dependents.module';
 import { EstateDocumentsModule } from './estate-documents/estate-documents.module';
 import { ImportModule } from './import/import.module';
 import { IncomeSourcesModule } from './income-sources/income-sources.module';
+import { PlannedExpensesModule } from './planned-expenses/planned-expenses.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -60,6 +61,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     TransactionsModule,
     ImportModule,
     IncomeSourcesModule,
+    PlannedExpensesModule,
     InsuranceModule,
   ],
   providers: [
