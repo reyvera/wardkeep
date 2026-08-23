@@ -13,6 +13,7 @@ import { CashflowModule } from './cashflow/cashflow.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { DebtModule } from './debt/debt.module';
+import { EstateDocumentsModule } from './estate-documents/estate-documents.module';
 import { ImportModule } from './import/import.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -47,6 +48,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CashflowModule,
     CategoriesModule,
     DebtModule,
+    EstateDocumentsModule,
     RecurringModule,
     ReadinessModule,
     RecommendationsModule,
