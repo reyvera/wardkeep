@@ -40,6 +40,7 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
   'secondary-liquidity': { sources: ['Credit-card limits', 'Current account balances'], method: 'Warns only when a recorded card has 10% or less of its limit available.', limitation: 'Available credit is borrowing capacity, not cash; it never increases emergency-fund coverage.', evidenceState: 'mixed' },
   'fixed-obligations': { sources: ['Recorded debt profiles', 'Liquid account balances'], method: 'Compares recorded monthly debt minimums with liquid reserves.', limitation: 'Unrecorded bills, variable obligations, and income are not included.', evidenceState: 'mixed' },
   dependents: { sources: ['User-entered dependent records'], method: 'Checks household-planning review dates and record presence.', limitation: 'Wardkeep does not assess care needs, coverage adequacy, or financial responsibility.', evidenceState: 'manual' },
+  'planned-expenses': { sources: ['User-entered planned expenses'], method: 'Flags recorded due dates in the next 30 days.', limitation: 'Wardkeep does not yet assess whether funds are set aside.', evidenceState: 'manual' },
   budgets: {
     sources: ['Current-month budget allocations', 'Current-month debit transactions'],
     method: 'Compares actual spending and budget pace with the current allocation.',
