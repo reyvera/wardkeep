@@ -26,9 +26,67 @@ export async function generateProtectionSignals(
 
   const emergencyFundSignals = await generateEmergencyFundSignals(prisma, userId);
   const insuranceSignals = await generateInsuranceSignals(prisma, userId);
-  signals.push(...emergencyFundSignals, ...insuranceSignals);
+  const estateDocumentSignals = await generateEstateDocumentSignals(prisma, userId);
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals);
 
   return signals;
+}
+
+/**
+ * Records document-review timing only. A listed document is not evidence that it
+ * is valid, current, accessible, or appropriate for the household.
+ */
+async function generateEstateDocumentSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  const documents = await prisma.estateDocument.findMany({
+    where: { userId, isActive: true },
+    select: { type: true, title: true, reviewDate: true },
+  });
+  if (documents.length === 0) return [];
+
+  const reviewSignals = documents
+    .map((document) => estateDocumentReviewSignal(document, new Date()))
+    .filter((signal): signal is Signal => signal !== null);
+  if (reviewSignals.length > 0) return reviewSignals;
+
+  return [{
+    capabilityId: 'estate-documents',
+    type: 'positive',
+    magnitude: 1,
+    pillar: 'protection',
+    summary: `${documents.length} active estate-planning ${documents.length === 1 ? 'record is' : 'records are'} recorded. Wardkeep does not assess legal validity, beneficiary choices, or adequacy.`,
+    weight: 0.5,
+  }];
+}
+
+/** Classifies a recorded review date without making a legal-adequacy claim. */
+export function estateDocumentReviewSignal(
+  document: { type: string; title: string | null; reviewDate: Date | null },
+  now: Date,
+): Signal | null {
+  if (!document.reviewDate) return null;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const daysUntilReview = Math.ceil(
+    (document.reviewDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+  );
+  const documentName = document.title || document.type.toLowerCase().replace(/_/g, ' ');
+  if (daysUntilReview < 0) return {
+    capabilityId: 'estate-documents',
+    type: 'warning',
+    magnitude: -3,
+    pillar: 'protection',
+    summary: `${documentName} has a review date that has passed. Consider reviewing it with the appropriate professional.`,
+    weight: 0.75,
+  };
+  if (daysUntilReview <= 30) return {
+    capabilityId: 'estate-documents',
+    type: 'warning',
+    magnitude: -2,
+    pillar: 'protection',
+    summary: `${documentName} is due for review in ${daysUntilReview} days.`,
+    weight: 0.75,
+  };
+  return null;
 }
 
 /**

@@ -30,6 +30,12 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     limitation: 'Unrecorded deductibles and worst-case simultaneous losses are not assumed.',
     evidenceState: 'mixed',
   },
+  'estate-documents': {
+    sources: ['User-entered estate-planning records'],
+    method: 'Checks recorded document review dates and record presence.',
+    limitation: 'Wardkeep does not assess legal validity, beneficiary choices, document access, or adequacy.',
+    evidenceState: 'manual',
+  },
   budgets: {
     sources: ['Current-month budget allocations', 'Current-month debit transactions'],
     method: 'Compares actual spending and budget pace with the current allocation.',

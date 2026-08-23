@@ -1,7 +1,7 @@
 import { Decimal } from 'decimal.js';
 import { describe, expect, it } from 'vitest';
 import { HouseholdBurnRate } from './burn-rate';
-import { emergencyFundSignal, insuranceRenewalSignal } from './protection.generator';
+import { emergencyFundSignal, estateDocumentReviewSignal, insuranceRenewalSignal } from './protection.generator';
 
 const now = new Date('2026-08-22T12:00:00.000Z');
 
@@ -33,6 +33,21 @@ describe('insuranceRenewalSignal', () => {
         now,
       ),
     ).toBeNull();
+  });
+});
+
+describe('estateDocumentReviewSignal', () => {
+  it('reminds the household about an upcoming recorded review without assessing the document', () => {
+    const signal = estateDocumentReviewSignal(
+      { type: 'WILL', title: 'Family will', reviewDate: new Date('2026-09-05T00:00:00.000Z') },
+      now,
+    );
+    expect(signal).toMatchObject({ type: 'warning', magnitude: -2, capabilityId: 'estate-documents' });
+    expect(signal?.summary).toContain('14 days');
+  });
+
+  it('does not infer a concern where no review date is entered', () => {
+    expect(estateDocumentReviewSignal({ type: 'TRUST', title: null, reviewDate: null }, now)).toBeNull();
   });
 });
 
