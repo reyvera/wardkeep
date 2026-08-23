@@ -543,7 +543,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Record separate versus mortgage/loan/other bundled premiums, linked payment account, and home property-tax escrow to prevent future cash-flow double counting
   - [x] Surface policy completeness and renewal attention on the dashboard and Protection detail page; support reversible inactive/restore lifecycle for cancelled or replaced policies
   - [x] Document local `db push` versus production/baselined `migrate deploy` workflow for this schema addition
-  - [ ] Insurance adequacy, disability/life coverage, estate documents, dependents, income interruption, fixed obligations, and secondary liquidity
+  - [x] Estate-planning records with reversible lifecycle, optional review dates, a limited review-timing signal, dashboard action, demo data, and explicit legal-adequacy limits
+  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependents, income interruption, fixed obligations, and secondary liquidity
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
