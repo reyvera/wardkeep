@@ -36,6 +36,7 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     limitation: 'Wardkeep does not assess legal validity, beneficiary choices, document access, or adequacy.',
     evidenceState: 'manual',
   },
+  'income-sources': { sources: ['User-entered income-source records'], method: 'Checks recorded income-context review dates and record presence.', limitation: 'Wardkeep does not infer job security, payment continuity, or income interruption resilience.', evidenceState: 'manual' },
   budgets: {
     sources: ['Current-month budget allocations', 'Current-month debit transactions'],
     method: 'Compares actual spending and budget pace with the current allocation.',

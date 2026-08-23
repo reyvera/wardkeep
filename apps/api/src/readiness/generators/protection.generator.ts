@@ -27,9 +27,22 @@ export async function generateProtectionSignals(
   const emergencyFundSignals = await generateEmergencyFundSignals(prisma, userId);
   const insuranceSignals = await generateInsuranceSignals(prisma, userId);
   const estateDocumentSignals = await generateEstateDocumentSignals(prisma, userId);
-  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals);
+  const incomeSources = await prisma.incomeSource.findMany({ where: { userId, isActive: true }, select: { name: true, reviewDate: true } });
+  const incomeSignals = incomeSources.map((source) => incomeSourceReviewSignal(source, new Date())).filter((signal): signal is Signal => signal !== null);
+  if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...incomeSignals);
 
   return signals;
+}
+
+/** Reminds about a household-entered income-context review, not income security. */
+export function incomeSourceReviewSignal(source: { name: string; reviewDate: Date | null }, now: Date): Signal | null {
+  if (!source.reviewDate) return null;
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((source.reviewDate.getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return { capabilityId: 'income-sources', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${source.name} has a review date that has passed. Confirm your income context is still current.` };
+  if (days <= 30) return { capabilityId: 'income-sources', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${source.name} is due for review in ${days} days.` };
+  return null;
 }
 
 /**
