@@ -114,12 +114,12 @@ model Account {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  user         User                   @relation(fields: [userId], references: [id])
-  transactions Transaction[]
-  recurring    RecurringTransaction[]
-  linkedBankAccounts LinkedBankAccount[]
-  debtProfile  DebtProfile?
-  bundledInsurancePolicies InsurancePolicy[] @relation("BundledInsurancePayments")
+  user                     User                   @relation(fields: [userId], references: [id])
+  transactions             Transaction[]
+  recurring                RecurringTransaction[]
+  linkedBankAccounts       LinkedBankAccount[]
+  debtProfile              DebtProfile?
+  bundledInsurancePolicies InsurancePolicy[]      @relation("BundledInsurancePayments")
 
   @@unique([userId, name])
   @@index([userId, isArchived])
@@ -164,33 +164,32 @@ enum InsurancePaymentArrangement {
 }
 
 model InsurancePolicy {
-  id               String                    @id @default(uuid())
-  userId           String
-  type             InsurancePolicyType
-  provider         String                    @db.VarChar(160)
-  nickname         String?                   @db.VarChar(100)
-  premium          Decimal?                  @db.Decimal(19, 4)
-  premiumFrequency InsurancePremiumFrequency @default(MONTHLY)
-  paymentArrangement InsurancePaymentArrangement @default(SEPARATE)
-  paymentAccountId String?
-  propertyTaxEscrow Decimal?                 @db.Decimal(19, 4)
+  id                   String                      @id @default(uuid())
+  userId               String
+  type                 InsurancePolicyType
+  provider             String                      @db.VarChar(160)
+  nickname             String?                     @db.VarChar(100)
+  premium              Decimal?                    @db.Decimal(19, 4)
+  premiumFrequency     InsurancePremiumFrequency   @default(MONTHLY)
+  paymentArrangement   InsurancePaymentArrangement @default(SEPARATE)
+  paymentAccountId     String?
+  propertyTaxEscrow    Decimal?                    @db.Decimal(19, 4)
   propertyTaxFrequency InsurancePremiumFrequency?
-  deductible       Decimal?                  @db.Decimal(19, 4)
-  coverageAmount   Decimal?                  @db.Decimal(19, 4)
-  renewalDate      DateTime?                 @db.Date
-  isActive         Boolean                   @default(true)
-  notes            String?                   @db.VarChar(1000)
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
+  deductible           Decimal?                    @db.Decimal(19, 4)
+  coverageAmount       Decimal?                    @db.Decimal(19, 4)
+  renewalDate          DateTime?                   @db.Date
+  isActive             Boolean                     @default(true)
+  notes                String?                     @db.VarChar(1000)
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   paymentAccount Account? @relation("BundledInsurancePayments", fields: [paymentAccountId], references: [id], onDelete: SetNull)
 
   @@index([userId, isActive])
   @@index([userId, renewalDate])
   @@index([paymentAccountId])
 }
-
 
 // ─── Transactions ───────────────────────────────────────────────────────────────
 
@@ -294,7 +293,6 @@ model BudgetAllocation {
   @@unique([budgetId, categoryId])
 }
 
-
 // ─── Rules ──────────────────────────────────────────────────────────────────────
 
 model Rule {
@@ -390,7 +388,6 @@ enum RecurrenceFrequency {
   SEMIANNUAL
   ANNUAL
 }
-
 
 // ─── AI Chat ────────────────────────────────────────────────────────────────────
 
@@ -526,35 +523,35 @@ model AICorrection {
 // ─── Bank Connections (SimpleFIN/Plaid) ─────────────────────────────────────────
 
 model BankConnection {
-  id              String               @id @default(uuid())
+  id              String                 @id @default(uuid())
   userId          String
   provider        BankConnectionProvider
-  institutionName String               @db.VarChar(200)
-  accessToken     String               @db.VarChar(1000) // Encrypted at application layer
-  status          BankConnectionStatus @default(ACTIVE)
+  institutionName String                 @db.VarChar(200)
+  accessToken     String                 @db.VarChar(1000) // Encrypted at application layer
+  status          BankConnectionStatus   @default(ACTIVE)
   lastSyncAt      DateTime?
-  lastError       String?              @db.VarChar(500)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  lastError       String?                @db.VarChar(500)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
-  user            User                 @relation(fields: [userId], references: [id])
-  linkedAccounts  LinkedBankAccount[]
+  user           User                @relation(fields: [userId], references: [id])
+  linkedAccounts LinkedBankAccount[]
 
   @@index([userId, status])
 }
 
 model LinkedBankAccount {
-  id               String   @id @default(uuid())
-  connectionId     String
-  accountId        String?  // Links to the local Account, null if not yet linked
-  externalId       String   @db.VarChar(200) // External account ID from provider
-  externalName     String   @db.VarChar(200)
-  externalType     String   @db.VarChar(50)
-  isEnabled        Boolean  @default(true) // Whether to sync transactions for this account
-  createdAt        DateTime @default(now())
+  id           String   @id @default(uuid())
+  connectionId String
+  accountId    String? // Links to the local Account, null if not yet linked
+  externalId   String   @db.VarChar(200) // External account ID from provider
+  externalName String   @db.VarChar(200)
+  externalType String   @db.VarChar(50)
+  isEnabled    Boolean  @default(true) // Whether to sync transactions for this account
+  createdAt    DateTime @default(now())
 
-  connection       BankConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  account          Account?       @relation(fields: [accountId], references: [id])
+  connection BankConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  account    Account?       @relation(fields: [accountId], references: [id])
 
   @@unique([connectionId, externalId])
   @@index([accountId])
@@ -591,16 +588,16 @@ model ReadinessSnapshot {
 }
 
 model ReadinessSignal {
-  id           String   @id @default(uuid())
+  id           String              @id @default(uuid())
   userId       String
-  capabilityId String   @db.VarChar(50)
+  capabilityId String              @db.VarChar(50)
   type         SignalType
-  magnitude    Int      // -10 to +10
+  magnitude    Int // -10 to +10
   pillar       ReadinessPillarEnum
-  summary      String   @db.VarChar(500)
-  weight       Decimal  @default(1.0) @db.Decimal(3, 2)
+  summary      String              @db.VarChar(500)
+  weight       Decimal             @default(1.0) @db.Decimal(3, 2)
   expiresAt    DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime            @default(now())
   snapshotId   String?
 
   snapshot ReadinessSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
