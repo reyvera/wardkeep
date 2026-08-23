@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
 - **Dependent planning reminders** — Optional non-identifying household records can carry a review date, without assessing care needs or coverage adequacy.
 - **Recorded income dates** — Income-source records can include a next expected date, shown in Dashboard Coming Up without predicting a paycheck.
+- **Planned-expense funding** — Record a known future cost, due date, and funds explicitly set aside; upcoming shortfalls appear in Preparation and Coming Up.
 
 ### Changed
 
