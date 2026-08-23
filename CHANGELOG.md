@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Visible secondary liquidity** — Credit-card accounts can record a credit limit and show available borrowing capacity, clearly separated from cash reserves.
 - **Low available-credit warning** — A recorded card that is at least 90% used can surface a modest Protection warning, without treating credit as readiness credit.
 - **Recorded fixed-obligation warning** — Protection can flag when recorded monthly debt minimums exceed liquid reserves, without assuming unrecorded household bills.
+- **Dependent planning reminders** — Optional non-identifying household records can carry a review date, without assessing care needs or coverage adequacy.
 
 ### Changed
 
