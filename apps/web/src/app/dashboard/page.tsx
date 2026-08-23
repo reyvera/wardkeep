@@ -305,6 +305,35 @@ export default function DashboardPage() {
     if (!policy.renewalDate) return false;
     return new Date(policy.renewalDate).getTime() - Date.now() <= 30 * 86_400_000;
   }).length;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntil = (date: string) =>
+    Math.ceil((new Date(date).getTime() - today.getTime()) / 86_400_000);
+  const comingUp = [
+    ...activePolicies
+      .filter((policy) => policy.renewalDate && daysUntil(policy.renewalDate) <= 30)
+      .map((policy) => ({
+        id: `policy-${policy.id}`,
+        date: policy.renewalDate!,
+        title: `${policy.provider} ${policy.type.toLowerCase().replace('_', ' ')} renewal`,
+        detail: 'Recorded policy renewal',
+        href: '/insurance',
+      })),
+    ...(recurringQuery.data ?? [])
+      .filter(
+        (transaction) =>
+          daysUntil(transaction.nextExpected) >= 0 && daysUntil(transaction.nextExpected) <= 30,
+      )
+      .map((transaction) => ({
+        id: `recurring-${transaction.id}`,
+        date: transaction.nextExpected,
+        title: transaction.merchant,
+        detail: `$${Number(transaction.expectedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected ${transaction.frequency.toLowerCase()}`,
+        href: '/recurring',
+      })),
+  ]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5);
 
   return (
     <div>
