@@ -350,6 +350,16 @@ Wardkeep is not trying to be another ledger or budget dashboard. Finance is the 
 
 The current release has a robust finance foundation and the first readiness implementation. It intentionally does **not** claim that a score is comprehensive when the required information is absent. Protection currently measures graduated liquid-reserve resilience using a filtered ordinary-expense burn rate. Matching household credit-card payment pairs are excluded so one payment is not counted as new spending twice, and a household can explicitly mark a one-time debit to exclude it from recurring burn-rate estimates; limited insurance-record renewal and deductible-to-reserve checks are also included. Insurance adequacy, estate, health, dependents, income interruption, and other protection dimensions remain planned capabilities rather than implied coverage.
 
+## Releases
+
+Wardkeep uses one workspace version. Before creating a release tag, run:
+
+```bash
+pnpm release:check
+```
+
+Create a matching `vX.Y.Z` tag only from the tested release commit. The image workflow rejects a version tag that does not match the root and workspace package versions. A manually dispatched non-version tag such as `latest` remains supported for operational image rebuilds.
+
 See [the readiness specification](docs/readiness-engine.md) for the scoring contract and current limits, and [the implementation plan](.kiro/specs/ai-personal-finance-app/tasks.md) for the sequenced work.
 
 ## License
