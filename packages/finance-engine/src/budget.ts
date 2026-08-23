@@ -36,10 +36,10 @@ export interface BudgetSummary {
  * Determines the budget status based on percentage of allocation used.
  *
  * @param percentUsed - The ratio of spent to allocated (e.g., 0.95 means 95%).
- * @returns The budget status: 'overspent' if >= 100%, 'warning' if >= 90%, otherwise 'ok'.
+ * @returns The budget status: 'overspent' if > 100%, 'warning' if >= 90%, otherwise 'ok'.
  */
 function determineBudgetStatus(percentUsedRatio: Decimal): BudgetStatus {
-  if (percentUsedRatio.gte(OVERSPENT_THRESHOLD)) {
+  if (percentUsedRatio.gt(OVERSPENT_THRESHOLD)) {
     return 'overspent';
   }
   if (percentUsedRatio.gte(WARNING_THRESHOLD)) {
@@ -53,7 +53,7 @@ function determineBudgetStatus(percentUsedRatio: Decimal): BudgetStatus {
  *
  * Sums all DEBIT transactions matching each allocation's categoryId to determine
  * actual spending. Computes remaining budget and percentage used, then assigns
- * a status threshold: 'ok' (< 90%), 'warning' (>= 90%), or 'overspent' (>= 100%).
+ * a status threshold: 'ok' (< 90%), 'warning' (>= 90%), or 'overspent' (> 100%).
  *
  * @param allocations - Array of budget allocations with categoryId and amount.
  * @param transactions - Array of transactions to measure spending from.

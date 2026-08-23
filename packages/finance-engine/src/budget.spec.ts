@@ -84,7 +84,7 @@ describe('Feature: ai-personal-finance-app, Property 9: Budget actual spending e
 // ─── Property 10 ────────────────────────────────────────────────────────────────
 
 describe('Feature: ai-personal-finance-app, Property 10: Budget threshold notifications fire at correct percentages', () => {
-  it('status is warning at >=90% and overspent at >=100%', () => {
+  it('status is warning at >=90% and overspent only above 100%', () => {
     fc.assert(
       fc.property(
         amountArb,
@@ -128,7 +128,7 @@ describe('Feature: ai-personal-finance-app, Property 10: Budget threshold notifi
 
           const ratio = spentAmount.div(allocated);
 
-          if (ratio.gte(new Decimal('1'))) {
+          if (ratio.gt(new Decimal('1'))) {
             expect(progress.status).toBe('overspent');
           } else if (ratio.gte(new Decimal('0.9'))) {
             expect(progress.status).toBe('warning');
@@ -139,5 +139,33 @@ describe('Feature: ai-personal-finance-app, Property 10: Budget threshold notifi
       ),
       { numRuns: 100 },
     );
+  });
+
+  it('does not count a category exactly at its allocation as overspent', () => {
+    const [progress] = calculateBudgetProgress(
+      [{ id: 'alloc-1', budgetId: 'budget-1', categoryId: 'housing', amount: '2424.03' }],
+      [
+        {
+          id: 'housing-spend',
+          userId: 'user-1',
+          accountId: 'account-1',
+          categoryId: 'housing',
+          date: new Date('2026-08-22T00:00:00.000Z'),
+          amount: '2424.03',
+          type: TransactionType.DEBIT,
+          merchant: 'Example Housing',
+          description: null,
+          notes: null,
+          isReconciliation: false,
+          aiCategorized: false,
+          aiConfidence: null,
+          createdAt: new Date('2026-08-22T00:00:00.000Z'),
+          updatedAt: new Date('2026-08-22T00:00:00.000Z'),
+        },
+      ],
+    );
+
+    expect(progress.status).toBe('warning');
+    expect(progress.remaining.toFixed(2)).toBe('0.00');
   });
 });
