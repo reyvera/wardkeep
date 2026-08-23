@@ -12,6 +12,7 @@ interface Account {
   name: string;
   type: string;
   currentBalance: string;
+  creditLimit: string | null;
   isArchived: boolean;
   source: 'synchronized' | 'manual';
   lastUpdatedAt: string;
@@ -48,6 +49,7 @@ export default function AccountsPage() {
   const [name, setName] = useState('');
   const [type, setType] = useState('CHECKING');
   const [balance, setBalance] = useState('');
+  const [creditLimit, setCreditLimit] = useState('');
   const [editingAsset, setEditingAsset] = useState<string | null>(null);
   const [assetValueInput, setAssetValueInput] = useState('');
 
@@ -80,6 +82,7 @@ export default function AccountsPage() {
         name,
         type,
         initialBalance: balance || '0',
+        ...(type === 'CREDIT_CARD' && creditLimit ? { creditLimit } : {}),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
@@ -87,6 +90,7 @@ export default function AccountsPage() {
       setName('');
       setType('CHECKING');
       setBalance('');
+      setCreditLimit('');
     },
   });
 
@@ -166,6 +170,7 @@ export default function AccountsPage() {
                 required
               />
             </div>
+            {type === 'CREDIT_CARD' && <div><label className="input-label">Credit Limit</label><input placeholder="0.00" type="number" min="0" step="0.01" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} className="input" /></div>}
             <div>
               <label className="input-label">Type</label>
               <select
@@ -246,6 +251,7 @@ export default function AccountsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-content-primary truncate">{account.name}</p>
                     <p className="text-xs text-content-tertiary">{formatAccountType(account.type)} · {account.source === 'synchronized' ? 'Synced' : 'Manual'}{account.freshness === 'stale' ? ' · may be outdated' : ''}</p>
+                    {account.type === 'CREDIT_CARD' && account.creditLimit && <p className="text-xs text-content-tertiary">Available credit: ${formatCurrency(Math.max(0, Number(account.creditLimit) - Math.abs(bal)))} · Borrowing capacity, not cash</p>}
                   </div>
                   <p className={`text-base font-bold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}>
                     {isDebt ? '-' : ''}${formatCurrency(Math.abs(bal))}
