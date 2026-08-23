@@ -32,6 +32,7 @@ const navItems = [
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
   { href: '/insurance', label: 'Policies', icon: ShieldCheck },
   { href: '/estate-documents', label: 'Estate planning', icon: ShieldCheck },
+  { href: '/income-sources', label: 'Income sources', icon: Wallet },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },

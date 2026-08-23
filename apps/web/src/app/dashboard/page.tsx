@@ -197,6 +197,7 @@ const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   insurance: { href: '/insurance', label: 'Review policies' },
   'insurance-deductibles': { href: '/insurance', label: 'Review deductibles' },
   'estate-documents': { href: '/estate-documents', label: 'Review estate plans' },
+  'income-sources': { href: '/income-sources', label: 'Review income sources' },
   budgets: { href: '/budget', label: 'Review budget' },
   cashflow: { href: '/dashboard/details', label: 'Review cash flow' },
   recurring: { href: '/recurring', label: 'Review recurring bills' },
