@@ -47,4 +47,28 @@ describe('recommendationCandidate', () => {
 
     expect(stale.priorityScore).toBeLessThan(current.priorityScore);
   });
+
+  it('previews a pillar-only improvement when other observed factors remain', () => {
+    const risk = {
+      capabilityId: 'emergency-fund',
+      type: 'risk' as const,
+      magnitude: -6,
+      pillar: 'protection' as const,
+      summary: 'Reserves are limited.',
+      provenance: { limitation: 'Cash resilience only.', evidenceState: 'synchronized' as const },
+    };
+    const candidate = recommendationCandidate(risk, [
+      risk,
+      {
+        capabilityId: 'insurance',
+        type: 'positive',
+        magnitude: 1,
+        pillar: 'protection',
+        summary: 'Policy recorded.',
+      },
+    ]);
+
+    expect(candidate.projectedPillarDelta).toBeGreaterThan(0);
+    expect(candidate.impactPreview).toContain('could increase');
+  });
 });

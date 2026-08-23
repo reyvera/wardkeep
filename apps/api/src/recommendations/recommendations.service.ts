@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'crypto';
 
-import { Signal } from '@wardkeep/readiness';
+import { computePillarScore, Signal } from '@wardkeep/readiness';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -22,7 +22,10 @@ const ACTIONS: Record<string, { action: string; href: string }> = {
   debt: { action: 'Review debt', href: '/debt' },
 };
 
-export function recommendationCandidate(signal: SignalWithProvenance) {
+export function recommendationCandidate(
+  signal: SignalWithProvenance,
+  pillarSignals: readonly Signal[] = [signal],
+) {
   const route = ACTIONS[signal.capabilityId] ?? {
     action: 'View readiness factor',
     href: `/dashboard/readiness/${signal.pillar}`,
@@ -42,6 +45,17 @@ export function recommendationCandidate(signal: SignalWithProvenance) {
   const fingerprint = createHash('sha256')
     .update(`${signal.capabilityId}|${signal.type}|${signal.summary}`)
     .digest('hex');
+  const currentPillarScore = computePillarScore(signal.pillar, pillarSignals);
+  const remainingSignals = pillarSignals.filter((candidate) => candidate !== signal);
+  const projectedPillarScore = remainingSignals.length
+    ? computePillarScore(signal.pillar, remainingSignals)
+    : null;
+  const projectedPillarDelta =
+    projectedPillarScore === null ? null : Math.max(0, projectedPillarScore - currentPillarScore);
+  const impactPreview =
+    projectedPillarDelta && projectedPillarDelta > 0
+      ? `If this source risk is resolved and the other observed ${signal.pillar} factors stay the same, ${signal.pillar} could increase by about ${projectedPillarDelta} points.`
+      : 'Wardkeep will measure any score change after this action is reflected in your records; it cannot reliably project a numeric change from this factor alone.';
 
   return {
     fingerprint,
@@ -54,6 +68,8 @@ export function recommendationCandidate(signal: SignalWithProvenance) {
     priority,
     priorityScore,
     assumptions: signal.provenance.limitation,
+    impactPreview,
+    projectedPillarDelta,
   };
 }
 
@@ -64,7 +80,12 @@ export class RecommendationsService {
   async synchronize(userId: string, signals: SignalWithProvenance[]) {
     const candidates = signals
       .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
-      .map(recommendationCandidate);
+      .map((signal) =>
+        recommendationCandidate(
+          signal,
+          signals.filter((candidate) => candidate.pillar === signal.pillar),
+        ),
+      );
     const fingerprints = candidates.map((candidate) => candidate.fingerprint);
     const existing =
       fingerprints.length === 0
