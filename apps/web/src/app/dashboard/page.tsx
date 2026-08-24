@@ -328,6 +328,16 @@ export default function DashboardPage() {
   const canCompareTrend =
     data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
   const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
+  const trendDays = canCompareTrend
+    ? Math.max(
+        1,
+        Math.round(
+          (new Date(history[history.length - 1]!.recordedAt).getTime() -
+            new Date(history[0]!.recordedAt).getTime()) /
+            86_400_000,
+        ),
+      )
+    : 0;
   const activeRecommendations = (recommendationsQuery.data ?? [])
     .filter((recommendation) => recommendation.status === 'ACTIVE')
     .slice(0, 3);
@@ -452,7 +462,8 @@ export default function DashboardPage() {
               </span>
               {canCompareTrend && (
                 <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>
-                  {trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over 90 days
+                  {trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over {trendDays} day
+                  {trendDays === 1 ? '' : 's'}
                 </span>
               )}
             </div>
