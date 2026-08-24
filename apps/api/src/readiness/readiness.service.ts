@@ -101,14 +101,20 @@ export class ReadinessService {
    */
   async getReadiness(userId: string, lastViewedAt: Date | null = null): Promise<ReadinessResponse> {
     // Collect signals from all pillar generators in parallel
-    const [provisionSignals, prosperitySignals, protectionSignals, preparationSignals] = await Promise.all([
-      generateProvisionSignals(this.prisma, userId),
-      generateProsperitySignals(this.prisma, userId),
-      generateProtectionSignals(this.prisma, userId),
-      generatePreparationSignals(this.prisma, userId),
-    ]);
+    const [provisionSignals, prosperitySignals, protectionSignals, preparationSignals] =
+      await Promise.all([
+        generateProvisionSignals(this.prisma, userId),
+        generateProsperitySignals(this.prisma, userId),
+        generateProtectionSignals(this.prisma, userId),
+        generatePreparationSignals(this.prisma, userId),
+      ]);
 
-    const allSignals: Signal[] = [...provisionSignals, ...prosperitySignals, ...protectionSignals, ...preparationSignals];
+    const allSignals: Signal[] = [
+      ...provisionSignals,
+      ...prosperitySignals,
+      ...protectionSignals,
+      ...preparationSignals,
+    ];
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);
