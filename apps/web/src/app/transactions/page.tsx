@@ -27,6 +27,7 @@ interface Transaction {
   type: string;
   status?: string;
   accountId: string;
+  isReviewed?: boolean;
   tags?: Array<{ tag: string }>;
 }
 
@@ -64,6 +65,7 @@ export default function TransactionsPage() {
   const [accountFilter, setAccountFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [hideTransfers, setHideTransfers] = useState(true);
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'unreviewed' | 'reviewed'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -87,6 +89,8 @@ export default function TransactionsPage() {
   if (dateFrom) params.set('dateFrom', dateFrom);
   if (dateTo) params.set('dateTo', dateTo);
   if (hideTransfers) params.set('excludeType', 'TRANSFER');
+  if (reviewFilter === 'unreviewed') params.set('reviewed', 'false');
+  if (reviewFilter === 'reviewed') params.set('reviewed', 'true');
 
   const txQuery = useQuery({
     queryKey: [
@@ -98,6 +102,7 @@ export default function TransactionsPage() {
       dateFrom,
       dateTo,
       hideTransfers,
+      reviewFilter,
     ],
     queryFn: () => apiClient.get<TransactionsResponse>(`/transactions?${params.toString()}`),
   });
@@ -306,6 +311,19 @@ export default function TransactionsPage() {
             ))}
           </select>
           <select
+            value={reviewFilter}
+            onChange={(e) => {
+              setReviewFilter(e.target.value as 'all' | 'unreviewed' | 'reviewed');
+              setPage(1);
+            }}
+            className="input w-auto py-2"
+            aria-label="Review status"
+          >
+            <option value="all">All transactions</option>
+            <option value="unreviewed">Needs review</option>
+            <option value="reviewed">Reviewed</option>
+          </select>
+          <select
             value={categoryFilter}
             onChange={(e) => {
               setCategoryFilter(e.target.value);
@@ -384,6 +402,7 @@ export default function TransactionsPage() {
               const isCredit = tx.type === 'CREDIT';
               const isTransfer = tx.type === 'TRANSFER';
               const isPending = tx.status === 'PENDING';
+              const needsReview = tx.isReviewed === false;
               const isOneTime =
                 tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
               const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
@@ -419,6 +438,11 @@ export default function TransactionsPage() {
                         <span className="category-pill text-[10px] bg-accent-yellow/10 text-accent-yellow">
                           <Clock size={8} className="inline mr-0.5" />
                           Pending
+                        </span>
+                      )}
+                      {needsReview && (
+                        <span className="category-pill text-[10px] bg-accent-blue/10 text-accent-blue">
+                          Needs review
                         </span>
                       )}
                       {catName && (
