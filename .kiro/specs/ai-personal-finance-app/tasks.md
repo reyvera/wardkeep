@@ -622,6 +622,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Group by: active, upcoming, annual renewals
   - Total monthly subscription burn rate
   - Alert on cancelled subscription still charging
+  - [x] Recurring workflow now lists confirmed and detected records from their separate API sources, with working confirm/dismiss actions.
 
 ### 35b. Debt Payoff Enhancements [COMPLETE]
 
