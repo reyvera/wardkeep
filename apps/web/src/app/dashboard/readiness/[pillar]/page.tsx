@@ -19,14 +19,6 @@ import { apiClient } from '@/lib/api-client';
 
 type PillarKey = 'protection' | 'provision' | 'preparation' | 'prosperity' | 'peace';
 
-interface PillarScores {
-  protection: number;
-  provision: number;
-  preparation: number;
-  prosperity: number;
-  peace: number;
-}
-
 interface Signal {
   capabilityId: string;
   type: 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';
@@ -41,28 +33,26 @@ interface Signal {
   };
 }
 
-interface ReadinessResponse {
+interface ReadinessExplanation {
   evaluatedAt: string;
-  pillars: PillarScores;
-  signals: Signal[];
-  history: Array<{ pillars: PillarScores; recordedAt: string }>;
-  coverage: number;
-  pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
-  pillarAssessments: Record<
-    PillarKey,
-    {
+  pillars: Array<{
+    pillar: PillarKey;
+    assessment: {
       state: 'known' | 'partial' | 'not_evaluated';
       score: number | null;
       coverage: number;
       evaluatedCapabilities: string[];
-    }
-  >;
+    };
+    factors: Signal[];
+    notEvaluated: Array<{ id: string; label: string }>;
+  }>;
   dataFreshness: {
     synchronizedAccounts: number;
     manualAccounts: number;
     staleAccounts: number;
     lastSynchronizedAt: string | null;
   };
+  recentChanges: Array<{ pillar: PillarKey; delta: number }>;
 }
 
 const PILLARS: Record<
@@ -80,19 +70,35 @@ const PILLARS: Record<
     label: 'Protection',
     icon: Shield,
     description: 'How well the household can absorb a financial shock.',
-    sources: ['Account balances', 'Recent debit transactions', 'Insurance, estate-planning, and income-source records'],
+    sources: [
+      'Account balances',
+      'Recent debit transactions',
+      'Insurance, estate-planning, and income-source records',
+    ],
     observed: [
       { capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' },
       { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
-      { capability: 'insurance-record-details', label: 'Completeness of entered insurance policy details' },
+      {
+        capability: 'insurance-record-details',
+        label: 'Completeness of entered insurance policy details',
+      },
       {
         capability: 'insurance-deductibles',
         label: 'Recorded deductibles compared with liquid reserves',
       },
-      { capability: 'estate-documents', label: 'Entered estate-planning records and review timing' },
+      {
+        capability: 'estate-documents',
+        label: 'Entered estate-planning records and review timing',
+      },
       { capability: 'income-sources', label: 'Entered income sources and review timing' },
-      { capability: 'secondary-liquidity', label: 'Recorded available credit when nearly exhausted' },
-      { capability: 'fixed-obligations', label: 'Recorded debt minimums compared with liquid reserves' },
+      {
+        capability: 'secondary-liquidity',
+        label: 'Recorded available credit when nearly exhausted',
+      },
+      {
+        capability: 'fixed-obligations',
+        label: 'Recorded debt minimums compared with liquid reserves',
+      },
       { capability: 'dependents', label: 'Entered dependent records and review timing' },
     ],
     next: [
@@ -119,9 +125,7 @@ const PILLARS: Record<
     icon: Hammer,
     description: 'How ready the household is for known future costs and responsibilities.',
     sources: ['User-entered planned expenses'],
-    observed: [
-      { capability: 'planned-expenses', label: 'Recorded future expense due dates' },
-    ],
+    observed: [{ capability: 'planned-expenses', label: 'Recorded future expense due dates' }],
     next: [
       'Goals and sinking funds',
       'Funds set aside for planned expenses',
@@ -184,8 +188,8 @@ export default function ReadinessPillarPage() {
   const pillar = params.pillar as PillarKey;
   const meta = PILLARS[pillar];
   const readinessQuery = useQuery({
-    queryKey: ['readiness'],
-    queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
+    queryKey: ['readiness-explanation'],
+    queryFn: () => apiClient.get<ReadinessExplanation>('/readiness/explain'),
   });
 
   if (!meta) {
@@ -222,13 +226,13 @@ export default function ReadinessPillarPage() {
   }
 
   const data = readinessQuery.data!;
-  const assessment = data.pillarAssessments[pillar];
-  const score = assessment.score ?? data.pillars[pillar];
+  const explanation = data.pillars.find((item) => item.pillar === pillar)!;
+  const assessment = explanation.assessment;
+  const score = assessment.score ?? 0;
   const coverage = assessment.coverage;
-  const signals = data.signals.filter((signal) => signal.pillar === pillar);
+  const signals = explanation.factors;
   const observedCapabilities = new Set(signals.map((signal) => signal.capabilityId));
-  const history = data.history.slice(-90);
-  const trend = history.length > 1 ? score - history[0]!.pillars[pillar] : null;
+  const trend = data.recentChanges.find((change) => change.pillar === pillar)?.delta ?? null;
   const Icon = meta.icon;
   const color = scoreColor(score);
 
@@ -276,7 +280,7 @@ export default function ReadinessPillarPage() {
                 This area has not been evaluated yet
               </h2>
               <p className="text-sm text-content-secondary mt-1">
-                Wardkeep does not have a generator for {meta.label.toLowerCase()} yet, so it will
+                Wardkeep does not have enough recorded evidence to evaluate this area, so it will
                 not present a score as if the household were prepared.
               </p>
             </div>
@@ -397,13 +401,18 @@ export default function ReadinessPillarPage() {
         <section className="card">
           <h2 className="card-title">STILL NEEDED FOR A COMPLETE PICTURE</h2>
           <ul className="space-y-3">
-            {meta.next.map((factor) => (
-              <li key={factor} className="flex gap-2 text-sm">
+            {explanation.notEvaluated.map((factor) => (
+              <li key={factor.id} className="flex gap-2 text-sm">
                 <CircleHelp size={16} className="text-content-tertiary flex-shrink-0" />
-                <span className="text-content-secondary">{factor}</span>
+                <span className="text-content-secondary">{factor.label}</span>
               </li>
             ))}
           </ul>
+          {meta.next.length > 0 && (
+            <p className="text-xs text-content-tertiary mt-4">
+              Further coverage planned: {meta.next.join(' · ')}.
+            </p>
+          )}
           <p className="text-xs text-content-tertiary mt-4">
             Coverage reflects currently evaluated factors. More source-specific freshness rules are
             still being defined.
