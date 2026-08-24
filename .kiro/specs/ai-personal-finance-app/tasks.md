@@ -617,6 +617,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Show rollover amount separately in UI
   - Per-category opt-in/out
 
+- [x] Planned-expense lifecycle
+  - [x] Mark a one-time planned expense as no longer planned without deleting it, excluding it from readiness and Timeline.
+  - [x] Restore an inactive planned expense when it becomes relevant again.
+
 - [ ] 35.2 Subscription management view
   - Dedicated /subscriptions page
   - Group by: active, upcoming, annual renewals
