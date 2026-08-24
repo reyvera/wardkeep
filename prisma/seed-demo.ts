@@ -457,6 +457,34 @@ async function main() {
   });
   console.log('  ✓ Created 4 unreviewed transaction demo records');
 
+  const demoReturnPurchaseDate = new Date();
+  demoReturnPurchaseDate.setDate(demoReturnPurchaseDate.getDate() - 12);
+  const demoReturnRefundDate = new Date();
+  demoReturnRefundDate.setDate(demoReturnRefundDate.getDate() - 5);
+  await prisma.transaction.createMany({
+    data: [
+      {
+        userId: user.id,
+        accountId: creditCard.id,
+        amount: '64.99',
+        type: 'DEBIT',
+        date: demoReturnPurchaseDate,
+        merchant: 'Demo Outfitters',
+        description: 'Demo purchase with a matching refund',
+      },
+      {
+        userId: user.id,
+        accountId: creditCard.id,
+        amount: '64.99',
+        type: 'CREDIT',
+        date: demoReturnRefundDate,
+        merchant: 'Demo Outfitters',
+        description: 'Demo refund awaiting confirmation',
+      },
+    ],
+  });
+  console.log('  ✓ Created a demo purchase/refund pair for matching verification');
+
   await prisma.recurringTransaction.createMany({
     data: [
       {
