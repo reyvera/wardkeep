@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "start": "node dist/main.js",
-    "dev": "ts-node src/main.ts",
+    "dev": "tsx src/main.ts",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src/",
     "postinstall": "echo 'Run npm install from the monorepo root to install all dependencies'"
