@@ -38,6 +38,13 @@ const eventLabels: Record<TimelineEventKind, string> = {
   PLANNED_EXPENSE: 'Planned expense',
 };
 
+const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = {
+  RECURRING_BILL: { icon: 'text-accent-orange', badge: 'bg-accent-orange/10 text-accent-orange' },
+  POLICY_RENEWAL: { icon: 'text-accent-yellow', badge: 'bg-accent-yellow/10 text-accent-yellow' },
+  INCOME: { icon: 'text-accent-green', badge: 'bg-accent-green/10 text-accent-green' },
+  PLANNED_EXPENSE: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
+};
+
 function dayKey(date: string) {
   return new Date(date).toLocaleDateString('en-CA', { timeZone: 'UTC' });
 }
@@ -48,6 +55,17 @@ function dayLabel(date: string) {
     month: 'long',
     day: 'numeric',
   });
+}
+
+function relativeDayLabel(date: string) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventDay = new Date(date);
+  eventDay.setHours(0, 0, 0, 0);
+  const days = Math.round((eventDay.getTime() - today.getTime()) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return `In ${days} days`;
 }
 
 export default function TimelinePage() {
@@ -129,6 +147,7 @@ export default function TimelinePage() {
               <div className="space-y-2">
                 {events.map((event) => {
                   const Icon = eventIcons[event.kind];
+                  const style = eventStyles[event.kind];
                   return (
                     <Link
                       key={event.id}
@@ -136,15 +155,22 @@ export default function TimelinePage() {
                       className="card flex items-center gap-4 transition-colors hover:border-accent-blue/40"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-tertiary">
-                        <Icon size={18} className="text-accent-blue" />
+                        <Icon size={18} className={style.icon} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-content-primary">{event.title}</p>
                         <p className="mt-0.5 text-sm text-content-secondary">{event.detail}</p>
                       </div>
-                      <span className="hidden text-xs text-content-tertiary sm:inline">
-                        {eventLabels[event.kind]}
-                      </span>
+                      <div className="hidden shrink-0 text-right sm:block">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${style.badge}`}
+                        >
+                          {eventLabels[event.kind]}
+                        </span>
+                        <p className="mt-1 text-xs text-content-tertiary">
+                          {relativeDayLabel(event.date)}
+                        </p>
+                      </div>
                     </Link>
                   );
                 })}
