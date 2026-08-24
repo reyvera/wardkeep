@@ -327,6 +327,36 @@ export class ReadinessService {
   }
 
   /**
+   * Returns an explicit, read-only explanation of the current readiness state.
+   * It deliberately does not record a visit, a recommendation, or a snapshot.
+   */
+  async getExplanation(userId: string) {
+    const readiness = await this.getReadiness(userId);
+    const pillars = (Object.keys(readiness.pillars) as Array<keyof PillarScores>).map((pillar) => {
+      const factors = readiness.signals
+        .filter((signal) => signal.pillar === pillar)
+        .sort((left, right) => Math.abs(right.magnitude) - Math.abs(left.magnitude));
+      const evaluated = new Set(factors.map((factor) => factor.capabilityId));
+
+      return {
+        pillar,
+        assessment: readiness.pillarAssessments[pillar],
+        factors,
+        notEvaluated: EXPLANATION_FACTORS[pillar].filter((factor) => !evaluated.has(factor.id)),
+      };
+    });
+
+    return {
+      evaluatedAt: readiness.evaluatedAt,
+      overallAssessment: readiness.overallAssessment,
+      dataFreshness: readiness.dataFreshness,
+      recentChanges: readiness.recentChanges,
+      changeWindow: readiness.changeWindow,
+      pillars,
+    };
+  }
+
+  /**
    * Records a daily readiness snapshot for the user.
    * Uses upsert to ensure only one snapshot per user per day.
    * @param userId - The authenticated user's ID
