@@ -139,6 +139,8 @@ The resettable `demo@wardkeep.app` fixture includes 90 days of clearly labeled d
 
 The BullMQ worker records daily readiness snapshots at **03:00 UTC**, independent of Dashboard visits. It calls a local, token-protected API endpoint using a credential derived from the deployment's existing `ENCRYPTION_KEY`; no additional self-hosting variable is required. The Dashboard endpoint also keeps a best-effort current-day snapshot so a newly active household can see today’s score without waiting for the schedule.
 
+Planned Expenses are one-time records, separate from recurring bills. An active planned expense can be marked **no longer planned** without deletion; it is then excluded from Preparation signals and Timeline until restored.
+
 ## Required next work
 
 ### Harden the scoring model
