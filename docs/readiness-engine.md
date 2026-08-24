@@ -137,6 +137,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 
 The resettable `demo@wardkeep.app` fixture includes 90 days of clearly labeled demo readiness history so the Dashboard's 7d / 30d / 90d controls can be verified immediately. The first live readiness check replaces today's demo point with the current calculated score.
 
+The BullMQ worker records daily readiness snapshots at **03:00 UTC**, independent of Dashboard visits. It calls a local, token-protected API endpoint using a credential derived from the deployment's existing `ENCRYPTION_KEY`; no additional self-hosting variable is required. The Dashboard endpoint also keeps a best-effort current-day snapshot so a newly active household can see today’s score without waiting for the schedule.
+
 ## Required next work
 
 ### Harden the scoring model

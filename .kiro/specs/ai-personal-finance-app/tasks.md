@@ -228,7 +228,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] ReadinessService collects current finance-generator signals
   - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
   - [x] ReadinessSnapshot model — daily score persistence
-  - [ ] Move snapshot creation to a daily BullMQ job; the endpoint currently records the daily snapshot asynchronously
+  - [x] Run daily snapshot creation through a BullMQ worker job; the Dashboard endpoint retains a best-effort current-day snapshot for immediate history
   - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
 
 - [~] 19.3 Implement readiness explainability

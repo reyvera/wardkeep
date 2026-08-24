@@ -342,7 +342,7 @@ For a containerized one-time baseline, set `WARDKEEP_BASELINE_EXISTING_DATABASE=
 | ----------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Bank auto-import (SimpleFIN)                                                                                                  | ✅     |
 | AI chat assistant (OpenAI/Anthropic/Ollama)                                                                                   | ✅     |
-| Household readiness dashboard with coverage, pillar signals, recommendations, and trend                                       | 🟡     |
+| Household readiness dashboard with coverage, pillar signals, recommendations, 365-day history, and daily snapshots            | 🟡     |
 | Financial overview with actual cumulative spending pace and month-end budget projection                                       | ✅     |
 | Monthly budgets with category progress                                                                                        | ✅     |
 | Transaction categorization (manual + AI)                                                                                      | ✅     |

@@ -152,7 +152,7 @@ Three container images built from the repo:
 
 - **wardkeep-api** — NestJS REST API with Prisma. Runs migrations on startup.
 - **wardkeep-web** — Next.js standalone server.
-- **wardkeep-worker** — BullMQ consumer for background jobs (AI categorization, imports, backups).
+- **wardkeep-worker** — BullMQ consumer for background jobs (AI categorization, imports, backups, and the daily 03:00 UTC readiness snapshot). Its trusted local API credential is derived from the same required `ENCRYPTION_KEY`; no extra environment variable is needed.
 
 ---
 
