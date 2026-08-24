@@ -140,6 +140,14 @@ export default function TransactionsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 
+  const markVisibleReviewedMutation = useMutation({
+    mutationFn: (transactionIds: string[]) =>
+      Promise.all(
+        transactionIds.map((txId) => apiClient.patch(`/transactions/${txId}/review`, {})),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
+
   const createMutation = useMutation({
     mutationFn: () =>
       apiClient.post('/transactions', {
@@ -169,25 +177,39 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-page-title text-content-primary">Transactions</h1>
           <p className="text-xs text-content-tertiary mt-0.5">{totalItems} total</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className={showForm ? 'btn-secondary' : 'btn-primary'}
-        >
-          {showForm ? (
-            <>
-              <X size={16} /> Cancel
-            </>
-          ) : (
-            <>
-              <Plus size={16} /> Add
-            </>
+        <div className="flex items-center gap-2">
+          {reviewFilter === 'unreviewed' && (txQuery.data?.data.length ?? 0) > 0 && (
+            <button
+              onClick={() =>
+                markVisibleReviewedMutation.mutate(txQuery.data!.data.map((tx) => tx.id))
+              }
+              disabled={markVisibleReviewedMutation.isPending}
+              className="btn-secondary"
+            >
+              <Check size={16} />
+              {markVisibleReviewedMutation.isPending ? 'Reviewing...' : 'Mark visible reviewed'}
+            </button>
           )}
-        </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className={showForm ? 'btn-secondary' : 'btn-primary'}
+          >
+            {showForm ? (
+              <>
+                <X size={16} /> Cancel
+              </>
+            ) : (
+              <>
+                <Plus size={16} /> Add
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Create Form */}

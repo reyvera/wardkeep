@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   Wallet,
@@ -21,6 +22,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { apiClient } from '@/lib/api-client';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -48,6 +50,12 @@ const bottomNavItems = [{ href: '/settings', label: 'Settings', icon: Settings }
 export function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const unreviewedQuery = useQuery<{ meta: { totalItems: number } }>({
+    queryKey: ['transactions', 'unreviewed-count'],
+    queryFn: () => apiClient.get('/transactions?reviewed=false&pageSize=10'),
+    staleTime: 30_000,
+  });
+  const unreviewedCount = unreviewedQuery.data?.meta.totalItems ?? 0;
 
   return (
     <aside className="hidden md:flex h-screen w-sidebar flex-col border-r border-edge bg-surface-primary sticky top-0">
@@ -79,6 +87,14 @@ export function Sidebar() {
                 >
                   <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
                   <span>{item.label}</span>
+                  {item.href === '/transactions' && unreviewedCount > 0 && (
+                    <span
+                      className="ml-auto min-w-5 rounded-full bg-accent-blue px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-white"
+                      aria-label={`${unreviewedCount} transactions need review`}
+                    >
+                      {unreviewedCount > 99 ? '99+' : unreviewedCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
