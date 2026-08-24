@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Spending-pace color meaning** — The Financial Overview spending curve is now green only when under pace, amber near pace, and red when over pace or when recent spending is accelerating above the daily budget pace.
 - **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
 - **Release versioning** — The workspace is aligned to 2.1.1, with a release guard that rejects mismatched `vX.Y.Z` tags.
 - **Development images** — Pushes to `develop` now publish separate `develop` and commit-specific Docker images, keeping development deployment tags distinct from releases.

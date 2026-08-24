@@ -50,6 +50,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Changed
 
+- **Spending-pace color meaning** — The Financial Overview curve is now green only when under pace, amber near pace, and red when over pace or when recent spending is accelerating above the daily budget pace.
 - **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.
 - **Direct-pillar dashboard summary** — The Dashboard now compares only directly evaluated pillars when naming the strongest and most limited observed area.
 - **Peace respects missing evidence** — Derived Peace now uses only pillars with observed signals rather than treating an unevaluated pillar as zero.
