@@ -502,11 +502,17 @@ export default function TransactionsPage() {
 
             {showNeedsReview && (unreviewedQuery.data?.data.length ?? 0) > 0 && (
               <div className="space-y-2">
+                <p className="text-xs text-content-tertiary">
+                  Verify the merchant, date, and amount. Categorize it or mark a transfer, one-time
+                  expense, or tag before marking it reviewed.
+                </p>
                 {unreviewedQuery.data!.data.map((tx) => {
                   const amt = Math.abs(Number(tx.amount));
                   const isCredit = tx.type === 'CREDIT';
                   const isSelectedForReview = selectedForReview.includes(tx.id);
                   const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
+                  const isOneTime =
+                    tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
                   const dateStr = new Date(tx.date).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -515,7 +521,7 @@ export default function TransactionsPage() {
                   return (
                     <div
                       key={tx.id}
-                      className="flex items-center gap-3 rounded-lg border border-edge px-3 py-2.5"
+                      className="grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border border-edge px-3 py-2.5"
                     >
                       <input
                         type="checkbox"
@@ -543,18 +549,77 @@ export default function TransactionsPage() {
                         </div>
                       </div>
                       <span
-                        className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}
+                        className={`w-20 shrink-0 text-right text-sm font-semibold tabular-nums ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}
                       >
                         {isCredit ? '+' : '-'}${formatCurrency(amt)}
                       </span>
-                      <button
-                        onClick={() => markReviewedMutation.mutate(tx.id)}
-                        disabled={markReviewedMutation.isPending}
-                        className="btn-ghost p-1 text-accent-blue hover:text-accent-green disabled:opacity-50"
-                        title="Mark as reviewed"
-                      >
-                        <Check size={14} />
-                      </button>
+                      <div className="col-span-4 flex flex-wrap items-center justify-end gap-1 border-t border-edge pt-2">
+                        <select
+                          value={tx.categoryId ?? ''}
+                          onChange={(e) =>
+                            updateCategoryMutation.mutate({
+                              txId: tx.id,
+                              categoryId: e.target.value || null,
+                            })
+                          }
+                          className="input w-auto max-w-[100px] py-1 px-1.5 text-[10px]"
+                          title="Set category"
+                        >
+                          <option value="">Uncategorized</option>
+                          {(categoriesQuery.data ?? []).map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                        {tx.type === 'DEBIT' && (
+                          <button
+                            onClick={() => markTransferMutation.mutate(tx.id)}
+                            className="btn-ghost p-1 text-content-tertiary hover:text-accent-blue"
+                            title="Mark as transfer"
+                          >
+                            <ArrowLeftRight size={13} />
+                          </button>
+                        )}
+                        {tx.type === 'DEBIT' && (
+                          <button
+                            onClick={() => {
+                              const tags = (tx.tags ?? []).map((tag) => tag.tag);
+                              toggleOneTimeMutation.mutate({
+                                txId: tx.id,
+                                tags: isOneTime
+                                  ? tags.filter((tag) => tag.toLowerCase() !== 'one-time')
+                                  : [...tags, 'one-time'],
+                              });
+                            }}
+                            className={`btn-ghost p-1 ${isOneTime ? 'text-accent-purple' : 'text-content-tertiary hover:text-accent-purple'}`}
+                            title={
+                              isOneTime ? 'Include in readiness burn rate' : 'Mark as one-time'
+                            }
+                          >
+                            <CircleOff size={13} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() =>
+                            setTagEditor({
+                              transactionId: tx.id,
+                              value: (tx.tags ?? []).map((tag) => tag.tag).join(', '),
+                            })
+                          }
+                          className="btn-ghost p-1 text-content-tertiary hover:text-accent-purple"
+                          title="Edit tags"
+                        >
+                          <Tag size={13} />
+                        </button>
+                        <button
+                          onClick={() => markReviewedMutation.mutate(tx.id)}
+                          disabled={markReviewedMutation.isPending}
+                          className="btn-secondary whitespace-nowrap py-1 px-2 text-[10px]"
+                        >
+                          <Check size={13} /> Mark reviewed
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
