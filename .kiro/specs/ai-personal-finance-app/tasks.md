@@ -604,7 +604,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 34. Transaction Workflow
 
 - [ ] 34.1 Transaction review/inbox workflow
-  - `reviewed` boolean field (bank imports start unreviewed)
+  - [x] `isReviewed` field; imported and bank-synced transactions start unreviewed while existing and manually entered records remain reviewed
   - "Mark as Reviewed" action (single and bulk)
   - Unreviewed count badge in navigation
   - Filter for unreviewed transactions
