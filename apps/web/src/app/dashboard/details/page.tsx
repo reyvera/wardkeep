@@ -3,12 +3,16 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from 'recharts';
-import {
-  TrendingUp, TrendingDown, ChevronLeft, ChevronRight,
-  Wallet, CreditCard, Landmark, PiggyBank,
+  TrendingUp,
+  TrendingDown,
+  ChevronLeft,
+  ChevronRight,
+  Wallet,
+  CreditCard,
+  Landmark,
+  PiggyBank,
 } from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 
@@ -91,10 +95,15 @@ function formatCurrency(value: number): string {
 
 function getAccountIcon(type: string) {
   switch (type) {
-    case 'CREDIT_CARD': return CreditCard;
-    case 'LOAN': case 'MORTGAGE': return Landmark;
-    case 'SAVINGS': return PiggyBank;
-    default: return Wallet;
+    case 'CREDIT_CARD':
+      return CreditCard;
+    case 'LOAN':
+    case 'MORTGAGE':
+      return Landmark;
+    case 'SAVINGS':
+      return PiggyBank;
+    default:
+      return Wallet;
   }
 }
 
@@ -115,7 +124,10 @@ function groupAccountsByType(accounts: Account[]) {
 }
 
 function formatAccountType(type: string): string {
-  return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return type
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -145,7 +157,8 @@ export default function DashboardPage() {
 
   const recentTxQuery = useQuery({
     queryKey: ['recent-transactions'],
-    queryFn: () => apiClient.get<{ data: Transaction[] }>('/transactions?limit=5&sort=date&order=desc'),
+    queryFn: () =>
+      apiClient.get<{ data: Transaction[] }>('/transactions?limit=5&sort=date&order=desc'),
   });
 
   const netWorth = Number(netWorthQuery.data?.netWorth ?? 0);
@@ -274,7 +287,9 @@ export default function DashboardPage() {
             </div>
             <div className="border-t border-edge pt-2 flex justify-between items-center">
               <span className="text-sm font-medium text-content-primary">Net</span>
-              <span className={`text-sm font-bold tabular-nums ${income - expenses >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+              <span
+                className={`text-sm font-bold tabular-nums ${income - expenses >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
+              >
                 {income - expenses >= 0 ? '+' : ''}${formatCurrency(income - expenses)}
               </span>
             </div>
@@ -299,16 +314,21 @@ export default function DashboardPage() {
                   className="progress-fill"
                   style={{
                     width: `${Math.min(100, (budgetSpent / budgetAllocated) * 100)}%`,
-                    background: budgetSpent / budgetAllocated > 0.9
-                      ? 'var(--accent-red)'
-                      : budgetSpent / budgetAllocated > 0.7
-                        ? 'var(--accent-yellow)'
-                        : 'var(--accent-blue)',
+                    background:
+                      budgetSpent / budgetAllocated > 0.9
+                        ? 'var(--accent-red)'
+                        : budgetSpent / budgetAllocated > 0.7
+                          ? 'var(--accent-yellow)'
+                          : 'var(--accent-blue)',
                   }}
                 />
               </div>
-              <p className={`text-xs mt-2 font-medium ${budgetRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                {budgetRemaining >= 0 ? `$${formatCurrency(budgetRemaining)} left` : `$${formatCurrency(Math.abs(budgetRemaining))} over`}
+              <p
+                className={`text-xs mt-2 font-medium ${budgetRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
+              >
+                {budgetRemaining >= 0
+                  ? `$${formatCurrency(budgetRemaining)} left`
+                  : `$${formatCurrency(Math.abs(budgetRemaining))} over`}
               </p>
             </>
           ) : (
@@ -319,7 +339,6 @@ export default function DashboardPage() {
 
       {/* Second Row: Accounts + Top Categories + Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
         {/* Accounts */}
         <div className="card">
           <span className="card-title">ACCOUNTS</span>
@@ -339,9 +358,13 @@ export default function DashboardPage() {
                         <div key={acc.id} className="flex items-center justify-between py-1">
                           <div className="flex items-center gap-2">
                             <Icon size={14} className="text-content-tertiary" />
-                            <span className="text-sm text-content-primary truncate max-w-[120px]">{acc.name}</span>
+                            <span className="text-sm text-content-primary truncate max-w-[120px]">
+                              {acc.name}
+                            </span>
                           </div>
-                          <span className={`text-sm font-semibold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}>
+                          <span
+                            className={`text-sm font-semibold tabular-nums ${isDebt ? 'text-accent-red' : 'text-content-primary'}`}
+                          >
                             {isDebt ? '-' : ''}${formatCurrency(Math.abs(bal))}
                           </span>
                         </div>
@@ -362,14 +385,31 @@ export default function DashboardPage() {
           {statsQuery.data && statsQuery.data.spendingByCategory.length > 0 ? (
             <div className="space-y-2.5 mt-2">
               {statsQuery.data.spendingByCategory.slice(0, 6).map((cat) => {
-                const change = statsQuery.data!.categoryChanges.find((item) => item.categoryId === cat.categoryId)?.change;
-                return <div key={cat.categoryId} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon name={cat.name} size="sm" />
-                    <span className="text-sm text-content-primary truncate max-w-[120px]">{cat.name}</span>
+                const change = statsQuery.data!.categoryChanges.find(
+                  (item) => item.categoryId === cat.categoryId,
+                )?.change;
+                return (
+                  <div key={cat.categoryId} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CategoryIcon name={cat.name} size="sm" />
+                      <span className="text-sm text-content-primary truncate max-w-[120px]">
+                        {cat.name}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold tabular-nums text-content-primary">
+                        ${formatCurrency(cat.amount)}
+                      </span>
+                      {change !== undefined && (
+                        <p
+                          className={`text-xs ${change > 0 ? 'text-accent-red' : change < 0 ? 'text-accent-green' : 'text-content-tertiary'}`}
+                        >
+                          {change > 0 ? '+' : ''}${formatCurrency(change)} vs last month
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right"><span className="text-sm font-semibold tabular-nums text-content-primary">${formatCurrency(cat.amount)}</span>{change !== undefined && <p className={`text-xs ${change > 0 ? 'text-accent-red' : change < 0 ? 'text-accent-green' : 'text-content-tertiary'}`}>{change > 0 ? '+' : ''}${formatCurrency(change)} vs last month</p>}</div>
-                </div>
+                );
               })}
             </div>
           ) : (
@@ -408,7 +448,9 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <span className={`text-sm font-semibold tabular-nums ml-3 ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}>
+                    <span
+                      className={`text-sm font-semibold tabular-nums ml-3 ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}
+                    >
                       {isCredit ? '+' : ''}${formatCurrency(amt)}
                     </span>
                   </div>
@@ -437,14 +479,48 @@ export default function DashboardPage() {
                   <stop offset="95%" stopColor="var(--accent-red)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="month" fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} />
-              <YAxis fontSize={11} stroke="var(--text-tertiary)" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-              <Tooltip
-                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
-                formatter={(value) => [`$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, '']}
+              <XAxis
+                dataKey="month"
+                fontSize={11}
+                stroke="var(--text-tertiary)"
+                tickLine={false}
+                axisLine={false}
               />
-              <Area type="monotone" dataKey="income" stroke="var(--accent-green)" fill="url(#incomeGrad)" strokeWidth={2} name="Income" />
-              <Area type="monotone" dataKey="expenses" stroke="var(--accent-red)" fill="url(#expenseGrad)" strokeWidth={2} name="Expenses" />
+              <YAxis
+                fontSize={11}
+                stroke="var(--text-tertiary)"
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 8,
+                  color: 'var(--text-primary)',
+                }}
+                formatter={(value) => [
+                  `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+                  '',
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="var(--accent-green)"
+                fill="url(#incomeGrad)"
+                strokeWidth={2}
+                name="Income"
+              />
+              <Area
+                type="monotone"
+                dataKey="expenses"
+                stroke="var(--accent-red)"
+                fill="url(#expenseGrad)"
+                strokeWidth={2}
+                name="Expenses"
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -461,8 +537,12 @@ export default function DashboardPage() {
               return (
                 <div key={i}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-content-primary truncate max-w-[200px]">{m.merchant}</span>
-                    <span className="font-semibold tabular-nums text-content-primary">${m.amount.toFixed(2)}</span>
+                    <span className="text-content-primary truncate max-w-[200px]">
+                      {m.merchant}
+                    </span>
+                    <span className="font-semibold tabular-nums text-content-primary">
+                      ${m.amount.toFixed(2)}
+                    </span>
                   </div>
                   <div className="progress-track">
                     <div

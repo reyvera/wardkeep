@@ -412,9 +412,7 @@ export class TransactionsService {
 
     const txDate = transaction.date;
     const startOfMonth = new Date(Date.UTC(txDate.getUTCFullYear(), txDate.getUTCMonth(), 1));
-    const startOfNext = new Date(
-      Date.UTC(txDate.getUTCFullYear(), txDate.getUTCMonth() + 1, 1),
-    );
+    const startOfNext = new Date(Date.UTC(txDate.getUTCFullYear(), txDate.getUTCMonth() + 1, 1));
 
     // Find budget allocation for this category in this month
     const allocation = await this.prisma.budgetAllocation.findFirst({
@@ -541,12 +539,23 @@ export class TransactionsService {
     const previousMonthEnd = startOfMonth;
     const previousCategorySpending = await this.prisma.transaction.groupBy({
       by: ['categoryId'],
-      where: { userId, type: 'DEBIT', date: { gte: previousMonthStart, lt: previousMonthEnd }, categoryId: { not: null } },
+      where: {
+        userId,
+        type: 'DEBIT',
+        date: { gte: previousMonthStart, lt: previousMonthEnd },
+        categoryId: { not: null },
+      },
       _sum: { amount: true },
     });
-    const previousCategoryAmounts = new Map(previousCategorySpending.map((item) => [item.categoryId, Number(item._sum.amount ?? 0)]));
+    const previousCategoryAmounts = new Map(
+      previousCategorySpending.map((item) => [item.categoryId, Number(item._sum.amount ?? 0)]),
+    );
     const categoryChanges = spendingByCategory
-      .map((category) => ({ ...category, previousAmount: previousCategoryAmounts.get(category.categoryId) ?? 0, change: category.amount - (previousCategoryAmounts.get(category.categoryId) ?? 0) }))
+      .map((category) => ({
+        ...category,
+        previousAmount: previousCategoryAmounts.get(category.categoryId) ?? 0,
+        change: category.amount - (previousCategoryAmounts.get(category.categoryId) ?? 0),
+      }))
       .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
 
     // Top merchants this month
