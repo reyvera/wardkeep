@@ -117,12 +117,12 @@ Every displayed factor also names its evidence state. Current states are **synch
 ```text
 GET /api/readiness              assessments, signals, coverage, freshness, history, and recent changes
 GET /api/readiness/history      daily snapshots for 1–90 days
+GET /api/readiness/explain      read-only pillar factors, factor gaps, freshness, and recent score changes
 ```
 
 Planned API additions:
 
 ```text
-GET  /api/readiness/explain     structured pillar factors, gaps, and score-change reasons
 POST /api/readiness/scenario    deterministic what-if result
 GET  /api/recommendations       persisted risk/warning recommendations, status, action link, priority, and assumptions
 PATCH /api/recommendations/:id  mark a recommendation completed or dismissed
@@ -131,6 +131,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 ```
 
 `GET /api/timeline/upcoming?days=30` is available now. It returns only recorded confirmed recurring bills, policy renewals, expected income dates, and planned expenses for the next 1–365 days. It does not generate recurring occurrences, infer obligations, or predict income.
+
+`GET /api/readiness/explain` is available now. It returns the current pillar assessments, evaluated signal evidence with provenance, factors Wardkeep did not evaluate, data freshness, and recorded score changes. It is read-only: it does not record a dashboard visit, snapshot, or recommendation update.
 
 ## Required next work
 
