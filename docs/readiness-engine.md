@@ -134,6 +134,8 @@ GET  /api/changes               meaningful changes since the user’s last visit
 
 `GET /api/readiness/explain` is available now. It returns the current pillar assessments, evaluated signal evidence with provenance, factors Wardkeep did not evaluate, data freshness, and recorded score changes. It is read-only: it does not record a dashboard visit, snapshot, or recommendation update.
 
+The resettable `demo@wardkeep.app` fixture includes 90 days of clearly labeled demo readiness history so the Dashboard's 7d / 30d / 90d controls can be verified immediately. The first live readiness check replaces today's demo point with the current calculated score.
+
 ## Required next work
 
 ### Harden the scoring model

@@ -511,7 +511,8 @@ export default function DashboardPage() {
                     }`}
                   >
                     {selectedTrendWindow.delta! >= 0 ? '↑' : '↓'}{' '}
-                    {Math.abs(selectedTrendWindow.delta!)} over {selectedTrendWindow.elapsedDays} days
+                    {Math.abs(selectedTrendWindow.delta!)} over {selectedTrendWindow.elapsedDays}{' '}
+                    days
                   </p>
                   <svg
                     viewBox="0 0 180 36"

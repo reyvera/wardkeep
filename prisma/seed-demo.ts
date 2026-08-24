@@ -59,6 +59,13 @@ async function main() {
     await prisma.linkedBankAccount.deleteMany({ where: { connection: { userId: existing.id } } });
     await prisma.bankConnection.deleteMany({ where: { userId: existing.id } });
     await prisma.insurancePolicy.deleteMany({ where: { userId: existing.id } });
+    await prisma.estateDocument.deleteMany({ where: { userId: existing.id } });
+    await prisma.incomeSource.deleteMany({ where: { userId: existing.id } });
+    await prisma.dependent.deleteMany({ where: { userId: existing.id } });
+    await prisma.plannedExpense.deleteMany({ where: { userId: existing.id } });
+    await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
+    await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
+    await prisma.readinessSnapshot.deleteMany({ where: { userId: existing.id } });
     await prisma.account.deleteMany({ where: { userId: existing.id } });
     await prisma.ruleCondition.deleteMany({ where: { rule: { userId: existing.id } } });
     await prisma.ruleAction.deleteMany({ where: { rule: { userId: existing.id } } });
@@ -207,8 +214,19 @@ async function main() {
   estateReview.setMonth(estateReview.getMonth() + 9);
   await prisma.estateDocument.createMany({
     data: [
-      { userId: user.id, type: 'WILL', title: 'Family will', reviewDate: estateReview, notes: 'Demo record only; document contents are not stored in Wardkeep.' },
-      { userId: user.id, type: 'FINANCIAL_POWER_OF_ATTORNEY', title: 'Financial power of attorney', reviewDate: estateReview },
+      {
+        userId: user.id,
+        type: 'WILL',
+        title: 'Family will',
+        reviewDate: estateReview,
+        notes: 'Demo record only; document contents are not stored in Wardkeep.',
+      },
+      {
+        userId: user.id,
+        type: 'FINANCIAL_POWER_OF_ATTORNEY',
+        title: 'Financial power of attorney',
+        reviewDate: estateReview,
+      },
     ],
   });
   console.log('  ✓ Created 2 estate-planning reminder records');
@@ -395,6 +413,29 @@ async function main() {
   }
 
   console.log(`  ✓ Created budget for ${budgetMonth} with ${allocations.length} allocations`);
+
+  // Demo-only history makes the Dashboard's 7d / 30d / 90d readiness controls
+  // immediately testable. Today remains intentionally absent: the first live
+  // readiness check records the current score for today.
+  const snapshotHistory = Array.from({ length: 90 }, (_, index) => {
+    const recordedAt = new Date();
+    recordedAt.setUTCDate(recordedAt.getUTCDate() - (90 - index));
+    recordedAt.setUTCHours(0, 0, 0, 0);
+    const progress = Math.round((index / 89) * 8);
+
+    return {
+      userId: user.id,
+      recordedAt,
+      overall: 61 + progress,
+      protection: 43 + progress,
+      provision: 54 + progress,
+      preparation: 30 + Math.round(progress / 2),
+      prosperity: 72 + progress,
+      peace: 52 + progress,
+    };
+  });
+  await prisma.readinessSnapshot.createMany({ data: snapshotHistory });
+  console.log('  ✓ Created 90 days of demo readiness history');
 
   console.log('\n✅ Demo seed complete!');
   console.log(`   Login: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
