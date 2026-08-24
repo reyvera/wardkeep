@@ -363,6 +363,7 @@ For a containerized one-time baseline, set `WARDKEEP_BASELINE_EXISTING_DATABASE=
 | CI/CD pipeline                                                                                                                | ✅     |
 | Readiness Engine (household decision engine)                                                                                  | 🟡     |
 | Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡     |
+| Household transition and trusted-access workspace (survivor checklists and recorded-information organization)                 | 📋     |
 | Capability SDK (extensible domain modules)                                                                                    | 📋     |
 | Coming Up timeline, change feed, and Morning Brief / Advisor                                                                  | 📋     |
 | Readiness scenarios and recommendation impact previews                                                                        | 📋     |

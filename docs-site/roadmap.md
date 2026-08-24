@@ -53,6 +53,7 @@ The amber segment is deliberately not a percentage: the decision-engine work sho
 | Composite Protection   | Partial     | Insurance records, renewal attention, deductible-to-reserve checks, bundled-payment context, estate-planning reminders, and income-source planning records are live. Adequacy, true income interruption, estate adequacy, obligations, dependents, and secondary backstops remain.                        |
 | Command center         | Partial     | Pillar explanations, a visit-aware change feed, capability-specific next-action links, durable recommendation actions, action history, a recorded-event Coming Up view, a 30/90/365-day household Timeline, and qualified pillar-only previews are in place; financial and overall impact previews remain |
 | Scenarios and planning | Planned     | Deterministic what-if outcomes connected to household plans                                                                                                                                                                                                                                               |
+| Household transition   | Future      | A privacy-first survivor and trusted-access workspace is planned for recorded estate, insurance, account, and arrangement information. It will organize user-entered records and checklists without determining legal authority or automatically granting access.                                         |
 
 ## Launch gates
 

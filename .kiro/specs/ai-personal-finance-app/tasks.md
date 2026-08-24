@@ -431,6 +431,17 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Signals: no will → critical risk, outdated beneficiaries → warning
   - Pillar: Protection
 
+- [ ] 26.4a Household transition and trusted-access workspace
+  - Provide two distinct modes: an **incapacity continuity plan** for a living household member and an **after-death settlement plan**. Starting either mode is a deliberate, auditable household workflow—not a legal finding that someone is incapacitated or deceased—and must never change financial accounts, sessions, ownership, or scores automatically.
+  - Provide a calm, step-by-step view of the household information already recorded: accounts and institutions, insurance policies and contacts, recurring obligations, estate-document locations, trusted contacts, and user-entered instructions. It must identify missing information rather than inventing it.
+  - Include optional planning checklists for immediate arrangements, including funeral or memorial planning, notifications, recurring-bill review, document gathering, and professional-support prompts. The product provides organization, not legal, tax, financial, medical, or funeral-direction advice.
+  - Let a household owner separately record an incapacity agent (such as a power-of-attorney contact), a potential executor/personal representative, and a surviving-household contact. A recorded designation is not proof of authority and must never bypass authentication, replace legal verification, or grant access automatically. The interface must state that authority and terminology vary by jurisdiction, and that an agent’s authority may end at death while an executor/personal representative handles the estate.
+  - Require explicit invitation, approval, revocation, least-privilege data scopes, and immutable access audit history before a trusted person can view household information. Provide emergency lockout and export/delete controls.
+  - Store document locations and notes by default, not will/trust, identity, medical, or funeral-document contents. Any future encrypted document vault needs separate consent, recovery, retention, and threat-model review.
+  - Add a pre-event readiness check: confirm who is designated, what they can see, where documents and contacts are located, what information is missing, and whether the household has reviewed the plan recently. Provide a downloadable, owner-approved handoff summary; never release it automatically based on inactivity or a reported death.
+  - Make the first release a neutral organizer and checklist, not a marketplace, legal-document generator, bank-action tool, credential vault, or automated notification sender.
+  - Pillars: Protection and Peace. Readiness uses only explainable record-completeness or review-date signals; bereavement status and access designations must not be scored as preparedness or risk.
+
 - [ ] 26.5 Emergency Preparedness Capability
   - Track: food storage, water, first aid, important documents, evacuation plan
   - Signals: incomplete preparation → risk, fully prepared → milestone
