@@ -44,6 +44,20 @@ export class TransactionsController {
     return this.transactionsService.findDuplicates(userId);
   }
 
+  @Get('refunds/candidates')
+  async listRefundCandidates(@Req() req: ScopedRequest) {
+    return this.transactionsService.listRefundCandidates(req.userId!);
+  }
+
+  @Post('refunds/confirm')
+  async confirmRefund(@Req() req: ScopedRequest) {
+    const { purchaseId, refundId } = req.body ?? {};
+    if (typeof purchaseId !== 'string' || typeof refundId !== 'string') {
+      throw new BadRequestException('purchaseId and refundId are required');
+    }
+    return this.transactionsService.confirmRefund(req.userId!, purchaseId, refundId);
+  }
+
   /**
    * Returns spending statistics: monthly income vs expenses for a requested 6- or 12-month window,
    * and spending breakdown by category for the current month.
