@@ -635,9 +635,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Restore an inactive planned expense when it becomes relevant again.
 
 - [ ] 35.2 Subscription management view
-  - Dedicated /subscriptions page
-  - Group by: active, upcoming, annual renewals
-  - Total monthly subscription burn rate
+  - [x] Dedicated /subscriptions page
+  - [x] Active subscription list and annual-renewal indicator
+  - [x] Total monthly-equivalent subscription burn rate
   - Alert on cancelled subscription still charging
   - [x] Recurring workflow now lists confirmed and detected records from their separate API sources, with working confirm/dismiss actions and reversible stop-monitoring control.
   - [x] Demo household includes confirmed and detected recurring-bill records for immediate workflow verification.
