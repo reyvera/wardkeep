@@ -607,7 +607,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] `isReviewed` field; imported and bank-synced transactions start unreviewed while existing and manually entered records remain reviewed
   - [x] Filter transaction lists by review state and mark an individual transaction reviewed through the API
   - [x] Demo household includes unreviewed transactions for inbox verification
-  - [x] "Mark as Reviewed" action (single and visible-page bulk)
+  - [x] "Mark as Reviewed" action (single and selected-inbox bulk)
   - [x] Unreviewed count badge in navigation
   - [x] Filter for unreviewed transactions
 

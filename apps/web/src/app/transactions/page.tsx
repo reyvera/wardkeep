@@ -8,6 +8,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   ArrowLeftRight,
   Clock,
@@ -66,11 +67,12 @@ export default function TransactionsPage() {
   const [accountFilter, setAccountFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [hideTransfers, setHideTransfers] = useState(true);
-  const [reviewFilter, setReviewFilter] = useState<'all' | 'unreviewed' | 'reviewed'>('all');
+  const [showNeedsReview, setShowNeedsReview] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
+  const [selectedForReview, setSelectedForReview] = useState<string[]>([]);
 
   const [newTx, setNewTx] = useState({
     merchant: '',
@@ -90,8 +92,7 @@ export default function TransactionsPage() {
   if (dateFrom) params.set('dateFrom', dateFrom);
   if (dateTo) params.set('dateTo', dateTo);
   if (hideTransfers) params.set('excludeType', 'TRANSFER');
-  if (reviewFilter === 'unreviewed') params.set('reviewed', 'false');
-  if (reviewFilter === 'reviewed') params.set('reviewed', 'true');
+  params.set('reviewed', 'true');
 
   const txQuery = useQuery({
     queryKey: [
@@ -103,7 +104,7 @@ export default function TransactionsPage() {
       dateFrom,
       dateTo,
       hideTransfers,
-      reviewFilter,
+      'reviewed',
     ],
     queryFn: () => apiClient.get<TransactionsResponse>(`/transactions?${params.toString()}`),
   });
@@ -116,6 +117,11 @@ export default function TransactionsPage() {
   const accountsQuery = useQuery({
     queryKey: ['accounts'],
     queryFn: () => apiClient.get<Account[]>('/accounts'),
+  });
+
+  const unreviewedQuery = useQuery({
+    queryKey: ['transactions', 'review-inbox'],
+    queryFn: () => apiClient.get<TransactionsResponse>('/transactions?reviewed=false&pageSize=200'),
   });
 
   const updateCategoryMutation = useMutation({
@@ -137,7 +143,10 @@ export default function TransactionsPage() {
 
   const markReviewedMutation = useMutation({
     mutationFn: (txId: string) => apiClient.patch(`/transactions/${txId}/review`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess: (_result, txId) => {
+      setSelectedForReview((selected) => selected.filter((id) => id !== txId));
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
   });
 
   const markVisibleReviewedMutation = useMutation({
@@ -145,7 +154,10 @@ export default function TransactionsPage() {
       Promise.all(
         transactionIds.map((txId) => apiClient.patch(`/transactions/${txId}/review`, {})),
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess: () => {
+      setSelectedForReview([]);
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
   });
 
   const createMutation = useMutation({
@@ -180,20 +192,38 @@ export default function TransactionsPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-page-title text-content-primary">Transactions</h1>
-          <p className="text-xs text-content-tertiary mt-0.5">{totalItems} total</p>
+          <p className="text-xs text-content-tertiary mt-0.5">{totalItems} reviewed</p>
         </div>
         <div className="flex items-center gap-2">
-          {reviewFilter === 'unreviewed' && (txQuery.data?.data.length ?? 0) > 0 && (
-            <button
-              onClick={() =>
-                markVisibleReviewedMutation.mutate(txQuery.data!.data.map((tx) => tx.id))
-              }
-              disabled={markVisibleReviewedMutation.isPending}
-              className="btn-secondary"
-            >
-              <Check size={16} />
-              {markVisibleReviewedMutation.isPending ? 'Reviewing...' : 'Mark visible reviewed'}
-            </button>
+          {showNeedsReview && (unreviewedQuery.data?.data.length ?? 0) > 0 && (
+            <>
+              <button
+                onClick={() =>
+                  setSelectedForReview((selected) =>
+                    selected.length === unreviewedQuery.data!.data.length
+                      ? []
+                      : unreviewedQuery.data!.data.map((tx) => tx.id),
+                  )
+                }
+                className="btn-secondary"
+              >
+                {selectedForReview.length === (unreviewedQuery.data?.data.length ?? 0)
+                  ? 'Clear selection'
+                  : 'Select all'}
+              </button>
+              {selectedForReview.length > 0 && (
+                <button
+                  onClick={() => markVisibleReviewedMutation.mutate(selectedForReview)}
+                  disabled={markVisibleReviewedMutation.isPending}
+                  className="btn-secondary"
+                >
+                  <Check size={16} />
+                  {markVisibleReviewedMutation.isPending
+                    ? 'Reviewing...'
+                    : `Mark ${selectedForReview.length} reviewed`}
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={() => setShowForm(!showForm)}
@@ -339,19 +369,6 @@ export default function TransactionsPage() {
             ))}
           </select>
           <select
-            value={reviewFilter}
-            onChange={(e) => {
-              setReviewFilter(e.target.value as 'all' | 'unreviewed' | 'reviewed');
-              setPage(1);
-            }}
-            className="input w-auto py-2"
-            aria-label="Review status"
-          >
-            <option value="all">All transactions</option>
-            <option value="unreviewed">Needs review</option>
-            <option value="reviewed">Reviewed</option>
-          </select>
-          <select
             value={categoryFilter}
             onChange={(e) => {
               setCategoryFilter(e.target.value);
@@ -424,13 +441,109 @@ export default function TransactionsPage() {
 
       {txQuery.data && (
         <>
+          <section className="card space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowNeedsReview((show) => !show);
+                if (showNeedsReview) setSelectedForReview([]);
+              }}
+              className="flex w-full items-center gap-2 text-left text-sm font-medium text-content-primary"
+              aria-expanded={showNeedsReview}
+            >
+              <ChevronDown
+                size={16}
+                className={`text-content-tertiary transition-transform ${showNeedsReview ? '' : '-rotate-90'}`}
+              />
+              Needs review
+              {(unreviewedQuery.data?.meta.totalItems ?? 0) > 0 && (
+                <span className="rounded-full bg-accent-blue/10 px-2 py-0.5 text-xs text-accent-blue">
+                  {unreviewedQuery.data!.meta.totalItems}
+                </span>
+              )}
+            </button>
+
+            {showNeedsReview && unreviewedQuery.isLoading && (
+              <p className="text-sm text-content-tertiary">
+                Loading transactions that need review…
+              </p>
+            )}
+
+            {showNeedsReview &&
+              (unreviewedQuery.data?.data.length ?? 0) === 0 &&
+              !unreviewedQuery.isLoading && (
+                <p className="text-sm text-content-tertiary">Everything is reviewed.</p>
+              )}
+
+            {showNeedsReview && (unreviewedQuery.data?.data.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                {unreviewedQuery.data!.data.map((tx) => {
+                  const amt = Math.abs(Number(tx.amount));
+                  const isCredit = tx.type === 'CREDIT';
+                  const isSelectedForReview = selectedForReview.includes(tx.id);
+                  const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
+                  const dateStr = new Date(tx.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+
+                  return (
+                    <div
+                      key={tx.id}
+                      className="flex items-center gap-3 rounded-lg border border-edge px-3 py-2.5"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelectedForReview}
+                        onChange={() =>
+                          setSelectedForReview((selected) =>
+                            isSelectedForReview
+                              ? selected.filter((id) => id !== tx.id)
+                              : [...selected, tx.id],
+                          )
+                        }
+                        className="h-4 w-4 shrink-0 rounded border-edge accent-accent-blue"
+                        aria-label={`Select ${tx.merchant || 'transaction'} for review`}
+                      />
+                      <CategoryIcon name={catName} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-content-primary">
+                          {tx.merchant || 'Unknown'}
+                        </p>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <span className="text-[10px] text-content-tertiary">{dateStr}</span>
+                          <span className="category-pill bg-accent-blue/10 text-[10px] text-accent-blue">
+                            Needs review
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-accent-green' : 'text-content-primary'}`}
+                      >
+                        {isCredit ? '+' : '-'}${formatCurrency(amt)}
+                      </span>
+                      <button
+                        onClick={() => markReviewedMutation.mutate(tx.id)}
+                        disabled={markReviewedMutation.isPending}
+                        className="btn-ghost p-1 text-accent-blue hover:text-accent-green disabled:opacity-50"
+                        title="Mark as reviewed"
+                      >
+                        <Check size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <h2 className="text-section text-content-primary">Reviewed transactions</h2>
           <div className="space-y-1">
             {txQuery.data.data.map((tx) => {
               const amt = Math.abs(Number(tx.amount));
               const isCredit = tx.type === 'CREDIT';
               const isTransfer = tx.type === 'TRANSFER';
               const isPending = tx.status === 'PENDING';
-              const needsReview = tx.isReviewed === false;
               const isOneTime =
                 tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
               const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
@@ -468,11 +581,6 @@ export default function TransactionsPage() {
                           Pending
                         </span>
                       )}
-                      {needsReview && (
-                        <span className="category-pill text-[10px] bg-accent-blue/10 text-accent-blue">
-                          Needs review
-                        </span>
-                      )}
                       {catName && (
                         <span
                           className="category-pill text-[10px]"
@@ -506,16 +614,6 @@ export default function TransactionsPage() {
 
                   {/* Quick actions */}
                   <div className="flex items-center gap-1 ml-1">
-                    {needsReview && (
-                      <button
-                        onClick={() => markReviewedMutation.mutate(tx.id)}
-                        disabled={markReviewedMutation.isPending}
-                        className="btn-ghost p-1 text-accent-blue hover:text-accent-green disabled:opacity-50"
-                        title="Mark as reviewed"
-                      >
-                        <Check size={13} />
-                      </button>
-                    )}
                     <select
                       value={tx.categoryId ?? ''}
                       onChange={(e) =>
