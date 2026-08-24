@@ -33,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 ### Added
 
 - **Transaction review foundation** — New imported and bank-synced transactions now enter an explicit review state; existing and manual records remain reviewed during upgrade.
+- **Review-inbox demo data** — The demo household includes clearly labeled unreviewed transactions for testing the review workflow.
 - **Planned-expense lifecycle** — One-time planned expenses can now be marked no longer planned and later restored, without deleting their recorded context.
 - **Scheduled readiness snapshots** — The background worker now records household readiness daily at 03:00 UTC, independently of Dashboard visits, using a local credential derived from the existing deployment encryption key.
 - **Year-long readiness history** — Wardkeep now retains the newest 365 daily readiness snapshots per household, and the history API can return up to a year of recorded data.
