@@ -585,7 +585,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [x] 33.3 Spending pace line visualization
   - [x] Cumulative daily spending vs ideal pace line in Financial Overview
   - [x] Pace indicator with dollar amount and projected month-end spending
-  - [ ] Extend the same truthful pace treatment to budget detail
+  - [x] Budget detail shows elapsed-day pace, recorded month-end projection, and the amount over or under pace
 
 ### 34. Transaction Workflow
 
