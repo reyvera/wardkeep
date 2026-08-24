@@ -636,7 +636,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [ ] 35.2 Subscription management view
   - [x] Dedicated /subscriptions page
-  - [x] Active subscription list and annual-renewal indicator
+  - [x] Group subscriptions by active, upcoming, and annual renewals
   - [x] Total monthly-equivalent subscription burn rate
   - Alert on cancelled subscription still charging
   - [x] Recurring workflow now lists confirmed and detected records from their separate API sources, with working confirm/dismiss actions and reversible stop-monitoring control.

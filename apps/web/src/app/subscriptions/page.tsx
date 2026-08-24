@@ -40,6 +40,12 @@ export default function SubscriptionsPage() {
   const subscriptions = (subscriptionsQuery.data ?? []).filter((record) => record.isSubscription);
   const monthlyTotal = subscriptions.reduce((sum, record) => sum + monthlyEquivalent(record), 0);
   const annual = subscriptions.filter((record) => record.frequency === 'ANNUAL');
+  const upcoming = subscriptions.filter((record) => {
+    const daysUntilCharge =
+      (new Date(record.nextExpected).getTime() - new Date().setHours(0, 0, 0, 0)) /
+      (1000 * 60 * 60 * 24);
+    return daysUntilCharge >= 0 && daysUntilCharge <= 30;
+  });
 
   return (
     <div className="space-y-6">
@@ -92,33 +98,75 @@ export default function SubscriptionsPage() {
       )}
 
       {subscriptions.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="text-section text-content-primary">Active services</h2>
-          {subscriptions.map((record) => (
-            <div key={record.id} className="card flex items-center gap-4 py-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-purple/10">
-                <CreditCard size={14} className="text-accent-purple" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-content-primary">{record.merchant}</p>
-                <p className="text-xs text-content-tertiary">
-                  {record.frequency} · next charge{' '}
-                  {new Date(record.nextExpected).toLocaleDateString()}
+        <>
+          {upcoming.length > 0 && (
+            <section className="space-y-2">
+              <h2 className="text-section text-content-primary">Upcoming in 30 days</h2>
+              {upcoming.map((record) => (
+                <div key={record.id} className="card flex items-center gap-4 py-3">
+                  <CalendarClock size={16} className="text-accent-yellow" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-content-primary">{record.merchant}</p>
+                    <p className="text-xs text-content-tertiary">
+                      {new Date(record.nextExpected).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <p className="text-sm font-bold tabular-nums text-content-primary">
+                    ${formatCurrency(Number(record.expectedAmount))}
+                  </p>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {annual.length > 0 && (
+            <section className="space-y-2">
+              <h2 className="text-section text-content-primary">Annual renewals</h2>
+              {annual.map((record) => (
+                <div key={record.id} className="card flex items-center gap-4 py-3">
+                  <CreditCard size={16} className="text-accent-purple" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-content-primary">{record.merchant}</p>
+                    <p className="text-xs text-content-tertiary">
+                      Renews {new Date(record.nextExpected).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <p className="text-sm font-bold tabular-nums text-content-primary">
+                    ${formatCurrency(Number(record.expectedAmount))}
+                  </p>
+                </div>
+              ))}
+            </section>
+          )}
+
+          <section className="space-y-2">
+            <h2 className="text-section text-content-primary">All active services</h2>
+            {subscriptions.map((record) => (
+              <div key={record.id} className="card flex items-center gap-4 py-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-purple/10">
+                  <CreditCard size={14} className="text-accent-purple" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-content-primary">{record.merchant}</p>
+                  <p className="text-xs text-content-tertiary">
+                    {record.frequency} · next charge{' '}
+                    {new Date(record.nextExpected).toLocaleDateString()}
+                  </p>
+                </div>
+                <p className="text-sm font-bold tabular-nums text-content-primary">
+                  ${formatCurrency(Number(record.expectedAmount))}
                 </p>
+                {record.frequency === 'ANNUAL' && (
+                  <CalendarClock
+                    size={15}
+                    className="text-accent-yellow"
+                    aria-label="Annual renewal"
+                  />
+                )}
               </div>
-              <p className="text-sm font-bold tabular-nums text-content-primary">
-                ${formatCurrency(Number(record.expectedAmount))}
-              </p>
-              {record.frequency === 'ANNUAL' && (
-                <CalendarClock
-                  size={15}
-                  className="text-accent-yellow"
-                  aria-label="Annual renewal"
-                />
-              )}
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        </>
       )}
     </div>
   );
