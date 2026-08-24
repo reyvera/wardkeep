@@ -92,6 +92,7 @@ export class TransactionsController {
     @Query('amountMax') amountMax?: string,
     @Query('search') search?: string,
     @Query('excludeType') excludeType?: string,
+    @Query('reviewed') reviewed?: string,
   ) {
     const userId = req.userId!;
 
@@ -121,6 +122,8 @@ export class TransactionsController {
       ...(amountMax && { amountMax }),
       ...(search && { search }),
       ...(excludeType && { excludeType }),
+      ...(reviewed === 'true' && { isReviewed: true }),
+      ...(reviewed === 'false' && { isReviewed: false }),
     };
 
     return this.transactionsService.listTransactions(userId, filters);
@@ -159,6 +162,11 @@ export class TransactionsController {
     }
 
     return this.transactionsService.updateTransaction(userId, id, result.data);
+  }
+
+  @Patch(':id/review')
+  async markReviewed(@Req() req: ScopedRequest, @Param('id') id: string) {
+    return this.transactionsService.markReviewed(req.userId!, id);
   }
 
   /**

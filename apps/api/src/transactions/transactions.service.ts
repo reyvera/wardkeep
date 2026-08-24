@@ -22,6 +22,7 @@ export interface TransactionFilters {
   amountMax?: string;
   search?: string;
   excludeType?: string;
+  isReviewed?: boolean;
 }
 
 @Injectable()
@@ -97,6 +98,10 @@ export class TransactionsService {
       where.type = { not: filters.excludeType };
     }
 
+    if (filters.isReviewed !== undefined) {
+      where.isReviewed = filters.isReviewed;
+    }
+
     const [totalItems, transactions] = await Promise.all([
       this.prisma.transaction.count({ where }),
       this.prisma.transaction.findMany({
@@ -123,6 +128,7 @@ export class TransactionsService {
         description: tx.description,
         notes: tx.notes,
         isReconciliation: tx.isReconciliation,
+        isReviewed: tx.isReviewed,
         aiCategorized: tx.aiCategorized,
         aiConfidence: tx.aiConfidence?.toString() ?? null,
         createdAt: tx.createdAt,
@@ -248,6 +254,16 @@ export class TransactionsService {
         tag: t.tag,
       })),
     };
+  }
+
+  async markReviewed(userId: string, id: string, isReviewed = true) {
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+    if (!transaction) throw new NotFoundException('Transaction not found');
+
+    return this.prisma.transaction.update({ where: { id }, data: { isReviewed } });
   }
 
   /**
