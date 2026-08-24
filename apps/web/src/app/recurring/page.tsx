@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { RefreshCw, Check, X, CalendarClock, PauseCircle } from 'lucide-react';
+import { RefreshCw, Check, X, CalendarClock, PauseCircle, CreditCard } from 'lucide-react';
 
 interface Account {
   id: string;
@@ -18,6 +18,7 @@ interface RecurringTransaction {
   frequency: string;
   nextExpected: string;
   isConfirmed: boolean;
+  isSubscription: boolean;
 }
 interface CashFlowProjection {
   date: string;
@@ -80,6 +81,11 @@ export default function RecurringPage() {
   });
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => apiClient.post('/recurring/deactivate', { id }),
+    onSuccess: refreshRecurring,
+  });
+  const subscriptionMutation = useMutation({
+    mutationFn: ({ id, isSubscription }: { id: string; isSubscription: boolean }) =>
+      apiClient.patch(`/recurring/${id}/subscription`, { isSubscription }),
     onSuccess: refreshRecurring,
   });
 
@@ -212,6 +218,22 @@ export default function RecurringPage() {
                   disabled={deactivateMutation.isPending}
                 >
                   <PauseCircle size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    subscriptionMutation.mutate({ id: r.id, isSubscription: !r.isSubscription })
+                  }
+                  className={`btn-ghost p-2 ${r.isSubscription ? 'text-accent-purple' : 'text-content-tertiary hover:text-accent-purple'}`}
+                  title={r.isSubscription ? 'Remove subscription label' : 'Mark as subscription'}
+                  aria-label={
+                    r.isSubscription
+                      ? `Remove subscription label from ${r.merchant}`
+                      : `Mark ${r.merchant} as a subscription`
+                  }
+                  disabled={subscriptionMutation.isPending}
+                >
+                  <CreditCard size={15} />
                 </button>
               </div>
             ))}
