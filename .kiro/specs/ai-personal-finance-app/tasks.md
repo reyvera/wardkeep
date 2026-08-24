@@ -233,8 +233,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 19.3 Implement readiness explainability
   - [x] Current response includes contributing signals and dashboard surfaces their summaries
-  - [ ] Create a ReadinessExplanation type with pillar details, evaluated/missing factors, and score-change reasons
-  - [ ] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
+  - [x] Create a structured readiness explanation response with pillar details, evaluated/not-evaluated factors, and score-change reasons
+  - [x] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
   - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
 
 - [~] 19.4 Implement readiness history and trends

@@ -58,4 +58,13 @@ export class ReadinessController {
 
     return this.readinessService.getHistory(userId, days);
   }
+
+  /**
+   * Explains each score with its evaluated factor evidence and factors Wardkeep
+   * did not evaluate. Unlike the Dashboard endpoint, this is read-only.
+   */
+  @Get('explain')
+  getExplanation(@Req() req: ScopedRequest) {
+    return this.readinessService.getExplanation(req.userId!);
+  }
 }

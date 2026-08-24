@@ -51,6 +51,29 @@ export interface ReadinessResponse {
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
+const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label: string }>> = {
+  protection: [
+    { id: 'emergency-fund', label: 'Liquid reserves' },
+    { id: 'insurance', label: 'Recorded insurance policies' },
+    { id: 'estate-documents', label: 'Estate-planning review dates' },
+    { id: 'income-sources', label: 'Recorded income-source reviews' },
+    { id: 'secondary-liquidity', label: 'Recorded credit availability' },
+    { id: 'fixed-obligations', label: 'Recorded debt minimums' },
+    { id: 'dependents', label: 'Dependent planning reviews' },
+  ],
+  provision: [
+    { id: 'budgets', label: 'Budget pace' },
+    { id: 'cashflow', label: 'Recorded cash-flow forecast' },
+    { id: 'recurring', label: 'Recorded upcoming recurring bills' },
+  ],
+  preparation: [{ id: 'planned-expenses', label: 'Recorded planned expenses' }],
+  prosperity: [
+    { id: 'net-worth', label: 'Recorded net worth' },
+    { id: 'debt-to-income', label: 'Recorded debt-to-income ratio' },
+  ],
+  peace: [{ id: 'derived-peace', label: 'Observed direct readiness pillars' }],
+};
+
 @Injectable()
 export class ReadinessService {
   constructor(private readonly prisma: PrismaService) {}
