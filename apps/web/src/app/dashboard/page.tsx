@@ -44,6 +44,12 @@ interface ReadinessResponse {
   topRisks: Signal[];
   topOpportunities: Signal[];
   history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
+  trendWindows: Array<{
+    days: 7 | 30 | 90;
+    delta: number | null;
+    comparedTo: string | null;
+    elapsedDays: number | null;
+  }>;
   overallAssessment: {
     state: 'known' | 'partial' | 'not_evaluated';
     score: number | null;
@@ -338,6 +344,9 @@ export default function DashboardPage() {
         ),
       )
     : 0;
+  const availableTrendWindows = data.trendWindows.filter(
+    (trend) => trend.delta !== null && trend.elapsedDays !== null,
+  );
   const activeRecommendations = (recommendationsQuery.data ?? [])
     .filter((recommendation) => recommendation.status === 'ACTIVE')
     .slice(0, 3);
@@ -487,6 +496,21 @@ export default function DashboardPage() {
                     .join(' ')}
                 />
               </svg>
+            )}
+            {availableTrendWindows.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-content-tertiary">
+                {availableTrendWindows.map((trend) => (
+                  <span key={trend.days}>
+                    {trend.elapsedDays}d:{' '}
+                    <span
+                      className={trend.delta! >= 0 ? 'text-accent-green' : 'text-accent-red'}
+                    >
+                      {trend.delta! >= 0 ? '+' : ''}
+                      {trend.delta}
+                    </span>
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>
