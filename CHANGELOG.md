@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Partial readiness trends** — Recorded trends are now available for partial assessments and explicitly identify that they cover only evaluated factors.
 - **Truthful readiness history** — The Dashboard now receives up to 90 daily readiness snapshots and labels its score movement with the actual available time span.
 - **Spending-pace color meaning** — The Financial Overview spending curve is now green only when under pace, amber near pace, and red when over pace or when recent spending is accelerating above the daily budget pace.
 - **Safe database upgrades** — Application images now apply only checked-in Prisma migrations and refuse to start on a migration failure. They no longer fall back to destructive schema synchronization or seed data during an update.

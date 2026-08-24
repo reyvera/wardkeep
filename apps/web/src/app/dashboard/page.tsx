@@ -341,7 +341,7 @@ export default function DashboardPage() {
     elapsedDays: null,
   };
   const canCompareTrend =
-    data.overallAssessment.state === 'known' &&
+    data.overallAssessment.state !== 'not_evaluated' &&
     observedOverall !== null &&
     selectedTrendWindow?.delta !== null &&
     selectedTrendWindow.comparedTo !== null &&
@@ -505,10 +505,15 @@ export default function DashboardPage() {
               </div>
               {canCompareTrend ? (
                 <>
+                  {data.overallAssessment.state === 'partial' && (
+                    <p className="mt-2 text-xs text-content-tertiary">
+                      Trend of the factors Wardkeep has evaluated so far.
+                    </p>
+                  )}
                   <p
-                    className={`mt-2 text-xs font-medium ${
-                      selectedTrendWindow.delta! >= 0 ? 'text-accent-green' : 'text-accent-red'
-                    }`}
+                    className={`text-xs font-medium ${
+                      data.overallAssessment.state === 'partial' ? 'mt-1' : 'mt-2'
+                    } ${selectedTrendWindow.delta! >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
                   >
                     {selectedTrendWindow.delta! >= 0 ? '↑' : '↓'}{' '}
                     {Math.abs(selectedTrendWindow.delta!)} over {selectedTrendWindow.elapsedDays}{' '}
