@@ -99,6 +99,37 @@ export class ReadinessService {
   }
 
   /**
+   * Records one fresh daily snapshot for every household. This is called by the
+   * trusted background worker, not by a browser request, so trend history can
+   * continue while a household is away from the Dashboard.
+   */
+  async recordDailySnapshots(): Promise<{ recorded: number; skipped: number; failed: number }> {
+    const users = await this.prisma.user.findMany({ select: { id: true } });
+    let recorded = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const user of users) {
+      try {
+        const readiness = await this.getReadiness(user.id);
+        const observedOverall = readiness.overallAssessment.score;
+        if (observedOverall === null) {
+          skipped++;
+          continue;
+        }
+
+        await this.recordSnapshot(user.id, observedOverall, readiness.pillars, readiness.signals);
+        recorded++;
+      } catch {
+        // One malformed household record must not prevent other daily snapshots.
+        failed++;
+      }
+    }
+
+    return { recorded, skipped, failed };
+  }
+
+  /**
    * Computes the full readiness state for a user.
    * Collects signals from all generators, scores each pillar,
    * computes overall readiness and Peace, and returns the full picture.
