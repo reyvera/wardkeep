@@ -42,7 +42,12 @@ function randomBetween(min: number, max: number): number {
 function randomDate(monthsAgo: number): Date {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
-  const end = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0);
+  // Do not create future activity in the current month. Leave today reserved
+  // for the transaction-review inbox records below so they are easy to find.
+  const end =
+    monthsAgo === 0
+      ? new Date(now.getFullYear(), now.getMonth(), Math.max(1, now.getDate() - 1), 23, 59, 59)
+      : new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0, 23, 59, 59);
   return new Date(start.getTime() + demoRandom() * (end.getTime() - start.getTime()));
 }
 
@@ -400,6 +405,57 @@ async function main() {
   }
 
   console.log(`  ✓ Created ${txCount} transactions (6 months)`);
+
+  const reviewDates = [0, 5, 10, 15].map((minutesAgo) => {
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - minutesAgo);
+    return date;
+  });
+  await prisma.transaction.createMany({
+    data: [
+      {
+        userId: user.id,
+        accountId: checking.id,
+        amount: '42.18',
+        type: 'DEBIT',
+        date: reviewDates[0]!,
+        merchant: 'Uncategorized Market',
+        description: 'Demo transaction awaiting review',
+        isReviewed: false,
+      },
+      {
+        userId: user.id,
+        accountId: creditCard.id,
+        amount: '89.00',
+        type: 'DEBIT',
+        date: reviewDates[1]!,
+        merchant: 'Home Supply Co.',
+        description: 'Demo transaction awaiting review',
+        isReviewed: false,
+      },
+      {
+        userId: user.id,
+        accountId: checking.id,
+        amount: '18.75',
+        type: 'DEBIT',
+        date: reviewDates[2]!,
+        merchant: 'Coffee House',
+        description: 'Demo transaction awaiting review',
+        isReviewed: false,
+      },
+      {
+        userId: user.id,
+        accountId: checking.id,
+        amount: '125.00',
+        type: 'CREDIT',
+        date: reviewDates[3]!,
+        merchant: 'Account Credit',
+        description: 'Demo transaction awaiting review',
+        isReviewed: false,
+      },
+    ],
+  });
+  console.log('  ✓ Created 4 unreviewed transaction demo records');
 
   await prisma.recurringTransaction.createMany({
     data: [
