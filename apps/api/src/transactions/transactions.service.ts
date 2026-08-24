@@ -129,6 +129,7 @@ export class TransactionsService {
         notes: tx.notes,
         isReconciliation: tx.isReconciliation,
         isReviewed: tx.isReviewed,
+        refundForTransactionId: tx.refundForTransactionId,
         aiCategorized: tx.aiCategorized,
         aiConfidence: tx.aiConfidence?.toString() ?? null,
         createdAt: tx.createdAt,

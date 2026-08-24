@@ -31,6 +31,7 @@ interface Transaction {
   status?: string;
   accountId: string;
   isReviewed?: boolean;
+  refundForTransactionId?: string | null;
   tags?: Array<{ tag: string }>;
 }
 
@@ -693,6 +694,7 @@ export default function TransactionsPage() {
               const isPending = tx.status === 'PENDING';
               const isOneTime =
                 tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
+              const isMatchedRefund = Boolean(tx.refundForTransactionId);
               const otherTags = (tx.tags ?? []).filter(
                 (tag) => tag.tag.toLowerCase() !== 'one-time',
               );
@@ -750,6 +752,11 @@ export default function TransactionsPage() {
                       {isOneTime && (
                         <span className="category-pill text-[10px] bg-accent-purple/10 text-accent-purple">
                           One-time
+                        </span>
+                      )}
+                      {isMatchedRefund && (
+                        <span className="category-pill bg-accent-green/10 text-[10px] text-accent-green">
+                          Confirmed refund
                         </span>
                       )}
                       {otherTags.map((tag) => (
