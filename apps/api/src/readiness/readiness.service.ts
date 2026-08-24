@@ -30,6 +30,12 @@ export interface ReadinessResponse {
   topRisks: Array<Signal & { provenance: SignalProvenance }>;
   topOpportunities: Array<Signal & { provenance: SignalProvenance }>;
   history: ReadinessSnapshot[];
+  trendWindows: Array<{
+    days: 7 | 30 | 90;
+    delta: number | null;
+    comparedTo: Date | null;
+    elapsedDays: number | null;
+  }>;
   overallAssessment: PillarAssessment;
   coverage: number;
   pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
@@ -285,6 +291,26 @@ export class ReadinessService {
       coverage,
       evaluatedCapabilities: evaluatedPillars,
     };
+    const evaluatedAt = new Date();
+    const trendWindows: ReadinessResponse['trendWindows'] = ([7, 30, 90] as const).map((days) => {
+      const cutoff = new Date(evaluatedAt);
+      cutoff.setDate(cutoff.getDate() - days);
+      const comparison = recentSnapshots.find((snapshot) => snapshot.recordedAt <= cutoff);
+
+      if (!comparison || observedOverallScore === null) {
+        return { days, delta: null, comparedTo: null, elapsedDays: null };
+      }
+
+      return {
+        days,
+        delta: observedOverallScore - comparison.overall,
+        comparedTo: comparison.recordedAt,
+        elapsedDays: Math.max(
+          1,
+          Math.round((evaluatedAt.getTime() - comparison.recordedAt.getTime()) / 86_400_000),
+        ),
+      };
+    });
 
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
@@ -315,13 +341,14 @@ export class ReadinessService {
       .slice(0, 5);
 
     return {
-      evaluatedAt: new Date(),
+      evaluatedAt,
       overall,
       pillars,
       signals: signalsWithProvenance,
       topRisks,
       topOpportunities,
       history: history.reverse(),
+      trendWindows,
       overallAssessment,
       coverage,
       pillarCoverage,
