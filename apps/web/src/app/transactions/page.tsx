@@ -57,6 +57,11 @@ interface TransactionsResponse {
   };
 }
 
+interface RefundCandidate {
+  purchase: { id: string; merchant: string; amount: string; date: string };
+  refund: { id: string; merchant: string; amount: string; date: string };
+}
+
 function formatCurrency(value: number): string {
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -139,6 +144,10 @@ export default function TransactionsPage() {
     queryKey: ['transactions', 'review-inbox'],
     queryFn: () => apiClient.get<TransactionsResponse>('/transactions?reviewed=false&pageSize=200'),
   });
+  const refundCandidatesQuery = useQuery({
+    queryKey: ['transactions', 'refund-candidates'],
+    queryFn: () => apiClient.get<RefundCandidate[]>('/transactions/refunds/candidates'),
+  });
 
   const updateCategoryMutation = useMutation({
     mutationFn: ({ txId, categoryId }: { txId: string; categoryId: string | null }) =>
@@ -163,6 +172,15 @@ export default function TransactionsPage() {
       setSelectedForReview((selected) => selected.filter((id) => id !== txId));
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
+  });
+
+  const confirmRefundMutation = useMutation({
+    mutationFn: (candidate: RefundCandidate) =>
+      apiClient.post('/transactions/refunds/confirm', {
+        purchaseId: candidate.purchase.id,
+        refundId: candidate.refund.id,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 
   const markVisibleReviewedMutation = useMutation({
@@ -626,6 +644,45 @@ export default function TransactionsPage() {
               </div>
             )}
           </section>
+
+          {(refundCandidatesQuery.data?.length ?? 0) > 0 && (
+            <section className="card space-y-3 border-accent-yellow/30">
+              <div>
+                <h2 className="text-section text-content-primary">Possible refunds</h2>
+                <p className="mt-1 text-xs text-content-tertiary">
+                  Confirm only when the credit is a refund for the listed purchase.
+                </p>
+              </div>
+              {refundCandidatesQuery.data!.map((candidate) => (
+                <div
+                  key={`${candidate.purchase.id}-${candidate.refund.id}`}
+                  className="flex flex-wrap items-center gap-3 rounded-lg border border-edge px-3 py-2.5"
+                >
+                  <div className="min-w-40 flex-1">
+                    <p className="text-xs text-content-tertiary">Purchase</p>
+                    <p className="text-sm font-medium text-content-primary">
+                      {candidate.purchase.merchant} · $
+                      {formatCurrency(Number(candidate.purchase.amount))}
+                    </p>
+                  </div>
+                  <div className="min-w-40 flex-1">
+                    <p className="text-xs text-content-tertiary">Credit</p>
+                    <p className="text-sm font-medium text-accent-green">
+                      {candidate.refund.merchant} · $
+                      {formatCurrency(Number(candidate.refund.amount))}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => confirmRefundMutation.mutate(candidate)}
+                    disabled={confirmRefundMutation.isPending}
+                    className="btn-secondary"
+                  >
+                    <Check size={15} /> Confirm refund
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
 
           <h2 className="text-section text-content-primary">Reviewed transactions</h2>
           <div className="space-y-1">
