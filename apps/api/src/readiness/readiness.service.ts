@@ -124,11 +124,11 @@ export class ReadinessService {
 
     const pillarScoresWithoutPeace = { protection, provision, preparation, prosperity };
 
-    // Fetch recent snapshots for Peace calculation
+    // Fetch enough daily snapshots for both Peace and the Dashboard's 90-day trend.
     const recentSnapshots = await this.prisma.readinessSnapshot.findMany({
       where: { userId },
       orderBy: { recordedAt: 'desc' },
-      take: 30,
+      take: 90,
     });
 
     const history: ReadinessSnapshot[] = recentSnapshots.map((s) => ({
