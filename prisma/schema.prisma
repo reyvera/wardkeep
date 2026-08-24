@@ -319,6 +319,7 @@ model Transaction {
   description      String?           @db.VarChar(500)
   notes            String?           @db.VarChar(1000)
   isReconciliation Boolean           @default(false)
+  isReviewed       Boolean           @default(true)
   aiCategorized    Boolean           @default(false)
   aiConfidence     Decimal?          @db.Decimal(3, 2)
   createdAt        DateTime          @default(now())
@@ -331,6 +332,7 @@ model Transaction {
   @@index([userId, accountId, date])
   @@index([userId, categoryId])
   @@index([userId, merchant])
+  @@index([userId, isReviewed, date])
   @@index([accountId, date, amount, merchant])
 }
 
