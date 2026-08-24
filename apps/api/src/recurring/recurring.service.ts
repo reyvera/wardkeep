@@ -28,6 +28,7 @@ export class RecurringService {
       isConfirmed: r.isConfirmed,
       isDismissed: r.isDismissed,
       isActive: r.isActive,
+      isSubscription: r.isSubscription,
       createdAt: r.createdAt,
     }));
   }
@@ -54,6 +55,7 @@ export class RecurringService {
       isConfirmed: r.isConfirmed,
       isDismissed: r.isDismissed,
       isActive: r.isActive,
+      isSubscription: r.isSubscription,
       createdAt: r.createdAt,
     }));
   }
@@ -161,5 +163,19 @@ export class RecurringService {
       isActive: updated.isActive,
       createdAt: updated.createdAt,
     };
+  }
+
+  async setSubscription(userId: string, id: string, isSubscription: boolean) {
+    const record = await this.prisma.recurringTransaction.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+    if (!record) throw new NotFoundException('Recurring transaction not found');
+
+    const updated = await this.prisma.recurringTransaction.update({
+      where: { id },
+      data: { isSubscription },
+    });
+    return { id: updated.id, isSubscription: updated.isSubscription };
   }
 }

@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -9,10 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { AuthGuard } from '../common/guards/auth.guard';
-import {
-  UserScopeInterceptor,
-  ScopedRequest,
-} from '../common/interceptors/user-scope.interceptor';
+import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { RecurringService } from './recurring.service';
 import { RecurringActionSchema } from './dto/recurring-action.dto';
 
@@ -93,5 +92,14 @@ export class RecurringController {
     }
 
     return this.recurringService.deactivate(userId, result.data.id);
+  }
+
+  @Patch(':id/subscription')
+  async setSubscription(@Req() req: ScopedRequest, @Param('id') id: string) {
+    const isSubscription = req.body?.isSubscription;
+    if (typeof isSubscription !== 'boolean') {
+      throw new BadRequestException('isSubscription must be a boolean');
+    }
+    return this.recurringService.setSubscription(req.userId!, id, isSubscription);
   }
 }
