@@ -593,9 +593,12 @@ export class TransactionsService {
     // Days elapsed and total days in month for pace projection
     const today = new Date();
     const daysInMonth = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0).getDate();
-    const dayOfMonth = today.getMonth() === refDate.getMonth() && today.getFullYear() === refDate.getFullYear()
-      ? today.getDate()
-      : daysInMonth; // if viewing past month, use full month
+    const isCurrentMonth =
+      today.getMonth() === refDate.getMonth() && today.getFullYear() === refDate.getFullYear();
+    const isFutureMonth =
+      refDate.getFullYear() > today.getFullYear() ||
+      (refDate.getFullYear() === today.getFullYear() && refDate.getMonth() > today.getMonth());
+    const dayOfMonth = isCurrentMonth ? today.getDate() : isFutureMonth ? 0 : daysInMonth;
 
     let cumulative = 0;
     const dailySpending = Array.from({ length: dayOfMonth }, (_, index) => {

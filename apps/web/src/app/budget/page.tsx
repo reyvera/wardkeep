@@ -248,7 +248,7 @@ export default function BudgetPage() {
           </div>
           <div className="card">
             <span className="card-title">SPENDING PACE</span>
-            {pace?.projectedMonthEnd === null ? (
+            {!pace || pace.projectedMonthEnd === null ? (
               <p className="mt-2 text-sm text-content-tertiary">No recorded pace yet</p>
             ) : (
               <>
