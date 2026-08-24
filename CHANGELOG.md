@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Readiness comparison windows** — The Dashboard now shows available short-, medium-, and longer-term readiness changes using the actual recorded time span.
 - **Readiness explanation API** — `GET /api/readiness/explain` now provides a read-only explanation of each pillar’s evaluated signals, not-yet-evaluated factors, freshness, and recorded score changes.
 - **Longer spending trends** — Financial Overview can now switch its income-versus-expenses chart between six and twelve months.
 - **Budget spending pace** — Budget now shows the recorded month-end spending projection and the amount over or under the elapsed-day budget pace, instead of treating all unspent allocation as automatically under budget.
