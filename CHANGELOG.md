@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Planned-expense lifecycle** — One-time planned expenses can now be marked no longer planned and later restored, without deleting their recorded context.
 - **Scheduled readiness snapshots** — The background worker now records household readiness daily at 03:00 UTC, independently of Dashboard visits, using a local credential derived from the existing deployment encryption key.
 - **Year-long readiness history** — Wardkeep now retains the newest 365 daily readiness snapshots per household, and the history API can return up to a year of recorded data.
 - **Readiness comparison windows** — The Dashboard now provides a visible 7d / 30d / 90d trend selector and shows available score changes using the actual recorded time span.
