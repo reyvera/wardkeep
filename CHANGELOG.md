@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Year-long readiness history** — Wardkeep now retains the newest 365 daily readiness snapshots per household, and the history API can return up to a year of recorded data.
 - **Readiness comparison windows** — The Dashboard now provides a visible 7d / 30d / 90d trend selector and shows available score changes using the actual recorded time span.
 - **Demo readiness history** — Resetting the demo fixture now includes 90 days of historical readiness points, so every Dashboard trend range is testable immediately.
 - **Readiness explanation API** — `GET /api/readiness/explain` now provides a read-only explanation of each pillar’s evaluated signals, not-yet-evaluated factors, freshness, and recorded score changes.

@@ -43,7 +43,7 @@ The `GET /api/readiness` response returns coverage, per-pillar assessments, and 
 - Signal magnitudes are bounded from -10 to +10 and aggregated with positive weights.
 - A pillar with no signals receives no readiness credit. The UI presents it as **Not evaluated**, rather than presenting a false 100.
 - The observed overall score re-normalizes the current default weights across evaluated direct pillars: Protection 25%, Provision 30%, Preparation 20%, Prosperity 25%. It is `null` when no direct pillar is evaluated and is explicitly marked partial until sufficient coverage exists. Peace is derived and is not weighted into overall readiness.
-- Daily snapshots preserve the same observed overall score shown on the Dashboard, along with pillar scores and contributing signals. Wardkeep does not persist a synthetic overall score when no direct pillar can be evaluated. The readiness response includes up to 90 available daily snapshots plus 7-, 30-, and 90-day comparison windows when an older snapshot exists. The Dashboard readiness card provides a visible 7d / 30d / 90d selector; every label uses the actual elapsed days represented. Partial assessments can show a clearly qualified trend of their evaluated factors; an unevaluated assessment has no score trend.
+- Daily snapshots preserve the same observed overall score shown on the Dashboard, along with pillar scores and contributing signals. Wardkeep does not persist a synthetic overall score when no direct pillar can be evaluated. It retains the newest 365 daily snapshots per household and prunes older snapshots with their attached signal records. `GET /api/readiness/history` accepts 1–365 days; the main readiness response remains limited to its newest 90 snapshots for the Dashboard. The Dashboard readiness card provides a visible 7d / 30d / 90d selector; every label uses the actual elapsed days represented. Partial assessments can show a clearly qualified trend of their evaluated factors; an unevaluated assessment has no score trend.
 - Pillar detail pages label a score change as either **since your last visit** or **since the previous recorded check**, and show the recorded changed-factor summary when one is available. They do not mislabel this short comparison as the full history trend.
 
 ## Protection: current contract
@@ -117,7 +117,7 @@ Every displayed factor also names its evidence state. Current states are **synch
 
 ```text
 GET /api/readiness              assessments, signals, coverage, freshness, history, and recent changes
-GET /api/readiness/history      daily snapshots for 1–90 days
+GET /api/readiness/history      daily snapshots for 1–365 days
 GET /api/readiness/explain      read-only pillar factors, factor gaps, freshness, and recent score changes
 ```
 

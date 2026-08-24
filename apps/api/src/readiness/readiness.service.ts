@@ -445,6 +445,14 @@ export class ReadinessService {
         })),
       }),
     ]);
+
+    // Keep one year of daily history. Snapshot signals cascade with the snapshot,
+    // so pruning does not leave orphaned factor records behind.
+    const retentionCutoff = new Date(today);
+    retentionCutoff.setUTCDate(retentionCutoff.getUTCDate() - 364);
+    await this.prisma.readinessSnapshot.deleteMany({
+      where: { userId, recordedAt: { lt: retentionCutoff } },
+    });
   }
 
   /**

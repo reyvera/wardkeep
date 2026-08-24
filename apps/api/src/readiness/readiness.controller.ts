@@ -56,13 +56,13 @@ export class ReadinessController {
   /**
    * Returns historical readiness snapshots for trend visualization.
    * @param req - The scoped request with userId
-   * @param days - Number of days of history to return (default: 30, max: 90)
+   * @param days - Number of days of history to return (default: 30, max: 365)
    * @returns Array of daily readiness snapshots
    */
   @Get('history')
   async getHistory(@Req() req: ScopedRequest, @Query('days') daysParam?: string) {
     const userId = req.userId!;
-    const days = Math.min(Math.max(parseInt(daysParam ?? '30', 10) || 30, 1), 90);
+    const days = Math.min(Math.max(parseInt(daysParam ?? '30', 10) || 30, 1), 365);
 
     return this.readinessService.getHistory(userId, days);
   }

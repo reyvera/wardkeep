@@ -240,7 +240,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 19.4 Implement readiness history and trends
   - [x] API endpoint: GET /api/readiness/history — score snapshots over time
   - [x] Dashboard renders up to 90 days of available score history
-  - [ ] Define retention and store 365 days of snapshots per household
+  - [x] Retain the newest 365 daily snapshots per household and expose 1–365 days through the history endpoint
 - [~] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
   - [x] Return available 7-, 30-, and 90-day score comparisons with their actual elapsed period.
   - [x] Store the observed overall score used by the Dashboard, never a synthetic score for an unevaluated household.
