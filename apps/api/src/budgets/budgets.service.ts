@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
 import { TransactionType } from '@wardkeep/shared';
@@ -232,9 +228,7 @@ export class BudgetsService {
     );
 
     if (filteredAllocations.length === 0) {
-      throw new NotFoundException(
-        'No valid allocations to copy from previous month',
-      );
+      throw new NotFoundException('No valid allocations to copy from previous month');
     }
 
     const budget = await this.prisma.budget.create({
@@ -338,12 +332,42 @@ export class BudgetsService {
     }));
 
     const summary = calculateBudgetSummary(budgetForEngine, transactionsForEngine);
+    const now = new Date();
+    const currentYear = now.getUTCFullYear();
+    const currentMonthIndex = now.getUTCMonth();
+    const daysInMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+    const isCurrentMonth = year === currentYear && monthIndex === currentMonthIndex;
+    const isPastMonth =
+      year < currentYear || (year === currentYear && monthIndex < currentMonthIndex);
+    const daysElapsed = isCurrentMonth ? now.getUTCDate() : isPastMonth ? daysInMonth : 0;
+    const expectedSpentToDate =
+      daysElapsed === 0 ? null : summary.totalAllocated.mul(daysElapsed).div(daysInMonth);
+    const projectedMonthEnd =
+      daysElapsed === 0 ? null : summary.totalSpent.mul(daysInMonth).div(daysElapsed);
+    const paceDifference = expectedSpentToDate
+      ? summary.totalSpent.minus(expectedSpentToDate)
+      : null;
 
     return {
       totalAllocated: summary.totalAllocated.toFixed(2),
       totalSpent: summary.totalSpent.toFixed(2),
       totalRemaining: summary.totalRemaining.toFixed(2),
       overspentCount: summary.overspentCount,
+      pace: {
+        daysElapsed,
+        daysInMonth,
+        expectedSpentToDate: expectedSpentToDate?.toFixed(2) ?? null,
+        projectedMonthEnd: projectedMonthEnd?.toFixed(2) ?? null,
+        differenceFromPace: paceDifference?.toFixed(2) ?? null,
+        status:
+          paceDifference === null
+            ? 'NOT_STARTED'
+            : paceDifference.abs().lessThanOrEqualTo(0.01)
+              ? 'ON_PACE'
+              : paceDifference.greaterThan(0)
+                ? 'OVER_PACE'
+                : 'UNDER_PACE',
+      },
       categoryProgress: summary.categoryProgress.map((cp) => ({
         categoryId: cp.categoryId,
         allocated: cp.allocated.toFixed(2),
