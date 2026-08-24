@@ -20,6 +20,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Changed
 
+- **Local worker startup** — `pnpm dev` now uses the workspace TypeScript runner for the background worker, matching the rest of the local development workflow.
 - **Partial readiness trends** — Recorded trends are now available for partial assessments and explicitly identify that they cover only evaluated factors.
 - **Consistent readiness history** — New daily snapshots now store the same observed overall score shown on the Dashboard, rather than a differently weighted placeholder score.
 - **Accurate pillar change labels** — Pillar details now distinguish changes since a visit from changes since the prior recorded check and surface the available factor summary.
