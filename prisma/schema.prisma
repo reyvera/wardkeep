@@ -487,6 +487,7 @@ model RecurringTransaction {
   isConfirmed    Boolean             @default(false)
   isDismissed    Boolean             @default(false)
   isActive       Boolean             @default(true)
+  isSubscription Boolean             @default(false)
   createdAt      DateTime            @default(now())
 
   user    User    @relation(fields: [userId], references: [id])
