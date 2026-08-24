@@ -464,11 +464,11 @@ export class TransactionsService {
 
   /**
    * Returns spending statistics for the dashboard:
-   * - Monthly income vs expenses for the last 6 months
+   * - Monthly income vs expenses for the requested 6- or 12-month window
    * - Spending by category for the current month
    * - Top merchants for the current month
    */
-  async getSpendingStats(userId: string, selectedMonth?: string) {
+  async getSpendingStats(userId: string, selectedMonth?: string, trendMonths = 6) {
     let refDate: Date;
     if (selectedMonth && /^\d{4}-\d{2}$/.test(selectedMonth)) {
       const [y, m] = selectedMonth.split('-').map(Number);
@@ -477,9 +477,9 @@ export class TransactionsService {
       refDate = new Date();
     }
 
-    // Last 6 months of income vs expenses
+    // Income vs expenses over the requested rolling window.
     const monthlyTrend = [];
-    for (let i = 5; i >= 0; i--) {
+    for (let i = trendMonths - 1; i >= 0; i--) {
       const date = new Date(refDate.getFullYear(), refDate.getMonth() - i, 1);
       const nextMonth = new Date(refDate.getFullYear(), refDate.getMonth() - i + 1, 1);
       const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });

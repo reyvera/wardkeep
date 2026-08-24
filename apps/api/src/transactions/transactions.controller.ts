@@ -48,13 +48,18 @@ export class TransactionsController {
   }
 
   /**
-   * Returns spending statistics: monthly income vs expenses for last 6 months,
+   * Returns spending statistics: monthly income vs expenses for a requested 6- or 12-month window,
    * and spending breakdown by category for the current month.
    */
   @Get('stats')
-  async getStats(@Req() req: ScopedRequest, @Query('month') month?: string) {
+  async getStats(
+    @Req() req: ScopedRequest,
+    @Query('month') month?: string,
+    @Query('trendMonths') trendMonths?: string,
+  ) {
     const userId = req.userId!;
-    return this.transactionsService.getSpendingStats(userId, month);
+    const parsedTrendMonths = trendMonths === '12' ? 12 : 6;
+    return this.transactionsService.getSpendingStats(userId, month, parsedTrendMonths);
   }
 
   /**
