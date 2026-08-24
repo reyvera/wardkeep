@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   ListChecks,
   CalendarDays,
+  CreditCard,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/rules', label: 'Rules', icon: Sparkles },
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
+  { href: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { href: '/insurance', label: 'Policies', icon: ShieldCheck },
   { href: '/estate-documents', label: 'Estate planning', icon: ShieldCheck },
   { href: '/income-sources', label: 'Income sources', icon: Wallet },
