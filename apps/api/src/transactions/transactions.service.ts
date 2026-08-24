@@ -396,6 +396,66 @@ export class TransactionsService {
     return duplicateGroups;
   }
 
+  async listRefundCandidates(userId: string) {
+    const since = new Date();
+    since.setDate(since.getDate() - 90);
+    const records = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        date: { gte: since },
+        merchant: { not: null },
+        refundForTransactionId: null,
+      },
+      orderBy: { date: 'desc' },
+    });
+    const debits = records.filter((record) => record.type === 'DEBIT');
+    return records
+      .filter((refund) => refund.type === 'CREDIT')
+      .flatMap((refund) => {
+        const purchase = debits.find(
+          (debit) =>
+            debit.amount.equals(refund.amount) &&
+            debit.merchant!.trim().toLowerCase() === refund.merchant!.trim().toLowerCase() &&
+            debit.date <= refund.date,
+        );
+        return purchase
+          ? [
+              {
+                purchase: {
+                  id: purchase.id,
+                  merchant: purchase.merchant,
+                  amount: purchase.amount.toString(),
+                  date: purchase.date,
+                },
+                refund: {
+                  id: refund.id,
+                  merchant: refund.merchant,
+                  amount: refund.amount.toString(),
+                  date: refund.date,
+                },
+              },
+            ]
+          : [];
+      });
+  }
+
+  async confirmRefund(userId: string, purchaseId: string, refundId: string) {
+    const [purchase, refund] = await Promise.all([
+      this.prisma.transaction.findFirst({ where: { id: purchaseId, userId } }),
+      this.prisma.transaction.findFirst({ where: { id: refundId, userId } }),
+    ]);
+    if (!purchase || !refund || purchase.type !== 'DEBIT' || refund.type !== 'CREDIT') {
+      throw new NotFoundException('A valid purchase and refund are required');
+    }
+    if (!purchase.amount.equals(refund.amount)) {
+      throw new BadRequestException('A confirmed refund must match the purchase amount');
+    }
+    return this.prisma.transaction.update({
+      where: { id: refundId },
+      data: { refundForTransactionId: purchaseId, refundMatchedAt: new Date() },
+    });
+  }
+
   /**
    * Deletes a transaction belonging to the user.
    * Cascade delete removes associated tags automatically.
