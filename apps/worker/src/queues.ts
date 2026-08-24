@@ -9,6 +9,7 @@ export const QUEUE_NAMES = {
   BACKUP: 'backup',
   RULES_APPLY: 'rules-apply',
   NOTIFICATIONS: 'notifications',
+  READINESS_SNAPSHOTS: 'readiness-snapshots',
 } as const;
 
 export const QUEUE_CONCURRENCY = {
@@ -18,4 +19,5 @@ export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.BACKUP]: 1,
   [QUEUE_NAMES.RULES_APPLY]: 2,
   [QUEUE_NAMES.NOTIFICATIONS]: 5,
+  [QUEUE_NAMES.READINESS_SNAPSHOTS]: 1,
 } as const;
