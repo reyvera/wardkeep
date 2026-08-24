@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Transaction workflow** — Transactions now have a visible review inbox with individual or selected bulk review, a navigation count, optional tags, and tag filtering.
+- **Subscription management** — Explicitly mark recurring bills as subscriptions and review their normalized monthly cost, upcoming 30-day charges, and annual renewals in a dedicated workspace.
 - **Transaction review foundation** — New imported and bank-synced transactions now enter an explicit review state; existing and manual records remain reviewed during upgrade.
 - **Review-inbox demo data** — The demo household includes clearly labeled unreviewed transactions for testing the review workflow.
 - **Planned-expense lifecycle** — One-time planned expenses can now be marked no longer planned and later restored, without deleting their recorded context.

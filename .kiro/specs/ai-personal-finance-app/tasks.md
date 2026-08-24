@@ -603,7 +603,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 34. Transaction Workflow
 
-- [ ] 34.1 Transaction review/inbox workflow
+- [x] 34.1 Transaction review/inbox workflow
   - [x] `isReviewed` field; imported and bank-synced transactions start unreviewed while existing and manually entered records remain reviewed
   - [x] Filter transaction lists by review state and mark an individual transaction reviewed through the API
   - [x] Demo household includes unreviewed transactions for inbox verification
@@ -611,7 +611,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Unreviewed count badge in navigation
   - [x] Filter for unreviewed transactions
 
-- [ ] 34.2 Tags support
+- [x] 34.2 Tags support
   - [x] Tag model with many-to-many relation to transactions
   - [x] Transaction tag CRUD and tag filter in search
   - [x] Rules engine can auto-apply tags
