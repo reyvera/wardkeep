@@ -2,8 +2,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Wardkeep Local Development
 # ─────────────────────────────────────────────────────────────────────────────
-# Starts infrastructure (Postgres + Redis) via Docker, then runs the API
-# and web frontend with hot-reload.
+# Starts infrastructure (Postgres + Redis) via Docker, then runs the API, web
+# frontend, and background worker with hot-reload.
 #
 # Usage:
 #   pnpm dev              # Start everything
@@ -133,9 +133,10 @@ success "  Postgres: localhost:5432 (postgres/postgres)"
 success "  Redis:    localhost:6379"
 success "  Web:      http://localhost:3000"
 success "  API:      http://localhost:4000"
+success "  Worker:   local BullMQ consumer"
 success "═══════════════════════════════════════════════════════"
 echo ""
-log "Starting API and Web with hot-reload... (Ctrl+C to stop)"
+log "Starting API, Web, and Worker with hot-reload... (Ctrl+C to stop)"
 echo ""
 
 # Export env vars for the API
@@ -146,5 +147,6 @@ export SESSION_TIMEOUT=30
 export ENCRYPTION_KEY=dev-local-key-not-for-production
 export AI_PRIVACY_MODE=LOCAL
 export OLLAMA_URL=http://localhost:11434
+export INTERNAL_API_URL=http://localhost:4000/api
 
-exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web'
+exec pnpm turbo dev --filter='@wardkeep/api' --filter='@wardkeep/web' --filter='@wardkeep/worker'
