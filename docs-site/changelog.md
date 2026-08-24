@@ -18,6 +18,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ## [Unreleased]
 
+### Changed
+
+- **Truthful readiness history** — The Dashboard now receives up to 90 daily readiness snapshots and labels score movement with the actual available time span.
+
 ### Added
 
 - **Readiness explanation API** — `GET /api/readiness/explain` now provides a read-only explanation of each pillar’s evaluated signals, factor gaps, freshness, and recorded score changes.
