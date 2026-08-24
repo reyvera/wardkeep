@@ -577,10 +577,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [ ] 33.2 Spending trends and monthly comparisons
   - [x] Show current-month recorded income, spending, net, and income-relative savings rate on the dashboard
-  - Month-over-month category spending comparison
-  - Income vs expenses and savings rate
-  - Per-category change indicators
-  - 6/12-month trend visualizations
+  - [x] Month-over-month category spending comparison
+  - [x] Income vs expenses and savings rate
+  - [x] Per-category change indicators
+  - [x] 6/12-month trend visualizations
 
 - [x] 33.3 Spending pace line visualization
   - [x] Cumulative daily spending vs ideal pace line in Financial Overview

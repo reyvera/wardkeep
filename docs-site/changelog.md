@@ -20,6 +20,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Added
 
+- **Longer spending trends** — Financial Overview can now switch its income-versus-expenses chart between six and twelve months.
 - **Budget spending pace** — Budget now shows the recorded month-end spending projection and the amount over or under the elapsed-day budget pace.
 - **Household Timeline** — A single chronological view now brings together recorded recurring bills, policy renewals, expected income dates, and planned expenses, with direct links back to each source record.
 - **Verified migration baseline** — Existing development databases without Prisma migration history can be explicitly baselined only after a strict schema match, preserving household data while enabling normal future upgrades.
