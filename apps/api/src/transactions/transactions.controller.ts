@@ -15,10 +15,7 @@ import {
 } from '@nestjs/common';
 
 import { AuthGuard } from '../common/guards/auth.guard';
-import {
-  UserScopeInterceptor,
-  ScopedRequest,
-} from '../common/interceptors/user-scope.interceptor';
+import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { TransactionsService, TransactionFilters } from './transactions.service';
 import { CreateTransactionSchema } from './dto/create-transaction.dto';
 import { UpdateTransactionSchema } from './dto/update-transaction.dto';
@@ -101,13 +98,14 @@ export class TransactionsController {
     const parsedPage = Math.max(1, parseInt(page || '1', 10) || 1);
     const parsedPageSize = Math.min(
       MAX_PAGE_SIZE,
-      Math.max(MIN_PAGE_SIZE, parseInt(pageSize || String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE),
+      Math.max(
+        MIN_PAGE_SIZE,
+        parseInt(pageSize || String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE,
+      ),
     );
 
     if (search && search.length > SEARCH_MAX_LENGTH) {
-      throw new BadRequestException(
-        `Search query must be at most ${SEARCH_MAX_LENGTH} characters`,
-      );
+      throw new BadRequestException(`Search query must be at most ${SEARCH_MAX_LENGTH} characters`);
     }
 
     const filters: TransactionFilters = {
