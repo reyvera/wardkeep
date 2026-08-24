@@ -24,7 +24,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 
 ### Added
 
-- **Readiness comparison windows** — The Dashboard now shows available short-, medium-, and longer-term readiness changes using the actual recorded time span.
+- **Readiness comparison windows** — The Dashboard now provides a visible 7d / 30d / 90d trend selector and shows available score changes using the actual recorded time span.
 - **Readiness explanation API** — `GET /api/readiness/explain` now provides a read-only explanation of each pillar’s evaluated signals, factor gaps, freshness, and recorded score changes.
 - **Longer spending trends** — Financial Overview can now switch its income-versus-expenses chart between six and twelve months.
 - **Budget spending pace** — Budget now shows the recorded month-end spending projection and the amount over or under the elapsed-day budget pace.

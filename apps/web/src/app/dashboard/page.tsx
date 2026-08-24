@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import {
@@ -38,6 +39,7 @@ interface Signal {
 }
 
 interface ReadinessResponse {
+  evaluatedAt: string;
   overall: number;
   pillars: PillarScores;
   signals: Signal[];
@@ -245,6 +247,7 @@ function signalAction(signal: Signal): { href: string; label: string } {
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
+  const [trendRange, setTrendRange] = useState<7 | 30 | 90>(30);
   const readinessQuery = useQuery({
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
@@ -331,22 +334,28 @@ export default function DashboardPage() {
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
   const history = data.history.slice(-90);
+  const selectedTrendWindow = data.trendWindows.find((trend) => trend.days === trendRange) ?? {
+    days: trendRange,
+    delta: null,
+    comparedTo: null,
+    elapsedDays: null,
+  };
   const canCompareTrend =
-    data.overallAssessment.state === 'known' && history.length > 1 && observedOverall !== null;
-  const trendDelta = canCompareTrend ? observedOverall - history[0]!.overall : 0;
-  const trendDays = canCompareTrend
-    ? Math.max(
-        1,
-        Math.round(
-          (new Date(history[history.length - 1]!.recordedAt).getTime() -
-            new Date(history[0]!.recordedAt).getTime()) /
-            86_400_000,
+    data.overallAssessment.state === 'known' &&
+    observedOverall !== null &&
+    selectedTrendWindow?.delta !== null &&
+    selectedTrendWindow.comparedTo !== null &&
+    selectedTrendWindow.elapsedDays !== null;
+  const visibleTrendHistory = canCompareTrend
+    ? [
+        ...history.filter(
+          (point) =>
+            new Date(point.recordedAt).getTime() >=
+            new Date(selectedTrendWindow.comparedTo!).getTime(),
         ),
-      )
-    : 0;
-  const availableTrendWindows = data.trendWindows.filter(
-    (trend) => trend.delta !== null && trend.elapsedDays !== null,
-  );
+        { overall: observedOverall!, pillars: data.pillars, recordedAt: data.evaluatedAt },
+      ]
+    : [];
   const activeRecommendations = (recommendationsQuery.data ?? [])
     .filter((recommendation) => recommendation.status === 'ACTIVE')
     .slice(0, 3);
@@ -469,49 +478,67 @@ export default function DashboardPage() {
                   ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated`
                   : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}
               </span>
-              {canCompareTrend && (
-                <span className={trendDelta >= 0 ? 'text-accent-green' : 'text-accent-red'}>
-                  {trendDelta >= 0 ? '↑' : '↓'} {Math.abs(trendDelta)} over {trendDays} day
-                  {trendDays === 1 ? '' : 's'}
-                </span>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center gap-1" aria-label="Readiness trend range">
+                {([7, 30, 90] as const).map((days) => {
+                  const isSelected = trendRange === days;
+                  const isAvailable = data.trendWindows.some(
+                    (trend) => trend.days === days && trend.delta !== null,
+                  );
+                  return (
+                    <button
+                      type="button"
+                      key={days}
+                      onClick={() => setTrendRange(days)}
+                      className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                        isSelected
+                          ? 'bg-accent-blue text-white'
+                          : 'text-content-tertiary hover:bg-surface-tertiary hover:text-content-primary'
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      {days}d{!isAvailable ? ' ·' : ''}
+                    </button>
+                  );
+                })}
+              </div>
+              {canCompareTrend ? (
+                <>
+                  <p
+                    className={`mt-2 text-xs font-medium ${
+                      selectedTrendWindow.delta! >= 0 ? 'text-accent-green' : 'text-accent-red'
+                    }`}
+                  >
+                    {selectedTrendWindow.delta! >= 0 ? '↑' : '↓'}{' '}
+                    {Math.abs(selectedTrendWindow.delta!)} over {selectedTrendWindow.elapsedDays} days
+                  </p>
+                  <svg
+                    viewBox="0 0 180 36"
+                    className="w-full max-w-xs h-9 mt-2"
+                    aria-label={`${trendRange}-day readiness trend`}
+                  >
+                    <polyline
+                      fill="none"
+                      stroke={scoreColor}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={visibleTrendHistory
+                        .map(
+                          (point, index) =>
+                            `${(index / (visibleTrendHistory.length - 1)) * 180},${34 - point.overall * 0.32}`,
+                        )
+                        .join(' ')}
+                    />
+                  </svg>
+                </>
+              ) : (
+                <p className="mt-2 text-xs text-content-tertiary">
+                  No recorded comparison is available for this period yet.
+                </p>
               )}
             </div>
-            {canCompareTrend && (
-              <svg
-                viewBox="0 0 180 36"
-                className="w-full max-w-xs h-9 mt-3"
-                aria-label="Readiness trend"
-              >
-                <polyline
-                  fill="none"
-                  stroke={scoreColor}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={history
-                    .map(
-                      (point, index) =>
-                        `${(index / (history.length - 1)) * 180},${34 - point.overall * 0.32}`,
-                    )
-                    .join(' ')}
-                />
-              </svg>
-            )}
-            {availableTrendWindows.length > 0 && (
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-content-tertiary">
-                {availableTrendWindows.map((trend) => (
-                  <span key={trend.days}>
-                    {trend.elapsedDays}d:{' '}
-                    <span
-                      className={trend.delta! >= 0 ? 'text-accent-green' : 'text-accent-red'}
-                    >
-                      {trend.delta! >= 0 ? '+' : ''}
-                      {trend.delta}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
