@@ -123,6 +123,7 @@ export class ImportService {
           merchant: tx.description,
           categoryId: null,
           notes: null,
+          isReviewed: false,
         },
       });
 

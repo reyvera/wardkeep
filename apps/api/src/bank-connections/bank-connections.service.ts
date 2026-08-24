@@ -369,6 +369,7 @@ export class BankConnectionsService {
               status: tx.pending ? 'PENDING' : 'POSTED',
               merchant,
               description: String(tx.memo ?? '').substring(0, 500) || null,
+              isReviewed: false,
             },
           });
 
