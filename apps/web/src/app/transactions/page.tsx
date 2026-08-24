@@ -15,6 +15,7 @@ import {
   Zap,
   CircleOff,
   Check,
+  Tag,
 } from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 import { CreateRuleModal } from '@/components/create-rule-modal';
@@ -60,12 +61,24 @@ function formatCurrency(value: number): string {
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function parseTags(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, 10);
+}
+
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [accountFilter, setAccountFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [hideTransfers, setHideTransfers] = useState(true);
   const [showNeedsReview, setShowNeedsReview] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
@@ -73,6 +86,7 @@ export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
   const [selectedForReview, setSelectedForReview] = useState<string[]>([]);
+  const [tagEditor, setTagEditor] = useState<{ transactionId: string; value: string } | null>(null);
 
   const [newTx, setNewTx] = useState({
     merchant: '',
@@ -89,6 +103,7 @@ export default function TransactionsPage() {
   if (search) params.set('search', search);
   if (accountFilter) params.set('accountId', accountFilter);
   if (categoryFilter) params.set('categoryId', categoryFilter);
+  if (tagFilter) params.set('tag', tagFilter);
   if (dateFrom) params.set('dateFrom', dateFrom);
   if (dateTo) params.set('dateTo', dateTo);
   if (hideTransfers) params.set('excludeType', 'TRANSFER');
@@ -101,6 +116,7 @@ export default function TransactionsPage() {
       search,
       accountFilter,
       categoryFilter,
+      tagFilter,
       dateFrom,
       dateTo,
       hideTransfers,
@@ -368,6 +384,15 @@ export default function TransactionsPage() {
               </option>
             ))}
           </select>
+          <input
+            placeholder="Filter by tag"
+            value={tagFilter}
+            onChange={(e) => {
+              setTagFilter(e.target.value);
+              setPage(1);
+            }}
+            className="input w-36 py-2"
+          />
           <select
             value={categoryFilter}
             onChange={(e) => {
@@ -546,6 +571,9 @@ export default function TransactionsPage() {
               const isPending = tx.status === 'PENDING';
               const isOneTime =
                 tx.tags?.some((tag) => tag.tag.toLowerCase() === 'one-time') ?? false;
+              const otherTags = (tx.tags ?? []).filter(
+                (tag) => tag.tag.toLowerCase() !== 'one-time',
+              );
               const catName = tx.categoryId ? categoryMap.get(tx.categoryId) : undefined;
               const dateStr = new Date(tx.date).toLocaleDateString('en-US', {
                 month: 'short',
@@ -601,6 +629,57 @@ export default function TransactionsPage() {
                         <span className="category-pill text-[10px] bg-accent-purple/10 text-accent-purple">
                           One-time
                         </span>
+                      )}
+                      {otherTags.map((tag) => (
+                        <span
+                          key={tag.tag}
+                          className="category-pill bg-accent-purple/10 text-[10px] text-accent-purple"
+                        >
+                          {tag.tag}
+                        </span>
+                      ))}
+                      {tagEditor?.transactionId === tx.id && (
+                        <div className="flex w-full items-center gap-1.5 pt-1">
+                          <input
+                            autoFocus
+                            value={tagEditor.value}
+                            onChange={(e) =>
+                              setTagEditor({ transactionId: tx.id, value: e.target.value })
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                toggleOneTimeMutation.mutate({
+                                  txId: tx.id,
+                                  tags: parseTags(tagEditor.value),
+                                });
+                                setTagEditor(null);
+                              }
+                              if (e.key === 'Escape') setTagEditor(null);
+                            }}
+                            placeholder="Tags, separated by commas"
+                            className="input h-7 min-w-0 flex-1 py-1 text-xs"
+                          />
+                          <button
+                            onClick={() => {
+                              toggleOneTimeMutation.mutate({
+                                txId: tx.id,
+                                tags: parseTags(tagEditor.value),
+                              });
+                              setTagEditor(null);
+                            }}
+                            className="btn-ghost p-1 text-accent-green"
+                            title="Save tags"
+                          >
+                            <Check size={13} />
+                          </button>
+                          <button
+                            onClick={() => setTagEditor(null)}
+                            className="btn-ghost p-1 text-content-tertiary"
+                            title="Cancel tag editing"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -662,6 +741,18 @@ export default function TransactionsPage() {
                         <CircleOff size={12} />
                       </button>
                     )}
+                    <button
+                      onClick={() =>
+                        setTagEditor({
+                          transactionId: tx.id,
+                          value: (tx.tags ?? []).map((tag) => tag.tag).join(', '),
+                        })
+                      }
+                      className="btn-ghost p-1 text-content-tertiary hover:text-accent-purple"
+                      title="Edit tags"
+                    >
+                      <Tag size={12} />
+                    </button>
                     <button
                       onClick={() => setRuleTransaction(tx)}
                       className="btn-ghost p-1 text-content-tertiary hover:text-accent-purple"

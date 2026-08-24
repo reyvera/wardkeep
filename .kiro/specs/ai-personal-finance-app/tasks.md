@@ -612,10 +612,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Filter for unreviewed transactions
 
 - [ ] 34.2 Tags support
-  - Tag model with many-to-many relation to transactions
-  - CRUD endpoints, tag filter in search
-  - Rules engine can auto-apply tags
-  - Tag management UI
+  - [x] Tag model with many-to-many relation to transactions
+  - [x] Transaction tag CRUD and tag filter in search
+  - [x] Rules engine can auto-apply tags
+  - [x] Inline transaction tag editing and filtering UI
 
 - [ ] 34.3 Refund matching
   - Detect credits from same merchant within 90 days
