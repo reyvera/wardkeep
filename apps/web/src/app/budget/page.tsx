@@ -21,6 +21,14 @@ interface BudgetSummary {
   totalSpent: string;
   totalRemaining: string;
   overspentCount: number;
+  pace: {
+    daysElapsed: number;
+    daysInMonth: number;
+    expectedSpentToDate: string | null;
+    projectedMonthEnd: string | null;
+    differenceFromPace: string | null;
+    status: 'NOT_STARTED' | 'ON_PACE' | 'OVER_PACE' | 'UNDER_PACE';
+  };
   categoryProgress: CategoryProgress[];
 }
 
@@ -64,7 +72,9 @@ export default function BudgetPage() {
   const queryClient = useQueryClient();
   const [month, setMonth] = useState(getCurrentMonth);
   const [showForm, setShowForm] = useState(false);
-  const [allocations, setAllocations] = useState<AllocationInput[]>([{ categoryId: '', amount: '' }]);
+  const [allocations, setAllocations] = useState<AllocationInput[]>([
+    { categoryId: '', amount: '' },
+  ]);
 
   const budgetQuery = useQuery({
     queryKey: ['budget-summary', month],
@@ -106,7 +116,9 @@ export default function BudgetPage() {
     mutationFn: () =>
       apiClient.post('/budgets', {
         month,
-        allocations: allocations.filter((a) => a.categoryId && a.amount).map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
+        allocations: allocations
+          .filter((a) => a.categoryId && a.amount)
+          .map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
@@ -118,7 +130,9 @@ export default function BudgetPage() {
   const updateMutation = useMutation({
     mutationFn: (budgetId: string) =>
       apiClient.patch(`/budgets/${budgetId}`, {
-        allocations: allocations.filter((a) => a.categoryId && a.amount).map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
+        allocations: allocations
+          .filter((a) => a.categoryId && a.amount)
+          .map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
@@ -129,11 +143,18 @@ export default function BudgetPage() {
 
   const hasBudget = !!budgetDetailQuery.data?.id;
 
-  useEffect(() => { setShowForm(false); }, [month]);
+  useEffect(() => {
+    setShowForm(false);
+  }, [month]);
 
   const startEditing = () => {
     if (budgetDetailQuery.data?.allocations) {
-      setAllocations(budgetDetailQuery.data.allocations.map((a) => ({ categoryId: a.categoryId, amount: a.amount })));
+      setAllocations(
+        budgetDetailQuery.data.allocations.map((a) => ({
+          categoryId: a.categoryId,
+          amount: a.amount,
+        })),
+      );
     } else {
       setAllocations([{ categoryId: '', amount: '' }]);
     }
@@ -167,11 +188,14 @@ export default function BudgetPage() {
     setAllocations(updated);
   };
 
-  const getCategoryName = (id: string) => categoriesQuery.data?.find((c) => c.id === id)?.name ?? id;
+  const getCategoryName = (id: string) =>
+    categoriesQuery.data?.find((c) => c.id === id)?.name ?? id;
 
   const totalAllocated = Number(budgetQuery.data?.totalAllocated ?? 0);
   const totalSpent = Number(budgetQuery.data?.totalSpent ?? 0);
   const totalRemaining = Number(budgetQuery.data?.totalRemaining ?? 0);
+  const pace = budgetQuery.data?.pace;
+  const paceDifference = Number(pace?.differenceFromPace ?? 0);
 
   return (
     <div className="space-y-6">
@@ -179,44 +203,100 @@ export default function BudgetPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-page-title text-content-primary">Budget</h1>
         <div className="flex items-center gap-1">
-          <button onClick={() => setMonth(navigateMonth(month, -1))} className="btn-ghost p-2"><ChevronLeft size={16} /></button>
-          <button onClick={() => setMonth(getCurrentMonth())} className="btn-secondary text-xs px-3 py-1.5">{formatMonth(month)}</button>
-          <button onClick={() => setMonth(navigateMonth(month, 1))} className="btn-ghost p-2"><ChevronRight size={16} /></button>
+          <button onClick={() => setMonth(navigateMonth(month, -1))} className="btn-ghost p-2">
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={() => setMonth(getCurrentMonth())}
+            className="btn-secondary text-xs px-3 py-1.5"
+          >
+            {formatMonth(month)}
+          </button>
+          <button onClick={() => setMonth(navigateMonth(month, 1))} className="btn-ghost p-2">
+            <ChevronRight size={16} />
+          </button>
         </div>
       </div>
 
       {/* Summary Cards */}
       {budgetQuery.data && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="card">
             <span className="card-title">ALLOCATED</span>
-            <p className="text-2xl font-bold tabular-nums text-content-primary">${formatCurrency(totalAllocated)}</p>
+            <p className="text-2xl font-bold tabular-nums text-content-primary">
+              ${formatCurrency(totalAllocated)}
+            </p>
           </div>
           <div className="card">
             <span className="card-title">SPENT</span>
-            <p className="text-2xl font-bold tabular-nums text-accent-red">${formatCurrency(totalSpent)}</p>
+            <p className="text-2xl font-bold tabular-nums text-accent-red">
+              ${formatCurrency(totalSpent)}
+            </p>
           </div>
           <div className="card">
             <span className="card-title">REMAINING</span>
-            <p className={`text-2xl font-bold tabular-nums ${totalRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
+            <p
+              className={`text-2xl font-bold tabular-nums ${totalRemaining >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
+            >
               ${formatCurrency(Math.abs(totalRemaining))}
             </p>
+            <p
+              className={`mt-1 text-xs ${totalRemaining >= 0 ? 'text-content-tertiary' : 'text-accent-red'}`}
+            >
+              {totalRemaining >= 0 ? 'left to allocate' : 'over allocated'}
+            </p>
+          </div>
+          <div className="card">
+            <span className="card-title">SPENDING PACE</span>
+            {pace?.projectedMonthEnd === null ? (
+              <p className="mt-2 text-sm text-content-tertiary">No recorded pace yet</p>
+            ) : (
+              <>
+                <p
+                  className={`text-2xl font-bold tabular-nums ${pace.status === 'OVER_PACE' ? 'text-accent-red' : pace.status === 'UNDER_PACE' ? 'text-accent-green' : 'text-accent-blue'}`}
+                >
+                  ${formatCurrency(Number(pace.projectedMonthEnd))}
+                </p>
+                <p className="mt-1 text-xs text-content-tertiary">
+                  {pace.status === 'ON_PACE'
+                    ? 'on pace for month-end'
+                    : `$${formatCurrency(Math.abs(paceDifference))} ${pace.status === 'OVER_PACE' ? 'over' : 'under'} pace through day ${pace.daysElapsed}`}
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <button onClick={handleCopyFromPrevious} disabled={copyMutation.isPending || overwriteCopyMutation.isPending} className="btn-secondary text-xs">
-          <Copy size={14} /> {(copyMutation.isPending || overwriteCopyMutation.isPending) ? 'Copying...' : 'Copy Previous'}
+        <button
+          onClick={handleCopyFromPrevious}
+          disabled={copyMutation.isPending || overwriteCopyMutation.isPending}
+          className="btn-secondary text-xs"
+        >
+          <Copy size={14} />{' '}
+          {copyMutation.isPending || overwriteCopyMutation.isPending
+            ? 'Copying...'
+            : 'Copy Previous'}
         </button>
         <button onClick={startEditing} className="btn-primary text-xs">
-          {hasBudget ? <><Edit3 size={14} /> Edit Budget</> : <><Plus size={14} /> Create Budget</>}
+          {hasBudget ? (
+            <>
+              <Edit3 size={14} /> Edit Budget
+            </>
+          ) : (
+            <>
+              <Plus size={14} /> Create Budget
+            </>
+          )}
         </button>
       </div>
 
       {(copyMutation.isError || overwriteCopyMutation.isError) && (
-        <p className="text-sm text-accent-red">{copyMutation.error?.message ?? overwriteCopyMutation.error?.message}</p>
+        <p className="text-sm text-accent-red">
+          {copyMutation.error?.message ?? overwriteCopyMutation.error?.message}
+        </p>
       )}
 
       {/* Empty state */}
@@ -224,7 +304,9 @@ export default function BudgetPage() {
         <div className="card text-center py-12">
           <PieChart size={40} className="mx-auto text-content-tertiary mb-3" />
           <p className="text-content-secondary text-sm">No budget set for {formatMonth(month)}</p>
-          <p className="text-content-tertiary text-xs mt-1">Create one or copy from the previous month</p>
+          <p className="text-content-tertiary text-xs mt-1">
+            Create one or copy from the previous month
+          </p>
         </div>
       )}
 
@@ -232,29 +314,63 @@ export default function BudgetPage() {
       {showForm && (
         <div className="card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-content-primary">{hasBudget ? 'Edit' : 'Create'} Budget</h2>
-            <button onClick={() => setShowForm(false)} className="btn-ghost p-1"><X size={16} /></button>
+            <h2 className="text-sm font-semibold text-content-primary">
+              {hasBudget ? 'Edit' : 'Create'} Budget
+            </h2>
+            <button onClick={() => setShowForm(false)} className="btn-ghost p-1">
+              <X size={16} />
+            </button>
           </div>
           {(createMutation.isError || updateMutation.isError) && (
-            <p className="text-sm text-accent-red">{createMutation.error?.message ?? updateMutation.error?.message}</p>
+            <p className="text-sm text-accent-red">
+              {createMutation.error?.message ?? updateMutation.error?.message}
+            </p>
           )}
           <form onSubmit={handleSubmit} className="space-y-3">
             {allocations.map((alloc, idx) => (
               <div key={idx} className="flex gap-3 items-center">
-                <select value={alloc.categoryId} onChange={(e) => updateRow(idx, 'categoryId', e.target.value)} className="input flex-1">
+                <select
+                  value={alloc.categoryId}
+                  onChange={(e) => updateRow(idx, 'categoryId', e.target.value)}
+                  className="input flex-1"
+                >
                   <option value="">Select category...</option>
-                  {(categoriesQuery.data ?? []).map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                  {(categoriesQuery.data ?? []).map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
-                <input type="number" step="0.01" min="0.01" placeholder="Amount" value={alloc.amount} onChange={(e) => updateRow(idx, 'amount', e.target.value)} className="input w-32" />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="Amount"
+                  value={alloc.amount}
+                  onChange={(e) => updateRow(idx, 'amount', e.target.value)}
+                  className="input w-32"
+                />
                 {allocations.length > 1 && (
-                  <button type="button" onClick={() => removeRow(idx)} className="btn-ghost p-1 text-accent-red"><X size={14} /></button>
+                  <button
+                    type="button"
+                    onClick={() => removeRow(idx)}
+                    className="btn-ghost p-1 text-accent-red"
+                  >
+                    <X size={14} />
+                  </button>
                 )}
               </div>
             ))}
             <div className="flex gap-2">
-              <button type="button" onClick={addRow} className="btn-secondary text-xs"><Plus size={14} /> Add</button>
-              <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="btn-primary text-xs">
-                {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 'Save Budget'}
+              <button type="button" onClick={addRow} className="btn-secondary text-xs">
+                <Plus size={14} /> Add
+              </button>
+              <button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="btn-primary text-xs"
+              >
+                {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 'Save Budget'}
               </button>
             </div>
           </form>
@@ -288,12 +404,20 @@ export default function BudgetPage() {
                       className="progress-fill"
                       style={{
                         width: `${pct}%`,
-                        background: isOver ? 'var(--accent-red)' : pct > 80 ? 'var(--accent-yellow)' : catIcon.color,
+                        background: isOver
+                          ? 'var(--accent-red)'
+                          : pct > 80
+                            ? 'var(--accent-yellow)'
+                            : catIcon.color,
                       }}
                     />
                   </div>
-                  <p className={`text-[10px] mt-1 ${isOver ? 'text-accent-red' : 'text-content-tertiary'}`}>
-                    {isOver ? `$${formatCurrency(Math.abs(Number(cp.remaining)))} over` : `$${formatCurrency(Number(cp.remaining))} left`}
+                  <p
+                    className={`text-[10px] mt-1 ${isOver ? 'text-accent-red' : 'text-content-tertiary'}`}
+                  >
+                    {isOver
+                      ? `$${formatCurrency(Math.abs(Number(cp.remaining)))} over`
+                      : `$${formatCurrency(Number(cp.remaining))} left`}
                   </p>
                 </div>
               );
