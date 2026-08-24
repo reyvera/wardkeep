@@ -52,7 +52,13 @@ interface ReadinessExplanation {
     staleAccounts: number;
     lastSynchronizedAt: string | null;
   };
-  recentChanges: Array<{ pillar: PillarKey; delta: number }>;
+  recentChanges: Array<{
+    pillar: PillarKey;
+    delta: number;
+    comparedTo: string;
+    reason: string | null;
+  }>;
+  changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
 const PILLARS: Record<
@@ -232,7 +238,7 @@ export default function ReadinessPillarPage() {
   const coverage = assessment.coverage;
   const signals = explanation.factors;
   const observedCapabilities = new Set(signals.map((signal) => signal.capabilityId));
-  const trend = data.recentChanges.find((change) => change.pillar === pillar)?.delta ?? null;
+  const trend = data.recentChanges.find((change) => change.pillar === pillar);
   const Icon = meta.icon;
   const color = scoreColor(score);
 
@@ -262,10 +268,20 @@ export default function ReadinessPillarPage() {
             >
               {confidenceLabel(coverage, data.dataFreshness.staleAccounts)} · {coverage}% coverage
             </p>
-            {trend !== null && (
-              <p className={`text-xs mt-2 ${trend >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>
-                {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)} over available history
-              </p>
+            {trend && (
+              <>
+                <p
+                  className={`text-xs mt-2 ${trend.delta >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
+                >
+                  {trend.delta >= 0 ? '↑' : '↓'} {Math.abs(trend.delta)}{' '}
+                  {data.changeWindow === 'since_last_visit'
+                    ? 'since your last visit'
+                    : 'since the previous recorded check'}
+                </p>
+                {trend.reason && (
+                  <p className="text-xs mt-1 text-content-tertiary">{trend.reason}</p>
+                )}
+              </>
             )}
           </div>
         </div>
