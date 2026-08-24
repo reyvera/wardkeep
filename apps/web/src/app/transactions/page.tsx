@@ -13,6 +13,7 @@ import {
   Clock,
   Zap,
   CircleOff,
+  Check,
 } from 'lucide-react';
 import { CategoryIcon, getCategoryIcon } from '@/components/category-icon';
 import { CreateRuleModal } from '@/components/create-rule-modal';
@@ -131,6 +132,11 @@ export default function TransactionsPage() {
   const toggleOneTimeMutation = useMutation({
     mutationFn: ({ txId, tags }: { txId: string; tags: string[] }) =>
       apiClient.patch(`/transactions/${txId}`, { tags }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
+
+  const markReviewedMutation = useMutation({
+    mutationFn: (txId: string) => apiClient.patch(`/transactions/${txId}/review`, {}),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 
@@ -478,6 +484,16 @@ export default function TransactionsPage() {
 
                   {/* Quick actions */}
                   <div className="flex items-center gap-1 ml-1">
+                    {needsReview && (
+                      <button
+                        onClick={() => markReviewedMutation.mutate(tx.id)}
+                        disabled={markReviewedMutation.isPending}
+                        className="btn-ghost p-1 text-accent-blue hover:text-accent-green disabled:opacity-50"
+                        title="Mark as reviewed"
+                      >
+                        <Check size={13} />
+                      </button>
+                    )}
                     <select
                       value={tx.categoryId ?? ''}
                       onChange={(e) =>
