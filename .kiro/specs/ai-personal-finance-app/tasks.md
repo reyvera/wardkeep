@@ -243,6 +243,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [ ] Define retention and store 365 days of snapshots per household
 - [~] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
   - [x] Return available 7-, 30-, and 90-day score comparisons with their actual elapsed period.
+  - [x] Store the observed overall score used by the Dashboard, never a synthetic score for an unevaluated household.
   - [ ] Add durable causal explanations for score changes, not only changed factors.
   - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 

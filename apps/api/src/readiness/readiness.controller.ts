@@ -35,12 +35,20 @@ export class ReadinessController {
 
     await this.readinessService.recordDashboardView(userId);
 
-    // Record today's snapshot for historical tracking (fire-and-forget)
-    this.readinessService
-      .recordSnapshot(userId, readiness.overall, readiness.pillars, readiness.signals)
-      .catch(() => {
-        // Non-fatal: snapshot persistence failure shouldn't block response
-      });
+    // Record today's observed score for historical tracking (fire-and-forget).
+    // Do not persist a synthetic overall when no direct pillar can be evaluated.
+    if (readiness.overallAssessment.score !== null) {
+      this.readinessService
+        .recordSnapshot(
+          userId,
+          readiness.overallAssessment.score,
+          readiness.pillars,
+          readiness.signals,
+        )
+        .catch(() => {
+          // Non-fatal: snapshot persistence failure shouldn't block response
+        });
+    }
 
     return readiness;
   }

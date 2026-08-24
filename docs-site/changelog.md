@@ -21,6 +21,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 ### Changed
 
 - **Partial readiness trends** — Recorded trends are now available for partial assessments and explicitly identify that they cover only evaluated factors.
+- **Consistent readiness history** — New daily snapshots now store the same observed overall score shown on the Dashboard, rather than a differently weighted placeholder score.
 - **Truthful readiness history** — The Dashboard now receives up to 90 daily readiness snapshots and labels score movement with the actual available time span.
 
 ### Added
