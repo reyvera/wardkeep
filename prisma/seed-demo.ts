@@ -485,6 +485,7 @@ async function main() {
         frequency: 'MONTHLY',
         nextExpected: nextMonthlyDate(21),
         isConfirmed: true,
+        isSubscription: true,
       },
       {
         userId: user.id,
