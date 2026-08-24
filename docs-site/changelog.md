@@ -21,6 +21,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 ### Changed
 
 - **Recurring workflow alignment** — Detected recurring patterns now load from their live API source and their confirm/dismiss actions use the correct endpoints.
+- **Recurring stop monitoring** — Confirmed recurring bills can now be removed from future monitoring and cash-flow forecasts without deleting the record.
+- **Recurring-bill demo data** — The demo household now includes confirmed and detected recurring bills for immediate Cash Flow workflow verification.
 - **Repeatable demo household** — Resetting demo data now produces stable amounts, merchants, and account choices for consistent verification and screenshots.
 - **Local worker startup** — `pnpm dev` now uses the workspace TypeScript runner for the background worker, matching the rest of the local development workflow.
 - **Partial readiness trends** — Recorded trends are now available for partial assessments and explicitly identify that they cover only evaluated factors.

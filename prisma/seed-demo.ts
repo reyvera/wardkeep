@@ -50,6 +50,14 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(demoRandom() * arr.length)]!;
 }
 
+function nextMonthlyDate(dayOfMonth: number): Date {
+  const next = new Date();
+  next.setHours(0, 0, 0, 0);
+  next.setDate(dayOfMonth);
+  if (next.getTime() <= Date.now()) next.setMonth(next.getMonth() + 1);
+  return next;
+}
+
 async function main() {
   console.log('🌱 Seeding demo data...');
 
@@ -392,6 +400,48 @@ async function main() {
   }
 
   console.log(`  ✓ Created ${txCount} transactions (6 months)`);
+
+  await prisma.recurringTransaction.createMany({
+    data: [
+      {
+        userId: user.id,
+        accountId: checking.id,
+        merchant: 'Apt Rent LLC',
+        expectedAmount: '1850.00',
+        frequency: 'MONTHLY',
+        nextExpected: nextMonthlyDate(1),
+        isConfirmed: true,
+      },
+      {
+        userId: user.id,
+        accountId: checking.id,
+        merchant: 'State Farm Insurance',
+        expectedAmount: '186.00',
+        frequency: 'MONTHLY',
+        nextExpected: nextMonthlyDate(12),
+        isConfirmed: true,
+      },
+      {
+        userId: user.id,
+        accountId: creditCard.id,
+        merchant: 'Netflix',
+        expectedAmount: '15.49',
+        frequency: 'MONTHLY',
+        nextExpected: nextMonthlyDate(21),
+        isConfirmed: true,
+      },
+      {
+        userId: user.id,
+        accountId: creditCard.id,
+        merchant: 'GitHub Pro',
+        expectedAmount: '4.00',
+        frequency: 'MONTHLY',
+        nextExpected: nextMonthlyDate(25),
+        isConfirmed: false,
+      },
+    ],
+  });
+  console.log('  ✓ Created 3 confirmed and 1 detected recurring-bill demo records');
 
   // Create current month budget
   const now = new Date();

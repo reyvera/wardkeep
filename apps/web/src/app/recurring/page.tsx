@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { RefreshCw, Check, X, CalendarClock } from 'lucide-react';
+import { RefreshCw, Check, X, CalendarClock, PauseCircle } from 'lucide-react';
 
 interface Account {
   id: string;
@@ -76,6 +76,10 @@ export default function RecurringPage() {
   });
   const dismissMutation = useMutation({
     mutationFn: (id: string) => apiClient.post('/recurring/dismiss', { id }),
+    onSuccess: refreshRecurring,
+  });
+  const deactivateMutation = useMutation({
+    mutationFn: (id: string) => apiClient.post('/recurring/deactivate', { id }),
     onSuccess: refreshRecurring,
   });
 
@@ -199,6 +203,16 @@ export default function RecurringPage() {
                 <p className="text-sm font-bold tabular-nums text-content-primary">
                   ${formatCurrency(Number(r.expectedAmount))}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => deactivateMutation.mutate(r.id)}
+                  className="btn-ghost p-2 text-content-tertiary hover:text-accent-yellow"
+                  title="Stop monitoring this recurring bill"
+                  aria-label={`Stop monitoring ${r.merchant}`}
+                  disabled={deactivateMutation.isPending}
+                >
+                  <PauseCircle size={15} />
+                </button>
               </div>
             ))}
           </div>
