@@ -177,11 +177,76 @@ export default function DashboardPage() {
   // from today's average: it hides real spending spikes and plateaus.
   const paceData = (statsQuery.data?.dailySpending ?? []).map((point) => ({
     ...point,
-    budget: budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * point.day * 100) / 100 : 0,
+    budget:
+      budgetAllocated > 0 ? Math.round((budgetAllocated / daysInMonth) * point.day * 100) / 100 : 0,
   }));
-  const expectedSpend = budgetAllocated > 0 && daysInMonth > 0 ? budgetAllocated * (daysElapsed / daysInMonth) : 0;
-  const paceDifference = expectedSpend - expenses;
+  const expectedSpend =
+    budgetAllocated > 0 && daysInMonth > 0 ? budgetAllocated * (daysElapsed / daysInMonth) : 0;
   const projectedSpend = daysElapsed > 0 ? (expenses / daysElapsed) * daysInMonth : 0;
+  const dailyBudget = daysInMonth > 0 ? budgetAllocated / daysInMonth : 0;
+  const dailySpending = paceData.map(
+    (point, index) => point.actual - (paceData[index - 1]?.actual ?? 0),
+  );
+  const recentDays = dailySpending.slice(-Math.min(7, dailySpending.length));
+  const previousDays = dailySpending.slice(-Math.min(14, dailySpending.length), -recentDays.length);
+  const recentDailyAverage =
+    recentDays.length > 0
+      ? recentDays.reduce((sum, amount) => sum + amount, 0) / recentDays.length
+      : 0;
+  const previousDailyAverage =
+    previousDays.length > 0
+      ? previousDays.reduce((sum, amount) => sum + amount, 0) / previousDays.length
+      : null;
+  const paceTolerance = Math.max(5, expectedSpend * 0.05);
+  const isAcceleratingOverBudget =
+    daysElapsed >= 3 && dailyBudget > 0 && recentDailyAverage > dailyBudget * 1.1;
+  const isNearBudgetPace =
+    daysElapsed >= 3 && dailyBudget > 0 && recentDailyAverage > dailyBudget * 0.95;
+  const paceState: 'neutral' | 'under' | 'near' | 'over' =
+    budgetAllocated === 0 || daysElapsed === 0
+      ? 'neutral'
+      : expenses > expectedSpend + paceTolerance || isAcceleratingOverBudget
+        ? 'over'
+        : expenses >= expectedSpend - paceTolerance || isNearBudgetPace
+          ? 'near'
+          : 'under';
+  const paceVisual = {
+    neutral: {
+      color: 'var(--accent-blue)',
+      gradient: 'spendGradientNeutral',
+      badge: 'bg-accent-blue/10 text-accent-blue',
+      label: 'No budget pace',
+    },
+    under: {
+      color: 'var(--accent-green)',
+      gradient: 'spendGradientUnder',
+      badge: 'bg-green-500/20 text-green-400',
+      label: 'Under pace',
+    },
+    near: {
+      color: 'var(--accent-yellow)',
+      gradient: 'spendGradientNear',
+      badge: 'bg-yellow-500/20 text-yellow-400',
+      label: 'Near pace',
+    },
+    over: {
+      color: 'var(--accent-red)',
+      gradient: 'spendGradientOver',
+      badge: 'bg-red-500/20 text-red-400',
+      label:
+        isAcceleratingOverBudget && expenses <= expectedSpend + paceTolerance
+          ? 'Spending accelerating'
+          : 'Over pace',
+    },
+  }[paceState];
+  const velocityLabel =
+    previousDailyAverage === null || previousDailyAverage === 0
+      ? null
+      : recentDailyAverage > previousDailyAverage * 1.1
+        ? 'Spending is accelerating'
+        : recentDailyAverage < previousDailyAverage * 0.9
+          ? 'Spending is slowing'
+          : 'Spending is steady';
 
   return (
     <div className="space-y-6">
@@ -217,50 +282,70 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-2">
           <span className="card-title">SPENDING PACE</span>
           {budgetAllocated > 0 && (
-            <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                paceDifference >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-              }`}
-            >
-              ${Math.abs(paceDifference).toLocaleString('en-US', { maximumFractionDigits: 0 })} {paceDifference >= 0 ? 'ahead of pace' : 'behind pace'}
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded ${paceVisual.badge}`}>
+              {paceVisual.label}
             </span>
           )}
         </div>
         <ResponsiveContainer width="100%" height={140}>
           <AreaChart data={paceData}>
             <defs>
-              <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
+              <linearGradient id={paceVisual.gradient} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={paceVisual.color} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={paceVisual.color} stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="day" hide />
             <YAxis hide />
             <Tooltip
-              contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 8, color: 'var(--text-primary)' }}
+              contentStyle={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 8,
+                color: 'var(--text-primary)',
+              }}
               formatter={(value) => [`$${Number(value).toFixed(2)}`, '']}
               labelFormatter={(day) => `Day ${day}`}
             />
             {budgetAllocated > 0 && (
-              <Area type="monotone" dataKey="budget" stroke="var(--text-tertiary)" strokeDasharray="4 4" fill="none" strokeWidth={1} />
+              <Area
+                type="monotone"
+                dataKey="budget"
+                stroke="var(--text-tertiary)"
+                strokeDasharray="4 4"
+                fill="none"
+                strokeWidth={1}
+              />
             )}
-            <Area type="monotone" dataKey="actual" stroke="var(--accent-green)" fill="url(#spendGradient)" strokeWidth={2} />
+            <Area
+              type="monotone"
+              dataKey="actual"
+              stroke={paceVisual.color}
+              fill={`url(#${paceVisual.gradient})`}
+              strokeWidth={2}
+            />
           </AreaChart>
         </ResponsiveContainer>
         {budgetAllocated > 0 && (
           <p className="text-xs text-content-tertiary mt-2">
-            ${formatCurrency(budgetRemaining)} remaining · Projected month-end: ${formatCurrency(projectedSpend)}{projectedSpend > budgetAllocated ? ` · $${formatCurrency(projectedSpend - budgetAllocated)} over` : ''}
+            ${formatCurrency(budgetRemaining)} remaining · Projected month-end: $
+            {formatCurrency(projectedSpend)}
+            {projectedSpend > budgetAllocated
+              ? ` · $${formatCurrency(projectedSpend - budgetAllocated)} over`
+              : ''}
+            {velocityLabel ? ` · ${velocityLabel.toLowerCase()}` : ''}
           </p>
         )}
       </div>
 
       {/* Main Grid: 3 columns on large, 2 on medium */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
         {/* Net Worth Card */}
         <div className="card">
           <span className="card-title">NET WORTH</span>
-          <p className={`text-hero tabular-nums ${netWorth >= 0 ? 'text-content-primary' : 'text-accent-red'}`}>
+          <p
+            className={`text-hero tabular-nums ${netWorth >= 0 ? 'text-content-primary' : 'text-accent-red'}`}
+          >
             ${formatCurrency(netWorth)}
           </p>
           <div className="flex items-center gap-4 mt-3 text-xs">
