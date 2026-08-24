@@ -241,7 +241,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] API endpoint: GET /api/readiness/history — score snapshots over time
   - [x] Dashboard renders up to 90 days of available score history
   - [ ] Define retention and store 365 days of snapshots per household
-  - [ ] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
+- [~] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
+  - [x] Return available 7-, 30-, and 90-day score comparisons with their actual elapsed period.
+  - [ ] Add durable causal explanations for score changes, not only changed factors.
   - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
 - [~] 19.5 Write property tests for Readiness Engine
