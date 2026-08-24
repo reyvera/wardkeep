@@ -157,6 +157,13 @@ npx ts-node --swc --project tsconfig.json src/main.ts
 # 6. Start the Web frontend (terminal 2)
 cd apps/web
 pnpm dev
+
+# 7. Start the background worker (terminal 3)
+cd apps/worker
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
+REDIS_HOST=localhost REDIS_PORT=6379 ENCRYPTION_KEY=dev-testing-key \
+INTERNAL_API_URL=http://localhost:4000/api \
+pnpm dev
 ```
 
 ### Demo User

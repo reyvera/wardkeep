@@ -100,9 +100,21 @@ cd apps/web
 pnpm dev
 ```
 
+## 6. Start the background worker
+
+In a third terminal:
+
+```bash
+cd apps/worker
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public" \
+REDIS_HOST=localhost REDIS_PORT=6379 ENCRYPTION_KEY=dev-testing-key \
+INTERNAL_API_URL=http://localhost:4000/api \
+pnpm dev
+```
+
 ---
 
-## 6. Open the app
+## 7. Open the app
 
 | Service      | URL                                                                  |
 | :----------- | :------------------------------------------------------------------- |
