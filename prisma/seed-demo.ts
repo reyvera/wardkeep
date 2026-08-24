@@ -26,19 +26,28 @@ const MERCHANTS = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Keep the fixture repeatable. Dates remain relative to today, but all amounts,
+// merchants, and account choices are stable for screenshots and verification.
+let randomState = 0x57_41_52_44;
+
+function demoRandom(): number {
+  randomState = (randomState * 1_664_525 + 1_013_904_223) >>> 0;
+  return randomState / 0x1_0000_0000;
+}
+
 function randomBetween(min: number, max: number): number {
-  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+  return Math.round((demoRandom() * (max - min) + min) * 100) / 100;
 }
 
 function randomDate(monthsAgo: number): Date {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
   const end = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0);
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  return new Date(start.getTime() + demoRandom() * (end.getTime() - start.getTime()));
 }
 
 function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
+  return arr[Math.floor(demoRandom() * arr.length)]!;
 }
 
 async function main() {
@@ -326,12 +335,12 @@ async function main() {
     txCount++;
 
     // Generate 60-80 random expenses per month
-    const expenseCount = Math.floor(Math.random() * 20) + 60;
+    const expenseCount = Math.floor(demoRandom() * 20) + 60;
     for (let i = 0; i < expenseCount; i++) {
       const categoryName = pickRandom(Object.keys(MERCHANTS));
       const merchants = MERCHANTS[categoryName as keyof typeof MERCHANTS]!;
       const merchant = pickRandom(merchants);
-      const account = Math.random() > 0.6 ? creditCard : checking;
+      const account = demoRandom() > 0.6 ? creditCard : checking;
 
       let amount: number;
       switch (categoryName) {

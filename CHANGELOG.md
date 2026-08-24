@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Repeatable demo household** — Resetting demo data now produces stable amounts, merchants, and account choices for consistent verification and screenshots.
 - **Local worker startup** — `pnpm dev` now uses the workspace TypeScript runner for the background worker, matching the rest of the local development workflow.
 - **Partial readiness trends** — Recorded trends are now available for partial assessments and explicitly identify that they cover only evaluated factors.
 - **Consistent readiness history** — New daily snapshots now store the same observed overall score shown on the Dashboard, rather than a differently weighted placeholder score.
