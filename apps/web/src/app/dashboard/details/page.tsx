@@ -134,6 +134,7 @@ function formatAccountType(type: string): string {
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(getCurrentMonth);
+  const [trendMonths, setTrendMonths] = useState<6 | 12>(6);
 
   const netWorthQuery = useQuery({
     queryKey: ['net-worth'],
@@ -151,8 +152,9 @@ export default function DashboardPage() {
   });
 
   const statsQuery = useQuery({
-    queryKey: ['spending-stats', month],
-    queryFn: () => apiClient.get<SpendingStats>(`/transactions/stats?month=${month}`),
+    queryKey: ['spending-stats', month, trendMonths],
+    queryFn: () =>
+      apiClient.get<SpendingStats>(`/transactions/stats?month=${month}&trendMonths=${trendMonths}`),
   });
 
   const recentTxQuery = useQuery({
@@ -551,7 +553,20 @@ export default function DashboardPage() {
       {/* Third Row: Income vs Expenses Trend */}
       {statsQuery.data && statsQuery.data.monthlyTrend.length > 0 && (
         <div className="card">
-          <span className="card-title">INCOME VS EXPENSES (6 MONTHS)</span>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="card-title">INCOME VS EXPENSES ({trendMonths} MONTHS)</span>
+            <div className="flex rounded-md border border-edge p-0.5 text-xs">
+              {[6, 12].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setTrendMonths(period as 6 | 12)}
+                  className={`rounded px-2 py-1 ${trendMonths === period ? 'bg-surface-tertiary text-content-primary' : 'text-content-tertiary hover:text-content-primary'}`}
+                >
+                  {period}M
+                </button>
+              ))}
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={statsQuery.data.monthlyTrend}>
               <defs>
