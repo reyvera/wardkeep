@@ -755,7 +755,10 @@ export default function DashboardPage() {
             <h3 className="card-title">COMING UP</h3>
             <p className="text-xs text-content-tertiary">Recorded dates in the next 30 days</p>
           </div>
-          <CalendarDays size={19} className="text-accent-blue" />
+          <Link href="/timeline" className="flex items-center gap-2 text-xs text-accent-blue hover:underline">
+            View timeline
+            <CalendarDays size={19} />
+          </Link>
         </div>
         {recurringQuery.isLoading || insuranceQuery.isLoading || incomeSourcesQuery.isLoading || plannedExpensesQuery.isLoading ? (
           <div className="skeleton mt-4 h-16 w-full" />
