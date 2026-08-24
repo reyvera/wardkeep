@@ -88,17 +88,29 @@ interface InsurancePolicySummary {
   isActive: boolean;
 }
 
-interface RecurringTransactionSummary {
+interface IncomeSourceSummary {
   id: string;
-  merchant: string;
-  expectedAmount: string;
-  frequency: string;
-  nextExpected: string;
+  name: string;
+  nextExpectedDate: string | null;
+  expectedNetAmount: string | null;
 }
-
-interface IncomeSourceSummary { id: string; name: string; nextExpectedDate: string | null; expectedNetAmount: string | null; }
-interface PlannedExpenseSummary { id: string; name: string; amount: string | null; fundedAmount: string | null; dueDate: string | null; }
-interface SpendingStatsSummary { monthlyTrend: Array<{ month: string; income: number; expenses: number }>; categoryChanges: Array<{ categoryId: string | null; name: string; amount: number; previousAmount: number; change: number }>; }
+interface SpendingStatsSummary {
+  monthlyTrend: Array<{ month: string; income: number; expenses: number }>;
+  categoryChanges: Array<{
+    categoryId: string | null;
+    name: string;
+    amount: number;
+    previousAmount: number;
+    change: number;
+  }>;
+}
+interface TimelineEvent {
+  id: string;
+  date: string;
+  title: string;
+  detail: string;
+  href: string;
+}
 
 interface Recommendation {
   id: string;
@@ -235,13 +247,18 @@ export default function DashboardPage() {
     queryKey: ['insurance-policies'],
     queryFn: () => apiClient.get<InsurancePolicySummary[]>('/insurance/policies'),
   });
-  const recurringQuery = useQuery({
-    queryKey: ['recurring-transactions'],
-    queryFn: () => apiClient.get<RecurringTransactionSummary[]>('/recurring'),
+  const incomeSourcesQuery = useQuery({
+    queryKey: ['income-sources'],
+    queryFn: () => apiClient.get<IncomeSourceSummary[]>('/income-sources'),
   });
-  const incomeSourcesQuery = useQuery({ queryKey: ['income-sources'], queryFn: () => apiClient.get<IncomeSourceSummary[]>('/income-sources') });
-  const spendingStatsQuery = useQuery({ queryKey: ['spending-stats'], queryFn: () => apiClient.get<SpendingStatsSummary>('/transactions/stats') });
-  const plannedExpensesQuery = useQuery({ queryKey: ['planned-expenses'], queryFn: () => apiClient.get<PlannedExpenseSummary[]>('/planned-expenses') });
+  const spendingStatsQuery = useQuery({
+    queryKey: ['spending-stats'],
+    queryFn: () => apiClient.get<SpendingStatsSummary>('/transactions/stats'),
+  });
+  const timelineQuery = useQuery({
+    queryKey: ['timeline', 30],
+    queryFn: () => apiClient.get<TimelineEvent[]>('/timeline/upcoming?days=30'),
+  });
   const recommendationsQuery = useQuery({
     queryKey: ['recommendations'],
     queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
@@ -326,47 +343,23 @@ export default function DashboardPage() {
   today.setHours(0, 0, 0, 0);
   const daysUntil = (date: string) =>
     Math.ceil((new Date(date).getTime() - today.getTime()) / 86_400_000);
-  const comingUp = [
-    ...activePolicies
-      .filter((policy) => policy.renewalDate && daysUntil(policy.renewalDate) <= 30)
-      .map((policy) => ({
-        id: `policy-${policy.id}`,
-        date: policy.renewalDate!,
-        title: `${policy.provider} ${policy.type.toLowerCase().replace('_', ' ')} renewal`,
-        detail: 'Recorded policy renewal',
-        href: '/insurance',
-      })),
-    ...(recurringQuery.data ?? [])
-      .filter(
-        (transaction) =>
-          daysUntil(transaction.nextExpected) >= 0 && daysUntil(transaction.nextExpected) <= 30,
-      )
-      .map((transaction) => ({
-        id: `recurring-${transaction.id}`,
-        date: transaction.nextExpected,
-        title: transaction.merchant,
-        detail: `$${Number(transaction.expectedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected ${transaction.frequency.toLowerCase()}`,
-        href: '/recurring',
-      })),
-    ...(incomeSourcesQuery.data ?? [])
-      .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0 && daysUntil(source.nextExpectedDate) <= 30)
-      .map((source) => ({ id: `income-${source.id}`, date: source.nextExpectedDate!, title: source.name, detail: `${source.expectedNetAmount ? `$${Number(source.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} expected income` : 'Recorded expected income date'}`, href: '/income-sources' })),
-    ...(plannedExpensesQuery.data ?? [])
-      .filter((expense) => expense.dueDate && daysUntil(expense.dueDate) >= 0 && daysUntil(expense.dueDate) <= 30)
-      .map((expense) => ({ id: `planned-${expense.id}`, date: expense.dueDate!, title: expense.name, detail: `${expense.amount ? `$${Number(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} planned` : 'Planned expense'}${expense.amount && Number(expense.fundedAmount ?? 0) < Number(expense.amount) ? ` · $${(Number(expense.amount) - Number(expense.fundedAmount ?? 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} not marked set aside` : ''}`, href: '/planned-expenses' })),
-  ]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
+  const comingUp = (timelineQuery.data ?? []).slice(0, 5);
   const nextExpectedIncome = (incomeSourcesQuery.data ?? [])
     .filter((source) => source.nextExpectedDate && daysUntil(source.nextExpectedDate) >= 0)
-    .sort((a, b) => new Date(a.nextExpectedDate!).getTime() - new Date(b.nextExpectedDate!).getTime())[0];
+    .sort(
+      (a, b) => new Date(a.nextExpectedDate!).getTime() - new Date(b.nextExpectedDate!).getTime(),
+    )[0];
   const recentSpending = spendingStatsQuery.data?.monthlyTrend.slice(-2) ?? [];
   const currentSpending = recentSpending[1];
   const previousSpending = recentSpending[0];
-  const spendingDelta = currentSpending && previousSpending ? currentSpending.expenses - previousSpending.expenses : null;
+  const spendingDelta =
+    currentSpending && previousSpending
+      ? currentSpending.expenses - previousSpending.expenses
+      : null;
   const largestCategoryChange = spendingStatsQuery.data?.categoryChanges[0];
   const recordedNet = currentSpending ? currentSpending.income - currentSpending.expenses : null;
-  const savingsRate = currentSpending && currentSpending.income > 0 ? recordedNet! / currentSpending.income : null;
+  const savingsRate =
+    currentSpending && currentSpending.income > 0 ? recordedNet! / currentSpending.income : null;
 
   return (
     <div>
@@ -573,21 +566,78 @@ export default function DashboardPage() {
             <h2 className="text-base font-semibold text-content-primary">Next expected income</h2>
             {nextExpectedIncome?.nextExpectedDate ? (
               <p className="mt-1 text-sm text-content-secondary">
-                {nextExpectedIncome.name} · {new Date(nextExpectedIncome.nextExpectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-                {nextExpectedIncome.expectedNetAmount ? ` · $${Number(nextExpectedIncome.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''}
+                {nextExpectedIncome.name} ·{' '}
+                {new Date(nextExpectedIncome.nextExpectedDate).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                })}
+                {nextExpectedIncome.expectedNetAmount
+                  ? ` · $${Number(nextExpectedIncome.expectedNetAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : ''}
               </p>
             ) : (
-              <p className="mt-1 text-sm text-content-secondary">No next expected income date recorded.</p>
+              <p className="mt-1 text-sm text-content-secondary">
+                No next expected income date recorded.
+              </p>
             )}
-            <p className="mt-1 text-xs text-content-tertiary">Recorded household planning context; not a predicted paycheck.</p>
+            <p className="mt-1 text-xs text-content-tertiary">
+              Recorded household planning context; not a predicted paycheck.
+            </p>
           </div>
-          <Link href="/income-sources" className="btn-secondary whitespace-nowrap">Review income</Link>
+          <Link href="/income-sources" className="btn-secondary whitespace-nowrap">
+            Review income
+          </Link>
         </section>
       )}
 
       {!spendingStatsQuery.isLoading && currentSpending && (
         <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div><h2 className="text-base font-semibold text-content-primary">This month’s recorded spending</h2><p className="mt-1 text-sm text-content-secondary">${currentSpending.expenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{spendingDelta === null ? '' : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}</p>{recordedNet !== null && <p className={`mt-1 text-xs ${recordedNet >= 0 ? 'text-accent-green' : 'text-accent-red'}`}>Recorded net: {recordedNet >= 0 ? '+' : '-'}${Math.abs(recordedNet).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{savingsRate !== null ? ` · ${(savingsRate * 100).toFixed(0)}% of recorded income` : ''}</p>}{largestCategoryChange && <p className="mt-1 text-xs text-content-secondary">Largest category change: {largestCategoryChange.name} · {largestCategoryChange.change >= 0 ? '$' : '-$'}{Math.abs(largestCategoryChange.change).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}<p className="mt-1 text-xs text-content-tertiary">Based on recorded debit and credit transactions; incomplete imports can change the comparison.</p></div><Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">View trends</Link>
+          <div>
+            <h2 className="text-base font-semibold text-content-primary">
+              This month’s recorded spending
+            </h2>
+            <p className="mt-1 text-sm text-content-secondary">
+              $
+              {currentSpending.expenses.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              {spendingDelta === null
+                ? ''
+                : ` · ${spendingDelta >= 0 ? '$' : '-$'}${Math.abs(spendingDelta).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${spendingDelta >= 0 ? 'more' : 'less'} than last month`}
+            </p>
+            {recordedNet !== null && (
+              <p
+                className={`mt-1 text-xs ${recordedNet >= 0 ? 'text-accent-green' : 'text-accent-red'}`}
+              >
+                Recorded net: {recordedNet >= 0 ? '+' : '-'}$
+                {Math.abs(recordedNet).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+                {savingsRate !== null
+                  ? ` · ${(savingsRate * 100).toFixed(0)}% of recorded income`
+                  : ''}
+              </p>
+            )}
+            {largestCategoryChange && (
+              <p className="mt-1 text-xs text-content-secondary">
+                Largest category change: {largestCategoryChange.name} ·{' '}
+                {largestCategoryChange.change >= 0 ? '$' : '-$'}
+                {Math.abs(largestCategoryChange.change).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-content-tertiary">
+              Based on recorded debit and credit transactions; incomplete imports can change the
+              comparison.
+            </p>
+          </div>
+          <Link href="/dashboard/details" className="btn-secondary whitespace-nowrap">
+            View trends
+          </Link>
         </section>
       )}
 
@@ -755,16 +805,20 @@ export default function DashboardPage() {
             <h3 className="card-title">COMING UP</h3>
             <p className="text-xs text-content-tertiary">Recorded dates in the next 30 days</p>
           </div>
-          <Link href="/timeline" className="flex items-center gap-2 text-xs text-accent-blue hover:underline">
+          <Link
+            href="/timeline"
+            className="flex items-center gap-2 text-xs text-accent-blue hover:underline"
+          >
             View timeline
             <CalendarDays size={19} />
           </Link>
         </div>
-        {recurringQuery.isLoading || insuranceQuery.isLoading || incomeSourcesQuery.isLoading || plannedExpensesQuery.isLoading ? (
+        {timelineQuery.isLoading ? (
           <div className="skeleton mt-4 h-16 w-full" />
         ) : comingUp.length === 0 ? (
           <p className="mt-4 text-sm text-content-tertiary">
-            No upcoming recorded bills, income dates, planned expenses, or policy renewals in the next 30 days.
+            No upcoming recorded bills, income dates, planned expenses, or policy renewals in the
+            next 30 days.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
