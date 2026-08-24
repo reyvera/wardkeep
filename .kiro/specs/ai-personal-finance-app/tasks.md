@@ -618,8 +618,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Inline transaction tag editing and filtering UI
 
 - [ ] 34.3 Refund matching
-  - Detect credits from same merchant within 90 days
-  - Show matched pair for user confirmation
+  - [x] Detect equal credits from the same merchant within 90 days
+  - [x] Return candidate purchase/refund pairs and require explicit confirmation
   - Confirmed refunds excluded from spending totals
 
 ### 35. Budgeting Enhancements
