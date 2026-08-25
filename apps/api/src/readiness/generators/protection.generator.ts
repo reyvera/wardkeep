@@ -306,6 +306,12 @@ async function generateEmergencyFundSignals(
       tags: { select: { tag: true } },
     },
   });
+  const refunds = await prisma.transaction.findMany({
+    where: { userId, type: TransactionType.CREDIT, refundForTransactionId: { in: debitTransactions.map((tx) => tx.id) } },
+    select: { refundForTransactionId: true, amount: true },
+  });
+  const refundsByPurchase = new Map<string, Decimal>();
+  for (const refund of refunds) if (refund.refundForTransactionId) refundsByPurchase.set(refund.refundForTransactionId, (refundsByPurchase.get(refund.refundForTransactionId) ?? new Decimal(0)).plus(refund.amount.toString()));
   const cardPaymentCredits = await prisma.transaction.findMany({
     where: {
       userId,
@@ -333,7 +339,7 @@ async function generateEmergencyFundSignals(
 
   const burnRate = calculateHouseholdBurnRate(
     householdDebits.map((transaction) => ({
-      amount: transaction.amount.toString(),
+      amount: new Decimal(transaction.amount.toString()).minus(refundsByPurchase.get(transaction.id) ?? 0).toFixed(2),
       categoryName: transaction.category?.name,
       merchant: transaction.merchant,
       description: transaction.description,

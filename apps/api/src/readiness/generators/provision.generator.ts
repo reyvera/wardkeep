@@ -74,6 +74,12 @@ async function generateBudgetAdherenceSignals(
       date: { gte: startOfMonth, lt: startOfNextMonth },
     },
   });
+  const refunds = await prisma.transaction.findMany({
+    where: { userId, type: TransactionType.CREDIT, refundForTransactionId: { in: transactions.map((tx) => tx.id) } },
+    select: { refundForTransactionId: true, amount: true },
+  });
+  const refundsByPurchase = new Map<string, Decimal>();
+  for (const refund of refunds) if (refund.refundForTransactionId) refundsByPurchase.set(refund.refundForTransactionId, (refundsByPurchase.get(refund.refundForTransactionId) ?? new Decimal(0)).plus(refund.amount.toString()));
 
   const mappedBudget = {
     allocations: budget.allocations.map((a) => ({
@@ -88,7 +94,7 @@ async function generateBudgetAdherenceSignals(
     accountId: tx.accountId,
     categoryId: tx.categoryId,
     date: tx.date,
-    amount: tx.amount.toString(),
+    amount: new Decimal(tx.amount.toString()).minus(refundsByPurchase.get(tx.id) ?? 0).toFixed(2),
     type: tx.type as unknown as TransactionType,
     status: tx.status,
     merchant: tx.merchant,
