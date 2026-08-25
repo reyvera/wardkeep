@@ -1,5 +1,5 @@
 import { Signal } from '@wardkeep/readiness';
-import { DataFreshnessSummary } from './data-freshness';
+import { DataFreshnessByScope, DataFreshnessSummary } from './data-freshness';
 
 export type EvidenceState =
   'synchronized' | 'manual' | 'mixed' | 'stale' | 'calculated' | 'unknown';
@@ -97,20 +97,43 @@ const ACCOUNT_EVIDENCE_CAPABILITIES = new Set([
   'debt',
 ]);
 
-function evidenceStateFor(signal: Signal, freshness?: DataFreshnessSummary): EvidenceState {
+const LIQUID_ACCOUNT_CAPABILITIES = new Set([
+  'emergency-fund',
+  'insurance-deductibles',
+  'fixed-obligations',
+  'recurring',
+]);
+
+const DEBT_ACCOUNT_CAPABILITIES = new Set(['debt']);
+
+function freshnessForSignal(
+  signal: Signal,
+  freshness: DataFreshnessSummary | DataFreshnessByScope,
+): DataFreshnessSummary {
+  if (!('all' in freshness)) return freshness;
+  if (LIQUID_ACCOUNT_CAPABILITIES.has(signal.capabilityId)) return freshness.liquid;
+  if (DEBT_ACCOUNT_CAPABILITIES.has(signal.capabilityId)) return freshness.debt;
+  return freshness.all;
+}
+
+function evidenceStateFor(
+  signal: Signal,
+  freshness?: DataFreshnessSummary | DataFreshnessByScope,
+): EvidenceState {
   const base = (PROVENANCE_BY_CAPABILITY[signal.capabilityId] ?? FALLBACK_PROVENANCE).evidenceState;
   if (!freshness || !ACCOUNT_EVIDENCE_CAPABILITIES.has(signal.capabilityId)) return base;
-  if (freshness.staleAccounts > 0) return 'stale';
-  if (freshness.synchronizedAccounts > 0 && freshness.manualAccounts > 0) return 'mixed';
-  if (freshness.synchronizedAccounts > 0) return 'synchronized';
-  if (freshness.manualAccounts > 0) return 'manual';
+  const signalFreshness = freshnessForSignal(signal, freshness);
+  if (signalFreshness.staleAccounts > 0) return 'stale';
+  if (signalFreshness.synchronizedAccounts > 0 && signalFreshness.manualAccounts > 0) return 'mixed';
+  if (signalFreshness.synchronizedAccounts > 0) return 'synchronized';
+  if (signalFreshness.manualAccounts > 0) return 'manual';
   return base;
 }
 
 /** Adds user-visible evidence context without changing a signal's score. */
 export function withSignalProvenance(
   signal: Signal,
-  freshness?: DataFreshnessSummary,
+  freshness?: DataFreshnessSummary | DataFreshnessByScope,
 ): Signal & { provenance: SignalProvenance } {
   const provenance = PROVENANCE_BY_CAPABILITY[signal.capabilityId] ?? FALLBACK_PROVENANCE;
   return {

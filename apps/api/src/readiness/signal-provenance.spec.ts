@@ -46,6 +46,27 @@ describe('withSignalProvenance', () => {
     expect(signal.provenance.evidenceState).toBe('stale');
   });
 
+  it('uses the freshness scope relevant to the signal', () => {
+    const freshness = {
+      all: { synchronizedAccounts: 2, manualAccounts: 0, staleAccounts: 1, lastSynchronizedAt: null },
+      liquid: { synchronizedAccounts: 1, manualAccounts: 0, staleAccounts: 0, lastSynchronizedAt: null },
+      debt: { synchronizedAccounts: 1, manualAccounts: 0, staleAccounts: 1, lastSynchronizedAt: null },
+    };
+
+    expect(
+      withSignalProvenance(
+        { capabilityId: 'emergency-fund', type: 'warning', magnitude: -4, pillar: 'protection', summary: 'Example reserves.' },
+        freshness,
+      ).provenance.evidenceState,
+    ).toBe('synchronized');
+    expect(
+      withSignalProvenance(
+        { capabilityId: 'debt', type: 'warning', magnitude: -4, pillar: 'prosperity', summary: 'Example debt.' },
+        freshness,
+      ).provenance.evidenceState,
+    ).toBe('stale');
+  });
+
   it('identifies insurance records as manual evidence', () => {
     const signal = withSignalProvenance({
       capabilityId: 'insurance',
