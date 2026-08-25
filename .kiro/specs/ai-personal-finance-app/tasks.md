@@ -536,12 +536,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Overall assessment re-normalizes weights across evaluated direct pillars, is nullable with no evidence, and is marked partial until coverage is sufficient
   - [x] Missing factors, account-source summary, score evaluation time, and factor-level provenance (sources, method, and limitation) are displayed
 
-- [~] 39.2 Add data provenance and freshness
+- [x] 39.2 Add data provenance and freshness
   - Source states: synchronized, manual, estimated, inferred, calculated, stale, unknown
   - [x] Display synchronized/manual/stale account summary and score evaluation time in relevant UI
   - [x] Qualify displayed confidence as “Freshness needs review” whenever one or more connected accounts are stale; coverage remains a separate measure of evaluated factors
   - [x] Treat manual accounts as a separate source state rather than calling them stale solely because their record is older; only overdue or never-completed connected-account syncs affect freshness confidence
   - [x] Show a per-factor evidence state (synchronized, manual, mixed, stale, calculated, or unknown) alongside sources, method, and limitation
+  - [x] Apply stale freshness only to the account scope a signal depends on; unrelated stale accounts do not downgrade its evidence state
 
 - [x] 39.3 Harden the Protection liquidity model
   - [x] Structurally exclude transfer records and remove common imported transfer, credit-card-payment, investment, savings-transfer, and principal-payment debits from burn rate
