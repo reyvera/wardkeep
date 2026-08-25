@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeDataFreshness } from './data-freshness';
+import { summarizeDataFreshness, summarizeDataFreshnessByScope } from './data-freshness';
 
 const now = new Date('2026-08-22T12:00:00.000Z');
 
@@ -33,5 +33,19 @@ describe('summarizeDataFreshness', () => {
     );
 
     expect(summary.lastSynchronizedAt).toEqual(new Date('2026-08-21T12:00:00.000Z'));
+  });
+
+  it('keeps stale account freshness within its relevant account scope', () => {
+    const freshness = summarizeDataFreshnessByScope(
+      [
+        { type: 'CHECKING', linkedSyncTimes: [new Date('2026-08-21T12:00:00.000Z')] },
+        { type: 'MORTGAGE', linkedSyncTimes: [new Date('2026-08-10T12:00:00.000Z')] },
+      ],
+      now,
+    );
+
+    expect(freshness.all.staleAccounts).toBe(1);
+    expect(freshness.liquid.staleAccounts).toBe(0);
+    expect(freshness.debt.staleAccounts).toBe(1);
   });
 });

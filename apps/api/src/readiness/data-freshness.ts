@@ -49,3 +49,29 @@ export function summarizeDataFreshness(
     lastSynchronizedAt,
   };
 }
+
+/**
+ * Summarizes account freshness for the data scopes used by readiness signals.
+ * A stale account affects only signals that rely on that account category; the
+ * `all` scope remains available for the household-level status summary.
+ *
+ * @param accounts Accounts and their connected-bank synchronization records.
+ * @param now The time against which synchronization age is evaluated.
+ * @returns Freshness summaries for all, liquid, and debt account scopes.
+ */
+export function summarizeDataFreshnessByScope(
+  accounts: readonly AccountFreshnessInput[],
+  now = new Date(),
+): DataFreshnessByScope {
+  return {
+    all: summarizeDataFreshness(accounts, now),
+    liquid: summarizeDataFreshness(
+      accounts.filter((account) => account.type !== undefined && LIQUID_ACCOUNT_TYPES.has(account.type)),
+      now,
+    ),
+    debt: summarizeDataFreshness(
+      accounts.filter((account) => account.type !== undefined && DEBT_ACCOUNT_TYPES.has(account.type)),
+      now,
+    ),
+  };
+}
