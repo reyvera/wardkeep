@@ -66,7 +66,9 @@ export class AccountsService {
       const source = account.linkedBankAccounts.length > 0 ? 'synchronized' : 'manual';
       const referenceDate = lastSynchronizedAt ?? account.updatedAt;
       const freshness =
-        Date.now() - referenceDate.getTime() > 7 * 24 * 60 * 60 * 1000 ? 'stale' : 'current';
+        source === 'synchronized' && Date.now() - referenceDate.getTime() > 7 * 24 * 60 * 60 * 1000
+          ? 'stale'
+          : 'current';
 
       return {
         id: account.id,
