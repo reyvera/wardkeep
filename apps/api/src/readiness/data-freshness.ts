@@ -1,5 +1,6 @@
 export interface AccountFreshnessInput {
   linkedSyncTimes: Array<Date | null>;
+  type?: string;
 }
 
 export interface DataFreshnessSummary {
@@ -9,7 +10,16 @@ export interface DataFreshnessSummary {
   lastSynchronizedAt: Date | null;
 }
 
+export interface DataFreshnessByScope {
+  all: DataFreshnessSummary;
+  liquid: DataFreshnessSummary;
+  debt: DataFreshnessSummary;
+}
+
 export const STALE_SYNC_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+
+const LIQUID_ACCOUNT_TYPES = new Set(['CHECKING', 'SAVINGS', 'CASH']);
+const DEBT_ACCOUNT_TYPES = new Set(['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC']);
 
 /**
  * Summarizes freshness without treating manually maintained records as failed bank syncs.
