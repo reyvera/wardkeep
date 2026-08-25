@@ -58,6 +58,11 @@ export class TransactionsController {
     return this.transactionsService.confirmRefund(req.userId!, purchaseId, refundId);
   }
 
+  @Patch(':id/refund-match')
+  async clearRefundMatch(@Req() req: ScopedRequest, @Param('id') id: string) {
+    return this.transactionsService.clearRefundMatch(req.userId!, id);
+  }
+
   /**
    * Returns spending statistics: monthly income vs expenses for a requested 6- or 12-month window,
    * and spending breakdown by category for the current month.

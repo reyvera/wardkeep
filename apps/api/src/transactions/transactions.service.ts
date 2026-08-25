@@ -457,6 +457,19 @@ export class TransactionsService {
     });
   }
 
+  async clearRefundMatch(userId: string, refundId: string) {
+    const refund = await this.prisma.transaction.findFirst({
+      where: { id: refundId, userId, type: 'CREDIT', refundForTransactionId: { not: null } },
+      select: { id: true },
+    });
+    if (!refund) throw new NotFoundException('Confirmed refund not found');
+
+    return this.prisma.transaction.update({
+      where: { id: refundId },
+      data: { refundForTransactionId: null, refundMatchedAt: null },
+    });
+  }
+
   /**
    * Deletes a transaction belonging to the user.
    * Cascade delete removes associated tags automatically.
