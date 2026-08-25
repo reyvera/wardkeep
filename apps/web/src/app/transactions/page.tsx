@@ -183,6 +183,11 @@ export default function TransactionsPage() {
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
+  const clearRefundMatchMutation = useMutation({
+    mutationFn: (transactionId: string) =>
+      apiClient.patch(`/transactions/${transactionId}/refund-match`, {}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
 
   const markVisibleReviewedMutation = useMutation({
     mutationFn: (transactionIds: string[]) =>
@@ -882,6 +887,16 @@ export default function TransactionsPage() {
                     >
                       <Tag size={12} />
                     </button>
+                    {isMatchedRefund && (
+                      <button
+                        onClick={() => clearRefundMatchMutation.mutate(tx.id)}
+                        disabled={clearRefundMatchMutation.isPending}
+                        className="btn-ghost p-1 text-accent-green hover:text-accent-red disabled:opacity-50"
+                        title="Undo confirmed refund match"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                     <button
                       onClick={() => setRuleTransaction(tx)}
                       className="btn-ghost p-1 text-content-tertiary hover:text-accent-purple"
