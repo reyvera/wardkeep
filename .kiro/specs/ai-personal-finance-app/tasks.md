@@ -620,7 +620,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [ ] 34.3 Refund matching
   - [x] Detect equal credits from the same merchant within 90 days
   - [x] Return candidate purchase/refund pairs and require explicit confirmation
-  - Confirmed refunds excluded from spending totals
+  - [x] Confirmed refunds reduce the linked purchase in Budget totals while preserving both transactions
 
 ### 35. Budgeting Enhancements
 

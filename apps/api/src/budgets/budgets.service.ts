@@ -298,6 +298,27 @@ export class BudgetsService {
       },
     });
 
+    // A confirmed refund stays as a credit in transaction history, but reduces the
+    // spend of its linked original purchase for this budget month.
+    const matchedRefunds = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: TransactionType.CREDIT,
+        refundForTransactionId: { in: transactions.map((transaction) => transaction.id) },
+      },
+      select: { refundForTransactionId: true, amount: true },
+    });
+    const refundsByPurchase = new Map<string, Decimal>();
+    for (const refund of matchedRefunds) {
+      if (!refund.refundForTransactionId) continue;
+      refundsByPurchase.set(
+        refund.refundForTransactionId,
+        (refundsByPurchase.get(refund.refundForTransactionId) ?? new Decimal(0)).plus(
+          refund.amount.toString(),
+        ),
+      );
+    }
+
     // Map Prisma results to shared types for the finance engine
     const budgetForEngine = {
       id: budget.id,
@@ -319,7 +340,7 @@ export class BudgetsService {
       accountId: tx.accountId,
       categoryId: tx.categoryId,
       date: tx.date,
-      amount: tx.amount.toString(),
+      amount: new Decimal(tx.amount.toString()).minus(refundsByPurchase.get(tx.id) ?? 0).toFixed(2),
       type: tx.type as TransactionType,
       merchant: tx.merchant,
       description: tx.description,
