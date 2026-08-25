@@ -12,7 +12,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { SignalProvenance, withSignalProvenance } from './signal-provenance';
-import { summarizeDataFreshness } from './data-freshness';
+import { summarizeDataFreshnessByScope } from './data-freshness';
 import {
   generateProvisionSignals,
   generateProsperitySignals,
@@ -346,16 +346,18 @@ export class ReadinessService {
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
       select: {
+        type: true,
         linkedBankAccounts: { select: { connection: { select: { lastSyncAt: true } } } },
       },
     });
-    const dataFreshness = summarizeDataFreshness(
+    const freshnessByScope = summarizeDataFreshnessByScope(
       accounts.map((account) => ({
+        type: account.type,
         linkedSyncTimes: account.linkedBankAccounts.map((linked) => linked.connection.lastSyncAt),
       })),
     );
     const signalsWithProvenance = allSignals.map((signal) =>
-      withSignalProvenance(signal, dataFreshness),
+      withSignalProvenance(signal, freshnessByScope),
     );
     const topRisks = signalsWithProvenance
       .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
@@ -384,7 +386,7 @@ export class ReadinessService {
       coverage,
       pillarCoverage,
       pillarAssessments,
-      dataFreshness,
+      dataFreshness: freshnessByScope.all,
       recentChanges,
       changeWindow,
     };
