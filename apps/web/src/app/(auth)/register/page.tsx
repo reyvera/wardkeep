@@ -19,7 +19,7 @@ export default function RegisterPage() {
       apiClient.post<{ token: string }>('/auth/register', { email, password, confirmPassword }),
     onSuccess: (data) => {
       setToken(data.token);
-      router.push('/dashboard');
+      router.push('/brief');
     },
   });
 

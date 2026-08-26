@@ -37,10 +37,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users from root to dashboard
+  // Redirect authenticated users from root to their Morning Brief.
   if (pathname === '/') {
-    const dashboardUrl = new URL('/dashboard', request.url);
-    return NextResponse.redirect(dashboardUrl);
+    const briefUrl = new URL('/brief', request.url);
+    return NextResponse.redirect(briefUrl);
   }
 
   return NextResponse.next();

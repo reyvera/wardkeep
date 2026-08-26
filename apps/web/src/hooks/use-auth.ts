@@ -36,13 +36,13 @@ export function useAuth() {
   const login = async (credentials: LoginCredentials) => {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     setToken(response.token);
-    router.push('/dashboard');
+    router.push('/brief');
   };
 
   const register = async (credentials: RegisterCredentials) => {
     const response = await apiClient.post<AuthResponse>('/auth/register', credentials);
     setToken(response.token);
-    router.push('/dashboard');
+    router.push('/brief');
   };
 
   return { isAuthenticated, login, register, logout };

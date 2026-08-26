@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const mobileNavItems = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+  { href: '/brief', label: 'Home', icon: LayoutDashboard },
   { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { href: '/budget', label: 'Budget', icon: PieChart },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
