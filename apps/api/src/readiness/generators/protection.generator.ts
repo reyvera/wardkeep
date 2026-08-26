@@ -42,14 +42,70 @@ export async function generateProtectionSignals(
 
 export function dependentReviewSignal(dependent: { label: string | null; relationship: string; reviewDate: Date | null }, now: Date): Signal | null { if (!dependent.reviewDate) return null; const today = new Date(now); today.setHours(0, 0, 0, 0); const days = Math.ceil((dependent.reviewDate.getTime() - today.getTime()) / 86_400_000); const name = dependent.label || dependent.relationship.toLowerCase(); if (days < 0) return { capabilityId: 'dependents', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${name} has a review date that has passed. Confirm household planning context is current.` }; if (days <= 30) return { capabilityId: 'dependents', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${name} is due for a household-planning review in ${days} days.` }; return null; }
 
-/** Checks only recorded debt minimums against liquid cash; it does not assume missing obligations. */
+/** Checks known debt minimums and recurring bills without estimating omitted obligations. */
 async function generateFixedObligationSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
-  const profiles = await prisma.debtProfile.findMany({ where: { userId }, select: { minimumPayment: true } });
-  const monthlyMinimums = profiles.reduce((total, profile) => total.add(new Decimal(profile.minimumPayment.toString())), new Decimal(0));
-  if (monthlyMinimums.lte(0)) return [];
+  const profiles = await prisma.debtProfile.findMany({
+    where: { userId },
+    select: { minimumPayment: true },
+  });
+  const recurringBills = await prisma.recurringTransaction.findMany({
+    where: { userId, isConfirmed: true, isActive: true },
+    select: { expectedAmount: true, frequency: true },
+  });
+  const monthlyDebtMinimums = profiles.reduce(
+    (total, profile) => total.add(new Decimal(profile.minimumPayment.toString())),
+    new Decimal(0),
+  );
+  const monthlyRecurringBills = recurringBills.reduce(
+    (total, bill) => total.add(monthlyRecurringAmount(bill.expectedAmount, bill.frequency)),
+    new Decimal(0),
+  );
+  if (monthlyDebtMinimums.add(monthlyRecurringBills).lte(0)) return [];
   const reserves = await calculateLiquidReserves(prisma, userId);
-  if (monthlyMinimums.gt(reserves)) return [{ capabilityId: 'fixed-obligations', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.75, summary: `Recorded debt minimums total $${monthlyMinimums.toFixed(2)} per month, above $${reserves.toFixed(2)} in liquid reserves. This does not include unrecorded household obligations.` }];
-  return [];
+  return fixedObligationSignal({ monthlyDebtMinimums, monthlyRecurringBills, reserves });
+}
+
+/** Converts a confirmed recurring amount to its monthly equivalent. */
+export function monthlyRecurringAmount(
+  amount: Decimal | { toString(): string },
+  frequency: string,
+): Decimal {
+  const monthlyMultiplierByFrequency: Record<string, Decimal> = {
+    WEEKLY: new Decimal(52).div(12),
+    BIWEEKLY: new Decimal(26).div(12),
+    MONTHLY: new Decimal(1),
+    QUARTERLY: new Decimal(1).div(3),
+    SEMIANNUAL: new Decimal(1).div(6),
+    ANNUAL: new Decimal(1).div(12),
+  };
+  const multiplier = monthlyMultiplierByFrequency[frequency];
+  return multiplier ? new Decimal(amount.toString()).mul(multiplier) : new Decimal(0);
+}
+
+/** Creates a warning only when known monthly commitments exceed liquid reserves. */
+export function fixedObligationSignal(input: {
+  monthlyDebtMinimums: Decimal;
+  monthlyRecurringBills: Decimal;
+  reserves: Decimal;
+}): Signal[] {
+  const monthlyObligations = input.monthlyDebtMinimums.add(input.monthlyRecurringBills);
+  if (monthlyObligations.lte(0) || monthlyObligations.lte(input.reserves)) return [];
+  const components = [
+    input.monthlyDebtMinimums.gt(0)
+      ? `$${input.monthlyDebtMinimums.toFixed(2)} in debt minimums`
+      : null,
+    input.monthlyRecurringBills.gt(0)
+      ? `$${input.monthlyRecurringBills.toFixed(2)} in confirmed recurring bills`
+      : null,
+  ].filter((component): component is string => component !== null);
+  return [{
+    capabilityId: 'fixed-obligations',
+    type: 'warning',
+    magnitude: -2,
+    pillar: 'protection',
+    weight: 0.75,
+    summary: `Recorded monthly commitments total $${monthlyObligations.toFixed(2)} (${components.join(' and ')}), above $${input.reserves.toFixed(2)} in liquid reserves. Unrecorded or variable household obligations are not included.`,
+  }];
 }
 
 /**

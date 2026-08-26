@@ -4,8 +4,10 @@ import { HouseholdBurnRate } from './burn-rate';
 import {
   emergencyFundSignal,
   estateDocumentReviewSignal,
+  fixedObligationSignal,
   insuranceCoverageTargetSignal,
   insuranceRenewalSignal,
+  monthlyRecurringAmount,
 } from './protection.generator';
 
 const now = new Date('2026-08-22T12:00:00.000Z');
@@ -87,6 +89,36 @@ describe('estateDocumentReviewSignal', () => {
 
   it('does not infer a concern where no review date is entered', () => {
     expect(estateDocumentReviewSignal({ type: 'TRUST', title: null, reviewDate: null }, now)).toBeNull();
+  });
+});
+
+describe('fixedObligationSignal', () => {
+  it('includes confirmed recurring bills with recorded debt minimums', () => {
+    const signal = fixedObligationSignal({
+      monthlyDebtMinimums: new Decimal(400),
+      monthlyRecurringBills: new Decimal(700),
+      reserves: new Decimal(1_000),
+    });
+
+    expect(signal).toHaveLength(1);
+    expect(signal[0]).toMatchObject({ capabilityId: 'fixed-obligations', type: 'warning' });
+    expect(signal[0]?.summary).toContain('$700.00 in confirmed recurring bills');
+    expect(signal[0]?.summary).toContain('Unrecorded or variable');
+  });
+
+  it('does not infer risk when known commitments are within reserves', () => {
+    expect(
+      fixedObligationSignal({
+        monthlyDebtMinimums: new Decimal(400),
+        monthlyRecurringBills: new Decimal(700),
+        reserves: new Decimal(1_100),
+      }),
+    ).toEqual([]);
+  });
+
+  it('normalizes confirmed recurring amounts by their recorded frequency', () => {
+    expect(monthlyRecurringAmount(new Decimal(120), 'ANNUAL').toFixed(2)).toBe('10.00');
+    expect(monthlyRecurringAmount(new Decimal(100), 'BIWEEKLY').toFixed(2)).toBe('216.67');
   });
 });
 
