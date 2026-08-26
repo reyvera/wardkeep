@@ -36,6 +36,13 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     limitation: 'Complete records do not prove insurance adequacy; unentered policy types remain unknown.',
     evidenceState: 'manual',
   },
+  'insurance-coverage-target': {
+    sources: ['User-entered policy coverage amount', 'User-entered coverage target'],
+    method: 'Flags when a recorded policy amount is below the household-entered target.',
+    limitation:
+      'Wardkeep does not determine whether a target or policy amount is adequate, available, or payable.',
+    evidenceState: 'manual',
+  },
   'estate-documents': {
     sources: ['User-entered estate-planning records'],
     method: 'Checks recorded document review dates and record presence.',

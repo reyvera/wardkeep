@@ -15,6 +15,7 @@ const ACTIONS: Record<string, { action: string; href: string }> = {
   'emergency-fund': { action: 'Review liquid accounts', href: '/accounts' },
   insurance: { action: 'Review policies', href: '/insurance' },
   'insurance-deductibles': { action: 'Review deductibles', href: '/insurance' },
+  'insurance-coverage-target': { action: 'Review coverage target', href: '/insurance' },
   budgets: { action: 'Review budget', href: '/budget' },
   cashflow: { action: 'Review cash flow', href: '/dashboard/details' },
   recurring: { action: 'Review recurring bills', href: '/recurring' },

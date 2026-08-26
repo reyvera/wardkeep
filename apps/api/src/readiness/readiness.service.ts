@@ -61,6 +61,7 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
   protection: [
     { id: 'emergency-fund', label: 'Liquid reserves' },
     { id: 'insurance', label: 'Recorded insurance policies' },
+    { id: 'insurance-coverage-target', label: 'Recorded policy coverage targets' },
     { id: 'estate-documents', label: 'Estate-planning review dates' },
     { id: 'income-sources', label: 'Recorded income-source reviews' },
     { id: 'secondary-liquidity', label: 'Recorded credit availability' },
