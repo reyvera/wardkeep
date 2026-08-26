@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
 
+import { Signal } from '@wardkeep/readiness';
+
+import { PrismaService } from '../prisma/prisma.service';
 import { ReadinessService } from '../readiness/readiness.service';
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { TimelineEvent, TimelineService } from '../timeline/timeline.service';
@@ -12,12 +16,77 @@ export interface MorningBrief {
   upcoming: TimelineEvent[];
 }
 
+export interface PeriodicBrief {
+  periodDays: 7 | 30;
+  readiness: MorningBrief['readiness'];
+  /** Null means Wardkeep does not yet have an observation old enough to compare. */
+  scoreChange: {
+    delta: number | null;
+    comparedTo: Date | null;
+    elapsedDays: number | null;
+  };
+  actionsCompleted: number;
+  completedRecommendations: Array<{ summary: string; action: string; completedAt: Date }>;
+  observedRisks: string[];
+  upcoming: TimelineEvent[];
+}
+
+type InsightCandidate = {
+  fingerprint: string;
+  summary: string;
+  action: string;
+  actionHref: string;
+  sourceCapabilities: string[];
+};
+
+function hasRisk(signals: readonly Signal[], capabilityId: string) {
+  return signals.some(
+    (signal) =>
+      signal.capabilityId === capabilityId && (signal.type === 'risk' || signal.type === 'warning'),
+  );
+}
+
+export function crossCapabilityInsightCandidates(signals: readonly Signal[]): InsightCandidate[] {
+  const candidates: Omit<InsightCandidate, 'fingerprint'>[] = [];
+  if (hasRisk(signals, 'emergency-fund') && hasRisk(signals, 'insurance-deductibles')) {
+    candidates.push({
+      summary:
+        'Liquid reserves are below recorded insurance deductibles. Review the reserve before increasing deductibles or relying on that cash for another plan.',
+      action: 'Review reserves and deductibles',
+      actionHref: '/insurance',
+      sourceCapabilities: ['emergency-fund', 'insurance-deductibles'],
+    });
+  }
+  if (
+    hasRisk(signals, 'planned-expenses') &&
+    (hasRisk(signals, 'cashflow') || hasRisk(signals, 'recurring'))
+  ) {
+    candidates.push({
+      summary:
+        'A recorded planned expense is not fully set aside while near-term cash flow is constrained. Review both dates before committing discretionary cash.',
+      action: 'Review planned expense funding',
+      actionHref: '/planned-expenses',
+      sourceCapabilities: [
+        'planned-expenses',
+        hasRisk(signals, 'cashflow') ? 'cashflow' : 'recurring',
+      ],
+    });
+  }
+  return candidates.map((candidate) => ({
+    ...candidate,
+    fingerprint: createHash('sha256')
+      .update(candidate.sourceCapabilities.slice().sort().join('|'))
+      .digest('hex'),
+  }));
+}
+
 @Injectable()
 export class AdvisorService {
   constructor(
     private readonly readiness: ReadinessService,
     private readonly recommendations: RecommendationsService,
     private readonly timeline: TimelineService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /** Builds a deterministic morning brief from recorded readiness and timeline data. */
@@ -48,5 +117,84 @@ export class AdvisorService {
       currentRisk,
       upcoming,
     };
+  }
+
+  /**
+   * Creates a recorded-data-only weekly or monthly review. A missing score
+   * comparison remains explicitly unknown instead of being estimated.
+   */
+  async getPeriodicBrief(userId: string, periodDays: 7 | 30): Promise<PeriodicBrief> {
+    const readiness = await this.readiness.getReadiness(userId);
+    await this.recommendations.synchronize(userId, readiness.signals);
+    const [recommendations, upcoming] = await Promise.all([
+      this.recommendations.list(userId),
+      this.timeline.listUpcoming(userId, periodDays),
+    ]);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - periodDays);
+    const completedRecommendations = recommendations
+      .filter(
+        (recommendation) =>
+          recommendation.status === 'COMPLETED' &&
+          recommendation.completedAt !== null &&
+          recommendation.completedAt >= cutoff,
+      )
+      .map((recommendation) => ({
+        summary: recommendation.signalSummary,
+        action: recommendation.action,
+        completedAt: recommendation.completedAt!,
+      }));
+    const trend = readiness.trendWindows.find((window) => window.days === periodDays);
+
+    return {
+      periodDays,
+      readiness: {
+        score: readiness.overallAssessment.score,
+        state: readiness.overallAssessment.state,
+        coverage: readiness.overallAssessment.coverage,
+      },
+      scoreChange: {
+        delta: trend?.delta ?? null,
+        comparedTo: trend?.comparedTo ?? null,
+        elapsedDays: trend?.elapsedDays ?? null,
+      },
+      actionsCompleted: completedRecommendations.length,
+      completedRecommendations,
+      observedRisks: readiness.topRisks.map((risk) => risk.summary),
+      upcoming,
+    };
+  }
+
+  getWeeklyBrief(userId: string): Promise<PeriodicBrief> {
+    return this.getPeriodicBrief(userId, 7);
+  }
+
+  getMonthlyBrief(userId: string): Promise<PeriodicBrief> {
+    return this.getPeriodicBrief(userId, 30);
+  }
+
+  /** Returns the current, source-linked recommendations in their recorded priority order. */
+  async getRecommendations(userId: string) {
+    const readiness = await this.readiness.getReadiness(userId);
+    await this.recommendations.synchronize(userId, readiness.signals);
+    return this.recommendations.list(userId);
+  }
+
+  /** Stores cross-capability observations, but does not repeat one within seven days. */
+  async getCrossCapabilityInsights(userId: string) {
+    const readiness = await this.readiness.getReadiness(userId);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+    const candidates = crossCapabilityInsightCandidates(readiness.signals);
+    const insights = await Promise.all(
+      candidates.map(async (candidate) => {
+        const existing = await this.prisma.advisorInsight.findFirst({
+          where: { userId, fingerprint: candidate.fingerprint, createdAt: { gte: cutoff } },
+          orderBy: { createdAt: 'desc' },
+        });
+        return existing ?? this.prisma.advisorInsight.create({ data: { userId, ...candidate } });
+      }),
+    );
+    return insights.sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
   }
 }
