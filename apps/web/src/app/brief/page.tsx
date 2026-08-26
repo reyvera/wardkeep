@@ -14,6 +14,14 @@ interface MorningBrief {
   upcoming: Array<{ id: string; date: string; title: string; detail: string; href: string }>;
 }
 
+interface AdvisorInsight {
+  id: string;
+  summary: string;
+  action: string;
+  actionHref: string;
+  sourceCapabilities: string[];
+}
+
 function readinessLabel(brief: MorningBrief) {
   if (brief.readiness.state === 'not_evaluated') return 'Not evaluated yet';
   if (brief.readiness.state === 'partial') return 'Partial picture';
@@ -31,6 +39,10 @@ export default function BriefPage() {
   const brief = useQuery({
     queryKey: ['advisor', 'morning-brief'],
     queryFn: () => apiClient.get<MorningBrief>('/advisor/brief/morning'),
+  });
+  const insights = useQuery({
+    queryKey: ['advisor', 'insights'],
+    queryFn: () => apiClient.get<AdvisorInsight[]>('/advisor/insights'),
   });
 
   if (brief.isLoading) {
@@ -79,6 +91,33 @@ export default function BriefPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} className="mt-0.5 text-accent-yellow" />
             <div><h2 className="card-title">CURRENT RISK</h2><p className="mt-2 text-sm text-content-secondary">{data.currentRisk}</p></div>
+          </div>
+        </section>
+      )}
+
+      {!insights.isError && (insights.data?.length ?? 0) > 0 && (
+        <section className="card">
+          <div className="flex items-start gap-3">
+            <Lightbulb size={20} className="mt-0.5 text-accent-purple" />
+            <div className="min-w-0 flex-1">
+              <h2 className="card-title">CONNECTED INSIGHTS</h2>
+              <p className="mt-1 text-sm text-content-secondary">
+                Observations supported by more than one recorded readiness factor.
+              </p>
+              <ul className="mt-4 space-y-4">
+                {insights.data!.map((insight) => (
+                  <li key={insight.id} className="border-t border-edge pt-4 first:border-t-0 first:pt-0">
+                    <p className="text-sm text-content-primary">{insight.summary}</p>
+                    <p className="mt-1 text-xs text-content-tertiary">
+                      Based on: {insight.sourceCapabilities.join(' · ')}
+                    </p>
+                    <Link href={insight.actionHref} className="btn-secondary mt-3 text-xs">
+                      {insight.action}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
       )}
