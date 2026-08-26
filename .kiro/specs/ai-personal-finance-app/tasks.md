@@ -318,23 +318,21 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - AI-enhanced version: natural language generated from same data (when Advisor available)
   - Fallback gracefully if AI unavailable — deterministic brief always works
 
-- [ ] 22.3 Implement Weekly and Monthly Briefs
-  - GET /api/advisor/brief/weekly — week in review + upcoming week
-  - GET /api/advisor/brief/monthly — month summary, trends, readiness change, wins
-  - Include: score changes, actions taken, recommendations completed, new risks
+- [~] 22.3 Implement Weekly and Monthly Briefs
+  - [x] GET /api/advisor/brief/weekly — recorded score change, completed recommendations, observed risks, and upcoming week
+  - [x] GET /api/advisor/brief/monthly — recorded month trend, completed recommendations, observed risks, and upcoming month
+  - [~] Include: score changes, actions taken, recommendations completed, new risks
 
-- [ ] 22.4 Implement recommendation prioritization
-  - GET /api/advisor/recommendations — sorted by impact × urgency ÷ effort
-  - Each recommendation links to its source Capability and signal
-  - User can dismiss (won't resurface) or complete (improves readiness)
-  - Track recommendation completion and resulting score changes
+- [~] 22.4 Implement recommendation prioritization
+  - [x] GET /api/advisor/recommendations — returns the recorded priority order after refreshing observed signals
+  - [x] Each recommendation links to its source Capability and signal
+  - [x] User can dismiss or complete a recommendation from the Recommendations workspace
+  - [~] Track recommendation completion and resulting score changes
 
-- [ ] 22.5 Implement cross-capability reasoning
-  - Advisor has read access to signals from all active Capabilities simultaneously
-  - Generate insights that span multiple domains:
-    - "Insurance renewal + emergency fund level → safe to increase deductible"
-    - "ARM adjustment in March + planned vacation → build extra buffer"
-  - Store generated insights; deduplicate similar insights within 7 days
+- [~] 22.5 Implement cross-capability reasoning
+  - [x] Advisor has read access to signals from all active Capabilities simultaneously
+  - [~] Generate deterministic insights that span supported domains
+  - [x] Store generated insights; deduplicate matching observations within 7 days
 
 ### 23. Household Timeline [PARTIAL]
 
@@ -371,9 +369,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] This week's timeline events
   - [x] Top recommendation with one-tap actions
   - [x] Active risks summary
-  - [ ] This becomes the landing page after login
+  - [x] This becomes the landing page after login
 
-- [~] 24.3 Implement Advisor conversation UI (replaces AI Chat)
+- [x] 24.3 Implement Advisor conversation UI (replaces AI Chat)
   - [x] Rebrand from "AI Chat" to "Advisor"
   - [x] Advisor context includes readiness state and signals
   - [x] Responses include linked readiness references for the currently observed risk pillars
