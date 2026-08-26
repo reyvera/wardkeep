@@ -10,6 +10,12 @@ import { TimelineService } from './timeline.service';
 export class TimelineController {
   constructor(private readonly timeline: TimelineService) {}
 
+  @Get()
+  list(@Req() req: ScopedRequest, @Query('days') days?: string) {
+    const requestedDays = days === undefined ? undefined : Number(days);
+    return this.timeline.list(req.userId!, requestedDays);
+  }
+
   @Get('upcoming')
   listUpcoming(@Req() req: ScopedRequest, @Query('days') days?: string) {
     const requestedDays = days === undefined ? undefined : Number(days);
