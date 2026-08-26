@@ -103,6 +103,66 @@ export class TimelineService {
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 
+  /**
+   * Lists dates that are already past in source records. These deliberately use
+   * a neutral status: Wardkeep cannot infer that a payment, renewal, or income
+   * event actually occurred from a scheduled date alone.
+   */
+  async listHistory(userId: string, requestedDays?: number): Promise<TimelineHistoryEvent[]> {
+    const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays!, 1), 365) : 30;
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    const start = new Date(end);
+    start.setDate(start.getDate() - days);
+    const [policies, income, plannedExpenses] = await Promise.all([
+      this.prisma.insurancePolicy.findMany({
+        where: { userId, renewalDate: { gte: start, lt: end } },
+        orderBy: { renewalDate: 'desc' },
+      }),
+      this.prisma.incomeSource.findMany({
+        where: { userId, nextExpectedDate: { gte: start, lt: end } },
+        orderBy: { nextExpectedDate: 'desc' },
+      }),
+      this.prisma.plannedExpense.findMany({
+        where: { userId, dueDate: { gte: start, lt: end } },
+        orderBy: { dueDate: 'desc' },
+      }),
+    ]);
+
+    return [
+      ...policies.map((record) => ({
+        id: `policy-${record.id}-${record.renewalDate!.toISOString()}`,
+        kind: 'POLICY_RENEWAL' as const,
+        date: record.renewalDate!,
+        title: `${record.provider} ${record.type.toLowerCase().replace('_', ' ')} renewal`,
+        detail: 'Recorded renewal date; confirm the policy status in Insurance.',
+        href: '/insurance',
+        actionRequired: true,
+        status: 'RECORDED_PAST' as const,
+      })),
+      ...income.map((record) => ({
+        id: `income-${record.id}-${record.nextExpectedDate!.toISOString()}`,
+        kind: 'INCOME' as const,
+        date: record.nextExpectedDate!,
+        title: record.name,
+        detail: 'Recorded expected income date; Wardkeep does not confirm receipt.',
+        href: '/income-sources',
+        actionRequired: false,
+        status: 'RECORDED_PAST' as const,
+      })),
+      ...plannedExpenses.map((record) => ({
+        id: `planned-${record.id}-${record.dueDate!.toISOString()}`,
+        kind: 'PLANNED_EXPENSE' as const,
+        date: record.dueDate!,
+        title: record.name,
+        detail: 'Recorded planned-expense date; review whether it was completed or rescheduled.',
+        href: '/planned-expenses',
+        actionRequired: true,
+        status: 'RECORDED_PAST' as const,
+      })),
+    ].sort((left, right) => right.date.getTime() - left.date.getTime());
+  }
+
   private currency(value: string) {
     return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
