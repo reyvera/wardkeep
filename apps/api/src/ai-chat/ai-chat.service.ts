@@ -79,7 +79,11 @@ export class AiChatService {
     }));
 
     // Build financial context from user's accounts
-    const financialContext = await this.buildFinancialContext(userId);
+    const [financialContext, readiness] = await Promise.all([
+      this.buildFinancialContext(userId),
+      this.readiness.getReadiness(userId),
+    ]);
+    const advisorContext = `${financialContext}\n\n${formatReadinessContext(readiness)}`;
 
     // Resolve the AI provider based on user settings
     const provider = await this.resolveProvider(userId);
@@ -90,7 +94,7 @@ export class AiChatService {
     try {
       aiResponse = await aiChat.chat(
         dto.query,
-        financialContext,
+        advisorContext,
         history,
       );
     } catch (error) {
