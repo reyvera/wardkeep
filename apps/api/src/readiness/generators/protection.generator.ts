@@ -289,6 +289,10 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
         pillar: 'protection',
         summary: `Recorded deductibles total $${totalDeductibles.toFixed(2)}, above $${liquidReserves.toFixed(2)} in liquid reserves. This is an out-of-pocket resilience check, not an insurance adequacy assessment.`,
         weight: 1,
+        financialImpact: {
+          amount: totalDeductibles.sub(liquidReserves).toFixed(2),
+          label: 'Recorded deductible reserve gap',
+        },
       });
     }
   }
@@ -508,6 +512,9 @@ export function emergencyFundSignal(totalLiquid: Decimal, burnRate: HouseholdBur
     pillar: 'protection',
     summary: `Liquid reserves cover ${monthsCoverage.toFixed(1)} months of ${burnRate.usesNormalFallback ? 'ordinary' : 'essential'} expenses${burnRate.usesNormalFallback ? ' (essential expenses are not categorized yet)' : ''}. ${targetText}`,
     weight: 2,
+    financialImpact: new Decimal(amountNeeded).gt(0)
+      ? { amount: amountNeeded, label: 'Recorded reserve target gap' }
+      : undefined,
   });
 
   return signals;
