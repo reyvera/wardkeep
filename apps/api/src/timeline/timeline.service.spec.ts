@@ -69,6 +69,10 @@ describe('TimelineService', () => {
       'PLANNED_EXPENSE',
     ]);
     expect(events[3]).toMatchObject({ detail: '$400.00 planned · $275.00 not marked set aside' });
+    expect(events.filter((event) => event.actionRequired).map((event) => event.kind)).toEqual([
+      'POLICY_RENEWAL',
+      'PLANNED_EXPENSE',
+    ]);
     expect(prisma.recurringTransaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ userId: 'user-1', isConfirmed: true, isActive: true }),
