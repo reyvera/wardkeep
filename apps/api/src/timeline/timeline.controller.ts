@@ -15,4 +15,10 @@ export class TimelineController {
     const requestedDays = days === undefined ? undefined : Number(days);
     return this.timeline.listUpcoming(req.userId!, requestedDays);
   }
+
+  @Get('history')
+  listHistory(@Req() req: ScopedRequest, @Query('days') days?: string) {
+    const requestedDays = days === undefined ? undefined : Number(days);
+    return this.timeline.listHistory(req.userId!, requestedDays);
+  }
 }
