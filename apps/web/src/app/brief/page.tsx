@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, CalendarDays, Lightbulb, Sun } from 'lucide-react';
 
@@ -22,6 +23,16 @@ interface AdvisorInsight {
   sourceCapabilities: string[];
 }
 
+interface PeriodicBrief {
+  periodDays: 7 | 30;
+  readiness: { score: number | null; state: 'known' | 'partial' | 'not_evaluated'; coverage: number };
+  scoreChange: { delta: number | null; comparedTo: string | null; elapsedDays: number | null };
+  actionsCompleted: number;
+  completedRecommendations: Array<{ summary: string; action: string; completedAt: string }>;
+  observedRisks: string[];
+  upcoming: Array<{ id: string; date: string; title: string; detail: string; href: string }>;
+}
+
 function readinessLabel(brief: MorningBrief) {
   if (brief.readiness.state === 'not_evaluated') return 'Not evaluated yet';
   if (brief.readiness.state === 'partial') return 'Partial picture';
@@ -36,6 +47,7 @@ function coverageSummary(brief: MorningBrief) {
 }
 
 export default function BriefPage() {
+  const [reviewPeriod, setReviewPeriod] = useState<7 | 30>(7);
   const brief = useQuery({
     queryKey: ['advisor', 'morning-brief'],
     queryFn: () => apiClient.get<MorningBrief>('/advisor/brief/morning'),
@@ -43,6 +55,13 @@ export default function BriefPage() {
   const insights = useQuery({
     queryKey: ['advisor', 'insights'],
     queryFn: () => apiClient.get<AdvisorInsight[]>('/advisor/insights'),
+  });
+  const periodicBrief = useQuery({
+    queryKey: ['advisor', 'periodic-brief', reviewPeriod],
+    queryFn: () =>
+      apiClient.get<PeriodicBrief>(
+        `/advisor/brief/${reviewPeriod === 7 ? 'weekly' : 'monthly'}`,
+      ),
   });
 
   if (brief.isLoading) {
@@ -94,6 +113,55 @@ export default function BriefPage() {
           </div>
         </section>
       )}
+
+      <section className="card">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="card-title">REVIEW</h2>
+            <p className="mt-1 text-sm text-content-secondary">
+              Recorded changes and completed actions for the selected period.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {([7, 30] as const).map((period) => (
+              <button
+                key={period}
+                className={reviewPeriod === period ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+                onClick={() => setReviewPeriod(period)}
+              >
+                {period === 7 ? 'Week' : 'Month'}
+              </button>
+            ))}
+          </div>
+        </div>
+        {periodicBrief.isLoading ? (
+          <div className="skeleton mt-4 h-20 w-full" />
+        ) : periodicBrief.isError || !periodicBrief.data ? (
+          <p className="mt-4 text-sm text-content-secondary">This review is unavailable right now.</p>
+        ) : (
+          <div className="mt-4 space-y-3 text-sm">
+            <p className="text-content-primary">
+              {periodicBrief.data.scoreChange.delta === null
+                ? 'No score comparison is available yet; Wardkeep needs an older recorded readiness snapshot.'
+                : `Readiness ${periodicBrief.data.scoreChange.delta >= 0 ? 'increased' : 'decreased'} by ${Math.abs(periodicBrief.data.scoreChange.delta)} points over ${periodicBrief.data.scoreChange.elapsedDays} recorded days.`}
+            </p>
+            <p className="text-content-secondary">
+              {periodicBrief.data.actionsCompleted === 0
+                ? 'No recommendations were marked complete in this period.'
+                : `${periodicBrief.data.actionsCompleted} recommendation${periodicBrief.data.actionsCompleted === 1 ? '' : 's'} marked complete.`}
+            </p>
+            {periodicBrief.data.completedRecommendations.length > 0 && (
+              <ul className="space-y-1 text-content-secondary">
+                {periodicBrief.data.completedRecommendations.map((recommendation) => (
+                  <li key={`${recommendation.summary}-${recommendation.completedAt}`}>
+                    {recommendation.summary}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
 
       {!insights.isError && (insights.data?.length ?? 0) > 0 && (
         <section className="card">
