@@ -562,7 +562,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Record a credit-card limit and show calculated available borrowing capacity without treating it as cash reserves; warn modestly when a recorded line is 90% used without granting Protection credit
   - [x] Compare recorded monthly debt minimums with liquid reserves and warn only when the recorded minimums exceed current reserves
   - [x] Dependent planning records with optional labels and review dates, limited review-timing signals, and explicit care/coverage adequacy limits
-  - [ ] Insurance adequacy, disability/life coverage, estate-document adequacy, dependent needs, true income-interruption resilience, and unrecorded or variable fixed obligations
+  - [~] Insurance adequacy, disability/life coverage, estate-document adequacy, dependent needs, true income-interruption resilience, and unrecorded or variable fixed obligations
+    - [x] Compare a recorded policy amount with a household-entered coverage target without inferring insurance adequacy
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
