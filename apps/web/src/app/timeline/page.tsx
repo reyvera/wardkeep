@@ -67,16 +67,22 @@ function relativeDayLabel(date: string) {
   const days = Math.round((eventDay.getTime() - today.getTime()) / 86_400_000);
   if (days === 0) return 'Today';
   if (days === 1) return 'Tomorrow';
+  if (days === -1) return 'Yesterday';
+  if (days < 0) return `${Math.abs(days)} days ago`;
   return `In ${days} days`;
 }
 
 export default function TimelinePage() {
   const [days, setDays] = useState(30);
+  const [view, setView] = useState<'UPCOMING' | 'HISTORY'>('UPCOMING');
   const [kind, setKind] = useState<'ALL' | TimelineEventKind>('ALL');
   const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
   const timeline = useQuery({
-    queryKey: ['timeline', days],
-    queryFn: () => apiClient.get<TimelineEvent[]>(`/timeline/upcoming?days=${days}`),
+    queryKey: ['timeline', view, days],
+    queryFn: () =>
+      apiClient.get<TimelineEvent[]>(
+        `/timeline/${view === 'UPCOMING' ? 'upcoming' : 'history'}?days=${days}`,
+      ),
   });
 
   const visibleEvents = (timeline.data ?? []).filter(
