@@ -228,7 +228,15 @@ export default function HouseholdObligationsPage() {
                 </button>
                 <button
                   className="btn-ghost p-1 text-content-tertiary hover:text-accent-red"
-                  onClick={() => remove.mutate(obligation.id)}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Delete ${obligation.name} permanently? You can archive it instead if you may need it later.`,
+                      )
+                    ) {
+                      remove.mutate(obligation.id);
+                    }
+                  }}
                   aria-label={`Delete ${obligation.name}`}
                 >
                   <Trash2 size={16} />
