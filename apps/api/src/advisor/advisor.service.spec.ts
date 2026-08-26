@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ReadinessService } from '../readiness/readiness.service';
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { TimelineService } from '../timeline/timeline.service';
-import { AdvisorService } from './advisor.service';
+import { AdvisorService, crossCapabilityInsightCandidates } from './advisor.service';
 
 describe('AdvisorService', () => {
   it('builds a deterministic brief from readiness, actions, and recorded events', async () => {
@@ -12,6 +12,10 @@ describe('AdvisorService', () => {
         signals: [],
         overallAssessment: { score: 62, state: 'partial', coverage: 55 },
         topRisks: [{ summary: 'Liquid reserves need attention.' }],
+        trendWindows: [
+          { days: 7, delta: 4, comparedTo: new Date('2026-08-19T00:00:00.000Z'), elapsedDays: 7 },
+          { days: 30, delta: null, comparedTo: null, elapsedDays: null },
+        ],
       }),
     } as unknown as ReadinessService;
     const recommendations = {
@@ -22,6 +26,12 @@ describe('AdvisorService', () => {
           signalSummary: 'Build a reserve.',
           action: 'Review liquid accounts',
           actionHref: '/accounts',
+        },
+        {
+          status: 'COMPLETED',
+          signalSummary: 'Update policy details.',
+          action: 'Review policies',
+          completedAt: new Date(),
         },
       ]),
     } as unknown as RecommendationsService;
@@ -37,7 +47,7 @@ describe('AdvisorService', () => {
         },
       ]),
     } as unknown as TimelineService;
-    const advisor = new AdvisorService(readiness, recommendations, timeline);
+    const advisor = new AdvisorService(readiness, recommendations, timeline, {} as never);
 
     const brief = await advisor.getMorningBrief('user-1');
 
@@ -50,5 +60,75 @@ describe('AdvisorService', () => {
     expect(brief.upcoming).toHaveLength(1);
     expect(vi.mocked(recommendations.synchronize)).toHaveBeenCalledWith('user-1', []);
     expect(vi.mocked(timeline.listUpcoming)).toHaveBeenCalledWith('user-1', 7);
+  });
+
+  it('reports recorded trend data and recently completed recommendations for periodic briefs', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [],
+        overallAssessment: { score: 62, state: 'partial', coverage: 55 },
+        topRisks: [{ summary: 'Liquid reserves need attention.' }],
+        trendWindows: [
+          { days: 7, delta: 4, comparedTo: new Date('2026-08-19T00:00:00.000Z'), elapsedDays: 7 },
+          { days: 30, delta: null, comparedTo: null, elapsedDays: null },
+        ],
+      }),
+    } as unknown as ReadinessService;
+    const recommendations = {
+      synchronize: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue([
+        {
+          status: 'COMPLETED',
+          signalSummary: 'Update policy details.',
+          action: 'Review policies',
+          completedAt: new Date(),
+        },
+      ]),
+    } as unknown as RecommendationsService;
+    const timeline = { listUpcoming: vi.fn().mockResolvedValue([]) } as unknown as TimelineService;
+    const advisor = new AdvisorService(readiness, recommendations, timeline, {} as never);
+
+    await expect(advisor.getWeeklyBrief('user-1')).resolves.toMatchObject({
+      periodDays: 7,
+      scoreChange: { delta: 4, elapsedDays: 7 },
+      actionsCompleted: 1,
+      observedRisks: ['Liquid reserves need attention.'],
+    });
+    await expect(advisor.getMonthlyBrief('user-1')).resolves.toMatchObject({
+      periodDays: 30,
+      scoreChange: { delta: null, comparedTo: null },
+    });
+    expect(vi.mocked(timeline.listUpcoming)).toHaveBeenNthCalledWith(1, 'user-1', 7);
+    expect(vi.mocked(timeline.listUpcoming)).toHaveBeenNthCalledWith(2, 'user-1', 30);
+  });
+
+  it('refreshes and returns recommendations from their existing priority order', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({ signals: [{ capabilityId: 'insurance' }] }),
+    } as unknown as ReadinessService;
+    const recordedRecommendations = [{ id: 'rec-1', capabilityId: 'insurance', priorityScore: 260 }];
+    const recommendations = {
+      synchronize: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue(recordedRecommendations),
+    } as unknown as RecommendationsService;
+    const timeline = {} as TimelineService;
+    const advisor = new AdvisorService(readiness, recommendations, timeline, {} as never);
+
+    await expect(advisor.getRecommendations('user-1')).resolves.toEqual(recordedRecommendations);
+    expect(vi.mocked(recommendations.synchronize)).toHaveBeenCalledWith('user-1', [
+      { capabilityId: 'insurance' },
+    ]);
+  });
+
+  it('only creates insights when recorded risks span the supported capabilities', () => {
+    expect(
+      crossCapabilityInsightCandidates([
+        { capabilityId: 'emergency-fund', type: 'warning', magnitude: -2, pillar: 'protection', summary: 'Reserve low.' },
+        { capabilityId: 'insurance-deductibles', type: 'risk', magnitude: -3, pillar: 'protection', summary: 'Deductible high.' },
+      ]),
+    ).toMatchObject([
+      { sourceCapabilities: ['emergency-fund', 'insurance-deductibles'], actionHref: '/insurance' },
+    ]);
+    expect(crossCapabilityInsightCandidates([])).toEqual([]);
   });
 });
