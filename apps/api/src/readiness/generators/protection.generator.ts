@@ -126,6 +126,11 @@ export function fixedObligationSignal(input: {
     pillar: 'protection',
     weight: 0.75,
     summary: `Recorded monthly commitments total $${monthlyObligations.toFixed(2)} (${components.join(' and ')}), above $${input.reserves.toFixed(2)} in liquid reserves. Amounts marked variable are household estimates; unrecorded commitments are not included.`,
+    financialImpact: {
+      amount: monthlyObligations.sub(input.reserves).toFixed(2),
+      monthlyAmount: monthlyObligations.toFixed(2),
+      label: 'Recorded commitment shortfall',
+    },
   }];
 }
 

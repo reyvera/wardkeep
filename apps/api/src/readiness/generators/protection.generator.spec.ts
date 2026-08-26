@@ -106,6 +106,11 @@ describe('fixedObligationSignal', () => {
     expect(signal[0]).toMatchObject({ capabilityId: 'fixed-obligations', type: 'warning' });
     expect(signal[0]?.summary).toContain('$700.00 in confirmed recurring bills');
     expect(signal[0]?.summary).toContain('unrecorded commitments are not included');
+    expect(signal[0]?.financialImpact).toEqual({
+      amount: '100.00',
+      monthlyAmount: '1100.00',
+      label: 'Recorded commitment shortfall',
+    });
   });
 
   it('does not infer risk when known commitments are within reserves', () => {
