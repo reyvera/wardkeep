@@ -339,7 +339,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 23.1 Implement Timeline service and API
   - [x] GET /api/timeline/upcoming — chronological recorded events for 1–365 days
   - [ ] API endpoint: GET /api/timeline — unified chronological view with future capability sources
-  - GET /api/timeline/history — past events (what happened)
+  - [x] GET /api/timeline/history — past recorded dates, clearly distinguished from confirmed outcomes
   - Each event: title, date, capability source, actionRequired flag, status
 
 - [~] 23.2 Wire finance events into Timeline
