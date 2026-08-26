@@ -22,6 +22,7 @@ interface TimelineEvent {
   title: string;
   detail: string;
   href: string;
+  actionRequired: boolean;
 }
 
 const eventIcons = {
