@@ -21,6 +21,13 @@ export interface Signal {
   observationId?: string;
   weight?: number;
   expiresAt?: Date;
+  /** Recorded financial context for a recommendation; absent when Wardkeep cannot estimate it. */
+  financialImpact?: {
+    amount?: string;
+    monthlyAmount?: string;
+    label?: string;
+    timeToCompletionDays?: number;
+  };
 }
 
 /** A fact collected by a capability before it is interpreted as a signal. */

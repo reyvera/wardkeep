@@ -68,6 +68,10 @@ model Recommendation {
   assumptions          String               @db.VarChar(1500)
   impactPreview        String               @default("Wardkeep cannot reliably project a numeric score change from this action yet.") @db.VarChar(1500)
   projectedPillarDelta Int?
+  estimatedAmount      Decimal?              @db.Decimal(19, 4)
+  estimatedMonthlyAmount Decimal?            @db.Decimal(19, 4)
+  estimatedAmountLabel String?               @db.VarChar(160)
+  estimatedCompletionDays Int?
   status               RecommendationStatus @default(ACTIVE)
   dismissedAt          DateTime?
   completedAt          DateTime?
