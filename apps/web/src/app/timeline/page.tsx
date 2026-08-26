@@ -189,6 +189,11 @@ export default function TimelinePage() {
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-content-primary">{event.title}</p>
                         <p className="mt-0.5 text-sm text-content-secondary">{event.detail}</p>
+                        {event.actionRequired && (
+                          <span className="mt-2 inline-block rounded-full bg-accent-yellow/10 px-2 py-1 text-xs font-medium text-accent-yellow">
+                            Action required
+                          </span>
+                        )}
                       </div>
                       <div className="hidden shrink-0 text-right sm:block">
                         <span
