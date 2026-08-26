@@ -17,6 +17,8 @@ import { ReadinessResponse, ReadinessService } from '../readiness/readiness.serv
 /** Default Ollama endpoint for local AI. */
 const OLLAMA_ENDPOINT = process.env['OLLAMA_URL'] ?? 'http://localhost:11434';
 
+type ReadinessReference = 'protection' | 'provision' | 'preparation' | 'prosperity';
+
 /** Formats evaluated readiness evidence for the Advisor conversation context. */
 export function formatReadinessContext(readiness: ReadinessResponse): string {
   const score = readiness.overallAssessment.score === null ? 'not evaluated' : `${readiness.overallAssessment.score}%`;
@@ -84,6 +86,7 @@ export class AiChatService {
       this.readiness.getReadiness(userId),
     ]);
     const advisorContext = `${financialContext}\n\n${formatReadinessContext(readiness)}`;
+    const readinessReferences = [...new Set(readiness.topRisks.map((signal) => signal.pillar))] as ReadinessReference[];
 
     // Resolve the AI provider based on user settings
     const provider = await this.resolveProvider(userId);
@@ -110,6 +113,7 @@ export class AiChatService {
         sessionId,
         message: `Sorry, I couldn't process your request: ${msg}`,
         verifiedData: null,
+        readinessReferences,
       };
     }
 
@@ -146,6 +150,7 @@ export class AiChatService {
       message: aiResponse.content,
       numericalClaims: aiResponse.numericalClaims,
       verifiedData,
+      readinessReferences,
     };
   }
 
