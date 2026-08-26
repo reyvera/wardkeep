@@ -103,7 +103,7 @@ const PILLARS: Record<
       },
       {
         capability: 'fixed-obligations',
-        label: 'Recorded debt minimums and recurring bills compared with liquid reserves',
+        label: 'Recorded debt minimums, recurring bills, and external commitments compared with liquid reserves',
       },
       { capability: 'dependents', label: 'Entered dependent records and review timing' },
     ],

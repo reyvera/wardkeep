@@ -65,7 +65,7 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
     { id: 'estate-documents', label: 'Estate-planning review dates' },
     { id: 'income-sources', label: 'Recorded income-source reviews' },
     { id: 'secondary-liquidity', label: 'Recorded credit availability' },
-    { id: 'fixed-obligations', label: 'Recorded monthly commitments' },
+    { id: 'fixed-obligations', label: 'Recorded monthly and external commitments' },
     { id: 'dependents', label: 'Dependent planning reviews' },
   ],
   provision: [
