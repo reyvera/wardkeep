@@ -137,6 +137,9 @@ export default function RecommendationsPage() {
                               {recommendation.estimatedAmount
                                 ? `$${recommendation.estimatedAmount}`
                                 : `$${recommendation.estimatedMonthlyAmount} per month`}
+                              {recommendation.estimatedAmount && recommendation.estimatedMonthlyAmount
+                                ? ` · $${recommendation.estimatedMonthlyAmount} per month recorded`
+                                : ''}
                               {recommendation.estimatedCompletionDays !== null
                                 ? ` · due in ${recommendation.estimatedCompletionDays} days`
                                 : ' · timing is not estimated'}
