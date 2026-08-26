@@ -101,7 +101,9 @@ export default function TimelinePage() {
         <div>
           <h1 className="text-page-title">Timeline</h1>
           <p className="mt-1 max-w-2xl text-sm text-content-secondary">
-            Upcoming dates recorded in your household—not forecasts or inferred obligations.
+            {view === 'UPCOMING'
+              ? 'Upcoming dates recorded in your household—not forecasts or inferred obligations.'
+              : 'Past dates recorded in your household. A recorded date does not confirm that the underlying event occurred.'}
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-content-secondary">
@@ -118,12 +120,28 @@ export default function TimelinePage() {
         </label>
       </div>
 
+      <div className="flex flex-wrap gap-2" aria-label="Choose timeline period">
+        <button
+          className={view === 'UPCOMING' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+          onClick={() => setView('UPCOMING')}
+        >
+          Upcoming
+        </button>
+        <button
+          className={view === 'HISTORY' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+          onClick={() => setView('HISTORY')}
+        >
+          Past recorded dates
+        </button>
+      </div>
+
       <div className="card border-accent-blue/20 bg-accent-blue/5">
         <div className="flex gap-3">
           <CalendarDays className="mt-0.5 shrink-0 text-accent-blue" size={20} />
           <p className="text-sm text-content-secondary">
-            Includes confirmed recurring bills, policy renewals, expected income dates, and planned
-            expenses. Add or change a record in its source workspace.
+            {view === 'UPCOMING'
+              ? 'Includes confirmed recurring bills, policy renewals, expected income dates, and planned expenses. Add or change a record in its source workspace.'
+              : 'Includes past policy renewal, expected-income, and planned-expense dates. Open the source workspace to confirm or update its outcome.'}
           </p>
         </div>
       </div>
@@ -163,14 +181,15 @@ export default function TimelinePage() {
           <CalendarDays className="mx-auto text-content-tertiary" size={28} />
           <p className="mt-3 font-medium text-content-primary">
             {actionRequiredOnly
-              ? `No action-required recorded events in the next ${days} days.`
+              ? `No action-required recorded dates in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`
               : kind === 'ALL'
-              ? `No recorded dates in the next ${days} days.`
-              : `No ${eventLabels[kind].toLowerCase()} events in the next ${days} days.`}
+              ? `No recorded dates in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`
+              : `No ${eventLabels[kind].toLowerCase()} events in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`}
           </p>
           <p className="mt-1 text-sm text-content-secondary">
-            Add a recurring bill, policy renewal, expected income date, or planned expense when you
-            know it.
+            {view === 'UPCOMING'
+              ? 'Add a recurring bill, policy renewal, expected income date, or planned expense when you know it.'
+              : 'Past scheduled dates remain separate from confirmed payments, renewals, or income.'}
           </p>
         </div>
       ) : (
@@ -199,6 +218,11 @@ export default function TimelinePage() {
                         {event.actionRequired && (
                           <span className="mt-2 inline-block rounded-full bg-accent-yellow/10 px-2 py-1 text-xs font-medium text-accent-yellow">
                             Action required
+                          </span>
+                        )}
+                        {event.status === 'RECORDED_PAST' && (
+                          <span className="mt-2 ml-2 inline-block rounded-full bg-surface-tertiary px-2 py-1 text-xs font-medium text-content-secondary">
+                            Recorded date
                           </span>
                         )}
                       </div>
