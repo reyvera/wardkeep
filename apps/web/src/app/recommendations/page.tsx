@@ -15,6 +15,10 @@ interface Recommendation {
   assumptions: string;
   impactPreview: string;
   projectedPillarDelta: number | null;
+  estimatedAmount: string | null;
+  estimatedMonthlyAmount: string | null;
+  estimatedAmountLabel: string | null;
+  estimatedCompletionDays: number | null;
   status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
   updatedAt: string;
 }
@@ -127,6 +131,17 @@ export default function RecommendationsPage() {
                           <p className="mt-1 text-xs text-content-secondary">
                             Impact preview: {recommendation.impactPreview}
                           </p>
+                          {(recommendation.estimatedAmount || recommendation.estimatedMonthlyAmount) && (
+                            <p className="mt-1 text-xs text-content-secondary">
+                              {recommendation.estimatedAmountLabel ?? 'Recorded financial impact'}:{' '}
+                              {recommendation.estimatedAmount
+                                ? `$${recommendation.estimatedAmount}`
+                                : `$${recommendation.estimatedMonthlyAmount} per month`}
+                              {recommendation.estimatedCompletionDays !== null
+                                ? ` · due in ${recommendation.estimatedCompletionDays} days`
+                                : ' · timing is not estimated'}
+                            </p>
+                          )}
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             <Link
                               href={recommendation.actionHref}
