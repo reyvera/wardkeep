@@ -11,6 +11,7 @@ export interface TimelineEvent {
   title: string;
   detail: string;
   href: string;
+  actionRequired: boolean;
 }
 
 @Injectable()
@@ -56,6 +57,7 @@ export class TimelineService {
         title: record.merchant,
         detail: `${this.currency(record.expectedAmount.toString())} expected ${record.frequency.toLowerCase()}`,
         href: '/recurring',
+        actionRequired: false,
       })),
       ...policies.map((record) => ({
         id: `policy-${record.id}`,
@@ -64,6 +66,7 @@ export class TimelineService {
         title: `${record.provider} ${record.type.toLowerCase().replace('_', ' ')} renewal`,
         detail: 'Recorded policy renewal',
         href: '/insurance',
+        actionRequired: true,
       })),
       ...income.map((record) => ({
         id: `income-${record.id}`,
@@ -74,6 +77,7 @@ export class TimelineService {
           ? `${this.currency(record.expectedNetAmount.toString())} expected income`
           : 'Recorded expected income date',
         href: '/income-sources',
+        actionRequired: false,
       })),
       ...plannedExpenses.map((record) => {
         const amount = record.amount?.toString();
@@ -88,6 +92,7 @@ export class TimelineService {
             ? `${this.currency(amount)} planned${shortfall ? ` · ${this.currency(shortfall.toString())} not marked set aside` : ''}`
             : 'Recorded planned expense',
           href: '/planned-expenses',
+          actionRequired: shortfall !== null && shortfall > 0,
         };
       }),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
