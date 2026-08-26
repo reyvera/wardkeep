@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Archive, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
 
@@ -28,20 +28,26 @@ export default function HouseholdObligationsPage() {
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState<HouseholdObligation | null>(null);
   const obligations = useQuery({
     queryKey: ['household-obligations'],
     queryFn: () => apiClient.get<HouseholdObligation[]>('/household-obligations'),
   });
-  const create = useMutation({
-    mutationFn: () =>
-      apiClient.post('/household-obligations', {
+  const save = useMutation({
+    mutationFn: () => {
+      const payload = {
         ...form,
-        reviewDate: form.reviewDate || undefined,
-        notes: form.notes || undefined,
-      }),
+        reviewDate: form.reviewDate || (editing ? null : undefined),
+        notes: form.notes || (editing ? null : undefined),
+      };
+      return editing
+        ? apiClient.patch(`/household-obligations/${editing.id}`, payload)
+        : apiClient.post('/household-obligations', payload);
+    },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['household-obligations'] });
       setForm(emptyForm);
+      setEditing(null);
       setOpen(false);
     },
   });
@@ -62,7 +68,7 @@ export default function HouseholdObligationsPage() {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    create.mutate();
+    save.mutate();
   };
 
   return (
@@ -76,7 +82,14 @@ export default function HouseholdObligationsPage() {
             recurring bills. Variable amounts are treated as your estimates.
           </p>
         </div>
-        <button className="btn-primary w-fit" onClick={() => setOpen(!open)}>
+        <button
+          className="btn-primary w-fit"
+          onClick={() => {
+            setEditing(null);
+            setForm(emptyForm);
+            setOpen(!open);
+          }}
+        >
           <Plus size={16} />
           Add commitment
         </button>
@@ -147,10 +160,17 @@ export default function HouseholdObligationsPage() {
             />
           </div>
           <div className="flex gap-2">
-            <button className="btn-primary" disabled={create.isPending}>
-              {create.isPending ? 'Saving…' : 'Save commitment'}
+            <button className="btn-primary" disabled={save.isPending}>
+              {save.isPending ? 'Saving…' : editing ? 'Save changes' : 'Save commitment'}
             </button>
-            <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setEditing(null);
+                setOpen(false);
+              }}
+            >
               Cancel
             </button>
           </div>
@@ -182,6 +202,23 @@ export default function HouseholdObligationsPage() {
                 )}
               </div>
               <div className="flex gap-1">
+                <button
+                  className="btn-ghost p-1 text-content-tertiary hover:text-accent-blue"
+                  onClick={() => {
+                    setEditing(obligation);
+                    setForm({
+                      name: obligation.name,
+                      monthlyAmount: obligation.monthlyAmount,
+                      isVariable: obligation.isVariable,
+                      reviewDate: obligation.reviewDate?.slice(0, 10) ?? '',
+                      notes: obligation.notes ?? '',
+                    });
+                    setOpen(true);
+                  }}
+                  aria-label={`Edit ${obligation.name}`}
+                >
+                  <Pencil size={16} />
+                </button>
                 <button
                   className="btn-ghost p-1 text-content-tertiary hover:text-accent-blue"
                   onClick={() => update.mutate({ id: obligation.id, isActive: !obligation.isActive })}
