@@ -184,6 +184,7 @@ model InsurancePolicy {
   propertyTaxFrequency InsurancePremiumFrequency?
   deductible           Decimal?                    @db.Decimal(19, 4)
   coverageAmount       Decimal?                    @db.Decimal(19, 4)
+  coverageTargetAmount Decimal?                    @db.Decimal(19, 4)
   renewalDate          DateTime?                   @db.Date
   isActive             Boolean                     @default(true)
   notes                String?                     @db.VarChar(1000)
