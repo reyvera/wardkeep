@@ -5,6 +5,7 @@ import { RATE_LIMIT_API } from '@wardkeep/shared';
 
 import { AccountsModule } from './accounts/accounts.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';
+import { AdvisorModule } from './advisor/advisor.module';
 import { AuthModule } from './auth/auth.module';
 import { BackupModule } from './backup/backup.module';
 import { BankConnectionsModule } from './bank-connections/bank-connections.module';
@@ -47,6 +48,7 @@ import { TimelineModule } from './timeline/timeline.module';
     AuthModule,
     AccountsModule,
     AiChatModule,
+    AdvisorModule,
     BackupModule,
     BankConnectionsModule,
     BudgetsModule,
