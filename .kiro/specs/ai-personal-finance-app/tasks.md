@@ -576,7 +576,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
   - [x] Show a truthful 30-day Coming Up view from recorded recurring-payment dates and policy renewals, without inventing unrecorded events
   - [x] Show a qualified pillar-only impact preview when removing a source risk leaves other observed pillar factors; otherwise state that Wardkeep will measure rather than predict the change
-  - [ ] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
+  - [~] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
+    - [x] Persist and display recorded financial gaps and known due dates without estimating missing timing
 
 - [x] 39.6 Establish GitHub launch tracking
   - [x] Publish the outcome-oriented release roadmap, task-plan link, and progress map on GitHub Pages; validate it in CI with locked Jekyll dependencies
