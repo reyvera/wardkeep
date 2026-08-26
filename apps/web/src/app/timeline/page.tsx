@@ -23,6 +23,7 @@ interface TimelineEvent {
   detail: string;
   href: string;
   actionRequired: boolean;
+  status?: 'RECORDED_PAST';
 }
 
 const eventIcons = {
