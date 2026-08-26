@@ -1,19 +1,24 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { Send, MessageSquare, Bot, User } from 'lucide-react';
+
+type ReadinessPillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   verifiedData?: Record<string, unknown>;
+  readinessReferences?: ReadinessPillar[];
 }
 
 interface ChatResponse {
   message: string;
   verifiedData?: Record<string, unknown>;
+  readinessReferences?: ReadinessPillar[];
 }
 
 const QUICK_PROMPTS = [
@@ -33,7 +38,12 @@ export default function ChatPage() {
   const chatMutation = useMutation({
     mutationFn: (userMessage: string) => apiClient.post<ChatResponse>('/chat', { query: userMessage }),
     onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.message, verifiedData: data.verifiedData }]);
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: data.message,
+        verifiedData: data.verifiedData,
+        readinessReferences: data.readinessReferences,
+      }]);
     },
   });
 
@@ -91,6 +101,20 @@ export default function ChatPage() {
                   <div className="mt-2 pt-2 border-t border-edge text-xs text-content-tertiary">
                     <p className="font-medium text-content-secondary">Verified data:</p>
                     <pre className="mt-1 overflow-x-auto">{JSON.stringify(msg.verifiedData, null, 2)}</pre>
+                  </div>
+                )}
+                {msg.readinessReferences && msg.readinessReferences.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1 border-t border-edge pt-2 text-xs">
+                    <span className="text-content-tertiary">Related readiness:</span>
+                    {msg.readinessReferences.map((pillar) => (
+                      <Link
+                        key={pillar}
+                        href={`/dashboard/readiness/${pillar}`}
+                        className="text-accent-blue hover:underline"
+                      >
+                        {pillar.charAt(0).toUpperCase() + pillar.slice(1)}
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
