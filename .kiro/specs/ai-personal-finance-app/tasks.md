@@ -376,7 +376,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 24.3 Implement Advisor conversation UI (replaces AI Chat)
   - [x] Rebrand from "AI Chat" to "Advisor"
   - [x] Advisor context includes readiness state and signals
-  - Responses include inline readiness references ("This affects your Provision score")
+  - [x] Responses include linked readiness references for the currently observed risk pillars
   - [x] Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
 
 - [ ] 24.4 Implement Timeline UI page
