@@ -35,7 +35,11 @@ export function recommendationCandidate(
   const severity = Math.min(10, Math.abs(signal.magnitude));
   const urgency = signal.type === 'risk' ? 3 : 2;
   const confidence = signal.provenance.evidenceState === 'stale' ? 0.5 : 1;
-  const priorityScore = Math.round((severity * 30 + urgency * 20 + 20) * confidence);
+  const financialImpactWeight =
+    signal.financialImpact?.amount || signal.financialImpact?.monthlyAmount ? 10 : 0;
+  const priorityScore = Math.round(
+    (severity * 30 + urgency * 20 + 20 + financialImpactWeight) * confidence,
+  );
   const priority: RecommendationPriority =
     priorityScore >= 280
       ? 'critical'
