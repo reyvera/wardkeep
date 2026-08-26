@@ -71,4 +71,20 @@ describe('recommendationCandidate', () => {
     expect(candidate.projectedPillarDelta).toBeGreaterThan(0);
     expect(candidate.impactPreview).toContain('could increase');
   });
+
+  it('persists recorded financial context without inventing missing timing', () => {
+    const candidate = recommendationCandidate({
+      capabilityId: 'emergency-fund',
+      type: 'warning',
+      magnitude: -4,
+      pillar: 'protection',
+      summary: 'Reserves need attention.',
+      financialImpact: { amount: '1200.00', label: 'Recorded reserve target gap' },
+      provenance: { limitation: 'Cash resilience only.', evidenceState: 'synchronized' },
+    });
+
+    expect(candidate.estimatedAmount?.toFixed(2)).toBe('1200.00');
+    expect(candidate.estimatedAmountLabel).toBe('Recorded reserve target gap');
+    expect(candidate.estimatedCompletionDays).toBeNull();
+  });
 });

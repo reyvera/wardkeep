@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { Decimal } from 'decimal.js';
 
 import { computePillarScore, Signal } from '@wardkeep/readiness';
 
@@ -71,6 +72,14 @@ export function recommendationCandidate(
     assumptions: signal.provenance.limitation,
     impactPreview,
     projectedPillarDelta,
+    estimatedAmount: signal.financialImpact?.amount
+      ? new Decimal(signal.financialImpact.amount)
+      : null,
+    estimatedMonthlyAmount: signal.financialImpact?.monthlyAmount
+      ? new Decimal(signal.financialImpact.monthlyAmount)
+      : null,
+    estimatedAmountLabel: signal.financialImpact?.label ?? null,
+    estimatedCompletionDays: signal.financialImpact?.timeToCompletionDays ?? null,
   };
 }
 
