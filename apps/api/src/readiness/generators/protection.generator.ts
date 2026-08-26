@@ -52,6 +52,10 @@ async function generateFixedObligationSignals(prisma: PrismaClient, userId: stri
     where: { userId, isConfirmed: true, isActive: true },
     select: { expectedAmount: true, frequency: true },
   });
+  const manualObligations = await prisma.householdObligation.findMany({
+    where: { userId, isActive: true },
+    select: { monthlyAmount: true, isVariable: true },
+  });
   const monthlyDebtMinimums = profiles.reduce(
     (total, profile) => total.add(new Decimal(profile.minimumPayment.toString())),
     new Decimal(0),
@@ -60,9 +64,19 @@ async function generateFixedObligationSignals(prisma: PrismaClient, userId: stri
     (total, bill) => total.add(monthlyRecurringAmount(bill.expectedAmount, bill.frequency)),
     new Decimal(0),
   );
-  if (monthlyDebtMinimums.add(monthlyRecurringBills).lte(0)) return [];
+  const monthlyManualObligations = manualObligations.reduce(
+    (total, obligation) => total.add(new Decimal(obligation.monthlyAmount.toString())),
+    new Decimal(0),
+  );
+  if (monthlyDebtMinimums.add(monthlyRecurringBills).add(monthlyManualObligations).lte(0)) return [];
   const reserves = await calculateLiquidReserves(prisma, userId);
-  return fixedObligationSignal({ monthlyDebtMinimums, monthlyRecurringBills, reserves });
+  return fixedObligationSignal({
+    monthlyDebtMinimums,
+    monthlyRecurringBills,
+    monthlyManualObligations,
+    variableManualObligationCount: manualObligations.filter((obligation) => obligation.isVariable).length,
+    reserves,
+  });
 }
 
 /** Converts a confirmed recurring amount to its monthly equivalent. */
@@ -86,9 +100,13 @@ export function monthlyRecurringAmount(
 export function fixedObligationSignal(input: {
   monthlyDebtMinimums: Decimal;
   monthlyRecurringBills: Decimal;
+  monthlyManualObligations: Decimal;
+  variableManualObligationCount: number;
   reserves: Decimal;
 }): Signal[] {
-  const monthlyObligations = input.monthlyDebtMinimums.add(input.monthlyRecurringBills);
+  const monthlyObligations = input.monthlyDebtMinimums
+    .add(input.monthlyRecurringBills)
+    .add(input.monthlyManualObligations);
   if (monthlyObligations.lte(0) || monthlyObligations.lte(input.reserves)) return [];
   const components = [
     input.monthlyDebtMinimums.gt(0)
@@ -97,6 +115,9 @@ export function fixedObligationSignal(input: {
     input.monthlyRecurringBills.gt(0)
       ? `$${input.monthlyRecurringBills.toFixed(2)} in confirmed recurring bills`
       : null,
+    input.monthlyManualObligations.gt(0)
+      ? `$${input.monthlyManualObligations.toFixed(2)} in entered external commitments${input.variableManualObligationCount > 0 ? ` (${input.variableManualObligationCount} marked variable)` : ''}`
+      : null,
   ].filter((component): component is string => component !== null);
   return [{
     capabilityId: 'fixed-obligations',
@@ -104,7 +125,7 @@ export function fixedObligationSignal(input: {
     magnitude: -2,
     pillar: 'protection',
     weight: 0.75,
-    summary: `Recorded monthly commitments total $${monthlyObligations.toFixed(2)} (${components.join(' and ')}), above $${input.reserves.toFixed(2)} in liquid reserves. Unrecorded or variable household obligations are not included.`,
+    summary: `Recorded monthly commitments total $${monthlyObligations.toFixed(2)} (${components.join(' and ')}), above $${input.reserves.toFixed(2)} in liquid reserves. Amounts marked variable are household estimates; unrecorded commitments are not included.`,
   }];
 }
 

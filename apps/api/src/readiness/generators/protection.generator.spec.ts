@@ -97,13 +97,15 @@ describe('fixedObligationSignal', () => {
     const signal = fixedObligationSignal({
       monthlyDebtMinimums: new Decimal(400),
       monthlyRecurringBills: new Decimal(700),
+      monthlyManualObligations: new Decimal(0),
+      variableManualObligationCount: 0,
       reserves: new Decimal(1_000),
     });
 
     expect(signal).toHaveLength(1);
     expect(signal[0]).toMatchObject({ capabilityId: 'fixed-obligations', type: 'warning' });
     expect(signal[0]?.summary).toContain('$700.00 in confirmed recurring bills');
-    expect(signal[0]?.summary).toContain('Unrecorded or variable');
+    expect(signal[0]?.summary).toContain('unrecorded commitments are not included');
   });
 
   it('does not infer risk when known commitments are within reserves', () => {
@@ -111,6 +113,8 @@ describe('fixedObligationSignal', () => {
       fixedObligationSignal({
         monthlyDebtMinimums: new Decimal(400),
         monthlyRecurringBills: new Decimal(700),
+        monthlyManualObligations: new Decimal(0),
+        variableManualObligationCount: 0,
         reserves: new Decimal(1_100),
       }),
     ).toEqual([]);
@@ -119,6 +123,19 @@ describe('fixedObligationSignal', () => {
   it('normalizes confirmed recurring amounts by their recorded frequency', () => {
     expect(monthlyRecurringAmount(new Decimal(120), 'ANNUAL').toFixed(2)).toBe('10.00');
     expect(monthlyRecurringAmount(new Decimal(100), 'BIWEEKLY').toFixed(2)).toBe('216.67');
+  });
+
+  it('includes entered variable obligations as labeled household estimates', () => {
+    const signal = fixedObligationSignal({
+      monthlyDebtMinimums: new Decimal(0),
+      monthlyRecurringBills: new Decimal(0),
+      monthlyManualObligations: new Decimal(1_100),
+      variableManualObligationCount: 1,
+      reserves: new Decimal(1_000),
+    });
+
+    expect(signal[0]?.summary).toContain('$1100.00 in entered external commitments (1 marked variable)');
+    expect(signal[0]?.summary).toContain('household estimates');
   });
 });
 
