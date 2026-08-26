@@ -42,6 +42,7 @@ model User {
   householdObligations  HouseholdObligation[]
   plannedExpenses       PlannedExpense[]
   recommendations       Recommendation[]
+  advisorInsights       AdvisorInsight[]
 }
 
 // ─── Durable household actions ────────────────────────────────────────────────
@@ -83,6 +84,23 @@ model Recommendation {
 
   @@unique([userId, fingerprint])
   @@index([userId, status, priorityScore])
+}
+
+// A deterministic observation that combines signals from more than one capability.
+model AdvisorInsight {
+  id                 String   @id @default(uuid())
+  userId             String
+  fingerprint        String   @db.VarChar(191)
+  summary            String   @db.VarChar(1500)
+  action             String   @db.VarChar(240)
+  actionHref         String   @db.VarChar(240)
+  sourceCapabilities String[]
+  createdAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, fingerprint, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Session {

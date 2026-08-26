@@ -87,6 +87,7 @@ async function main() {
     await prisma.householdObligation.deleteMany({ where: { userId: existing.id } });
     await prisma.plannedExpense.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
+    await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSnapshot.deleteMany({ where: { userId: existing.id } });
     await prisma.account.deleteMany({ where: { userId: existing.id } });
