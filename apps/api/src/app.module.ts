@@ -17,6 +17,7 @@ import { DependentsModule } from './dependents/dependents.module';
 import { EstateDocumentsModule } from './estate-documents/estate-documents.module';
 import { ImportModule } from './import/import.module';
 import { IncomeSourcesModule } from './income-sources/income-sources.module';
+import { HouseholdObligationsModule } from './household-obligations/household-obligations.module';
 import { PlannedExpensesModule } from './planned-expenses/planned-expenses.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -63,6 +64,7 @@ import { TimelineModule } from './timeline/timeline.module';
     TimelineModule,
     ImportModule,
     IncomeSourcesModule,
+    HouseholdObligationsModule,
     PlannedExpensesModule,
     InsuranceModule,
   ],
