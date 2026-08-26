@@ -365,13 +365,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Needs attention and Wardkeep recommends sections
   - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
 
-- [ ] 24.2 Implement Morning Brief UI (new home screen)
-  - Greeting with readiness score
-  - Today's priorities (from Advisor)
-  - This week's timeline events
-  - Top recommendation with one-tap actions
-  - Active risks summary
-  - This becomes the landing page after login
+- [~] 24.2 Implement Morning Brief UI (new home screen)
+  - [x] Greeting with readiness score
+  - [x] Today's priorities (from Advisor)
+  - [x] This week's timeline events
+  - [x] Top recommendation with one-tap actions
+  - [x] Active risks summary
+  - [ ] This becomes the landing page after login
 
 - [ ] 24.3 Implement Advisor conversation UI (replaces AI Chat)
   - Rebrand from "AI Chat" to "Advisor"
