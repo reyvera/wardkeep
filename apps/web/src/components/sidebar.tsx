@@ -40,7 +40,7 @@ const navItems = [
   { href: '/estate-documents', label: 'Estate planning', icon: ShieldCheck },
   { href: '/income-sources', label: 'Income sources', icon: Wallet },
   { href: '/dependents', label: 'Dependents', icon: ShieldCheck },
-  { href: '/household-obligations', label: 'External commitments', icon: Wallet },
+  { href: '/external-commitments', label: 'External commitments', icon: Wallet },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/timeline', label: 'Timeline', icon: CalendarDays },
   { href: '/chat', label: 'AI Chat', icon: MessageSquare },

@@ -224,7 +224,7 @@ const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   'estate-documents': { href: '/estate-documents', label: 'Review estate plans' },
   'income-sources': { href: '/income-sources', label: 'Review income sources' },
   'secondary-liquidity': { href: '/accounts', label: 'Review available credit' },
-  'fixed-obligations': { href: '/household-obligations', label: 'Review external commitments' },
+  'fixed-obligations': { href: '/external-commitments', label: 'Review external commitments' },
   dependents: { href: '/dependents', label: 'Review dependents' },
   'planned-expenses': { href: '/planned-expenses', label: 'Review planned expenses' },
   budgets: { href: '/budget', label: 'Review budget' },
