@@ -311,10 +311,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Advisor produces: natural-language explanations, prioritized recommendations, briefs
   - Advisor never modifies scores — only interprets and explains them
 
-- [ ] 22.2 Implement Morning Brief generation
+- [~] 22.2 Implement Morning Brief generation
   - API endpoint: GET /api/advisor/brief/morning
   - Contents: greeting, readiness score, today's priority, this week's events, top recommendation, current risk
-  - Deterministic version (no AI): template-based using signals and timeline data
+  - [x] Deterministic version (no AI): template-based using signals and timeline data
   - AI-enhanced version: natural language generated from same data (when Advisor available)
   - Fallback gracefully if AI unavailable — deterministic brief always works
 
