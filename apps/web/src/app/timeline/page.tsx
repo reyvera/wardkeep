@@ -72,12 +72,16 @@ function relativeDayLabel(date: string) {
 export default function TimelinePage() {
   const [days, setDays] = useState(30);
   const [kind, setKind] = useState<'ALL' | TimelineEventKind>('ALL');
+  const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
   const timeline = useQuery({
     queryKey: ['timeline', days],
     queryFn: () => apiClient.get<TimelineEvent[]>(`/timeline/upcoming?days=${days}`),
   });
 
-  const visibleEvents = (timeline.data ?? []).filter((event) => kind === 'ALL' || event.kind === kind);
+  const visibleEvents = (timeline.data ?? []).filter(
+    (event) =>
+      (kind === 'ALL' || event.kind === kind) && (!actionRequiredOnly || event.actionRequired),
+  );
   const groups = visibleEvents.reduce<Record<string, TimelineEvent[]>>((result, event) => {
     const key = dayKey(event.date);
     (result[key] ??= []).push(event);
@@ -127,6 +131,12 @@ export default function TimelinePage() {
             {option === 'ALL' ? 'All events' : eventLabels[option]}
           </button>
         ))}
+        <button
+          className={actionRequiredOnly ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+          onClick={() => setActionRequiredOnly(!actionRequiredOnly)}
+        >
+          Action required
+        </button>
       </div>
 
       {timeline.isLoading ? (
@@ -145,7 +155,9 @@ export default function TimelinePage() {
         <div className="card py-12 text-center">
           <CalendarDays className="mx-auto text-content-tertiary" size={28} />
           <p className="mt-3 font-medium text-content-primary">
-            {kind === 'ALL'
+            {actionRequiredOnly
+              ? `No action-required recorded events in the next ${days} days.`
+              : kind === 'ALL'
               ? `No recorded dates in the next ${days} days.`
               : `No ${eventLabels[kind].toLowerCase()} events in the next ${days} days.`}
           </p>
