@@ -373,11 +373,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Active risks summary
   - [ ] This becomes the landing page after login
 
-- [ ] 24.3 Implement Advisor conversation UI (replaces AI Chat)
-  - Rebrand from "AI Chat" to "Advisor"
+- [~] 24.3 Implement Advisor conversation UI (replaces AI Chat)
+  - [x] Rebrand from "AI Chat" to "Advisor"
   - Advisor context includes readiness state and signals
   - Responses include inline readiness references ("This affects your Provision score")
-  - Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
+  - [x] Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
 
 - [ ] 24.4 Implement Timeline UI page
   - Full-page scrollable timeline

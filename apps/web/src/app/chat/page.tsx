@@ -16,6 +16,12 @@ interface ChatResponse {
   verifiedData?: Record<string, unknown>;
 }
 
+const QUICK_PROMPTS = [
+  'Explain my readiness score.',
+  'What should I prioritize next?',
+  'What should I review if I lose my job?',
+];
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -31,20 +37,36 @@ export default function ChatPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    const userMessage = input.trim();
+  const sendMessage = (message: string) => {
+    const userMessage = message.trim();
+    if (!userMessage) return;
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setInput('');
     chatMutation.mutate(userMessage);
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="mb-4">
-        <h1 className="text-page-title text-content-primary">AI Chat</h1>
-        <p className="text-sm text-content-tertiary mt-1">Ask about your finances, budget, or spending patterns</p>
+        <h1 className="text-page-title text-content-primary">Advisor</h1>
+        <p className="text-sm text-content-tertiary mt-1">Ask about your finances, readiness, budget, or spending patterns. Calculations remain verified against your records.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {QUICK_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              className="btn-secondary text-xs"
+              onClick={() => sendMessage(prompt)}
+              disabled={chatMutation.isPending}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto card mb-4 p-4">
@@ -52,7 +74,7 @@ export default function ChatPage() {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <MessageSquare size={40} className="text-content-tertiary mb-3" />
             <p className="text-content-secondary text-sm">No messages yet</p>
-            <p className="text-content-tertiary text-xs mt-1">Try asking &quot;What did I spend the most on this month?&quot;</p>
+            <p className="text-content-tertiary text-xs mt-1">Try a prompt above or ask about your recorded finances.</p>
           </div>
         )}
         <div className="space-y-4">
@@ -104,7 +126,7 @@ export default function ChatPage() {
       )}
 
       <form onSubmit={handleSubmit} className="flex gap-3">
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Type your question..." className="input flex-1" disabled={chatMutation.isPending} />
+        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask your Advisor..." className="input flex-1" disabled={chatMutation.isPending} />
         <button type="submit" disabled={chatMutation.isPending || !input.trim()} className="btn-primary"><Send size={16} /></button>
       </form>
     </div>

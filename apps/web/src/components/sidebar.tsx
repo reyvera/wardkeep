@@ -45,7 +45,7 @@ const navItems = [
   { href: '/external-commitments', label: 'External commitments', icon: Wallet },
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/timeline', label: 'Timeline', icon: CalendarDays },
-  { href: '/chat', label: 'AI Chat', icon: MessageSquare },
+  { href: '/chat', label: 'Advisor', icon: MessageSquare },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/bank-connections', label: 'Bank Connections', icon: Link2 },
 ];
