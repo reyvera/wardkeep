@@ -564,6 +564,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Dependent planning records with optional labels and review dates, limited review-timing signals, and explicit care/coverage adequacy limits
   - [~] Insurance adequacy, disability/life coverage, estate-document adequacy, dependent needs, true income-interruption resilience, and unrecorded or variable fixed obligations
     - [x] Compare a recorded policy amount with a household-entered coverage target without inferring insurance adequacy
+    - [x] Include confirmed recurring bills with recorded debt minimums in the liquid-reserve commitment check; unrecorded and variable obligations remain unknown
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
