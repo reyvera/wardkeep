@@ -20,6 +20,7 @@ interface Policy {
   propertyTaxEscrow: string | null;
   deductible: string | null;
   coverageAmount: string | null;
+  coverageTargetAmount: string | null;
   renewalDate: string | null;
   notes: string | null;
   isActive: boolean;
@@ -87,6 +88,7 @@ const emptyForm = {
   premiumFrequency: 'MONTHLY',
   deductible: '',
   coverageAmount: '',
+  coverageTargetAmount: '',
   paymentArrangement: 'SEPARATE',
   paymentAccountId: '',
   propertyTaxEscrow: '',
@@ -118,6 +120,7 @@ export default function InsurancePage() {
       'premium',
       'deductible',
       'coverageAmount',
+      'coverageTargetAmount',
       'notes',
     ]) {
       payload[field] = form[field as keyof typeof form] || null;
@@ -169,7 +172,8 @@ export default function InsurancePage() {
           <h1 className="text-page-title">Insurance policies</h1>
           <p className="mt-1 max-w-2xl text-sm text-content-secondary">
             Keep policy details and renewal dates in one place. Wardkeep tracks renewal timing; it
-            does not yet determine whether your coverage is adequate.
+            can compare a recorded amount with a coverage target you set, but does not determine
+            whether either amount is adequate.
           </p>
         </div>
         <button
@@ -297,6 +301,19 @@ export default function InsurancePage() {
               placeholder="0.00"
             />
           </div>
+          <div>
+            <label className="input-label">Your coverage target (optional)</label>
+            <input
+              className="input"
+              inputMode="decimal"
+              value={form.coverageTargetAmount}
+              onChange={(e) => setForm({ ...form, coverageTargetAmount: e.target.value })}
+              placeholder="0.00"
+            />
+            <p className="mt-1 text-xs text-content-tertiary">
+              Your planning target, not advice from Wardkeep.
+            </p>
+          </div>
           <div className="md:col-span-2">
             <label className="input-label">Notes (optional)</label>
             <textarea
@@ -417,6 +434,7 @@ export default function InsurancePage() {
                           premiumFrequency: policy.premiumFrequency,
                           deductible: policy.deductible ?? '',
                           coverageAmount: policy.coverageAmount ?? '',
+                          coverageTargetAmount: policy.coverageTargetAmount ?? '',
                           paymentArrangement: policy.paymentArrangement,
                           paymentAccountId: policy.paymentAccountId ?? '',
                           propertyTaxEscrow: policy.propertyTaxEscrow ?? '',
@@ -502,6 +520,21 @@ export default function InsurancePage() {
                           ? ' · already included above'
                           : ''}
                       </b>
+                    </span>
+                  )}
+                  {policy.coverageTargetAmount && (
+                    <span className="col-span-2">
+                      Coverage target
+                      <br />
+                      <b className="text-content-primary">
+                        ${policy.coverageTargetAmount}
+                        {policy.coverageAmount && Number(policy.coverageAmount) < Number(policy.coverageTargetAmount)
+                          ? ` · $${policy.coverageAmount} recorded`
+                          : ''}
+                      </b>
+                      <small className="mt-1 block text-content-tertiary">
+                        A household-entered comparison, not an adequacy determination
+                      </small>
                     </span>
                   )}
                   {monthlyMortgageEscrow(policy) !== null && (
