@@ -35,6 +35,9 @@ export class InsuranceService {
           dto.propertyTaxFrequency ?? (dto.propertyTaxEscrow ? 'MONTHLY' : null),
         deductible: dto.deductible ? new Decimal(dto.deductible) : null,
         coverageAmount: dto.coverageAmount ? new Decimal(dto.coverageAmount) : null,
+        coverageTargetAmount: dto.coverageTargetAmount
+          ? new Decimal(dto.coverageTargetAmount)
+          : null,
         renewalDate: dto.renewalDate ? new Date(`${dto.renewalDate}T00:00:00.000Z`) : null,
         notes: dto.notes || null,
       },
@@ -64,6 +67,10 @@ export class InsuranceService {
         }),
         ...(dto.coverageAmount !== undefined && {
           coverageAmount: dto.coverageAmount === null ? null : new Decimal(dto.coverageAmount),
+        }),
+        ...(dto.coverageTargetAmount !== undefined && {
+          coverageTargetAmount:
+            dto.coverageTargetAmount === null ? null : new Decimal(dto.coverageTargetAmount),
         }),
         ...(dto.propertyTaxEscrow !== undefined && {
           propertyTaxEscrow:
@@ -125,6 +132,7 @@ export class InsuranceService {
     propertyTaxFrequency: string | null;
     deductible: { toString(): string } | null;
     coverageAmount: { toString(): string } | null;
+    coverageTargetAmount: { toString(): string } | null;
     renewalDate: Date | null;
     isActive: boolean;
     notes: string | null;
@@ -136,6 +144,7 @@ export class InsuranceService {
       premium: policy.premium?.toString() ?? null,
       deductible: policy.deductible?.toString() ?? null,
       coverageAmount: policy.coverageAmount?.toString() ?? null,
+      coverageTargetAmount: policy.coverageTargetAmount?.toString() ?? null,
       propertyTaxEscrow: policy.propertyTaxEscrow?.toString() ?? null,
     };
   }

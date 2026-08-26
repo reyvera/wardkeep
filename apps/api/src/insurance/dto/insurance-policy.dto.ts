@@ -31,6 +31,7 @@ export const CreateInsurancePolicySchema = z.object({
   propertyTaxFrequency: z.enum(premiumFrequencies).optional(),
   deductible: money.optional(),
   coverageAmount: money.optional(),
+  coverageTargetAmount: money.optional(),
   renewalDate: z.string().date().optional(),
   notes: z.string().trim().max(1000).optional(),
 });
@@ -41,6 +42,7 @@ export const UpdateInsurancePolicySchema = CreateInsurancePolicySchema.partial()
   premium: money.nullable().optional(),
   deductible: money.nullable().optional(),
   coverageAmount: money.nullable().optional(),
+  coverageTargetAmount: money.nullable().optional(),
   paymentAccountId: z.string().uuid().nullable().optional(),
   propertyTaxEscrow: money.nullable().optional(),
   propertyTaxFrequency: z.enum(premiumFrequencies).nullable().optional(),
