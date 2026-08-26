@@ -109,4 +109,35 @@ describe('TimelineService', () => {
       expect.objectContaining({ where: expect.objectContaining({ userId: 'user-1' }) }),
     );
   });
+
+  it('merges past and upcoming records into chronological order for the unified feed', async () => {
+    const service = new TimelineService({} as never);
+    vi.spyOn(service, 'listHistory').mockResolvedValue([
+      {
+        id: 'past',
+        kind: 'INCOME',
+        date: new Date('2026-08-20T00:00:00.000Z'),
+        title: 'Past record',
+        detail: 'Recorded date',
+        href: '/income-sources',
+        actionRequired: false,
+        status: 'RECORDED_PAST',
+      },
+    ]);
+    vi.spyOn(service, 'listUpcoming').mockResolvedValue([
+      {
+        id: 'future',
+        kind: 'INCOME',
+        date: new Date('2026-08-27T00:00:00.000Z'),
+        title: 'Future record',
+        detail: 'Recorded date',
+        href: '/income-sources',
+        actionRequired: false,
+      },
+    ]);
+
+    const events = await service.list('user-1', 30);
+
+    expect(events.map((event) => event.id)).toEqual(['past', 'future']);
+  });
 });
