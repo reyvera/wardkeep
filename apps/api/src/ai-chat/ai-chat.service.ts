@@ -12,15 +12,33 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { EncryptionService } from '../common/services/encryption.service';
 import { ChatRequestDto } from './dto/chat.dto';
+import { ReadinessResponse, ReadinessService } from '../readiness/readiness.service';
 
 /** Default Ollama endpoint for local AI. */
 const OLLAMA_ENDPOINT = process.env['OLLAMA_URL'] ?? 'http://localhost:11434';
+
+/** Formats evaluated readiness evidence for the Advisor conversation context. */
+export function formatReadinessContext(readiness: ReadinessResponse): string {
+  const score = readiness.overallAssessment.score === null ? 'not evaluated' : `${readiness.overallAssessment.score}%`;
+  const pillars = Object.entries(readiness.pillarAssessments)
+    .filter(([, assessment]) => assessment.score !== null)
+    .map(([pillar, assessment]) => `${pillar}: ${assessment.score}% (${assessment.state})`)
+    .join(', ');
+  const risks = readiness.topRisks.map((signal) => signal.summary).join(' | ');
+  return [
+    `Readiness assessment: ${score} (${readiness.overallAssessment.state}, ${readiness.overallAssessment.coverage}% coverage).`,
+    pillars ? `Evaluated pillars: ${pillars}.` : 'No readiness pillars are currently evaluated.',
+    risks ? `Observed risks: ${risks}.` : 'No observed readiness risks are currently recorded.',
+    'Readiness scores and signals are deterministic records. Explain them, but do not claim to change or override them.',
+  ].join('\n');
+}
 
 @Injectable()
 export class AiChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
+    private readonly readiness: ReadinessService,
   ) {}
 
   /**
