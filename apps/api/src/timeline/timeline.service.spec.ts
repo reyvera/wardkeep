@@ -79,4 +79,34 @@ describe('TimelineService', () => {
       }),
     );
   });
+
+  it('labels past source dates without inferring that the underlying event happened', async () => {
+    const prisma = {
+      insurancePolicy: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'policy',
+            provider: 'State Farm',
+            type: 'AUTO',
+            renewalDate: new Date('2026-08-20T00:00:00.000Z'),
+          },
+        ]),
+      },
+      incomeSource: { findMany: vi.fn().mockResolvedValue([]) },
+      plannedExpense: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+    const service = new TimelineService(prisma as never);
+
+    const events = await service.listHistory('user-1', 30);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      kind: 'POLICY_RENEWAL',
+      status: 'RECORDED_PAST',
+      detail: 'Recorded renewal date; confirm the policy status in Insurance.',
+    });
+    expect(prisma.insurancePolicy.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ userId: 'user-1' }) }),
+    );
+  });
 });
