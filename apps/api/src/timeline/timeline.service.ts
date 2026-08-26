@@ -14,6 +14,11 @@ export interface TimelineEvent {
   actionRequired: boolean;
 }
 
+export interface TimelineHistoryEvent extends TimelineEvent {
+  /** The date was recorded in Wardkeep; it does not confirm the underlying event occurred. */
+  status: 'RECORDED_PAST';
+}
+
 @Injectable()
 export class TimelineService {
   constructor(private readonly prisma: PrismaService) {}
