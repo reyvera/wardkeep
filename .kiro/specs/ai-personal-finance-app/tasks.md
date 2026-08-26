@@ -565,6 +565,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [~] Insurance adequacy, disability/life coverage, estate-document adequacy, dependent needs, true income-interruption resilience, and unrecorded or variable fixed obligations
     - [x] Compare a recorded policy amount with a household-entered coverage target without inferring insurance adequacy
     - [x] Include confirmed recurring bills with recorded debt minimums in the liquid-reserve commitment check; unrecorded and variable obligations remain unknown
+    - [x] Let households record external funding commitments outside Wardkeep’s tracked accounts and label variable amounts as estimates; tracked spending must not be duplicated
   - Keep every component independently explainable; missing data remains unknown
 
 - [~] 39.5 Create durable recommendations and impact previews
