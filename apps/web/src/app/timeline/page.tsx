@@ -70,12 +70,14 @@ function relativeDayLabel(date: string) {
 
 export default function TimelinePage() {
   const [days, setDays] = useState(30);
+  const [kind, setKind] = useState<'ALL' | TimelineEventKind>('ALL');
   const timeline = useQuery({
     queryKey: ['timeline', days],
     queryFn: () => apiClient.get<TimelineEvent[]>(`/timeline/upcoming?days=${days}`),
   });
 
-  const groups = (timeline.data ?? []).reduce<Record<string, TimelineEvent[]>>((result, event) => {
+  const visibleEvents = (timeline.data ?? []).filter((event) => kind === 'ALL' || event.kind === kind);
+  const groups = visibleEvents.reduce<Record<string, TimelineEvent[]>>((result, event) => {
     const key = dayKey(event.date);
     (result[key] ??= []).push(event);
     return result;
@@ -114,6 +116,18 @@ export default function TimelinePage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2" aria-label="Filter timeline events">
+        {(['ALL', ...Object.keys(eventLabels)] as Array<'ALL' | TimelineEventKind>).map((option) => (
+          <button
+            key={option}
+            className={option === kind ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+            onClick={() => setKind(option)}
+          >
+            {option === 'ALL' ? 'All events' : eventLabels[option]}
+          </button>
+        ))}
+      </div>
+
       {timeline.isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((item) => (
@@ -130,7 +144,9 @@ export default function TimelinePage() {
         <div className="card py-12 text-center">
           <CalendarDays className="mx-auto text-content-tertiary" size={28} />
           <p className="mt-3 font-medium text-content-primary">
-            No recorded dates in the next {days} days.
+            {kind === 'ALL'
+              ? `No recorded dates in the next ${days} days.`
+              : `No ${eventLabels[kind].toLowerCase()} events in the next ${days} days.`}
           </p>
           <p className="mt-1 text-sm text-content-secondary">
             Add a recurring bill, policy renewal, expected income date, or planned expense when you
