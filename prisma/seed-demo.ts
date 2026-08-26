@@ -84,6 +84,7 @@ async function main() {
     await prisma.estateDocument.deleteMany({ where: { userId: existing.id } });
     await prisma.incomeSource.deleteMany({ where: { userId: existing.id } });
     await prisma.dependent.deleteMany({ where: { userId: existing.id } });
+    await prisma.householdObligation.deleteMany({ where: { userId: existing.id } });
     await prisma.plannedExpense.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -283,6 +284,28 @@ async function main() {
     },
   });
 
+  const externalCommitmentReview = new Date();
+  externalCommitmentReview.setMonth(externalCommitmentReview.getMonth() + 3);
+  await prisma.householdObligation.createMany({
+    data: [
+      {
+        userId: user.id,
+        name: 'External grocery-account funding',
+        monthlyAmount: '1000.00',
+        notes:
+          'Demo: monthly transfer to a household grocery account that Wardkeep does not track. Do not also record these grocery purchases in Wardkeep.',
+      },
+      {
+        userId: user.id,
+        name: 'Family support contribution',
+        monthlyAmount: '250.00',
+        isVariable: true,
+        reviewDate: externalCommitmentReview,
+        notes: 'Demo: a household-entered variable estimate, not a transaction-derived expense.',
+      },
+    ],
+  });
+
   const propertyTaxDue = new Date();
   propertyTaxDue.setDate(propertyTaxDue.getDate() + 18);
   const vehicleRegistrationDue = new Date();
@@ -306,7 +329,7 @@ async function main() {
       },
     ],
   });
-  console.log('  ✓ Created dependent and planned-expense demo records');
+  console.log('  ✓ Created dependent, external-commitment, and planned-expense demo records');
 
   // Generate 6 months of transactions
   let txCount = 0;
