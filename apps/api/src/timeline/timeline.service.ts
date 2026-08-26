@@ -19,6 +19,8 @@ export interface TimelineHistoryEvent extends TimelineEvent {
   status: 'RECORDED_PAST';
 }
 
+export type UnifiedTimelineEvent = TimelineEvent | TimelineHistoryEvent;
+
 @Injectable()
 export class TimelineService {
   constructor(private readonly prisma: PrismaService) {}
@@ -161,6 +163,15 @@ export class TimelineService {
         status: 'RECORDED_PAST' as const,
       })),
     ].sort((left, right) => right.date.getTime() - left.date.getTime());
+  }
+
+  /** Combines past recorded dates and upcoming events into one chronological feed. */
+  async list(userId: string, requestedDays?: number): Promise<UnifiedTimelineEvent[]> {
+    const [history, upcoming] = await Promise.all([
+      this.listHistory(userId, requestedDays),
+      this.listUpcoming(userId, requestedDays),
+    ]);
+    return [...history, ...upcoming].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 
   private currency(value: string) {
