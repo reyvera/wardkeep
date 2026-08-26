@@ -1,7 +1,12 @@
 import { Decimal } from 'decimal.js';
 import { describe, expect, it } from 'vitest';
 import { HouseholdBurnRate } from './burn-rate';
-import { emergencyFundSignal, estateDocumentReviewSignal, insuranceRenewalSignal } from './protection.generator';
+import {
+  emergencyFundSignal,
+  estateDocumentReviewSignal,
+  insuranceCoverageTargetSignal,
+  insuranceRenewalSignal,
+} from './protection.generator';
 
 const now = new Date('2026-08-22T12:00:00.000Z');
 
@@ -32,6 +37,40 @@ describe('insuranceRenewalSignal', () => {
         { type: 'LIFE', provider: 'Example', renewalDate: new Date('2026-10-01T00:00:00.000Z') },
         now,
       ),
+    ).toBeNull();
+  });
+});
+
+describe('insuranceCoverageTargetSignal', () => {
+  it('flags only a recorded amount below the household-entered target', () => {
+    const signal = insuranceCoverageTargetSignal({
+      type: 'LIFE',
+      provider: 'Example',
+      coverageAmount: new Decimal(300_000),
+      coverageTargetAmount: new Decimal(500_000),
+    });
+
+    expect(signal).toMatchObject({ capabilityId: 'insurance-coverage-target', type: 'warning' });
+    expect(signal?.summary).toContain('$500000.00 coverage target');
+    expect(signal?.summary).toContain('does not determine');
+  });
+
+  it('does not infer a target or adequacy from missing or sufficient records', () => {
+    expect(
+      insuranceCoverageTargetSignal({
+        type: 'LIFE',
+        provider: 'Example',
+        coverageAmount: new Decimal(500_000),
+        coverageTargetAmount: null,
+      }),
+    ).toBeNull();
+    expect(
+      insuranceCoverageTargetSignal({
+        type: 'LIFE',
+        provider: 'Example',
+        coverageAmount: new Decimal(500_000),
+        coverageTargetAmount: new Decimal(500_000),
+      }),
     ).toBeNull();
   });
 });

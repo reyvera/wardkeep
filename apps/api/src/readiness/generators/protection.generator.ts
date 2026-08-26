@@ -152,7 +152,14 @@ export function estateDocumentReviewSignal(
 async function generateInsuranceSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
   const policies = await prisma.insurancePolicy.findMany({
     where: { userId, isActive: true },
-    select: { type: true, provider: true, renewalDate: true, deductible: true, coverageAmount: true },
+    select: {
+      type: true,
+      provider: true,
+      renewalDate: true,
+      deductible: true,
+      coverageAmount: true,
+      coverageTargetAmount: true,
+    },
   });
   if (policies.length === 0) return [];
 
@@ -184,6 +191,10 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
       weight: 0.75,
     });
   }
+  for (const policy of policies) {
+    const coverageTargetSignal = insuranceCoverageTargetSignal(policy);
+    if (coverageTargetSignal) signals.push(coverageTargetSignal);
+  }
   const recordedDeductibles = policies
     .map((policy) => (policy.deductible ? new Decimal(policy.deductible.toString()) : null))
     .filter((deductible): deductible is Decimal => deductible !== null);
@@ -205,6 +216,35 @@ async function generateInsuranceSignals(prisma: PrismaClient, userId: string): P
     }
   }
   return signals;
+}
+
+/**
+ * Compares a policy amount with a target entered by the household. This is a
+ * record-comparison check only: it does not establish that the target is right
+ * for the household or that the policy will pay a claim.
+ *
+ * @param policy The recorded policy coverage and optional household target.
+ * @returns A warning when the recorded amount is below the entered target.
+ */
+export function insuranceCoverageTargetSignal(policy: {
+  type: string;
+  provider: string;
+  coverageAmount: Decimal | { toString(): string } | null;
+  coverageTargetAmount: Decimal | { toString(): string } | null;
+}): Signal | null {
+  if (!policy.coverageAmount || !policy.coverageTargetAmount) return null;
+  const coverage = new Decimal(policy.coverageAmount.toString());
+  const target = new Decimal(policy.coverageTargetAmount.toString());
+  if (coverage.gte(target)) return null;
+  const policyName = `${policy.provider} ${policy.type.toLowerCase().replace('_', ' ')}`;
+  return {
+    capabilityId: 'insurance-coverage-target',
+    type: 'warning',
+    magnitude: -2,
+    pillar: 'protection',
+    summary: `${policyName} has $${coverage.toFixed(2)} recorded against your $${target.toFixed(2)} coverage target. Review the policy and target; Wardkeep does not determine whether either amount is adequate.`,
+    weight: 0.75,
+  };
 }
 
 /** Classifies a recorded renewal date without making an insurance-adequacy claim. */
