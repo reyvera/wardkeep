@@ -361,7 +361,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Hero: readiness score, coverage/confidence, strongest/most-limited pillar, and trend indicator
   - [x] Pillar cards: score, coverage, and contributing signal summaries
   - [x] Needs attention and Wardkeep recommends sections
-  - [ ] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
+  - [x] Pillar-detail explanations, score-change reasons, Coming up, and Since your last visit
 
 - [~] 24.2 Implement Morning Brief UI (new home screen)
   - [x] Greeting with readiness score
