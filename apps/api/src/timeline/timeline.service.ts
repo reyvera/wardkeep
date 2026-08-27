@@ -9,10 +9,12 @@ export type TimelineEventKind =
   | 'PLANNED_EXPENSE'
   | 'DEBT_PAYOFF'
   | 'BUDGET_PERIOD';
+export type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 export interface TimelineEvent {
   id: string;
   kind: TimelineEventKind;
+  pillar: TimelinePillar;
   date: Date;
   title: string;
   detail: string;
@@ -71,6 +73,7 @@ export class TimelineService {
       ...recurring.map((record) => ({
         id: `recurring-${record.id}`,
         kind: 'RECURRING_BILL' as const,
+        pillar: 'provision' as const,
         date: record.nextExpected,
         title: record.merchant,
         detail: `${this.currency(record.expectedAmount.toString())} expected ${record.frequency.toLowerCase()}`,
@@ -80,6 +83,7 @@ export class TimelineService {
       ...policies.map((record) => ({
         id: `policy-${record.id}`,
         kind: 'POLICY_RENEWAL' as const,
+        pillar: 'protection' as const,
         date: record.renewalDate!,
         title: `${record.provider} ${record.type.toLowerCase().replace('_', ' ')} renewal`,
         detail: 'Recorded policy renewal',
@@ -89,6 +93,7 @@ export class TimelineService {
       ...income.map((record) => ({
         id: `income-${record.id}`,
         kind: 'INCOME' as const,
+        pillar: 'protection' as const,
         date: record.nextExpectedDate!,
         title: record.name,
         detail: record.expectedNetAmount
@@ -104,6 +109,7 @@ export class TimelineService {
         return {
           id: `planned-${record.id}`,
           kind: 'PLANNED_EXPENSE' as const,
+          pillar: 'preparation' as const,
           date: record.dueDate!,
           title: record.name,
           detail: amount
@@ -123,6 +129,7 @@ export class TimelineService {
         .map(({ plan, date }) => ({
           id: `debt-payoff-${plan.id}`,
           kind: 'DEBT_PAYOFF' as const,
+          pillar: 'prosperity' as const,
           date,
           title: `${plan.name} projected payoff`,
           detail: `Recorded ${plan.strategy} payoff plan projects debt freedom in ${plan.totalMonths} months; actual payoff depends on balances and payments.`,
@@ -142,6 +149,7 @@ export class TimelineService {
           {
             id: `budget-start-${budget.id}`,
             kind: 'BUDGET_PERIOD' as const,
+            pillar: 'provision' as const,
             date: periodStart,
             title: `${monthName} budget begins`,
             detail: 'Recorded monthly budget period; review allocations as needed.',
@@ -151,6 +159,7 @@ export class TimelineService {
           {
             id: `budget-end-${budget.id}`,
             kind: 'BUDGET_PERIOD' as const,
+            pillar: 'provision' as const,
             date: periodEnd,
             title: `${monthName} budget ends`,
             detail: 'Recorded monthly budget period; this does not confirm a budget review occurred.',
@@ -192,6 +201,7 @@ export class TimelineService {
       ...policies.map((record) => ({
         id: `policy-${record.id}-${record.renewalDate!.toISOString()}`,
         kind: 'POLICY_RENEWAL' as const,
+        pillar: 'protection' as const,
         date: record.renewalDate!,
         title: `${record.provider} ${record.type.toLowerCase().replace('_', ' ')} renewal`,
         detail: 'Recorded renewal date; confirm the policy status in Insurance.',
@@ -202,6 +212,7 @@ export class TimelineService {
       ...income.map((record) => ({
         id: `income-${record.id}-${record.nextExpectedDate!.toISOString()}`,
         kind: 'INCOME' as const,
+        pillar: 'protection' as const,
         date: record.nextExpectedDate!,
         title: record.name,
         detail: 'Recorded expected income date; Wardkeep does not confirm receipt.',
@@ -212,6 +223,7 @@ export class TimelineService {
       ...plannedExpenses.map((record) => ({
         id: `planned-${record.id}-${record.dueDate!.toISOString()}`,
         kind: 'PLANNED_EXPENSE' as const,
+        pillar: 'preparation' as const,
         date: record.dueDate!,
         title: record.name,
         detail: 'Recorded planned-expense date; review whether it was completed or rescheduled.',

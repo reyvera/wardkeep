@@ -350,10 +350,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 23.3 Implement Timeline UI
   - [x] Scrollable, grouped upcoming timeline with 30/90/365-day views and direct source links
-  - [ ] Past ← today → future view
-  - [ ] Color-code capability sources and highlight action-required events when source semantics support it
-  - Click event → navigate to relevant Capability view
-  - Mobile-friendly: swipeable, compact cards
+  - [~] Past and upcoming recorded-date views
+  - [x] Color-code capability sources and highlight action-required events when source semantics support it
+  - [x] Click event → navigate to relevant Capability view
+  - [x] Mobile-friendly compact cards
 
 ### 24. Readiness Dashboard & Brief UI [PARTIAL]
 
@@ -377,11 +377,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Responses include linked readiness references for the currently observed risk pillars
   - [x] Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
 
-- [ ] 24.4 Implement Timeline UI page
-  - Full-page scrollable timeline
-  - Filter by Capability, by pillar, by action-required
-  - Past events show completion status
-  - Future events show countdown/proximity
+- [~] 24.4 Implement Timeline UI page
+  - [x] Full-page scrollable timeline
+  - [x] Filter by Capability, by pillar, by action-required
+  - [x] Past events show recorded-date status without inferring completion
+  - [x] Future events show countdown/proximity
 
 ### 24.5 Financial Overview accuracy [COMPLETE]
 
@@ -396,7 +396,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [ ] 25.4 Verify Advisor can explain readiness changes
 - [ ] 25.5 All property tests pass (Properties 34–38+)
 - [ ] 25.6 Docker Compose stack works with new features
-- [ ] 25.7 Demo instance updated with readiness data
+- [~] 25.7 Demo instance updated with readiness, Timeline, and Advisor data
 
 ---
 

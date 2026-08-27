@@ -94,6 +94,7 @@ describe('TimelineService', () => {
     expect(events.find((event) => event.kind === 'DEBT_PAYOFF')).toMatchObject({
       title: 'Debt freedom projected payoff',
       href: '/debt',
+      pillar: 'prosperity',
     });
     expect(events.find((event) => event.id === 'budget-end-budget')).toMatchObject({
       title: 'August budget ends',
@@ -142,6 +143,7 @@ describe('TimelineService', () => {
       {
         id: 'past',
         kind: 'INCOME',
+        pillar: 'protection',
         date: new Date('2026-08-20T00:00:00.000Z'),
         title: 'Past record',
         detail: 'Recorded date',
@@ -154,6 +156,7 @@ describe('TimelineService', () => {
       {
         id: 'future',
         kind: 'INCOME',
+        pillar: 'protection',
         date: new Date('2026-08-27T00:00:00.000Z'),
         title: 'Future record',
         detail: 'Recorded date',

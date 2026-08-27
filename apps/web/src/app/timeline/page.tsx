@@ -22,10 +22,12 @@ type TimelineEventKind =
   | 'PLANNED_EXPENSE'
   | 'DEBT_PAYOFF'
   | 'BUDGET_PERIOD';
+type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 interface TimelineEvent {
   id: string;
   kind: TimelineEventKind;
+  pillar: TimelinePillar;
   date: string;
   title: string;
   detail: string;
@@ -90,6 +92,7 @@ export default function TimelinePage() {
   const [days, setDays] = useState(30);
   const [view, setView] = useState<'UPCOMING' | 'HISTORY'>('UPCOMING');
   const [kind, setKind] = useState<'ALL' | TimelineEventKind>('ALL');
+  const [pillar, setPillar] = useState<'ALL' | TimelinePillar>('ALL');
   const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
   const timeline = useQuery({
     queryKey: ['timeline', view, days],
@@ -101,7 +104,9 @@ export default function TimelinePage() {
 
   const visibleEvents = (timeline.data ?? []).filter(
     (event) =>
-      (kind === 'ALL' || event.kind === kind) && (!actionRequiredOnly || event.actionRequired),
+      (kind === 'ALL' || event.kind === kind) &&
+      (pillar === 'ALL' || event.pillar === pillar) &&
+      (!actionRequiredOnly || event.actionRequired),
   );
   const groups = visibleEvents.reduce<Record<string, TimelineEvent[]>>((result, event) => {
     const key = dayKey(event.date);
@@ -176,6 +181,20 @@ export default function TimelinePage() {
         >
           Action required
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2" aria-label="Filter timeline pillars">
+        {(['ALL', 'protection', 'provision', 'preparation', 'prosperity'] as Array<'ALL' | TimelinePillar>).map(
+          (option) => (
+            <button
+              key={option}
+              className={option === pillar ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+              onClick={() => setPillar(option)}
+            >
+              {option === 'ALL' ? 'All pillars' : option.charAt(0).toUpperCase() + option.slice(1)}
+            </button>
+          ),
+        )}
       </div>
 
       {timeline.isLoading ? (

@@ -78,6 +78,7 @@ async function main() {
     await prisma.budgetAllocation.deleteMany({ where: { budget: { userId: existing.id } } });
     await prisma.budget.deleteMany({ where: { userId: existing.id } });
     await prisma.debtProfile.deleteMany({ where: { userId: existing.id } });
+    await prisma.savedPayoffPlan.deleteMany({ where: { userId: existing.id } });
     await prisma.linkedBankAccount.deleteMany({ where: { connection: { userId: existing.id } } });
     await prisma.bankConnection.deleteMany({ where: { userId: existing.id } });
     await prisma.insurancePolicy.deleteMany({ where: { userId: existing.id } });
@@ -182,6 +183,19 @@ async function main() {
     },
   });
   console.log('  ✓ Created debt profiles for liability accounts');
+
+  await prisma.savedPayoffPlan.create({
+    data: {
+      userId: user.id,
+      name: 'Credit card payoff',
+      accountIds: [creditCard.id],
+      strategy: 'avalanche',
+      totalMonthlyPayment: '600.00',
+      totalInterest: '318.00',
+      totalMonths: 6,
+    },
+  });
+  console.log('  ✓ Created a 6-month debt payoff-plan projection');
 
   // Create insurance policies for the Protection dashboard. The auto renewal is
   // intentionally near-term so the demo visibly exercises renewal awareness.
