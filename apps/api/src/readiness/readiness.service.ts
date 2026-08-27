@@ -73,7 +73,11 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
     { id: 'cashflow', label: 'Recorded cash-flow forecast' },
     { id: 'recurring', label: 'Recorded upcoming recurring bills' },
   ],
-  preparation: [{ id: 'planned-expenses', label: 'Recorded planned expenses' }],
+  preparation: [
+    { id: 'planned-expenses', label: 'Recorded planned expenses' },
+    { id: 'vehicle-maintenance', label: 'Vehicle maintenance reminders' },
+    { id: 'vehicle-lease', label: 'Vehicle lease end dates' },
+  ],
   prosperity: [
     { id: 'net-worth', label: 'Recorded net worth' },
     { id: 'debt-to-income', label: 'Recorded debt-to-income ratio' },
