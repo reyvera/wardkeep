@@ -76,6 +76,8 @@ model Recommendation {
   status               RecommendationStatus @default(ACTIVE)
   dismissedAt          DateTime?
   completedAt          DateTime?
+  scoreAtCompletion   Int?
+  scoreRecordedAtCompletion DateTime?
   resolvedAt           DateTime?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt

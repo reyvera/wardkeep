@@ -136,22 +136,49 @@ export class RecommendationsService {
   }
 
   async list(userId: string) {
-    return this.prisma.recommendation.findMany({
-      where: { userId },
-      orderBy: [{ status: 'asc' }, { priorityScore: 'desc' }, { updatedAt: 'desc' }],
-    });
+    const [recommendations, latestSnapshot] = await Promise.all([
+      this.prisma.recommendation.findMany({
+        where: { userId },
+        orderBy: [{ status: 'asc' }, { priorityScore: 'desc' }, { updatedAt: 'desc' }],
+      }),
+      this.prisma.readinessSnapshot.findFirst({
+        where: { userId },
+        orderBy: { recordedAt: 'desc' },
+        select: { overall: true, recordedAt: true },
+      }),
+    ]);
+    return recommendations.map((recommendation) => ({
+      ...recommendation,
+      scoreChangeSinceCompletion:
+        recommendation.status === 'COMPLETED' &&
+        recommendation.scoreAtCompletion !== null &&
+        latestSnapshot
+          ? latestSnapshot.overall - recommendation.scoreAtCompletion
+          : null,
+      scoreComparedAt: latestSnapshot?.recordedAt ?? null,
+    }));
   }
 
   async updateStatus(userId: string, id: string, status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED') {
     const recommendation = await this.prisma.recommendation.findFirst({ where: { id, userId } });
     if (!recommendation) throw new NotFoundException('Recommendation not found');
     const now = new Date();
+    const completionSnapshot =
+      status === 'COMPLETED'
+        ? await this.prisma.readinessSnapshot.findFirst({
+            where: { userId },
+            orderBy: { recordedAt: 'desc' },
+            select: { overall: true, recordedAt: true },
+          })
+        : null;
     return this.prisma.recommendation.update({
       where: { id },
       data: {
         status,
         dismissedAt: status === 'DISMISSED' ? now : null,
         completedAt: status === 'COMPLETED' ? now : null,
+        scoreAtCompletion: completionSnapshot?.overall ?? null,
+        scoreRecordedAtCompletion: completionSnapshot?.recordedAt ?? null,
         resolvedAt: null,
       },
     });

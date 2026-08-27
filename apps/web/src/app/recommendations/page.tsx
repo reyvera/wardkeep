@@ -20,6 +20,8 @@ interface Recommendation {
   estimatedAmountLabel: string | null;
   estimatedCompletionDays: number | null;
   status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
+  scoreChangeSinceCompletion: number | null;
+  scoreComparedAt: string | null;
   updatedAt: string;
 }
 
@@ -200,6 +202,14 @@ export default function RecommendationsPage() {
                           {statusLabel(recommendation.status)} · updated{' '}
                           {new Date(recommendation.updatedAt).toLocaleDateString()}
                         </p>
+                        {recommendation.status === 'COMPLETED' &&
+                          recommendation.scoreChangeSinceCompletion !== null && (
+                            <p className="mt-1 text-xs text-content-secondary">
+                              Readiness {recommendation.scoreChangeSinceCompletion >= 0 ? 'changed by +' : 'changed by '}
+                              {recommendation.scoreChangeSinceCompletion} points since completion.
+                              This is an observed change, not an attribution to this action.
+                            </p>
+                          )}
                         {(recommendation.status === 'COMPLETED' ||
                           recommendation.status === 'DISMISSED') && (
                           <button

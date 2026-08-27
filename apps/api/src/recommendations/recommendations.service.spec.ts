@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { recommendationCandidate } from './recommendations.service';
+import { RecommendationsService, recommendationCandidate } from './recommendations.service';
 
 describe('recommendationCandidate', () => {
   it('creates a stable, high-priority action for a confirmed risk', () => {
@@ -86,5 +86,46 @@ describe('recommendationCandidate', () => {
     expect(candidate.estimatedAmount?.toFixed(2)).toBe('1200.00');
     expect(candidate.estimatedAmountLabel).toBe('Recorded reserve target gap');
     expect(candidate.estimatedCompletionDays).toBeNull();
+  });
+});
+
+describe('RecommendationsService completion observations', () => {
+  it('records the latest observed readiness score when an action is completed', async () => {
+    const prisma = {
+      recommendation: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'rec-1' }),
+        update: vi.fn().mockResolvedValue({ id: 'rec-1' }),
+      },
+      readinessSnapshot: {
+        findFirst: vi.fn().mockResolvedValue({ overall: 64, recordedAt: new Date('2026-08-26') }),
+      },
+    };
+    const service = new RecommendationsService(prisma as never);
+
+    await service.updateStatus('user-1', 'rec-1', 'COMPLETED');
+
+    expect(prisma.recommendation.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ scoreAtCompletion: 64 }),
+      }),
+    );
+  });
+
+  it('reports observed score movement since completion without attributing causation', async () => {
+    const prisma = {
+      recommendation: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 'rec-1', status: 'COMPLETED', scoreAtCompletion: 64 },
+        ]),
+      },
+      readinessSnapshot: {
+        findFirst: vi.fn().mockResolvedValue({ overall: 67, recordedAt: new Date('2026-08-27') }),
+      },
+    };
+    const service = new RecommendationsService(prisma as never);
+
+    await expect(service.list('user-1')).resolves.toMatchObject([
+      { id: 'rec-1', scoreChangeSinceCompletion: 3 },
+    ]);
   });
 });

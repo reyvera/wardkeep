@@ -28,6 +28,8 @@ export interface PeriodicBrief {
   actionsCompleted: number;
   completedRecommendations: Array<{ summary: string; action: string; completedAt: Date }>;
   observedRisks: string[];
+  /** Risks or warnings whose source signal was absent from the comparison snapshot. */
+  newRisks: string[];
   upcoming: TimelineEvent[];
 }
 
@@ -145,6 +147,26 @@ export class AdvisorService {
         completedAt: recommendation.completedAt!,
       }));
     const trend = readiness.trendWindows.find((window) => window.days === periodDays);
+    const comparisonSnapshot = trend?.comparedTo
+      ? await this.prisma.readinessSnapshot.findFirst({
+          where: { userId, recordedAt: { lte: trend.comparedTo } },
+          orderBy: { recordedAt: 'desc' },
+          include: { signals: true },
+        })
+      : null;
+    const priorRiskKeys = new Set(
+      (comparisonSnapshot?.signals ?? [])
+        .filter((signal) => signal.type === 'RISK' || signal.type === 'WARNING')
+        .map((signal) => `${signal.capabilityId}|${signal.type}`),
+    );
+    const newRisks = comparisonSnapshot
+      ? readiness.signals
+          .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
+          .filter(
+            (signal) => !priorRiskKeys.has(`${signal.capabilityId}|${signal.type.toUpperCase()}`),
+          )
+          .map((signal) => signal.summary)
+      : [];
 
     return {
       periodDays,
@@ -161,6 +183,7 @@ export class AdvisorService {
       actionsCompleted: completedRecommendations.length,
       completedRecommendations,
       observedRisks: readiness.topRisks.map((risk) => risk.summary),
+      newRisks,
       upcoming,
     };
   }

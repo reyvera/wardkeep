@@ -65,7 +65,15 @@ describe('AdvisorService', () => {
   it('reports recorded trend data and recently completed recommendations for periodic briefs', async () => {
     const readiness = {
       getReadiness: vi.fn().mockResolvedValue({
-        signals: [],
+        signals: [
+          {
+            capabilityId: 'emergency-fund',
+            type: 'warning',
+            magnitude: -2,
+            pillar: 'protection',
+            summary: 'Liquid reserves need attention.',
+          },
+        ],
         overallAssessment: { score: 62, state: 'partial', coverage: 55 },
         topRisks: [{ summary: 'Liquid reserves need attention.' }],
         trendWindows: [
@@ -86,13 +94,17 @@ describe('AdvisorService', () => {
       ]),
     } as unknown as RecommendationsService;
     const timeline = { listUpcoming: vi.fn().mockResolvedValue([]) } as unknown as TimelineService;
-    const advisor = new AdvisorService(readiness, recommendations, timeline, {} as never);
+    const prisma = {
+      readinessSnapshot: { findFirst: vi.fn().mockResolvedValue({ signals: [] }) },
+    };
+    const advisor = new AdvisorService(readiness, recommendations, timeline, prisma as never);
 
     await expect(advisor.getWeeklyBrief('user-1')).resolves.toMatchObject({
       periodDays: 7,
       scoreChange: { delta: 4, elapsedDays: 7 },
       actionsCompleted: 1,
       observedRisks: ['Liquid reserves need attention.'],
+      newRisks: ['Liquid reserves need attention.'],
     });
     await expect(advisor.getMonthlyBrief('user-1')).resolves.toMatchObject({
       periodDays: 30,
@@ -100,6 +112,7 @@ describe('AdvisorService', () => {
     });
     expect(vi.mocked(timeline.listUpcoming)).toHaveBeenNthCalledWith(1, 'user-1', 7);
     expect(vi.mocked(timeline.listUpcoming)).toHaveBeenNthCalledWith(2, 'user-1', 30);
+    expect(prisma.readinessSnapshot.findFirst).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes and returns recommendations from their existing priority order', async () => {

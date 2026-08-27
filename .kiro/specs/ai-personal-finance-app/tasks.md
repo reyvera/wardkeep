@@ -321,13 +321,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 22.3 Implement Weekly and Monthly Briefs
   - [x] GET /api/advisor/brief/weekly — recorded score change, completed recommendations, observed risks, and upcoming week
   - [x] GET /api/advisor/brief/monthly — recorded month trend, completed recommendations, observed risks, and upcoming month
-  - [~] Include: score changes, actions taken, recommendations completed, new risks
+  - [x] Include: recorded score changes, actions taken, recommendations completed, and newly observed risks when a comparison snapshot exists
 
 - [~] 22.4 Implement recommendation prioritization
   - [x] GET /api/advisor/recommendations — returns the recorded priority order after refreshing observed signals
   - [x] Each recommendation links to its source Capability and signal
   - [x] User can dismiss or complete a recommendation from the Recommendations workspace
-  - [~] Track recommendation completion and resulting score changes
+  - [x] Track recommendation completion and observed score changes since completion (without causal attribution)
 
 - [~] 22.5 Implement cross-capability reasoning
   - [x] Advisor has read access to signals from all active Capabilities simultaneously
@@ -390,7 +390,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 25. Phase 2 Checkpoint
 
-- [ ] 25.1 Verify Readiness Engine produces correct, explainable scores
+- [x] 25.1 Verify Readiness Engine produces correct, explainable scores (automated readiness and API suites)
 - [ ] 25.2 Verify Morning Brief renders with real finance data
 - [ ] 25.3 Verify Timeline shows upcoming bills, paydays, and milestones
 - [ ] 25.4 Verify Advisor can explain readiness changes

@@ -30,6 +30,7 @@ interface PeriodicBrief {
   actionsCompleted: number;
   completedRecommendations: Array<{ summary: string; action: string; completedAt: string }>;
   observedRisks: string[];
+  newRisks: string[];
   upcoming: Array<{ id: string; date: string; title: string; detail: string; href: string }>;
 }
 
@@ -158,6 +159,16 @@ export default function BriefPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {periodicBrief.data.newRisks.length > 0 && (
+              <div>
+                <p className="font-medium text-content-primary">Newly observed risks</p>
+                <ul className="mt-1 space-y-1 text-content-secondary">
+                  {periodicBrief.data.newRisks.map((risk) => (
+                    <li key={risk}>{risk}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}
