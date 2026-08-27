@@ -35,6 +35,7 @@ export class BackupService {
       conditions,
       actions,
       recurring,
+      financialGoals,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -51,6 +52,7 @@ export class BackupService {
       this.prisma.ruleCondition.findMany({ where: { rule: { userId } } }),
       this.prisma.ruleAction.findMany({ where: { rule: { userId } } }),
       this.prisma.recurringTransaction.findMany({ where: { userId } }),
+      this.prisma.financialGoal.findMany({ where: { userId } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -65,6 +67,7 @@ export class BackupService {
       conditions,
       actions,
       recurring,
+      financialGoals,
       settings,
     });
 
@@ -146,6 +149,7 @@ export class BackupService {
       await tx.ruleAction.deleteMany({ where: { rule: { userId } } });
       await tx.rule.deleteMany({ where: { userId } });
       await tx.recurringTransaction.deleteMany({ where: { userId } });
+      await tx.financialGoal.deleteMany({ where: { userId } });
       await tx.category.deleteMany({ where: { userId } });
       await tx.account.deleteMany({ where: { userId } });
       await tx.userSettings.deleteMany({ where: { userId } });
@@ -180,6 +184,9 @@ export class BackupService {
       }
       if (payload.recurring?.length) {
         await tx.recurringTransaction.createMany({ data: payload.recurring });
+      }
+      if (payload.financialGoals?.length) {
+        await tx.financialGoal.createMany({ data: payload.financialGoals });
       }
       if (payload.settings) {
         await tx.userSettings.create({ data: payload.settings });
