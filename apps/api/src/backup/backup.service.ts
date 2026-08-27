@@ -36,6 +36,8 @@ export class BackupService {
       actions,
       recurring,
       financialGoals,
+      vehicles,
+      vehicleMaintenance,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -53,6 +55,8 @@ export class BackupService {
       this.prisma.ruleAction.findMany({ where: { rule: { userId } } }),
       this.prisma.recurringTransaction.findMany({ where: { userId } }),
       this.prisma.financialGoal.findMany({ where: { userId } }),
+      this.prisma.vehicle.findMany({ where: { userId } }),
+      this.prisma.vehicleMaintenance.findMany({ where: { vehicle: { userId } } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -68,6 +72,8 @@ export class BackupService {
       actions,
       recurring,
       financialGoals,
+      vehicles,
+      vehicleMaintenance,
       settings,
     });
 
@@ -150,6 +156,8 @@ export class BackupService {
       await tx.rule.deleteMany({ where: { userId } });
       await tx.recurringTransaction.deleteMany({ where: { userId } });
       await tx.financialGoal.deleteMany({ where: { userId } });
+      await tx.vehicleMaintenance.deleteMany({ where: { vehicle: { userId } } });
+      await tx.vehicle.deleteMany({ where: { userId } });
       await tx.category.deleteMany({ where: { userId } });
       await tx.account.deleteMany({ where: { userId } });
       await tx.userSettings.deleteMany({ where: { userId } });
@@ -187,6 +195,12 @@ export class BackupService {
       }
       if (payload.financialGoals?.length) {
         await tx.financialGoal.createMany({ data: payload.financialGoals });
+      }
+      if (payload.vehicles?.length) {
+        await tx.vehicle.createMany({ data: payload.vehicles });
+      }
+      if (payload.vehicleMaintenance?.length) {
+        await tx.vehicleMaintenance.createMany({ data: payload.vehicleMaintenance });
       }
       if (payload.settings) {
         await tx.userSettings.create({ data: payload.settings });
