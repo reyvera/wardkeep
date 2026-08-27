@@ -199,7 +199,7 @@ export class TimelineService {
     end.setHours(0, 0, 0, 0);
     const start = new Date(end);
     start.setDate(start.getDate() - days);
-    const [policies, income, plannedExpenses] = await Promise.all([
+    const [policies, income, plannedExpenses, goals] = await Promise.all([
       this.prisma.insurancePolicy.findMany({
         where: { userId, renewalDate: { gte: start, lt: end } },
         orderBy: { renewalDate: 'desc' },
@@ -211,6 +211,10 @@ export class TimelineService {
       this.prisma.plannedExpense.findMany({
         where: { userId, dueDate: { gte: start, lt: end } },
         orderBy: { dueDate: 'desc' },
+      }),
+      this.prisma.financialGoal.findMany({
+        where: { userId, targetDate: { gte: start, lt: end } },
+        orderBy: { targetDate: 'desc' },
       }),
     ]);
 
@@ -245,6 +249,17 @@ export class TimelineService {
         title: record.name,
         detail: 'Recorded planned-expense date; review whether it was completed or rescheduled.',
         href: '/planned-expenses',
+        actionRequired: true,
+        status: 'RECORDED_PAST' as const,
+      })),
+      ...goals.map((goal) => ({
+        id: `goal-${goal.id}-${goal.targetDate!.toISOString()}`,
+        kind: 'FINANCIAL_GOAL' as const,
+        pillar: 'preparation' as const,
+        date: goal.targetDate!,
+        title: `${goal.name} target date`,
+        detail: 'Recorded goal target date; review whether the goal was achieved or needs a new date.',
+        href: '/financial-goals',
         actionRequired: true,
         status: 'RECORDED_PAST' as const,
       })),

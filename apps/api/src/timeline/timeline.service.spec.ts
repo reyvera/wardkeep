@@ -138,6 +138,7 @@ describe('TimelineService', () => {
       },
       incomeSource: { findMany: vi.fn().mockResolvedValue([]) },
       plannedExpense: { findMany: vi.fn().mockResolvedValue([]) },
+      financialGoal: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const service = new TimelineService(prisma as never);
 
