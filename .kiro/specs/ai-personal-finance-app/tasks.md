@@ -350,7 +350,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 23.3 Implement Timeline UI
   - [x] Scrollable, grouped upcoming timeline with 30/90/365-day views and direct source links
-  - [~] Past and upcoming recorded-date views
+  - [x] Past ← today → future recorded-date views
   - [x] Color-code capability sources and highlight action-required events when source semantics support it
   - [x] Click event → navigate to relevant Capability view
   - [x] Mobile-friendly compact cards
@@ -377,7 +377,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Responses include linked readiness references for the currently observed risk pillars
   - [x] Quick actions: "Explain my score", "What should I prioritize?", "What if I lose my job?"
 
-- [~] 24.4 Implement Timeline UI page
+- [x] 24.4 Implement Timeline UI page
   - [x] Full-page scrollable timeline
   - [x] Filter by Capability, by pillar, by action-required
   - [x] Past events show recorded-date status without inferring completion

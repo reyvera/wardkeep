@@ -90,7 +90,7 @@ function relativeDayLabel(date: string) {
 
 export default function TimelinePage() {
   const [days, setDays] = useState(30);
-  const [view, setView] = useState<'UPCOMING' | 'HISTORY'>('UPCOMING');
+  const [view, setView] = useState<'UPCOMING' | 'TODAY' | 'HISTORY'>('UPCOMING');
   const [kind, setKind] = useState<'ALL' | TimelineEventKind>('ALL');
   const [pillar, setPillar] = useState<'ALL' | TimelinePillar>('ALL');
   const [actionRequiredOnly, setActionRequiredOnly] = useState(false);
@@ -98,16 +98,19 @@ export default function TimelinePage() {
     queryKey: ['timeline', view, days],
     queryFn: () =>
       apiClient.get<TimelineEvent[]>(
-        `/timeline/${view === 'UPCOMING' ? 'upcoming' : 'history'}?days=${days}`,
+        `/timeline/${view === 'HISTORY' ? 'history' : 'upcoming'}?days=${days}`,
       ),
   });
 
-  const visibleEvents = (timeline.data ?? []).filter(
-    (event) =>
+  const visibleEvents = (timeline.data ?? []).filter((event) => {
+    const isToday = dayKey(event.date) === dayKey(new Date().toISOString());
+    return (
+      (view !== 'TODAY' || isToday) &&
       (kind === 'ALL' || event.kind === kind) &&
       (pillar === 'ALL' || event.pillar === pillar) &&
-      (!actionRequiredOnly || event.actionRequired),
-  );
+      (!actionRequiredOnly || event.actionRequired)
+    );
+  });
   const groups = visibleEvents.reduce<Record<string, TimelineEvent[]>>((result, event) => {
     const key = dayKey(event.date);
     (result[key] ??= []).push(event);
@@ -122,6 +125,8 @@ export default function TimelinePage() {
           <p className="mt-1 max-w-2xl text-sm text-content-secondary">
             {view === 'UPCOMING'
               ? 'Upcoming dates recorded in your household—not forecasts or inferred obligations.'
+              : view === 'TODAY'
+                ? 'Recorded household dates for today—not forecasts or inferred obligations.'
               : 'Past dates recorded in your household. A recorded date does not confirm that the underlying event occurred.'}
           </p>
         </div>
@@ -141,16 +146,22 @@ export default function TimelinePage() {
 
       <div className="flex flex-wrap gap-2" aria-label="Choose timeline period">
         <button
-          className={view === 'UPCOMING' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
-          onClick={() => setView('UPCOMING')}
-        >
-          Upcoming
-        </button>
-        <button
           className={view === 'HISTORY' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
           onClick={() => setView('HISTORY')}
         >
           Past recorded dates
+        </button>
+        <button
+          className={view === 'TODAY' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+          onClick={() => setView('TODAY')}
+        >
+          Today
+        </button>
+        <button
+          className={view === 'UPCOMING' ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+          onClick={() => setView('UPCOMING')}
+        >
+          Upcoming
         </button>
       </div>
 
@@ -158,7 +169,7 @@ export default function TimelinePage() {
         <div className="flex gap-3">
           <CalendarDays className="mt-0.5 shrink-0 text-accent-blue" size={20} />
           <p className="text-sm text-content-secondary">
-            {view === 'UPCOMING'
+            {view === 'UPCOMING' || view === 'TODAY'
               ? 'Includes confirmed recurring bills, policy renewals, expected income dates, and planned expenses. Add or change a record in its source workspace.'
               : 'Includes past policy renewal, expected-income, and planned-expense dates. Open the source workspace to confirm or update its outcome.'}
           </p>
@@ -214,13 +225,13 @@ export default function TimelinePage() {
           <CalendarDays className="mx-auto text-content-tertiary" size={28} />
           <p className="mt-3 font-medium text-content-primary">
             {actionRequiredOnly
-              ? `No action-required recorded dates in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`
+              ? `No action-required recorded dates ${view === 'TODAY' ? 'today' : `in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days`}.`
               : kind === 'ALL'
-              ? `No recorded dates in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`
-              : `No ${eventLabels[kind].toLowerCase()} events in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days.`}
+              ? `No recorded dates ${view === 'TODAY' ? 'today' : `in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days`}.`
+              : `No ${eventLabels[kind].toLowerCase()} events ${view === 'TODAY' ? 'today' : `in the ${view === 'UPCOMING' ? 'next' : 'past'} ${days} days`}.`}
           </p>
           <p className="mt-1 text-sm text-content-secondary">
-            {view === 'UPCOMING'
+            {view === 'UPCOMING' || view === 'TODAY'
               ? 'Add a recurring bill, policy renewal, expected income date, or planned expense when you know it.'
               : 'Past scheduled dates remain separate from confirmed payments, renewals, or income.'}
           </p>
