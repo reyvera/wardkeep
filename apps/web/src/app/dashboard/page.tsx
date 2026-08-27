@@ -862,8 +862,8 @@ export default function DashboardPage() {
           </ul>
         )}
         <p className="text-xs text-content-tertiary mt-4">
-          Compared with the closest daily readiness snapshot available for this period. Detailed
-          score-change reasons are still being added.
+          Compared with the closest daily readiness snapshot available for this period. A reason is
+          shown when Wardkeep can identify a recorded factor behind the change.
         </p>
       </div>
 
