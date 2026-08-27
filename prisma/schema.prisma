@@ -42,6 +42,7 @@ model User {
   householdObligations  HouseholdObligation[]
   plannedExpenses       PlannedExpense[]
   financialGoals        FinancialGoal[]
+  vehicles              Vehicle[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
 }
@@ -369,6 +370,48 @@ model FinancialGoal {
 
   @@index([userId, isActive])
   @@index([userId, targetDate])
+}
+
+/// A vehicle the household has chosen to track. Mileage and maintenance are
+/// recorded by the household; Wardkeep never infers them from transactions.
+model Vehicle {
+  id           String    @id @default(uuid())
+  userId       String
+  nickname     String?   @db.VarChar(100)
+  make         String    @db.VarChar(80)
+  model        String    @db.VarChar(80)
+  year         Int?
+  mileage      Int?
+  isActive     Boolean   @default(true)
+  notes        String?   @db.VarChar(1000)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  maintenance VehicleMaintenance[]
+
+  @@index([userId, isActive])
+}
+
+/// A recorded or planned maintenance item for a household vehicle. A due date
+/// or due mileage is an explicit reminder, not an assertion that work occurred.
+model VehicleMaintenance {
+  id          String    @id @default(uuid())
+  vehicleId   String
+  name        String    @db.VarChar(120)
+  dueDate     DateTime? @db.Date
+  dueMileage  Int?
+  completedAt DateTime? @db.Date
+  completedMileage Int?
+  estimatedCost Decimal? @db.Decimal(19, 4)
+  notes       String?   @db.VarChar(1000)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, dueDate])
+  @@index([vehicleId, completedAt])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────

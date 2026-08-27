@@ -32,6 +32,7 @@ import { RulesModule } from './rules/rules.module';
 import { SettingsModule } from './settings/settings.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { TimelineModule } from './timeline/timeline.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { TimelineModule } from './timeline/timeline.module';
     SettingsModule,
     TransactionsModule,
     TimelineModule,
+    VehiclesModule,
     ImportModule,
     IncomeSourcesModule,
     HouseholdObligationsModule,
