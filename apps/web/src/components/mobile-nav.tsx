@@ -23,6 +23,7 @@ import {
   Link2,
   Settings,
   Sun,
+  Target,
 } from 'lucide-react';
 
 const mobileNavItems = [
@@ -40,6 +41,7 @@ const moreNavItems = [
   { href: '/categories', label: 'Categories', icon: Tag },
   { href: '/budget', label: 'Budget', icon: PieChart },
   { href: '/planned-expenses', label: 'Planned expenses', icon: Wallet },
+  { href: '/financial-goals', label: 'Financial goals', icon: Target },
   { href: '/rules', label: 'Rules', icon: Sparkles },
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },
