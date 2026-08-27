@@ -407,9 +407,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 26. Additional Capabilities
 
 - [ ] 26.1 Vehicle Capability
-  - Track vehicles: make, model, year, mileage
-  - Maintenance schedules (oil change, tires, registration, inspection)
-  - Signals: overdue maintenance → risk, upcoming registration → timeline event
+  - [x] Track vehicles: make, model, year, mileage, ownership, lease/loan details, and recorded valuations
+  - [x] Maintenance schedules (oil change, tires, registration, inspection)
+  - [~] Signals: overdue maintenance → risk, upcoming registration → timeline event
   - Pillar: Preparation
 
 - [ ] 26.2 Insurance Capability

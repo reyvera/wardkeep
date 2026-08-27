@@ -84,6 +84,18 @@ describe('TimelineService', () => {
           },
         ]),
       },
+      vehicleMaintenance: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'maintenance',
+            name: 'Oil change',
+            dueDate: new Date('2026-08-30T00:00:00.000Z'),
+            dueMileage: 32500,
+            estimatedCost: decimal('85'),
+            vehicle: { year: 2022, make: 'Honda', model: 'CR-V' },
+          },
+        ]),
+      },
     };
     const service = new TimelineService(prisma as never);
 
@@ -95,6 +107,7 @@ describe('TimelineService', () => {
       'RECURRING_BILL',
       'PLANNED_EXPENSE',
       'FINANCIAL_GOAL',
+      'VEHICLE_MAINTENANCE',
       'BUDGET_PERIOD',
       'DEBT_PAYOFF',
     ]);
@@ -102,6 +115,7 @@ describe('TimelineService', () => {
     expect(events.filter((event) => event.actionRequired).map((event) => event.kind)).toEqual([
       'POLICY_RENEWAL',
       'PLANNED_EXPENSE',
+      'VEHICLE_MAINTENANCE',
     ]);
     expect(events.find((event) => event.kind === 'DEBT_PAYOFF')).toMatchObject({
       title: 'Debt freedom projected payoff',
@@ -116,6 +130,11 @@ describe('TimelineService', () => {
       title: 'Family vacation target date',
       detail: '$1,200.00 of $3,000.00 recorded toward this goal.',
       href: '/financial-goals',
+    });
+    expect(events.find((event) => event.kind === 'VEHICLE_MAINTENANCE')).toMatchObject({
+      title: '2022 Honda CR-V · Oil change',
+      detail: '32,500 mi reminder · $85.00 estimated',
+      href: '/vehicles',
     });
     expect(prisma.recurringTransaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -139,6 +158,7 @@ describe('TimelineService', () => {
       incomeSource: { findMany: vi.fn().mockResolvedValue([]) },
       plannedExpense: { findMany: vi.fn().mockResolvedValue([]) },
       financialGoal: { findMany: vi.fn().mockResolvedValue([]) },
+      vehicleMaintenance: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const service = new TimelineService(prisma as never);
 

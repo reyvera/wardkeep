@@ -9,7 +9,8 @@ export type TimelineEventKind =
   | 'PLANNED_EXPENSE'
   | 'DEBT_PAYOFF'
   | 'BUDGET_PERIOD'
-  | 'FINANCIAL_GOAL';
+  | 'FINANCIAL_GOAL'
+  | 'VEHICLE_MAINTENANCE';
 export type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 export interface TimelineEvent {
@@ -41,7 +42,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -71,6 +72,11 @@ export class TimelineService {
       this.prisma.financialGoal.findMany({
         where: { userId, isActive: true, targetDate: { gte: start, lte: end } },
         orderBy: { targetDate: 'asc' },
+      }),
+      this.prisma.vehicleMaintenance.findMany({
+        where: { vehicle: { userId, isActive: true }, completedAt: null, dueDate: { gte: start, lte: end } },
+        include: { vehicle: true },
+        orderBy: { dueDate: 'asc' },
       }),
     ]);
 
@@ -185,6 +191,16 @@ export class TimelineService {
         href: '/financial-goals',
         actionRequired: false,
       })),
+      ...vehicleMaintenance.map((record) => ({
+        id: `vehicle-maintenance-${record.id}`,
+        kind: 'VEHICLE_MAINTENANCE' as const,
+        pillar: 'preparation' as const,
+        date: record.dueDate!,
+        title: `${record.vehicle.year ?? ''} ${record.vehicle.make} ${record.vehicle.model} · ${record.name}`.trim(),
+        detail: `${record.dueMileage ? `${record.dueMileage.toLocaleString()} mi reminder` : 'Recorded maintenance reminder'}${record.estimatedCost ? ` · ${this.currency(record.estimatedCost.toString())} estimated` : ''}`,
+        href: '/vehicles',
+        actionRequired: true,
+      })),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 
@@ -199,7 +215,7 @@ export class TimelineService {
     end.setHours(0, 0, 0, 0);
     const start = new Date(end);
     start.setDate(start.getDate() - days);
-    const [policies, income, plannedExpenses, goals] = await Promise.all([
+    const [policies, income, plannedExpenses, goals, vehicleMaintenance] = await Promise.all([
       this.prisma.insurancePolicy.findMany({
         where: { userId, renewalDate: { gte: start, lt: end } },
         orderBy: { renewalDate: 'desc' },
@@ -215,6 +231,11 @@ export class TimelineService {
       this.prisma.financialGoal.findMany({
         where: { userId, targetDate: { gte: start, lt: end } },
         orderBy: { targetDate: 'desc' },
+      }),
+      this.prisma.vehicleMaintenance.findMany({
+        where: { vehicle: { userId }, completedAt: null, dueDate: { gte: start, lt: end } },
+        include: { vehicle: true },
+        orderBy: { dueDate: 'desc' },
       }),
     ]);
 
@@ -260,6 +281,17 @@ export class TimelineService {
         title: `${goal.name} target date`,
         detail: 'Recorded goal target date; review whether the goal was achieved or needs a new date.',
         href: '/financial-goals',
+        actionRequired: true,
+        status: 'RECORDED_PAST' as const,
+      })),
+      ...vehicleMaintenance.map((record) => ({
+        id: `vehicle-maintenance-${record.id}-${record.dueDate!.toISOString()}`,
+        kind: 'VEHICLE_MAINTENANCE' as const,
+        pillar: 'preparation' as const,
+        date: record.dueDate!,
+        title: `${record.vehicle.year ?? ''} ${record.vehicle.make} ${record.vehicle.model} · ${record.name}`.trim(),
+        detail: 'Recorded maintenance reminder date; review whether the service was completed or rescheduled.',
+        href: '/vehicles',
         actionRequired: true,
         status: 'RECORDED_PAST' as const,
       })),
