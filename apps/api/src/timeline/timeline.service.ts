@@ -8,7 +8,8 @@ export type TimelineEventKind =
   | 'INCOME'
   | 'PLANNED_EXPENSE'
   | 'DEBT_PAYOFF'
-  | 'BUDGET_PERIOD';
+  | 'BUDGET_PERIOD'
+  | 'FINANCIAL_GOAL';
 export type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 export interface TimelineEvent {
@@ -40,7 +41,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -66,6 +67,10 @@ export class TimelineService {
       this.prisma.budget.findMany({
         where: { userId, month: { gte: new Date(start.getFullYear(), start.getMonth(), 1), lte: end } },
         orderBy: { month: 'asc' },
+      }),
+      this.prisma.financialGoal.findMany({
+        where: { userId, isActive: true, targetDate: { gte: start, lte: end } },
+        orderBy: { targetDate: 'asc' },
       }),
     ]);
 
@@ -168,6 +173,18 @@ export class TimelineService {
           },
         ].filter((event) => event.date >= start && event.date <= end);
       }),
+      ...goals.map((goal) => ({
+        id: `goal-${goal.id}`,
+        kind: 'FINANCIAL_GOAL' as const,
+        pillar: 'preparation' as const,
+        date: goal.targetDate!,
+        title: `${goal.name} target date`,
+        detail: goal.targetAmount
+          ? `${this.currency(goal.savedAmount.toString())} of ${this.currency(goal.targetAmount.toString())} recorded toward this goal.`
+          : `${this.currency(goal.savedAmount.toString())} recorded toward this goal.`,
+        href: '/financial-goals',
+        actionRequired: false,
+      })),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 

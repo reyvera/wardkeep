@@ -73,6 +73,17 @@ describe('TimelineService', () => {
           { id: 'budget', month: new Date('2026-08-01T00:00:00.000Z') },
         ]),
       },
+      financialGoal: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'goal',
+            name: 'Family vacation',
+            targetAmount: decimal('3000'),
+            savedAmount: decimal('1200'),
+            targetDate: new Date('2026-08-29T00:00:00.000Z'),
+          },
+        ]),
+      },
     };
     const service = new TimelineService(prisma as never);
 
@@ -83,6 +94,7 @@ describe('TimelineService', () => {
       'INCOME',
       'RECURRING_BILL',
       'PLANNED_EXPENSE',
+      'FINANCIAL_GOAL',
       'BUDGET_PERIOD',
       'DEBT_PAYOFF',
     ]);
@@ -99,6 +111,11 @@ describe('TimelineService', () => {
     expect(events.find((event) => event.id === 'budget-end-budget')).toMatchObject({
       title: 'August budget ends',
       href: '/budget',
+    });
+    expect(events.find((event) => event.kind === 'FINANCIAL_GOAL')).toMatchObject({
+      title: 'Family vacation target date',
+      detail: '$1,200.00 of $3,000.00 recorded toward this goal.',
+      href: '/financial-goals',
     });
     expect(prisma.recurringTransaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
