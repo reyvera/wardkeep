@@ -1,0 +1,49 @@
+'use client';
+
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Car, Trash2, Wrench } from 'lucide-react';
+
+import { apiClient } from '@/lib/api-client';
+
+type Maintenance = { id: string; name: string; dueDate: string | null; dueMileage: number | null; completedAt: string | null; estimatedCost: string | null };
+type Vehicle = { id: string; kind: string; ownership: string; nickname: string | null; make: string; model: string; year: number | null; mileage: number | null; loanBalance: string | null; leasePayment: string | null; leaseEndDate: string | null; estimatedValue: string | null; valuationSource: string | null; valuedAt: string | null; isActive: boolean; maintenance: Maintenance[] };
+const kinds = ['AUTOMOBILE', 'MOTORCYCLE', 'RV', 'BOAT', 'TRAILER', 'ATV', 'OTHER'];
+const ownerships = ['OWNED', 'FINANCED', 'LEASED', 'OTHER'];
+const label = (value: string) => value.toLowerCase().replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+const money = (value: string | null) => value ? `$${Number(value).toLocaleString()}` : null;
+
+export default function VehiclesPage() {
+  const client = useQueryClient();
+  const [form, setForm] = useState({ kind: 'AUTOMOBILE', ownership: 'OWNED', make: '', model: '', year: '', mileage: '', estimatedValue: '', loanBalance: '', leasePayment: '', leaseEndDate: '', valuationSource: 'Manual', valuedAt: new Date().toISOString().slice(0, 10) });
+  const [maintenance, setMaintenance] = useState<Record<string, { name: string; dueDate: string; dueMileage: string; estimatedCost: string }>>({});
+  const vehicles = useQuery({ queryKey: ['vehicles'], queryFn: () => apiClient.get<Vehicle[]>('/vehicles') });
+  const refresh = () => client.invalidateQueries({ queryKey: ['vehicles'] });
+  const create = useMutation({ mutationFn: () => apiClient.post('/vehicles', { ...form, year: form.year ? Number(form.year) : null, mileage: form.mileage ? Number(form.mileage) : null, estimatedValue: form.estimatedValue || null, loanBalance: form.loanBalance || null, leasePayment: form.leasePayment || null, leaseEndDate: form.leaseEndDate || null, valuationSource: form.valuationSource || null, valuedAt: form.valuedAt || null }), onSuccess: () => { setForm({ ...form, make: '', model: '', year: '', mileage: '', estimatedValue: '', loanBalance: '', leasePayment: '', leaseEndDate: '' }); refresh(); } });
+  const remove = useMutation({ mutationFn: (id: string) => apiClient.delete(`/vehicles/${id}`), onSuccess: refresh });
+  const addMaintenance = useMutation({ mutationFn: ({ vehicleId, body }: { vehicleId: string; body: object }) => apiClient.post(`/vehicles/${vehicleId}/maintenance`, body), onSuccess: refresh });
+
+  return <div className="space-y-6">
+    <div><h1 className="text-page-title">Vehicles</h1><p className="mt-1 text-sm text-content-secondary">Track household vehicles, recorded values, loan or lease obligations, and maintenance. Values are estimates, not guaranteed sale prices.</p></div>
+    <form className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+      <div><label className="input-label">Asset type</label><select className="input" value={form.kind} onChange={(event) => setForm({ ...form, kind: event.target.value })}>{kinds.map((kind) => <option key={kind}>{kind}</option>)}</select></div>
+      <div><label className="input-label">Ownership</label><select className="input" value={form.ownership} onChange={(event) => setForm({ ...form, ownership: event.target.value })}>{ownerships.map((item) => <option key={item}>{item}</option>)}</select></div>
+      <div><label className="input-label">Year (optional)</label><input className="input" inputMode="numeric" value={form.year} onChange={(event) => setForm({ ...form, year: event.target.value })} /></div>
+      <div><label className="input-label">Make</label><input className="input" required value={form.make} onChange={(event) => setForm({ ...form, make: event.target.value })} placeholder="e.g. Honda" /></div>
+      <div><label className="input-label">Model</label><input className="input" required value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} placeholder="e.g. CR-V" /></div>
+      <div><label className="input-label">Current mileage</label><input className="input" inputMode="numeric" value={form.mileage} onChange={(event) => setForm({ ...form, mileage: event.target.value })} /></div>
+      <div><label className="input-label">Estimated value</label><input className="input" inputMode="decimal" value={form.estimatedValue} onChange={(event) => setForm({ ...form, estimatedValue: event.target.value })} placeholder="0.00" /></div>
+      {form.ownership === 'FINANCED' && <div><label className="input-label">Loan balance</label><input className="input" inputMode="decimal" value={form.loanBalance} onChange={(event) => setForm({ ...form, loanBalance: event.target.value })} placeholder="0.00" /></div>}
+      {form.ownership === 'LEASED' && <><div><label className="input-label">Monthly lease payment</label><input className="input" inputMode="decimal" value={form.leasePayment} onChange={(event) => setForm({ ...form, leasePayment: event.target.value })} placeholder="0.00" /></div><div><label className="input-label">Lease end date</label><input className="input" type="date" value={form.leaseEndDate} onChange={(event) => setForm({ ...form, leaseEndDate: event.target.value })} /></div></>}
+      <div className="flex items-end"><button className="btn-primary w-full" disabled={create.isPending}>Add vehicle</button></div>
+    </form>
+    {vehicles.isLoading ? <div className="card skeleton h-40" /> : vehicles.data?.length === 0 ? <div className="card py-12 text-center text-sm text-content-secondary">No vehicles recorded yet.</div> : <ul className="space-y-3">{vehicles.data?.map((vehicle) => {
+      const task = maintenance[vehicle.id] ?? { name: '', dueDate: '', dueMileage: '', estimatedCost: '' };
+      const netValue = vehicle.ownership === 'LEASED' ? null : (Number(vehicle.estimatedValue ?? 0) - Number(vehicle.loanBalance ?? 0));
+      return <li key={vehicle.id} className="card"><div className="flex gap-3"><Car className="mt-0.5 text-accent-blue" size={20} /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><div><p className="font-medium text-content-primary">{[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ')}</p><p className="mt-1 text-sm text-content-secondary">{label(vehicle.kind)} · {label(vehicle.ownership)}{vehicle.mileage !== null ? ` · ${vehicle.mileage.toLocaleString()} mi` : ''}</p></div><button className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" aria-label={`Delete ${vehicle.make} ${vehicle.model}`} onClick={() => remove.mutate(vehicle.id)}><Trash2 size={16} /></button></div><p className="mt-3 text-sm text-content-secondary">{vehicle.ownership === 'LEASED' ? `${money(vehicle.leasePayment) ?? 'No'} monthly lease payment${vehicle.leaseEndDate ? ` · ends ${new Date(vehicle.leaseEndDate).toLocaleDateString()}` : ''}` : `${money(vehicle.estimatedValue) ?? 'No'} estimated value${vehicle.loanBalance ? ` · ${money(vehicle.loanBalance)} loan balance` : ''}${netValue !== null && vehicle.estimatedValue ? ` · ${money(String(netValue))} net vehicle value` : ''}`}</p>
+        {vehicle.estimatedValue && <p className="mt-1 text-xs text-content-tertiary">{vehicle.valuationSource ?? 'Manual'} estimate{vehicle.valuedAt ? ` as of ${new Date(vehicle.valuedAt).toLocaleDateString()}` : ''}</p>}
+        <div className="mt-4 border-t border-edge pt-3"><p className="card-title flex items-center gap-2"><Wrench size={15} /> Maintenance</p>{vehicle.maintenance.filter((item) => !item.completedAt).map((item) => <p key={item.id} className="mt-2 text-sm text-content-secondary">{item.name}{item.dueDate ? ` · due ${new Date(item.dueDate).toLocaleDateString()}` : ''}{item.dueMileage ? ` · ${item.dueMileage.toLocaleString()} mi` : ''}</p>)}<form className="mt-3 grid gap-2 sm:grid-cols-4" onSubmit={(event) => { event.preventDefault(); addMaintenance.mutate({ vehicleId: vehicle.id, body: { name: task.name, dueDate: task.dueDate || null, dueMileage: task.dueMileage ? Number(task.dueMileage) : null, estimatedCost: task.estimatedCost || null } }); setMaintenance({ ...maintenance, [vehicle.id]: { name: '', dueDate: '', dueMileage: '', estimatedCost: '' } }); }}><input className="input" required placeholder="Maintenance item" value={task.name} onChange={(event) => setMaintenance({ ...maintenance, [vehicle.id]: { ...task, name: event.target.value } })} /><input className="input" type="date" value={task.dueDate} onChange={(event) => setMaintenance({ ...maintenance, [vehicle.id]: { ...task, dueDate: event.target.value } })} /><input className="input" inputMode="numeric" placeholder="Due mileage" value={task.dueMileage} onChange={(event) => setMaintenance({ ...maintenance, [vehicle.id]: { ...task, dueMileage: event.target.value } })} /><button className="btn-secondary" disabled={addMaintenance.isPending}>Add reminder</button></form></div>
+      </div></div></li>;
+    })}</ul>}
+  </div>;
+}

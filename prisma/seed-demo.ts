@@ -88,6 +88,8 @@ async function main() {
     await prisma.householdObligation.deleteMany({ where: { userId: existing.id } });
     await prisma.plannedExpense.deleteMany({ where: { userId: existing.id } });
     await prisma.financialGoal.deleteMany({ where: { userId: existing.id } });
+    await prisma.vehicleMaintenance.deleteMany({ where: { vehicle: { userId: existing.id } } });
+    await prisma.vehicle.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -356,6 +358,41 @@ async function main() {
       savedAmount: '1200.00',
       targetDate: vacationGoalDate,
       notes: 'Demo: household-entered progress for an upcoming family trip.',
+    },
+  });
+  const oilChangeDue = new Date();
+  oilChangeDue.setDate(oilChangeDue.getDate() + 14);
+  const motorcycleServiceDue = new Date();
+  motorcycleServiceDue.setMonth(motorcycleServiceDue.getMonth() + 2);
+  await prisma.vehicle.create({
+    data: {
+      userId: user.id,
+      kind: 'AUTOMOBILE',
+      ownership: 'FINANCED',
+      make: 'Honda',
+      model: 'CR-V',
+      year: 2022,
+      mileage: 31800,
+      estimatedValue: '26500.00',
+      valuationSource: 'Manual demo estimate',
+      valuedAt: new Date(),
+      loanBalance: '11800.00',
+      maintenance: { create: { name: 'Oil change', dueDate: oilChangeDue, dueMileage: 32500, estimatedCost: '85.00' } },
+    },
+  });
+  await prisma.vehicle.create({
+    data: {
+      userId: user.id,
+      kind: 'MOTORCYCLE',
+      ownership: 'OWNED',
+      make: 'Yamaha',
+      model: 'MT-07',
+      year: 2021,
+      mileage: 6200,
+      estimatedValue: '6900.00',
+      valuationSource: 'Manual demo estimate',
+      valuedAt: new Date(),
+      maintenance: { create: { name: 'Annual service', dueDate: motorcycleServiceDue, estimatedCost: '250.00' } },
     },
   });
   console.log('  ✓ Created dependent, external-commitment, and planned-expense demo records');
