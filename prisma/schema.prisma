@@ -41,6 +41,7 @@ model User {
   dependents            Dependent[]
   householdObligations  HouseholdObligation[]
   plannedExpenses       PlannedExpense[]
+  financialGoals        FinancialGoal[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
 }
@@ -348,6 +349,26 @@ model PlannedExpense {
 
   @@index([userId, isActive])
   @@index([userId, dueDate])
+}
+
+/// A household-entered financial goal. Progress is recorded by the household;
+/// Wardkeep does not infer it from account balances or transactions.
+model FinancialGoal {
+  id            String   @id @default(uuid())
+  userId        String
+  name          String   @db.VarChar(100)
+  targetAmount  Decimal? @db.Decimal(19, 4)
+  savedAmount   Decimal  @default(0) @db.Decimal(19, 4)
+  targetDate    DateTime? @db.Date
+  isActive      Boolean  @default(true)
+  notes         String?  @db.VarChar(1000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, targetDate])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────
