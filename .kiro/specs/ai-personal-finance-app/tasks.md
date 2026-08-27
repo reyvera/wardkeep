@@ -247,13 +247,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [ ] Add durable causal explanations for score changes, not only changed factors.
   - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
-- [~] 19.5 Write property tests for Readiness Engine
-  - **Property 34: Pillar score is deterministic given same signals**
-  - **Property 35: Overall readiness is weighted average of pillar scores**
-  - **Property 36: Peace score derives from minimum pillar and volatility**
-  - **Property 37: No signals is never treated as perfect readiness; the API/UI must mark it not evaluated**
-  - **Property 38: Signal magnitude bounded to [-10, +10] clamps correctly**
-  - Generate random signal sets; verify deterministic, bounded, explainable output
+- [x] 19.5 Write property tests for Readiness Engine
+  - [x] **Property 34:** Pillar score is deterministic given same signals
+  - [x] **Property 35:** Overall readiness is weighted average of pillar scores
+  - [x] **Property 36:** Peace score derives from minimum pillar and volatility
+  - [x] **Property 37:** No signals is never treated as perfect readiness; the API/UI must mark it not evaluated
+  - [x] **Property 38:** Signal magnitude bounded to [-10, +10] clamps correctly
+  - [x] Generate random signal sets; verify deterministic, bounded, explainable output
 
 ### 20. Finance Capability Signals [PARTIAL]
 
@@ -394,7 +394,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [ ] 25.2 Verify Morning Brief renders with real finance data
 - [ ] 25.3 Verify Timeline shows upcoming bills, paydays, and milestones
 - [ ] 25.4 Verify Advisor can explain readiness changes
-- [ ] 25.5 All property tests pass (Properties 34–38+)
+- [x] 25.5 All property tests pass (Properties 34–38+)
 - [ ] 25.6 Docker Compose stack works with new features
 - [~] 25.7 Demo instance updated with readiness, Timeline, and Advisor data
 

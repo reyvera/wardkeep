@@ -26,28 +26,70 @@ describe('Readiness Engine scoring', () => {
   });
 
   it('computes the weighted average of pillar scores', () => {
-    expect(
-      computeOverallReadiness(
-        { protection: 80, provision: 60, preparation: 100, prosperity: 80 },
-        {
-          protection: 1,
-          provision: 2,
-          preparation: 1,
-          prosperity: 0,
+    const scoreArbitrary = fc.integer({ min: 0, max: 100 });
+    const weightsArbitrary = fc.record({
+      protection: fc.double({ min: 0.01, max: 5, noNaN: true }),
+      provision: fc.double({ min: 0.01, max: 5, noNaN: true }),
+      preparation: fc.double({ min: 0.01, max: 5, noNaN: true }),
+      prosperity: fc.double({ min: 0.01, max: 5, noNaN: true }),
+    });
+
+    fc.assert(
+      fc.property(
+        fc.record({
+          protection: scoreArbitrary,
+          provision: scoreArbitrary,
+          preparation: scoreArbitrary,
+          prosperity: scoreArbitrary,
+        }),
+        weightsArbitrary,
+        (scores, weights) => {
+          const totalWeight = Object.values(weights).reduce((total, weight) => total + weight, 0);
+          const expected = Math.round(
+            (scores.protection * weights.protection +
+              scores.provision * weights.provision +
+              scores.preparation * weights.preparation +
+              scores.prosperity * weights.prosperity) /
+              totalWeight,
+          );
+
+          expect(computeOverallReadiness(scores, weights)).toBe(expected);
         },
       ),
-    ).toBe(75);
+    );
   });
 
   it('derives peace from the least-ready pillar and penalizes volatility', () => {
-    const pillars = { protection: 90, provision: 80, preparation: 95, prosperity: 85 };
-    expect(computePeace(pillars)).toBe(80);
-    expect(
-      computePeace(pillars, [
-        { overall: 80, pillars: { ...pillars, peace: 80 }, recordedAt: new Date('2026-01-01') },
-        { overall: 60, pillars: { ...pillars, peace: 80 }, recordedAt: new Date('2026-01-02') },
-      ]),
-    ).toBe(60);
+    const scoreArbitrary = fc.integer({ min: 0, max: 100 });
+    fc.assert(
+      fc.property(
+        fc.record({
+          protection: scoreArbitrary,
+          provision: scoreArbitrary,
+          preparation: scoreArbitrary,
+          prosperity: scoreArbitrary,
+        }),
+        fc.array(scoreArbitrary, { minLength: 2, maxLength: 7 }),
+        (pillars, overallHistory) => {
+          const lowestPillar = Math.min(...Object.values(pillars));
+          const recentHistory = overallHistory.slice(-7);
+          const totalChange = recentHistory.slice(1).reduce(
+            (total, score, index) => total + Math.abs(score - recentHistory[index]!),
+            0,
+          );
+          const expected = Math.round(
+            Math.max(0, Math.min(100, lowestPillar - Math.min(20, totalChange / (recentHistory.length - 1)))),
+          );
+          const history = recentHistory.map((overall, index) => ({
+            overall,
+            pillars: { ...pillars, peace: lowestPillar },
+            recordedAt: new Date(2026, 0, index + 1),
+          }));
+
+          expect(computePeace(pillars, history)).toBe(expected);
+        },
+      ),
+    );
   });
 
   it('derives peace from observed pillars without treating an omitted pillar as zero', () => {
