@@ -33,6 +33,8 @@ const maintenanceSchema = z.object({
   completedAt: optionalDate,
   completedMileage: optionalInteger,
   estimatedCost: optionalAmount,
+  actualCost: optionalAmount,
+  paidAt: optionalDate,
   notes: z.string().trim().max(1000).nullable().optional(),
 });
 

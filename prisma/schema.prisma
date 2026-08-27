@@ -431,6 +431,8 @@ model VehicleMaintenance {
   completedAt DateTime? @db.Date
   completedMileage Int?
   estimatedCost Decimal? @db.Decimal(19, 4)
+  actualCost   Decimal? @db.Decimal(19, 4)
+  paidAt       DateTime? @db.Date
   notes       String?   @db.VarChar(1000)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

@@ -30,6 +30,8 @@ type MaintenanceInput = {
   completedAt?: string | null;
   completedMileage?: number | null;
   estimatedCost?: string | null;
+  actualCost?: string | null;
+  paidAt?: string | null;
   notes?: string | null;
 };
 
@@ -114,6 +116,8 @@ export class VehiclesService {
         completedAt: date(input.completedAt),
         completedMileage: input.completedMileage ?? null,
         estimatedCost: input.estimatedCost ? new Decimal(input.estimatedCost) : null,
+        actualCost: input.actualCost ? new Decimal(input.actualCost) : null,
+        paidAt: date(input.paidAt),
         notes: input.notes ?? null,
       },
     });
@@ -134,6 +138,10 @@ export class VehiclesService {
         ...(input.estimatedCost !== undefined
           ? { estimatedCost: input.estimatedCost ? new Decimal(input.estimatedCost) : null }
           : {}),
+        ...(input.actualCost !== undefined
+          ? { actualCost: input.actualCost ? new Decimal(input.actualCost) : null }
+          : {}),
+        ...(input.paidAt !== undefined ? { paidAt: date(input.paidAt) } : {}),
         ...(input.notes !== undefined ? { notes: input.notes } : {}),
       },
     });
