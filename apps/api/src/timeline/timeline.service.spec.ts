@@ -68,6 +68,11 @@ describe('TimelineService', () => {
           },
         ]),
       },
+      budget: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 'budget', month: new Date('2026-08-01T00:00:00.000Z') },
+        ]),
+      },
     };
     const service = new TimelineService(prisma as never);
 
@@ -78,6 +83,7 @@ describe('TimelineService', () => {
       'INCOME',
       'RECURRING_BILL',
       'PLANNED_EXPENSE',
+      'BUDGET_PERIOD',
       'DEBT_PAYOFF',
     ]);
     expect(events[3]).toMatchObject({ detail: '$400.00 planned · $275.00 not marked set aside' });
@@ -88,6 +94,10 @@ describe('TimelineService', () => {
     expect(events.find((event) => event.kind === 'DEBT_PAYOFF')).toMatchObject({
       title: 'Debt freedom projected payoff',
       href: '/debt',
+    });
+    expect(events.find((event) => event.id === 'budget-end-budget')).toMatchObject({
+      title: 'August budget ends',
+      href: '/budget',
     });
     expect(prisma.recurringTransaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

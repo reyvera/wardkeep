@@ -7,7 +7,8 @@ export type TimelineEventKind =
   | 'POLICY_RENEWAL'
   | 'INCOME'
   | 'PLANNED_EXPENSE'
-  | 'DEBT_PAYOFF';
+  | 'DEBT_PAYOFF'
+  | 'BUDGET_PERIOD';
 
 export interface TimelineEvent {
   id: string;
@@ -37,7 +38,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    const [recurring, policies, income, plannedExpenses, payoffPlans] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -60,6 +61,10 @@ export class TimelineService {
         orderBy: { dueDate: 'asc' },
       }),
       this.prisma.savedPayoffPlan.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.budget.findMany({
+        where: { userId, month: { gte: new Date(start.getFullYear(), start.getMonth(), 1), lte: end } },
+        orderBy: { month: 'asc' },
+      }),
     ]);
 
     return [
@@ -124,6 +129,36 @@ export class TimelineService {
           href: '/debt',
           actionRequired: false,
         })),
+      ...budgets.flatMap((budget) => {
+        const year = budget.month.getUTCFullYear();
+        const month = budget.month.getUTCMonth();
+        const periodStart = new Date(Date.UTC(year, month, 1));
+        const periodEnd = new Date(Date.UTC(year, month + 1, 0));
+        const monthName = periodStart.toLocaleDateString('en-US', {
+          month: 'long',
+          timeZone: 'UTC',
+        });
+        return [
+          {
+            id: `budget-start-${budget.id}`,
+            kind: 'BUDGET_PERIOD' as const,
+            date: periodStart,
+            title: `${monthName} budget begins`,
+            detail: 'Recorded monthly budget period; review allocations as needed.',
+            href: '/budget',
+            actionRequired: false,
+          },
+          {
+            id: `budget-end-${budget.id}`,
+            kind: 'BUDGET_PERIOD' as const,
+            date: periodEnd,
+            title: `${monthName} budget ends`,
+            detail: 'Recorded monthly budget period; this does not confirm a budget review occurred.',
+            href: '/budget',
+            actionRequired: false,
+          },
+        ].filter((event) => event.date >= start && event.date <= end);
+      }),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 

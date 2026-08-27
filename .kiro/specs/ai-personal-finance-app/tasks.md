@@ -345,7 +345,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 23.2 Wire finance events into Timeline
   - [x] Confirmed recurring bills, recorded policy renewals, expected income dates, and planned expenses → upcoming events
   - [ ] Goal milestones → past/upcoming events
-  - Budget period start/end → recurring events
+  - [x] Recorded budget period start/end → upcoming events
   - [x] Recorded debt payoff-plan projections → upcoming events
 
 - [~] 23.3 Implement Timeline UI
