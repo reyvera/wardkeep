@@ -327,14 +327,17 @@ export class AccountsService {
    * @returns Object with assets, liabilities, and netWorth as formatted decimal strings
    */
   async getNetWorth(userId: string) {
-    const accounts = await this.prisma.account.findMany({
+    const [accounts, vehicles] = await Promise.all([this.prisma.account.findMany({
       where: { userId, isArchived: false },
       include: {
         transactions: true,
         linkedBankAccounts: { select: { id: true } },
         debtProfile: { select: { assetValue: true } },
       },
-    });
+    }), this.prisma.vehicle.findMany({
+      where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } },
+      select: { estimatedValue: true, loanBalance: true },
+    })]);
 
     let assets = new Decimal(0);
     let liabilities = new Decimal(0);
@@ -369,6 +372,11 @@ export class AccountsService {
       } else {
         assets = assets.plus(balance);
       }
+    }
+
+    for (const vehicle of vehicles) {
+      assets = assets.plus(new Decimal(vehicle.estimatedValue!.toString()));
+      if (vehicle.loanBalance) liabilities = liabilities.plus(new Decimal(vehicle.loanBalance.toString()));
     }
 
     const netWorth = assets.minus(liabilities);

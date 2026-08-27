@@ -66,14 +66,14 @@ async function generateNetWorthTrendSignals(
 ): Promise<Signal[]> {
   const signals: Signal[] = [];
 
-  const accounts = await prisma.account.findMany({
+  const [accounts, vehicles] = await Promise.all([prisma.account.findMany({
     where: { userId, isArchived: false },
     include: {
       transactions: true,
       linkedBankAccounts: { select: { id: true } },
       debtProfile: { select: { assetValue: true } },
     },
-  });
+  }), prisma.vehicle.findMany({ where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } }, select: { estimatedValue: true, loanBalance: true } })]);
 
   let assets = new Decimal(0);
   let liabilities = new Decimal(0);
@@ -91,6 +91,13 @@ async function generateNetWorthTrendSignals(
     } else {
       assets = assets.add(balance);
     }
+  }
+
+  // Leased vehicles are not household assets. For recorded owned/financed values,
+  // include the estimate and its separately recorded loan balance transparently.
+  for (const vehicle of vehicles) {
+    assets = assets.add(new Decimal(vehicle.estimatedValue!.toString()));
+    if (vehicle.loanBalance) liabilities = liabilities.add(new Decimal(vehicle.loanBalance.toString()));
   }
 
   const currentNetWorth = assets.sub(liabilities);
