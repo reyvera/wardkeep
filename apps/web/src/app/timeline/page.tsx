@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   TrendingDown,
   WalletCards,
+  Target,
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
@@ -21,7 +22,8 @@ type TimelineEventKind =
   | 'INCOME'
   | 'PLANNED_EXPENSE'
   | 'DEBT_PAYOFF'
-  | 'BUDGET_PERIOD';
+  | 'BUDGET_PERIOD'
+  | 'FINANCIAL_GOAL';
 type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 interface TimelineEvent {
@@ -43,6 +45,7 @@ const eventIcons = {
   PLANNED_EXPENSE: CalendarClock,
   DEBT_PAYOFF: TrendingDown,
   BUDGET_PERIOD: WalletCards,
+  FINANCIAL_GOAL: Target,
 };
 
 const eventLabels: Record<TimelineEventKind, string> = {
@@ -52,6 +55,7 @@ const eventLabels: Record<TimelineEventKind, string> = {
   PLANNED_EXPENSE: 'Planned expense',
   DEBT_PAYOFF: 'Debt payoff projection',
   BUDGET_PERIOD: 'Budget period',
+  FINANCIAL_GOAL: 'Goal target',
 };
 
 const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = {
@@ -61,6 +65,7 @@ const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = 
   PLANNED_EXPENSE: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
   DEBT_PAYOFF: { icon: 'text-accent-purple', badge: 'bg-accent-purple/10 text-accent-purple' },
   BUDGET_PERIOD: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
+  FINANCIAL_GOAL: { icon: 'text-accent-purple', badge: 'bg-accent-purple/10 text-accent-purple' },
 };
 
 function dayKey(date: string) {
