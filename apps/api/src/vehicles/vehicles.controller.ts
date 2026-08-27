@@ -9,11 +9,21 @@ const optionalDate = z.string().date().nullable().optional();
 const optionalAmount = z.string().regex(/^\d+(\.\d+)?$/).nullable().optional();
 const optionalInteger = z.number().int().nonnegative().nullable().optional();
 const vehicleSchema = z.object({
+  kind: z.enum(['AUTOMOBILE', 'MOTORCYCLE', 'RV', 'BOAT', 'TRAILER', 'ATV', 'OTHER']).optional(),
+  ownership: z.enum(['OWNED', 'FINANCED', 'LEASED', 'OTHER']).optional(),
   nickname: z.string().trim().min(1).max(100).nullable().optional(),
   make: z.string().trim().min(1).max(80),
   model: z.string().trim().min(1).max(80),
   year: z.number().int().min(1886).max(9999).nullable().optional(),
+  vin: z.string().trim().toUpperCase().regex(/^[A-HJ-NPR-Z0-9]{17}$/).nullable().optional(),
   mileage: optionalInteger,
+  loanBalance: optionalAmount,
+  leasePayment: optionalAmount,
+  leaseEndDate: optionalDate,
+  leaseMileageAllowance: optionalInteger,
+  estimatedValue: optionalAmount,
+  valuationSource: z.string().trim().min(1).max(80).nullable().optional(),
+  valuedAt: optionalDate,
   notes: z.string().trim().max(1000).nullable().optional(),
 });
 const maintenanceSchema = z.object({

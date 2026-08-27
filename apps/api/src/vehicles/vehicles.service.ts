@@ -4,11 +4,21 @@ import { Decimal } from 'decimal.js';
 import { PrismaService } from '../prisma/prisma.service';
 
 type VehicleInput = {
+  kind?: 'AUTOMOBILE' | 'MOTORCYCLE' | 'RV' | 'BOAT' | 'TRAILER' | 'ATV' | 'OTHER';
+  ownership?: 'OWNED' | 'FINANCED' | 'LEASED' | 'OTHER';
   nickname?: string | null;
   make?: string;
   model?: string;
   year?: number | null;
+  vin?: string | null;
   mileage?: number | null;
+  loanBalance?: string | null;
+  leasePayment?: string | null;
+  leaseEndDate?: string | null;
+  leaseMileageAllowance?: number | null;
+  estimatedValue?: string | null;
+  valuationSource?: string | null;
+  valuedAt?: string | null;
   isActive?: boolean;
   notes?: string | null;
 };
@@ -42,11 +52,21 @@ export class VehiclesService {
     return this.prisma.vehicle.create({
       data: {
         userId,
+        kind: input.kind ?? 'AUTOMOBILE',
+        ownership: input.ownership ?? 'OWNED',
         make: input.make,
         model: input.model,
         nickname: input.nickname ?? null,
         year: input.year ?? null,
+        vin: input.vin ?? null,
         mileage: input.mileage ?? null,
+        loanBalance: input.loanBalance ? new Decimal(input.loanBalance) : null,
+        leasePayment: input.leasePayment ? new Decimal(input.leasePayment) : null,
+        leaseEndDate: date(input.leaseEndDate),
+        leaseMileageAllowance: input.leaseMileageAllowance ?? null,
+        estimatedValue: input.estimatedValue ? new Decimal(input.estimatedValue) : null,
+        valuationSource: input.valuationSource ?? null,
+        valuedAt: date(input.valuedAt),
         notes: input.notes ?? null,
       },
     });
@@ -58,10 +78,20 @@ export class VehiclesService {
       where: { id },
       data: {
         ...(input.nickname !== undefined ? { nickname: input.nickname } : {}),
+        ...(input.kind !== undefined ? { kind: input.kind } : {}),
+        ...(input.ownership !== undefined ? { ownership: input.ownership } : {}),
         ...(input.make !== undefined ? { make: input.make } : {}),
         ...(input.model !== undefined ? { model: input.model } : {}),
         ...(input.year !== undefined ? { year: input.year } : {}),
+        ...(input.vin !== undefined ? { vin: input.vin } : {}),
         ...(input.mileage !== undefined ? { mileage: input.mileage } : {}),
+        ...(input.loanBalance !== undefined ? { loanBalance: input.loanBalance ? new Decimal(input.loanBalance) : null } : {}),
+        ...(input.leasePayment !== undefined ? { leasePayment: input.leasePayment ? new Decimal(input.leasePayment) : null } : {}),
+        ...(input.leaseEndDate !== undefined ? { leaseEndDate: date(input.leaseEndDate) } : {}),
+        ...(input.leaseMileageAllowance !== undefined ? { leaseMileageAllowance: input.leaseMileageAllowance } : {}),
+        ...(input.estimatedValue !== undefined ? { estimatedValue: input.estimatedValue ? new Decimal(input.estimatedValue) : null } : {}),
+        ...(input.valuationSource !== undefined ? { valuationSource: input.valuationSource } : {}),
+        ...(input.valuedAt !== undefined ? { valuedAt: date(input.valuedAt) } : {}),
         ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
         ...(input.notes !== undefined ? { notes: input.notes } : {}),
       },

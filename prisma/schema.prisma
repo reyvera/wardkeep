@@ -377,11 +377,21 @@ model FinancialGoal {
 model Vehicle {
   id           String    @id @default(uuid())
   userId       String
+  kind         VehicleKind @default(AUTOMOBILE)
+  ownership    VehicleOwnership @default(OWNED)
   nickname     String?   @db.VarChar(100)
   make         String    @db.VarChar(80)
   model        String    @db.VarChar(80)
   year         Int?
+  vin          String?   @db.VarChar(17)
   mileage      Int?
+  loanBalance  Decimal?  @db.Decimal(19, 4)
+  leasePayment Decimal?  @db.Decimal(19, 4)
+  leaseEndDate DateTime? @db.Date
+  leaseMileageAllowance Int?
+  estimatedValue Decimal? @db.Decimal(19, 4)
+  valuationSource String? @db.VarChar(80)
+  valuedAt     DateTime? @db.Date
   isActive     Boolean   @default(true)
   notes        String?   @db.VarChar(1000)
   createdAt    DateTime  @default(now())
@@ -391,6 +401,23 @@ model Vehicle {
   maintenance VehicleMaintenance[]
 
   @@index([userId, isActive])
+}
+
+enum VehicleKind {
+  AUTOMOBILE
+  MOTORCYCLE
+  RV
+  BOAT
+  TRAILER
+  ATV
+  OTHER
+}
+
+enum VehicleOwnership {
+  OWNED
+  FINANCED
+  LEASED
+  OTHER
 }
 
 /// A recorded or planned maintenance item for a household vehicle. A due date
