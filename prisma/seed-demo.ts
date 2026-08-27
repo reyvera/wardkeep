@@ -87,6 +87,7 @@ async function main() {
     await prisma.dependent.deleteMany({ where: { userId: existing.id } });
     await prisma.householdObligation.deleteMany({ where: { userId: existing.id } });
     await prisma.plannedExpense.deleteMany({ where: { userId: existing.id } });
+    await prisma.financialGoal.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -343,6 +344,19 @@ async function main() {
         dueDate: vehicleRegistrationDue,
       },
     ],
+  });
+
+  const vacationGoalDate = new Date();
+  vacationGoalDate.setDate(vacationGoalDate.getDate() + 45);
+  await prisma.financialGoal.create({
+    data: {
+      userId: user.id,
+      name: 'Family vacation',
+      targetAmount: '3000.00',
+      savedAmount: '1200.00',
+      targetDate: vacationGoalDate,
+      notes: 'Demo: household-entered progress for an upcoming family trip.',
+    },
   });
   console.log('  ✓ Created dependent, external-commitment, and planned-expense demo records');
 
