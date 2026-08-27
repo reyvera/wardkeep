@@ -57,6 +57,17 @@ describe('TimelineService', () => {
             },
           ]),
       },
+      savedPayoffPlan: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'plan',
+            name: 'Debt freedom',
+            strategy: 'avalanche',
+            totalMonths: 1,
+            createdAt: new Date('2026-08-01T00:00:00.000Z'),
+          },
+        ]),
+      },
     };
     const service = new TimelineService(prisma as never);
 
@@ -67,12 +78,17 @@ describe('TimelineService', () => {
       'INCOME',
       'RECURRING_BILL',
       'PLANNED_EXPENSE',
+      'DEBT_PAYOFF',
     ]);
     expect(events[3]).toMatchObject({ detail: '$400.00 planned · $275.00 not marked set aside' });
     expect(events.filter((event) => event.actionRequired).map((event) => event.kind)).toEqual([
       'POLICY_RENEWAL',
       'PLANNED_EXPENSE',
     ]);
+    expect(events.find((event) => event.kind === 'DEBT_PAYOFF')).toMatchObject({
+      title: 'Debt freedom projected payoff',
+      href: '/debt',
+    });
     expect(prisma.recurringTransaction.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ userId: 'user-1', isConfirmed: true, isActive: true }),

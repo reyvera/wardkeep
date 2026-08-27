@@ -346,7 +346,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Confirmed recurring bills, recorded policy renewals, expected income dates, and planned expenses → upcoming events
   - [ ] Goal milestones → past/upcoming events
   - Budget period start/end → recurring events
-  - Debt payoff milestones → upcoming events
+  - [x] Recorded debt payoff-plan projections → upcoming events
 
 - [~] 23.3 Implement Timeline UI
   - [x] Scrollable, grouped upcoming timeline with 30/90/365-day views and direct source links

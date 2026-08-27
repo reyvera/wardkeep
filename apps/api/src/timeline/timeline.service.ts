@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
-export type TimelineEventKind = 'RECURRING_BILL' | 'POLICY_RENEWAL' | 'INCOME' | 'PLANNED_EXPENSE';
+export type TimelineEventKind =
+  | 'RECURRING_BILL'
+  | 'POLICY_RENEWAL'
+  | 'INCOME'
+  | 'PLANNED_EXPENSE'
+  | 'DEBT_PAYOFF';
 
 export interface TimelineEvent {
   id: string;
@@ -32,7 +37,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    const [recurring, policies, income, plannedExpenses] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -54,6 +59,7 @@ export class TimelineService {
         where: { userId, isActive: true, dueDate: { gte: start, lte: end } },
         orderBy: { dueDate: 'asc' },
       }),
+      this.prisma.savedPayoffPlan.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
     ]);
 
     return [
@@ -102,6 +108,22 @@ export class TimelineService {
           actionRequired: shortfall !== null && shortfall > 0,
         };
       }),
+      ...payoffPlans
+        .map((plan) => {
+          const date = new Date(plan.createdAt);
+          date.setMonth(date.getMonth() + plan.totalMonths);
+          return { plan, date };
+        })
+        .filter(({ date }) => date >= start && date <= end)
+        .map(({ plan, date }) => ({
+          id: `debt-payoff-${plan.id}`,
+          kind: 'DEBT_PAYOFF' as const,
+          date,
+          title: `${plan.name} projected payoff`,
+          detail: `Recorded ${plan.strategy} payoff plan projects debt freedom in ${plan.totalMonths} months; actual payoff depends on balances and payments.`,
+          href: '/debt',
+          actionRequired: false,
+        })),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 

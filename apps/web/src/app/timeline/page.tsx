@@ -9,11 +9,17 @@ import {
   CircleDollarSign,
   ReceiptText,
   ShieldCheck,
+  TrendingDown,
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
 
-type TimelineEventKind = 'RECURRING_BILL' | 'POLICY_RENEWAL' | 'INCOME' | 'PLANNED_EXPENSE';
+type TimelineEventKind =
+  | 'RECURRING_BILL'
+  | 'POLICY_RENEWAL'
+  | 'INCOME'
+  | 'PLANNED_EXPENSE'
+  | 'DEBT_PAYOFF';
 
 interface TimelineEvent {
   id: string;
@@ -31,6 +37,7 @@ const eventIcons = {
   POLICY_RENEWAL: ShieldCheck,
   INCOME: CircleDollarSign,
   PLANNED_EXPENSE: CalendarClock,
+  DEBT_PAYOFF: TrendingDown,
 };
 
 const eventLabels: Record<TimelineEventKind, string> = {
@@ -38,6 +45,7 @@ const eventLabels: Record<TimelineEventKind, string> = {
   POLICY_RENEWAL: 'Policy renewal',
   INCOME: 'Expected income',
   PLANNED_EXPENSE: 'Planned expense',
+  DEBT_PAYOFF: 'Debt payoff projection',
 };
 
 const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = {
@@ -45,6 +53,7 @@ const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = 
   POLICY_RENEWAL: { icon: 'text-accent-yellow', badge: 'bg-accent-yellow/10 text-accent-yellow' },
   INCOME: { icon: 'text-accent-green', badge: 'bg-accent-green/10 text-accent-green' },
   PLANNED_EXPENSE: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
+  DEBT_PAYOFF: { icon: 'text-accent-purple', badge: 'bg-accent-purple/10 text-accent-purple' },
 };
 
 function dayKey(date: string) {
