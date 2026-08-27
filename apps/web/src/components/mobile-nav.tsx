@@ -75,13 +75,13 @@ export function MobileNav() {
               <Link
                 href={item.href}
                 className={`
-                  flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5
-                  text-[10px] font-medium transition-colors duration-150
+                  flex flex-col items-center gap-0.5 rounded-lg px-3 py-2
+                  text-xs font-medium transition-colors duration-150
                   ${isActive ? 'text-accent-blue' : 'text-content-tertiary'}
                 `}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
+                <Icon size={21} strokeWidth={isActive ? 2 : 1.5} />
                 <span>{item.label}</span>
               </Link>
             </li>
@@ -90,14 +90,14 @@ export function MobileNav() {
         <li>
           <button
             type="button"
-            className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-medium transition-colors duration-150 ${
+            className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors duration-150 ${
               isMoreOpen ? 'text-accent-blue' : 'text-content-tertiary'
             }`}
             onClick={() => setIsMoreOpen(true)}
             aria-expanded={isMoreOpen}
             aria-controls="mobile-more-menu"
           >
-            <Menu size={20} strokeWidth={isMoreOpen ? 2 : 1.5} />
+            <Menu size={21} strokeWidth={isMoreOpen ? 2 : 1.5} />
             <span>More</span>
           </button>
         </li>

@@ -87,6 +87,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Small screens need a more comfortable reading scale for dense household data. */
+  @media (max-width: 767px) {
+    html {
+      font-size: 18px;
+    }
+  }
+
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
