@@ -25,6 +25,7 @@ import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { HomeMaintenanceModule } from './home-maintenance/home-maintenance.module';
 import { ReadinessModule } from './readiness/readiness.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { RecurringModule } from './recurring/recurring.module';
@@ -47,6 +48,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     CommonModule,
     NotificationsModule,
     HealthModule,
+    HomeMaintenanceModule,
     AuthModule,
     AccountsModule,
     AiChatModule,

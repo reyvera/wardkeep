@@ -43,6 +43,8 @@ model User {
   plannedExpenses       PlannedExpense[]
   financialGoals        FinancialGoal[]
   vehicles              Vehicle[]
+  homeAssets            HomeAsset[]
+  homeMaintenanceTasks  HomeMaintenanceTask[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
 }
@@ -441,6 +443,49 @@ model VehicleMaintenance {
 
   @@index([vehicleId, dueDate])
   @@index([vehicleId, completedAt])
+}
+
+/// A household appliance or maintained home component. Expected lifespan and
+/// replacement cost are household-entered planning values, not predictions.
+model HomeAsset {
+  id                   String    @id @default(uuid())
+  userId               String
+  name                 String    @db.VarChar(120)
+  type                 String    @db.VarChar(80)
+  installedAt          DateTime? @db.Date
+  expectedLifespanYears Int?
+  replacementCost      Decimal?  @db.Decimal(19, 4)
+  isActive             Boolean   @default(true)
+  notes                String?   @db.VarChar(1000)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks HomeMaintenanceTask[]
+
+  @@index([userId, isActive])
+}
+
+/// A recorded home-maintenance reminder. A due date does not confirm that the
+/// service happened; completion is recorded separately by the household.
+model HomeMaintenanceTask {
+  id          String    @id @default(uuid())
+  homeAssetId String?
+  userId      String
+  name        String    @db.VarChar(120)
+  dueDate     DateTime? @db.Date
+  completedAt DateTime? @db.Date
+  estimatedCost Decimal? @db.Decimal(19, 4)
+  actualCost  Decimal? @db.Decimal(19, 4)
+  notes       String? @db.VarChar(1000)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeAsset HomeAsset? @relation(fields: [homeAssetId], references: [id], onDelete: SetNull)
+
+  @@index([userId, dueDate])
+  @@index([homeAssetId])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────
