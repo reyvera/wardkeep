@@ -25,6 +25,7 @@ import {
   Sun,
   Target,
   Car,
+  House,
 } from 'lucide-react';
 
 const mobileNavItems = [
@@ -44,6 +45,7 @@ const moreNavItems = [
   { href: '/planned-expenses', label: 'Planned expenses', icon: Wallet },
   { href: '/financial-goals', label: 'Financial goals', icon: Target },
   { href: '/vehicles', label: 'Vehicles', icon: Car },
+  { href: '/home-maintenance', label: 'Home maintenance', icon: House },
   { href: '/rules', label: 'Rules', icon: Sparkles },
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },

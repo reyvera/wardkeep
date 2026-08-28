@@ -90,6 +90,8 @@ async function main() {
     await prisma.financialGoal.deleteMany({ where: { userId: existing.id } });
     await prisma.vehicleMaintenance.deleteMany({ where: { vehicle: { userId: existing.id } } });
     await prisma.vehicle.deleteMany({ where: { userId: existing.id } });
+    await prisma.homeMaintenanceTask.deleteMany({ where: { userId: existing.id } });
+    await prisma.homeAsset.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -380,6 +382,14 @@ async function main() {
       maintenance: { create: { name: 'Oil change', dueDate: oilChangeDue, dueMileage: 32500, estimatedCost: '85.00' } },
     },
   });
+  const hvacFilterDue = new Date();
+  hvacFilterDue.setDate(hvacFilterDue.getDate() + 10);
+  await prisma.homeAsset.create({
+    data: { userId: user.id, name: 'Main HVAC', type: 'Heating and cooling', installedAt: new Date('2016-06-01'), expectedLifespanYears: 15, replacementCost: '8500.00', tasks: { create: { userId: user.id, name: 'Replace HVAC filter', dueDate: hvacFilterDue, estimatedCost: '35.00' } } },
+  });
+  const gutterDue = new Date();
+  gutterDue.setDate(gutterDue.getDate() + 25);
+  await prisma.homeMaintenanceTask.create({ data: { userId: user.id, name: 'Clean gutters', dueDate: gutterDue, estimatedCost: '180.00' } });
   await prisma.vehicle.create({
     data: {
       userId: user.id,
