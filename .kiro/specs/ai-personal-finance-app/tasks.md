@@ -305,11 +305,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 22. Advisor & Morning Brief
 
-- [ ] 22.1 Evolve AI Engine into Advisor
-  - Rename/refactor ai-chat to Advisor service
-  - Advisor receives: readiness scores, signals from all Capabilities, household context
-  - Advisor produces: natural-language explanations, prioritized recommendations, briefs
-  - Advisor never modifies scores — only interprets and explains them
+- [x] 22.1 Evolve AI Engine into Advisor
+  - [x] Rename/refactor ai-chat to Advisor service
+  - [x] Advisor receives: readiness scores, signals from all Capabilities, household context
+  - [x] Advisor produces: natural-language explanations, prioritized recommendations, briefs
+  - [x] Advisor never modifies scores — only interprets and explains them
 
 - [~] 22.2 Implement Morning Brief generation
   - API endpoint: GET /api/advisor/brief/morning

@@ -36,7 +36,7 @@ export default function ChatPage() {
   useEffect(() => { scrollToBottom(); }, [messages]);
 
   const chatMutation = useMutation({
-    mutationFn: (userMessage: string) => apiClient.post<ChatResponse>('/chat', { query: userMessage }),
+    mutationFn: (userMessage: string) => apiClient.post<ChatResponse>('/advisor/conversation', { query: userMessage }),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, {
         role: 'assistant',
