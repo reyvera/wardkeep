@@ -4,6 +4,7 @@ import { HouseholdBurnRate } from './burn-rate';
 import {
   emergencyFundSignal,
   estateDocumentReviewSignal,
+  estateWillRecordSignal,
   fixedObligationSignal,
   insuranceCoverageTargetSignal,
   insuranceRenewalSignal,
@@ -89,6 +90,13 @@ describe('estateDocumentReviewSignal', () => {
 
   it('does not infer a concern where no review date is entered', () => {
     expect(estateDocumentReviewSignal({ type: 'TRUST', title: null, reviewDate: null }, now)).toBeNull();
+  });
+});
+
+describe('estateWillRecordSignal', () => {
+  it('flags a missing recorded will without assessing legal adequacy', () => {
+    expect(estateWillRecordSignal(false)).toMatchObject({ capabilityId: 'estate-documents', type: 'risk', magnitude: -4 });
+    expect(estateWillRecordSignal(true)).toBeNull();
   });
 });
 

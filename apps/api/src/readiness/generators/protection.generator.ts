@@ -178,7 +178,8 @@ async function generateEstateDocumentSignals(prisma: PrismaClient, userId: strin
     where: { userId, isActive: true },
     select: { type: true, title: true, reviewDate: true },
   });
-  if (documents.length === 0) return [];
+  const willSignal = estateWillRecordSignal(documents.some((document) => document.type === 'WILL'));
+  if (willSignal) return [willSignal];
 
   const reviewSignals = documents
     .map((document) => estateDocumentReviewSignal(document, new Date()))
@@ -193,6 +194,13 @@ async function generateEstateDocumentSignals(prisma: PrismaClient, userId: strin
     summary: `${documents.length} active estate-planning ${documents.length === 1 ? 'record is' : 'records are'} recorded. Wardkeep does not assess legal validity, beneficiary choices, or adequacy.`,
     weight: 0.5,
   }];
+}
+
+export function estateWillRecordSignal(hasRecordedWill: boolean): Signal | null {
+  return hasRecordedWill ? null : {
+    capabilityId: 'estate-documents', type: 'risk', magnitude: -4, pillar: 'protection', weight: 0.75,
+    summary: 'No active will record is entered. Record a document location or review plan; Wardkeep does not assess legal validity or adequacy.',
+  };
 }
 
 /** Classifies a recorded review date without making a legal-adequacy claim. */
