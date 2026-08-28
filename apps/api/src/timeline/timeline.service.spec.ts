@@ -96,6 +96,7 @@ describe('TimelineService', () => {
           },
         ]),
       },
+      homeMaintenanceTask: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const service = new TimelineService(prisma as never);
 
@@ -159,6 +160,7 @@ describe('TimelineService', () => {
       plannedExpense: { findMany: vi.fn().mockResolvedValue([]) },
       financialGoal: { findMany: vi.fn().mockResolvedValue([]) },
       vehicleMaintenance: { findMany: vi.fn().mockResolvedValue([]) },
+      homeMaintenanceTask: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const service = new TimelineService(prisma as never);
 

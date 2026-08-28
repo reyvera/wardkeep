@@ -10,7 +10,8 @@ export type TimelineEventKind =
   | 'DEBT_PAYOFF'
   | 'BUDGET_PERIOD'
   | 'FINANCIAL_GOAL'
-  | 'VEHICLE_MAINTENANCE';
+  | 'VEHICLE_MAINTENANCE'
+  | 'HOME_MAINTENANCE';
 export type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 export interface TimelineEvent {
@@ -42,7 +43,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setDate(end.getDate() + days);
 
-    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance, homeMaintenance] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -78,6 +79,7 @@ export class TimelineService {
         include: { vehicle: true },
         orderBy: { dueDate: 'asc' },
       }),
+      this.prisma.homeMaintenanceTask.findMany({ where: { userId, completedAt: null, dueDate: { gte: start, lte: end } }, include: { homeAsset: true }, orderBy: { dueDate: 'asc' } }),
     ]);
 
     return [
@@ -201,6 +203,7 @@ export class TimelineService {
         href: '/vehicles',
         actionRequired: true,
       })),
+      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'preparation' as const, date: record.dueDate!, title: record.name, detail: `${record.homeAsset ? `${record.homeAsset.name} · ` : ''}recorded home-maintenance reminder${record.estimatedCost ? ` · ${this.currency(record.estimatedCost.toString())} estimated` : ''}`, href: '/home-maintenance', actionRequired: true })),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 
@@ -215,7 +218,7 @@ export class TimelineService {
     end.setHours(0, 0, 0, 0);
     const start = new Date(end);
     start.setDate(start.getDate() - days);
-    const [policies, income, plannedExpenses, goals, vehicleMaintenance] = await Promise.all([
+    const [policies, income, plannedExpenses, goals, vehicleMaintenance, homeMaintenance] = await Promise.all([
       this.prisma.insurancePolicy.findMany({
         where: { userId, renewalDate: { gte: start, lt: end } },
         orderBy: { renewalDate: 'desc' },
@@ -237,6 +240,7 @@ export class TimelineService {
         include: { vehicle: true },
         orderBy: { dueDate: 'desc' },
       }),
+      this.prisma.homeMaintenanceTask.findMany({ where: { userId, completedAt: null, dueDate: { gte: start, lt: end } }, include: { homeAsset: true }, orderBy: { dueDate: 'desc' } }),
     ]);
 
     return [
@@ -295,6 +299,7 @@ export class TimelineService {
         actionRequired: true,
         status: 'RECORDED_PAST' as const,
       })),
+      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}-${record.dueDate!.toISOString()}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'preparation' as const, date: record.dueDate!, title: record.name, detail: 'Recorded home-maintenance reminder date; review whether the task was completed or rescheduled.', href: '/home-maintenance', actionRequired: true, status: 'RECORDED_PAST' as const })),
     ].sort((left, right) => right.date.getTime() - left.date.getTime());
   }
 

@@ -13,6 +13,7 @@ import {
   WalletCards,
   Target,
   Wrench,
+  House,
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
@@ -25,7 +26,8 @@ type TimelineEventKind =
   | 'DEBT_PAYOFF'
   | 'BUDGET_PERIOD'
   | 'FINANCIAL_GOAL'
-  | 'VEHICLE_MAINTENANCE';
+  | 'VEHICLE_MAINTENANCE'
+  | 'HOME_MAINTENANCE';
 type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
 
 interface TimelineEvent {
@@ -49,6 +51,7 @@ const eventIcons = {
   BUDGET_PERIOD: WalletCards,
   FINANCIAL_GOAL: Target,
   VEHICLE_MAINTENANCE: Wrench,
+  HOME_MAINTENANCE: House,
 };
 
 const eventLabels: Record<TimelineEventKind, string> = {
@@ -60,6 +63,7 @@ const eventLabels: Record<TimelineEventKind, string> = {
   BUDGET_PERIOD: 'Budget period',
   FINANCIAL_GOAL: 'Goal target',
   VEHICLE_MAINTENANCE: 'Vehicle maintenance',
+  HOME_MAINTENANCE: 'Home maintenance',
 };
 
 const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = {
@@ -71,6 +75,7 @@ const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = 
   BUDGET_PERIOD: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
   FINANCIAL_GOAL: { icon: 'text-accent-purple', badge: 'bg-accent-purple/10 text-accent-purple' },
   VEHICLE_MAINTENANCE: { icon: 'text-accent-orange', badge: 'bg-accent-orange/10 text-accent-orange' },
+  HOME_MAINTENANCE: { icon: 'text-accent-green', badge: 'bg-accent-green/10 text-accent-green' },
 };
 
 function dayKey(date: string) {
