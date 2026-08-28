@@ -412,10 +412,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Signals: overdue maintenance → risk, upcoming registration → timeline event
   - Pillar: Preparation
 
-- [ ] 26.2 Insurance Capability
-  - Track policies: type, provider, premium, deductible, coverage, renewal date
-  - Signals: renewal approaching → timeline + recommendation, coverage gap → risk
-  - Cross-capability: correlate deductible with emergency fund
+- [x] 26.2 Insurance Capability
+  - [x] Track policies: type, provider, premium, deductible, coverage, renewal date
+  - [x] Signals: renewal approaching → timeline + recommendation, coverage gap → risk
+  - [x] Cross-capability: correlate deductible with emergency fund
   - Pillar: Protection
 
 - [ ] 26.3 Home Maintenance Capability
