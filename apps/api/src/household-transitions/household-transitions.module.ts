@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common'; import { HouseholdTransitionsController } from './household-transitions.controller'; import { HouseholdTransitionsService } from './household-transitions.service'; @Module({ controllers: [HouseholdTransitionsController], providers: [HouseholdTransitionsService] }) export class HouseholdTransitionsModule {}

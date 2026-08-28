@@ -46,6 +46,7 @@ model User {
   homeAssets            HomeAsset[]
   homeMaintenanceTasks  HomeMaintenanceTask[]
   emergencyPreparednessItems EmergencyPreparednessItem[]
+  householdTransitionPlans HouseholdTransitionPlan[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
 }
@@ -515,6 +516,29 @@ model EmergencyPreparednessItem {
 
   @@index([userId, category])
   @@index([userId, reviewDate])
+}
+
+enum HouseholdTransitionMode {
+  INCAPACITY_CONTINUITY
+  AFTER_DEATH_SETTLEMENT
+}
+
+/// A neutral organizer for household continuity planning. This record does not
+/// establish incapacity/death, prove legal authority, or grant anyone access.
+model HouseholdTransitionPlan {
+  id          String                  @id @default(uuid())
+  userId      String
+  mode        HouseholdTransitionMode
+  title       String                  @db.VarChar(120)
+  reviewDate  DateTime?               @db.Date
+  isActive    Boolean                 @default(true)
+  notes       String?                 @db.VarChar(2000)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, mode, isActive])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────

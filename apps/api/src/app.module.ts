@@ -21,6 +21,7 @@ import { FinancialGoalsModule } from './financial-goals/financial-goals.module';
 import { ImportModule } from './import/import.module';
 import { IncomeSourcesModule } from './income-sources/income-sources.module';
 import { HouseholdObligationsModule } from './household-obligations/household-obligations.module';
+import { HouseholdTransitionsModule } from './household-transitions/household-transitions.module';
 import { PlannedExpensesModule } from './planned-expenses/planned-expenses.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -75,6 +76,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     ImportModule,
     IncomeSourcesModule,
     HouseholdObligationsModule,
+    HouseholdTransitionsModule,
     PlannedExpensesModule,
     InsuranceModule,
   ],
