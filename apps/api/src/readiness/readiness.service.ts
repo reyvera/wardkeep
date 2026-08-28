@@ -553,4 +553,23 @@ export class ReadinessService {
       recordedAt: s.recordedAt,
     }));
   }
+
+  /** Returns recorded capability facts for a household's recent readiness snapshots. */
+  async getObservations(userId: string, days: number) {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    since.setUTCHours(0, 0, 0, 0);
+    return this.prisma.readinessObservation.findMany({
+      where: { userId, observedAt: { gte: since } },
+      select: {
+        capabilityId: true,
+        fact: true,
+        value: true,
+        confidence: true,
+        observedAt: true,
+        snapshot: { select: { recordedAt: true } },
+      },
+      orderBy: [{ observedAt: 'desc' }, { capabilityId: 'asc' }, { fact: 'asc' }],
+    });
+  }
 }

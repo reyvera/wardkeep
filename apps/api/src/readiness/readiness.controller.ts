@@ -67,6 +67,13 @@ export class ReadinessController {
     return this.readinessService.getHistory(userId, days);
   }
 
+  /** Returns the household-scoped facts recorded alongside recent readiness snapshots. */
+  @Get('observations')
+  getObservations(@Req() req: ScopedRequest, @Query('days') daysParam?: string) {
+    const days = Math.min(Math.max(parseInt(daysParam ?? '30', 10) || 30, 1), 365);
+    return this.readinessService.getObservations(req.userId!, days);
+  }
+
   /**
    * Explains each score with its evaluated factor evidence and factors Wardkeep
    * did not evaluate. Unlike the Dashboard endpoint, this is read-only.
