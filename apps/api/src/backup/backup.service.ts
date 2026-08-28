@@ -38,6 +38,8 @@ export class BackupService {
       financialGoals,
       vehicles,
       vehicleMaintenance,
+      homeAssets,
+      homeMaintenanceTasks,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -57,6 +59,8 @@ export class BackupService {
       this.prisma.financialGoal.findMany({ where: { userId } }),
       this.prisma.vehicle.findMany({ where: { userId } }),
       this.prisma.vehicleMaintenance.findMany({ where: { vehicle: { userId } } }),
+      this.prisma.homeAsset.findMany({ where: { userId } }),
+      this.prisma.homeMaintenanceTask.findMany({ where: { userId } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -74,6 +78,8 @@ export class BackupService {
       financialGoals,
       vehicles,
       vehicleMaintenance,
+      homeAssets,
+      homeMaintenanceTasks,
       settings,
     });
 
@@ -158,6 +164,8 @@ export class BackupService {
       await tx.financialGoal.deleteMany({ where: { userId } });
       await tx.vehicleMaintenance.deleteMany({ where: { vehicle: { userId } } });
       await tx.vehicle.deleteMany({ where: { userId } });
+      await tx.homeMaintenanceTask.deleteMany({ where: { userId } });
+      await tx.homeAsset.deleteMany({ where: { userId } });
       await tx.category.deleteMany({ where: { userId } });
       await tx.account.deleteMany({ where: { userId } });
       await tx.userSettings.deleteMany({ where: { userId } });
@@ -201,6 +209,12 @@ export class BackupService {
       }
       if (payload.vehicleMaintenance?.length) {
         await tx.vehicleMaintenance.createMany({ data: payload.vehicleMaintenance });
+      }
+      if (payload.homeAssets?.length) {
+        await tx.homeAsset.createMany({ data: payload.homeAssets });
+      }
+      if (payload.homeMaintenanceTasks?.length) {
+        await tx.homeMaintenanceTask.createMany({ data: payload.homeMaintenanceTasks });
       }
       if (payload.settings) {
         await tx.userSettings.create({ data: payload.settings });

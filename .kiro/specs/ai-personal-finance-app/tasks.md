@@ -418,10 +418,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Cross-capability: correlate deductible with emergency fund
   - Pillar: Protection
 
-- [ ] 26.3 Home Maintenance Capability
-  - Track appliances: type, age, expected lifespan, replacement cost
-  - Maintenance tasks: HVAC filter, gutter cleaning, roof inspection
-  - Signals: appliance nearing end-of-life → risk + sinking fund recommendation
+- [x] 26.3 Home Maintenance Capability
+  - [x] Track appliances: type, age, expected lifespan, replacement cost
+  - [x] Maintenance tasks: HVAC filter, gutter cleaning, roof inspection
+  - [x] Signals: appliance nearing end-of-life → risk + sinking fund recommendation
   - Pillar: Preparation
 
 - [ ] 26.4 Estate Capability
