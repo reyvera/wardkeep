@@ -17,6 +17,7 @@ import {
   PayoffStrategy,
 } from '@wardkeep/finance-engine';
 import { DEBT_ACCOUNT_TYPES } from '@wardkeep/shared';
+import { AccountType } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -90,7 +91,7 @@ export class DebtService {
       throw new NotFoundException('Account not found');
     }
 
-    const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
+    const debtTypes = DEBT_ACCOUNT_TYPES as unknown as AccountType[];
     if (!debtTypes.includes(account.type)) {
       throw new BadRequestException(
         `Account type "${account.type}" is not a liability type. Debt profiles can only be created for: ${DEBT_ACCOUNT_TYPES.join(', ')}`,
@@ -208,7 +209,7 @@ export class DebtService {
    */
   async getDebtsFromAccounts(userId: string) {
     // Auto-create profiles for liability accounts that don't have one
-    const debtTypes: string[] = DEBT_ACCOUNT_TYPES;
+    const debtTypes = DEBT_ACCOUNT_TYPES as unknown as AccountType[];
 
     try {
       const liabilityAccounts = await this.prisma.account.findMany({

@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, TransactionType } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 
 import { NotificationsService } from '../notifications/notifications.service';
@@ -95,7 +95,7 @@ export class TransactionsService {
     }
 
     if (filters.excludeType) {
-      where.type = { not: filters.excludeType };
+      where.type = { not: filters.excludeType as TransactionType };
     }
 
     if (filters.isReviewed !== undefined) {

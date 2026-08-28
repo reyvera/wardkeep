@@ -1,3 +1,4 @@
+import { AccountType } from '@prisma/client';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -116,7 +117,7 @@ export class BankConnectionsService {
    * Maps an external account name to a local AccountType.
    * Uses simple heuristics based on the account name.
    */
-  private mapExternalType(name: string): string {
+  private mapExternalType(name: string): AccountType {
     const lower = name.toLowerCase();
     if (lower.includes('checking')) return 'CHECKING';
     if (lower.includes('savings')) return 'SAVINGS';
@@ -281,7 +282,7 @@ export class BankConnectionsService {
         );
       }
 
-      const data = await accountsResponse.json();
+      const data = await accountsResponse.json() as { accounts?: Array<Record<string, unknown>> };
       const accounts = (data.accounts ?? []).map((acct: Record<string, unknown>) => ({
         externalId: String(acct['id'] ?? ''),
         name: String(acct['name'] ?? 'Unknown'),
@@ -315,7 +316,7 @@ export class BankConnectionsService {
 
       if (!response.ok) return { imported, skippedDuplicates };
 
-      const data = await response.json();
+      const data = await response.json() as { accounts?: Array<Record<string, unknown>> };
 
       for (const extAccount of data.accounts ?? []) {
         const linked = linkedAccounts.find((la) => la.externalId === extAccount.id);
@@ -330,11 +331,14 @@ export class BankConnectionsService {
           });
         }
 
-        for (const tx of extAccount.transactions ?? []) {
+        const transactions = Array.isArray(extAccount['transactions'])
+          ? extAccount['transactions'] as Array<Record<string, unknown>>
+          : [];
+        for (const tx of transactions) {
           // SimpleFIN uses UNIX epoch timestamps for 'posted'
-          const txDate = new Date(tx.posted * 1000);
-          const amount = Math.abs(Number(tx.amount));
-          const merchant = String(tx.description ?? 'Unknown').substring(0, 100);
+          const txDate = new Date(Number(tx['posted'] ?? 0) * 1000);
+          const amount = Math.abs(Number(tx['amount'] ?? 0));
+          const merchant = String(tx['description'] ?? 'Unknown').substring(0, 100);
 
           // Check for duplicate (same date + amount + description in same account)
           const existing = await this.prisma.transaction.findFirst({

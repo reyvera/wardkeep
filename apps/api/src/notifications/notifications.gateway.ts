@@ -9,7 +9,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({ cors: true, namespace: '/notifications' })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private userSockets = new Map<string, Set<string>>();
 
