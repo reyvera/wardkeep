@@ -424,9 +424,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Signals: appliance nearing end-of-life → risk + sinking fund recommendation
   - Pillar: Preparation
 
-- [ ] 26.4 Estate Capability
-  - Track: will status, beneficiaries, document locations, power of attorney
-  - Signals: no will → critical risk, outdated beneficiaries → warning
+- [x] 26.4 Estate Capability
+  - [x] Track: will status, beneficiaries, document locations, power of attorney
+  - [x] Signals: no will → critical risk, outdated beneficiaries → warning
   - Pillar: Protection
 
 - [ ] 26.4a Household transition and trusted-access workspace
