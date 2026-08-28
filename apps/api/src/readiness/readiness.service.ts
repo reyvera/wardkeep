@@ -77,6 +77,7 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
     { id: 'planned-expenses', label: 'Recorded planned expenses' },
     { id: 'vehicle-maintenance', label: 'Vehicle maintenance reminders' },
     { id: 'vehicle-lease', label: 'Vehicle lease end dates' },
+    { id: 'home-assets', label: 'Home asset lifespan records' },
   ],
   prosperity: [
     { id: 'net-worth', label: 'Recorded net worth' },
