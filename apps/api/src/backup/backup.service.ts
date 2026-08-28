@@ -40,6 +40,7 @@ export class BackupService {
       vehicleMaintenance,
       homeAssets,
       homeMaintenanceTasks,
+      emergencyPreparednessItems,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -61,6 +62,7 @@ export class BackupService {
       this.prisma.vehicleMaintenance.findMany({ where: { vehicle: { userId } } }),
       this.prisma.homeAsset.findMany({ where: { userId } }),
       this.prisma.homeMaintenanceTask.findMany({ where: { userId } }),
+      this.prisma.emergencyPreparednessItem.findMany({ where: { userId } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -80,6 +82,7 @@ export class BackupService {
       vehicleMaintenance,
       homeAssets,
       homeMaintenanceTasks,
+      emergencyPreparednessItems,
       settings,
     });
 
@@ -166,6 +169,7 @@ export class BackupService {
       await tx.vehicle.deleteMany({ where: { userId } });
       await tx.homeMaintenanceTask.deleteMany({ where: { userId } });
       await tx.homeAsset.deleteMany({ where: { userId } });
+      await tx.emergencyPreparednessItem.deleteMany({ where: { userId } });
       await tx.category.deleteMany({ where: { userId } });
       await tx.account.deleteMany({ where: { userId } });
       await tx.userSettings.deleteMany({ where: { userId } });
@@ -215,6 +219,9 @@ export class BackupService {
       }
       if (payload.homeMaintenanceTasks?.length) {
         await tx.homeMaintenanceTask.createMany({ data: payload.homeMaintenanceTasks });
+      }
+      if (payload.emergencyPreparednessItems?.length) {
+        await tx.emergencyPreparednessItem.createMany({ data: payload.emergencyPreparednessItems });
       }
       if (payload.settings) {
         await tx.userSettings.create({ data: payload.settings });

@@ -440,9 +440,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Make the first release a neutral organizer and checklist, not a marketplace, legal-document generator, bank-action tool, credential vault, or automated notification sender.
   - Pillars: Protection and Peace. Readiness uses only explainable record-completeness or review-date signals; bereavement status and access designations must not be scored as preparedness or risk.
 
-- [ ] 26.5 Emergency Preparedness Capability
-  - Track: food storage, water, first aid, important documents, evacuation plan
-  - Signals: incomplete preparation → risk, fully prepared → milestone
+- [x] 26.5 Emergency Preparedness Capability
+  - [x] Track: food storage, water, first aid, important documents, evacuation plan
+  - [x] Signals: incomplete preparation → risk, fully prepared → milestone
   - Pillar: Protection
 
 ### 27. Capability Marketplace Infrastructure

@@ -5,6 +5,7 @@ import {
   emergencyFundSignal,
   estateDocumentReviewSignal,
   estateWillRecordSignal,
+  emergencyPreparednessSignal,
   fixedObligationSignal,
   insuranceCoverageTargetSignal,
   insuranceRenewalSignal,
@@ -97,6 +98,13 @@ describe('estateWillRecordSignal', () => {
   it('flags a missing recorded will without assessing legal adequacy', () => {
     expect(estateWillRecordSignal(false)).toMatchObject({ capabilityId: 'estate-documents', type: 'risk', magnitude: -4 });
     expect(estateWillRecordSignal(true)).toBeNull();
+  });
+});
+
+describe('emergencyPreparednessSignal', () => {
+  it('warns only from recorded incomplete checklist items', () => {
+    expect(emergencyPreparednessSignal([{ isComplete: true, category: 'WATER' }, { isComplete: false, category: 'EVACUATION_PLAN' }])).toMatchObject({ capabilityId: 'emergency-preparedness', type: 'warning', magnitude: -2 });
+    expect(emergencyPreparednessSignal([{ isComplete: true, category: 'WATER' }])).toMatchObject({ type: 'positive' });
   });
 });
 
