@@ -74,6 +74,42 @@ export function crossCapabilityInsightCandidates(signals: readonly Signal[]): In
       ],
     });
   }
+  if (
+    (hasRisk(signals, 'vehicle-maintenance') || hasRisk(signals, 'vehicle-lease')) &&
+    (hasRisk(signals, 'cashflow') || hasRisk(signals, 'planned-expenses'))
+  ) {
+    const vehicleSource = hasRisk(signals, 'vehicle-maintenance')
+      ? 'vehicle-maintenance'
+      : 'vehicle-lease';
+    candidates.push({
+      summary:
+        'A vehicle-related deadline is approaching while recorded cash flow or planned-expense funding is constrained. Review the timing and set aside only an amount your household has recorded as available.',
+      action: 'Review vehicle timing and cash flow',
+      actionHref: '/vehicles',
+      sourceCapabilities: [
+        vehicleSource,
+        hasRisk(signals, 'cashflow') ? 'cashflow' : 'planned-expenses',
+      ],
+    });
+  }
+  if (hasRisk(signals, 'home-assets') && hasRisk(signals, 'emergency-fund')) {
+    candidates.push({
+      summary:
+        'A recorded home asset is near its expected lifespan while liquid reserves are limited. Review the replacement estimate and decide whether a separate savings target is appropriate for your household.',
+      action: 'Review home replacement planning',
+      actionHref: '/home-maintenance',
+      sourceCapabilities: ['home-assets', 'emergency-fund'],
+    });
+  }
+  if (hasRisk(signals, 'estate-documents') && hasRisk(signals, 'household-transitions')) {
+    candidates.push({
+      summary:
+        'Estate-document records and a household continuity plan both need attention. Review the recorded dates and locations together; Wardkeep does not assess legal adequacy or replace professional advice.',
+      action: 'Review continuity records',
+      actionHref: '/household-transitions',
+      sourceCapabilities: ['estate-documents', 'household-transitions'],
+    });
+  }
   return candidates.map((candidate) => ({
     ...candidate,
     fingerprint: createHash('sha256')

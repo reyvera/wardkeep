@@ -329,9 +329,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] User can dismiss or complete a recommendation from the Recommendations workspace
   - [x] Track recommendation completion and observed score changes since completion (without causal attribution)
 
-- [~] 22.5 Implement cross-capability reasoning
+- [x] 22.5 Implement cross-capability reasoning
   - [x] Advisor has read access to signals from all active Capabilities simultaneously
-  - [~] Generate deterministic insights that span supported domains
+  - [x] Generate deterministic insights that span supported domains
   - [x] Store generated insights; deduplicate matching observations within 7 days
 
 ### 23. Household Timeline [PARTIAL]

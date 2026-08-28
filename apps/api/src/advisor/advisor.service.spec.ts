@@ -144,4 +144,21 @@ describe('AdvisorService', () => {
     ]);
     expect(crossCapabilityInsightCandidates([])).toEqual([]);
   });
+
+  it('connects vehicle, home, and continuity risks to their related household context', () => {
+    const candidates = crossCapabilityInsightCandidates([
+      { capabilityId: 'vehicle-maintenance', type: 'risk', magnitude: -4, pillar: 'preparation', summary: 'Service overdue.' },
+      { capabilityId: 'cashflow', type: 'warning', magnitude: -3, pillar: 'provision', summary: 'Cash constrained.' },
+      { capabilityId: 'home-assets', type: 'risk', magnitude: -4, pillar: 'preparation', summary: 'HVAC aging.' },
+      { capabilityId: 'emergency-fund', type: 'warning', magnitude: -2, pillar: 'protection', summary: 'Reserve low.' },
+      { capabilityId: 'estate-documents', type: 'risk', magnitude: -4, pillar: 'protection', summary: 'Will missing.' },
+      { capabilityId: 'household-transitions', type: 'warning', magnitude: -2, pillar: 'protection', summary: 'Plan review passed.' },
+    ]);
+
+    expect(candidates).toEqual(expect.arrayContaining([
+      expect.objectContaining({ actionHref: '/vehicles', sourceCapabilities: ['vehicle-maintenance', 'cashflow'] }),
+      expect.objectContaining({ actionHref: '/home-maintenance', sourceCapabilities: ['home-assets', 'emergency-fund'] }),
+      expect.objectContaining({ actionHref: '/household-transitions', sourceCapabilities: ['estate-documents', 'household-transitions'] }),
+    ]));
+  });
 });
