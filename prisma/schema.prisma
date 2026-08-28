@@ -956,9 +956,28 @@ model ReadinessSnapshot {
   recordedAt  DateTime @default(now()) @db.Date
 
   signals ReadinessSignal[]
+  observations ReadinessObservation[]
 
   @@unique([userId, recordedAt])
   @@index([userId, recordedAt])
+}
+
+/// Raw, household-scoped facts published by capabilities for a daily readiness snapshot.
+model ReadinessObservation {
+  id           String   @id @default(uuid())
+  userId       String
+  capabilityId String   @db.VarChar(100)
+  fact         String   @db.VarChar(240)
+  value        Json
+  confidence   Decimal  @db.Decimal(3, 2)
+  observedAt   DateTime
+  snapshotId   String?
+  createdAt    DateTime @default(now())
+
+  snapshot ReadinessSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([userId, capabilityId, observedAt])
+  @@index([snapshotId])
 }
 
 model ReadinessSignal {

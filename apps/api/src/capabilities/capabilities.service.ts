@@ -60,6 +60,14 @@ export class CapabilitiesService implements CapabilityRegistry, OnModuleInit {
     return this.all().map(({ metadata }) => ({ ...metadata, isEnabled: enabledById.get(metadata.id) ?? true }));
   }
 
+  async enabledForUser(userId: string): Promise<Capability[]> {
+    const settings = await this.listForUser(userId);
+    return settings.filter((setting) => setting.isEnabled).flatMap((setting) => {
+      const capability = this.get(setting.id);
+      return capability ? [capability] : [];
+    });
+  }
+
   async enable(userId: string, capabilityId: string) { return this.setEnabled(userId, capabilityId, true); }
   async disable(userId: string, capabilityId: string) { return this.setEnabled(userId, capabilityId, false); }
 

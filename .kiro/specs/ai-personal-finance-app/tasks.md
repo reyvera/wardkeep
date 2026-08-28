@@ -269,7 +269,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 20.2 Wire existing finance services to emit signals
   - [x] Current generators derive signals on readiness evaluation
   - [ ] Recompute signals on relevant writes and scheduled syncs
-  - [ ] Store signals/observations in DB and feed them through a versioned pipeline
+  - [~] Store signals/observations in DB and feed them through a versioned pipeline
 
 - [x] 20.3 Implement Capability interface for finance
   - [x] Create FinanceCapability class implementing the Capability interface

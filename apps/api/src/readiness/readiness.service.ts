@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import {
   computePillarScore,
@@ -452,6 +453,10 @@ export class ReadinessService {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const netWorth = await calculateRecordedNetWorth(this.prisma, userId);
+    const observationContext = { householdId: userId, evaluatedAt: today };
+    const observations = (await Promise.all(
+      (await this.capabilities.enabledForUser(userId)).map((capability) => capability.observations(observationContext)),
+    )).flat();
 
     const snapshot = await this.prisma.readinessSnapshot.upsert({
       where: { userId_recordedAt: { userId, recordedAt: today } },
@@ -479,6 +484,7 @@ export class ReadinessService {
 
     await this.prisma.$transaction([
       this.prisma.readinessSignal.deleteMany({ where: { snapshotId: snapshot.id } }),
+      this.prisma.readinessObservation.deleteMany({ where: { snapshotId: snapshot.id } }),
       this.prisma.readinessSignal.createMany({
         data: signals.map((signal) => ({
           userId,
@@ -492,6 +498,17 @@ export class ReadinessService {
           summary: signal.summary,
           weight: signal.weight ?? 1,
           expiresAt: signal.expiresAt ?? null,
+        })),
+      }),
+      this.prisma.readinessObservation.createMany({
+        data: observations.map((observation) => ({
+          userId,
+          snapshotId: snapshot.id,
+          capabilityId: observation.capabilityId,
+          fact: observation.fact,
+          value: observation.value as Prisma.InputJsonValue,
+          confidence: observation.confidence,
+          observedAt: observation.observedAt,
         })),
       }),
     ]);
