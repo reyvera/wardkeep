@@ -183,6 +183,7 @@ describe('emergencyFundSignal', () => {
     [0, 'risk', '0.0 months'],
     [0.5, 'risk', '0.5 months'],
     [1, 'risk', '1.0 months'],
+    [2, 'risk', '2.0 months'],
     [3, 'risk', '3.0 months'],
     [6, 'warning', '6.0 months'],
     [12, 'positive', '12.0 months'],

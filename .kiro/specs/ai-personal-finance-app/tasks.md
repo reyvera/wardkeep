@@ -277,12 +277,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Wire observations(), signals(), recommendations(), dashboardCards(), timelineEvents()
   - [x] This wraps existing services — no rewrite of business logic
 
-- [ ] 20.4 Write tests for finance signal generation
-  - Test: budget at 95% → risk signal with correct magnitude
-  - Test: emergency fund at 2 months → risk signal
-  - Test: net worth increasing 3 consecutive months → positive signal
-  - Test: projected negative cashflow in 14 days → warning signal
-  - Verify signal magnitudes are proportional and bounded
+- [x] 20.4 Write tests for finance signal generation
+  - [x] Test: budget at 95% → risk signal with correct magnitude
+  - [x] Test: emergency fund at 2 months → risk signal
+  - [x] Test: net worth increasing 3 consecutive months → positive signal
+  - [x] Test: projected negative cashflow in 14 days → risk signal
+  - [x] Verify signal magnitudes are proportional and bounded
 
 ### 21. Capability Registry & SDK
 

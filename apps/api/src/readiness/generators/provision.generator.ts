@@ -116,58 +116,35 @@ async function generateBudgetAdherenceSignals(
     return signals;
   }
 
+  signals.push(...budgetPaceSignals(totalAllocated, totalSpent, summary.overspentCount, now));
+
+  return signals;
+}
+
+/** Produces deterministic budget risk signals from recorded allocation and spending totals. */
+export function budgetPaceSignals(
+  totalAllocated: Decimal,
+  totalSpent: Decimal,
+  overspentCount: number,
+  now: Date,
+): Signal[] {
+  if (totalAllocated.isZero()) return [];
+  const signals: Signal[] = [];
   const adherenceRatio = totalSpent.div(totalAllocated);
-  const dayOfMonth = now.getUTCDate();
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const expectedRatio = new Decimal(dayOfMonth).div(daysInMonth);
-
-  // Compare actual spending pace to expected pace
-  if (adherenceRatio.gt(new Decimal('1.0'))) {
-    // Over budget
-    const overPercent = adherenceRatio.sub(1).mul(100).toFixed(0);
-    signals.push({
-      capabilityId: 'budgets',
-      type: 'risk',
-      magnitude: -7,
-      pillar: 'provision',
-      summary: `Spending is ${overPercent}% over budget this month.`,
-      weight: 1.5,
-    });
+  const expectedRatio = new Decimal(now.getUTCDate()).div(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate());
+  if (adherenceRatio.gt(1)) {
+    signals.push({ capabilityId: 'budgets', type: 'risk', magnitude: -7, pillar: 'provision', summary: `Spending is ${adherenceRatio.sub(1).mul(100).toFixed(0)}% over budget this month.`, weight: 1.5 });
+  } else if (adherenceRatio.gte(new Decimal('0.95'))) {
+    signals.push({ capabilityId: 'budgets', type: 'risk', magnitude: -5, pillar: 'provision', summary: 'Spending has reached 95% of the monthly budget. Review remaining planned spending.', weight: 1.25 });
   } else if (adherenceRatio.gt(expectedRatio.mul(new Decimal('1.2')))) {
-    // Spending faster than pace (20% ahead of expected pace)
-    signals.push({
-      capabilityId: 'budgets',
-      type: 'warning',
-      magnitude: -3,
-      pillar: 'provision',
-      summary: 'Spending is ahead of budget pace for this point in the month.',
-      weight: 1.0,
-    });
+    signals.push({ capabilityId: 'budgets', type: 'warning', magnitude: -3, pillar: 'provision', summary: 'Spending is ahead of budget pace for this point in the month.', weight: 1 });
   } else if (adherenceRatio.lt(expectedRatio.mul(new Decimal('0.8')))) {
-    // Under budget pace — positive signal
-    signals.push({
-      capabilityId: 'budgets',
-      type: 'positive',
-      magnitude: 3,
-      pillar: 'provision',
-      summary: 'Spending is below budget pace — on track for a surplus this month.',
-      weight: 1.0,
-    });
+    signals.push({ capabilityId: 'budgets', type: 'positive', magnitude: 3, pillar: 'provision', summary: 'Spending is below budget pace — on track for a surplus this month.', weight: 1 });
   }
-
-  // Overspent categories risk
-  if (summary.overspentCount > 0) {
-    const severity = Math.min(summary.overspentCount * 2, 8);
-    signals.push({
-      capabilityId: 'budgets',
-      type: 'warning',
-      magnitude: -severity,
-      pillar: 'provision',
-      summary: `${summary.overspentCount} budget ${summary.overspentCount === 1 ? 'category is' : 'categories are'} overspent.`,
-      weight: 1.0,
-    });
+  if (overspentCount > 0) {
+    const severity = Math.min(overspentCount * 2, 8);
+    signals.push({ capabilityId: 'budgets', type: 'warning', magnitude: -severity, pillar: 'provision', summary: `${overspentCount} budget ${overspentCount === 1 ? 'category is' : 'categories are'} overspent.`, weight: 1 });
   }
-
   return signals;
 }
 
@@ -253,27 +230,16 @@ async function generateCashFlowSignals(
     totalBelowZeroCount += urgentNotifications.length;
   }
 
-  if (totalBelowZeroCount > 0) {
-    signals.push({
-      capabilityId: 'cashflow',
-      type: 'risk',
-      magnitude: -8,
-      pillar: 'provision',
-      summary: `Cash flow projection shows ${totalBelowZeroCount} ${totalBelowZeroCount === 1 ? 'account' : 'accounts'} going below zero within 30 days.`,
-      weight: 2.0,
-    });
-  } else {
-    signals.push({
-      capabilityId: 'cashflow',
-      type: 'positive',
-      magnitude: 5,
-      pillar: 'provision',
-      summary: 'All accounts remain positive in the 30-day cash flow projection.',
-      weight: 1.0,
-    });
-  }
+  signals.push(cashFlowProjectionSignal(totalBelowZeroCount));
 
   return signals;
+}
+
+/** Produces the published cash-flow signal after evaluating the 30-day projection. */
+export function cashFlowProjectionSignal(totalBelowZeroCount: number): Signal {
+  return totalBelowZeroCount > 0
+    ? { capabilityId: 'cashflow', type: 'risk', magnitude: -8, pillar: 'provision', summary: `Cash flow projection shows ${totalBelowZeroCount} ${totalBelowZeroCount === 1 ? 'account' : 'accounts'} going below zero within 30 days.`, weight: 2 }
+    : { capabilityId: 'cashflow', type: 'positive', magnitude: 5, pillar: 'provision', summary: 'All accounts remain positive in the 30-day cash flow projection.', weight: 1 };
 }
 
 /**
