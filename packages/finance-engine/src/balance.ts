@@ -3,7 +3,10 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { Transaction, TransactionType } from '@wardkeep/shared';
+import { TransactionType } from '@wardkeep/shared';
+
+/** The only transaction fields required for a balance calculation. */
+export type BalanceTransaction = { amount: string; type: string };
 
 /**
  * Calculates the current account balance from an initial balance and a list of transactions.
@@ -14,7 +17,7 @@ import { Transaction, TransactionType } from '@wardkeep/shared';
  * @param transactions - Array of transactions associated with the account.
  * @returns The computed current balance as a Decimal.
  */
-export function calculateBalance(initialBalance: Decimal, transactions: Transaction[]): Decimal {
+export function calculateBalance(initialBalance: Decimal, transactions: readonly BalanceTransaction[]): Decimal {
   return transactions.reduce((balance, tx) => {
     const amount = new Decimal(tx.amount);
     if (tx.type === TransactionType.CREDIT) {

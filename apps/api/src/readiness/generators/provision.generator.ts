@@ -1,5 +1,5 @@
 import { Decimal } from 'decimal.js';
-import { PrismaClient } from '@prisma/client';
+import { AccountType, PrismaClient } from '@prisma/client';
 
 import {
   calculateBalance,
@@ -277,7 +277,7 @@ async function generateBillCoverageSignals(
   );
 
   // Get liquid account balances (checking, savings, cash)
-  const liquidTypes = ['CHECKING', 'SAVINGS', 'CASH'];
+  const liquidTypes: AccountType[] = ['CHECKING', 'SAVINGS', 'CASH'];
   const liquidAccounts = await prisma.account.findMany({
     where: { userId, isArchived: false, type: { in: liquidTypes } },
     include: {

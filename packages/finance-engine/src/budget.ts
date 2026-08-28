@@ -3,7 +3,11 @@
  */
 import { Decimal } from 'decimal.js';
 
-import { Budget, BudgetAllocation, Transaction, TransactionType } from '@wardkeep/shared';
+import { TransactionType } from '@wardkeep/shared';
+
+type BudgetAllocationInput = { categoryId: string; amount: string };
+type BudgetInput = { allocations?: BudgetAllocationInput[] };
+type BudgetTransaction = { categoryId: string | null; amount: string; type: string };
 
 /** Budget status thresholds. */
 const WARNING_THRESHOLD = new Decimal('0.9');
@@ -60,8 +64,8 @@ function determineBudgetStatus(percentUsedRatio: Decimal): BudgetStatus {
  * @returns Array of CategoryProgress objects, one per allocation.
  */
 export function calculateBudgetProgress(
-  allocations: BudgetAllocation[],
-  transactions: Transaction[],
+  allocations: readonly BudgetAllocationInput[],
+  transactions: readonly BudgetTransaction[],
 ): CategoryProgress[] {
   return allocations.map((allocation) => {
     const allocated = new Decimal(allocation.amount);
@@ -98,7 +102,7 @@ export function calculateBudgetProgress(
  * @param transactions - Array of transactions for the budget period.
  * @returns A BudgetSummary with totals and per-category progress.
  */
-export function calculateBudgetSummary(budget: Budget, transactions: Transaction[]): BudgetSummary {
+export function calculateBudgetSummary(budget: BudgetInput, transactions: readonly BudgetTransaction[]): BudgetSummary {
   const allocations = budget.allocations ?? [];
   const categoryProgress = calculateBudgetProgress(allocations, transactions);
 
