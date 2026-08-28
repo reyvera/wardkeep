@@ -27,6 +27,7 @@ import {
   Car,
   House,
   ShieldAlert,
+  HeartHandshake,
 } from 'lucide-react';
 
 const mobileNavItems = [
@@ -48,6 +49,7 @@ const moreNavItems = [
   { href: '/vehicles', label: 'Vehicles', icon: Car },
   { href: '/home-maintenance', label: 'Home maintenance', icon: House },
   { href: '/emergency-preparedness', label: 'Emergency preparedness', icon: ShieldAlert },
+  { href: '/household-transitions', label: 'Transition plans', icon: HeartHandshake },
   { href: '/rules', label: 'Rules', icon: Sparkles },
   { href: '/debt', label: 'Debt', icon: TrendingDown },
   { href: '/recurring', label: 'Cash Flow', icon: RefreshCw },

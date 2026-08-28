@@ -93,6 +93,7 @@ async function main() {
     await prisma.homeMaintenanceTask.deleteMany({ where: { userId: existing.id } });
     await prisma.homeAsset.deleteMany({ where: { userId: existing.id } });
     await prisma.emergencyPreparednessItem.deleteMany({ where: { userId: existing.id } });
+    await prisma.householdTransitionPlan.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -398,6 +399,9 @@ async function main() {
     { userId: user.id, category: 'FIRST_AID', name: 'First-aid kit reviewed', isComplete: true, reviewDate: preparednessReview },
     { userId: user.id, category: 'EVACUATION_PLAN', name: 'Household evacuation meeting point', isComplete: false, reviewDate: preparednessReview },
   ] });
+  const transitionPlanReview = new Date();
+  transitionPlanReview.setMonth(transitionPlanReview.getMonth() + 6);
+  await prisma.householdTransitionPlan.create({ data: { userId: user.id, mode: 'INCAPACITY_CONTINUITY', title: 'Household continuity review', reviewDate: transitionPlanReview, notes: 'Demo: review document locations, contacts, and recurring obligations. This is not an authority designation.' } });
   await prisma.vehicle.create({
     data: {
       userId: user.id,
