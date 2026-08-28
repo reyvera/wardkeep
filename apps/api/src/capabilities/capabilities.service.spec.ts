@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CapabilitiesService } from './capabilities.service';
+import { FinanceCapability } from './finance.capability';
 
 const createService = () => {
   const prisma = {
@@ -11,7 +12,7 @@ const createService = () => {
       upsert: vi.fn(),
     },
   } as unknown as PrismaService;
-  const service = new CapabilitiesService(prisma);
+  const service = new CapabilitiesService(prisma, new FinanceCapability(prisma));
   service.onModuleInit();
   return { prisma, service };
 };

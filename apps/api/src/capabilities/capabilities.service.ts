@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import type { Capability, CapabilityContext, CapabilityMetadata, CapabilityRegistry, DashboardCard, Observation, ReadinessPillar, Recommendation, Signal, TimelineEvent } from '@wardkeep/capability-sdk';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { FinanceCapability, financeCapabilityMetadata } from './finance.capability';
 
 class RegisteredCoreCapability implements Capability {
   constructor(readonly metadata: CapabilityMetadata) {}
@@ -14,7 +15,7 @@ class RegisteredCoreCapability implements Capability {
 }
 
 const coreCapabilities: CapabilityMetadata[] = [
-  { id: 'finance', name: 'Finance', pillars: ['provision', 'prosperity'], icon: 'wallet', description: 'Accounts, transactions, budgets, debt, cash flow, and savings goals.', source: 'core' },
+  financeCapabilityMetadata,
   { id: 'vehicle', name: 'Vehicles', pillars: ['preparation', 'prosperity'], icon: 'car', description: 'Vehicle ownership, values, leases, and maintenance planning.', source: 'core' },
   { id: 'insurance', name: 'Insurance', pillars: ['protection'], icon: 'shield', description: 'Policies, renewals, deductibles, and coverage gaps.', source: 'core' },
   { id: 'home', name: 'Home maintenance', pillars: ['preparation'], icon: 'home', description: 'Home assets, maintenance work, and replacement planning.', source: 'core' },
@@ -37,10 +38,15 @@ const signalCapabilityOwners: Record<string, string> = {
 export class CapabilitiesService implements CapabilityRegistry, OnModuleInit {
   private readonly registered = new Map<string, Capability>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly financeCapability: FinanceCapability,
+  ) {}
 
   onModuleInit(): void {
-    for (const metadata of coreCapabilities) this.register(new RegisteredCoreCapability(metadata));
+    for (const metadata of coreCapabilities) {
+      this.register(metadata.id === 'finance' ? this.financeCapability : new RegisteredCoreCapability(metadata));
+    }
   }
 
   register(capability: Capability): void { this.registered.set(capability.metadata.id, capability); }

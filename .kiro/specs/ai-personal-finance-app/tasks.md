@@ -271,11 +271,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [ ] Recompute signals on relevant writes and scheduled syncs
   - [ ] Store signals/observations in DB and feed them through a versioned pipeline
 
-- [ ] 20.3 Implement Capability interface for finance
-  - Create FinanceCapability class implementing the Capability interface
-  - Register with CapabilityRegistry at API startup
-  - Wire observations(), signals(), recommendations(), dashboardCards(), timelineEvents()
-  - This wraps existing services — no rewrite of business logic
+- [x] 20.3 Implement Capability interface for finance
+  - [x] Create FinanceCapability class implementing the Capability interface
+  - [x] Register with CapabilityRegistry at API startup
+  - [x] Wire observations(), signals(), recommendations(), dashboardCards(), timelineEvents()
+  - [x] This wraps existing services — no rewrite of business logic
 
 - [ ] 20.4 Write tests for finance signal generation
   - Test: budget at 95% → risk signal with correct magnitude
