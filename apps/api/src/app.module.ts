@@ -11,6 +11,7 @@ import { BackupModule } from './backup/backup.module';
 import { BankConnectionsModule } from './bank-connections/bank-connections.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { CashflowModule } from './cashflow/cashflow.module';
+import { CapabilitiesModule } from './capabilities/capabilities.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { DebtModule } from './debt/debt.module';
@@ -59,6 +60,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     BankConnectionsModule,
     BudgetsModule,
     CashflowModule,
+    CapabilitiesModule,
     CategoriesModule,
     DebtModule,
     DependentsModule,

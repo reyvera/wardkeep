@@ -292,11 +292,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Export ReadinessPillar type
   - [x] This becomes the contract for all future Capabilities (core and community)
 
-- [ ] 21.2 Implement CapabilityRegistry in apps/api
-  - NestJS service that manages Capability lifecycle (register, enable, disable)
-  - Per-household capability enablement (stored in DB)
-  - API endpoints: GET /api/capabilities, POST /api/capabilities/:id/enable|disable
-  - At startup: auto-register all core Capabilities
+- [x] 21.2 Implement CapabilityRegistry in apps/api
+  - [x] NestJS service that manages Capability lifecycle (register, enable, disable)
+  - [x] Per-household capability enablement (stored in DB)
+  - [x] API endpoints: GET /api/capabilities, POST /api/capabilities/:id/enable|disable
+  - [x] At startup: auto-register all core Capabilities
 
 - [ ] 21.3 Implement Capability data isolation
   - Each Capability's data scoped to householdId

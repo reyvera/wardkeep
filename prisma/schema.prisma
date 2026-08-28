@@ -47,8 +47,25 @@ model User {
   homeMaintenanceTasks  HomeMaintenanceTask[]
   emergencyPreparednessItems EmergencyPreparednessItem[]
   householdTransitionPlans HouseholdTransitionPlan[]
+  capabilitySettings    CapabilitySetting[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
+}
+
+/// A household's explicit capability preference. Missing records inherit the
+/// enabled-by-default state for registered core capabilities.
+model CapabilitySetting {
+  id           String   @id @default(uuid())
+  userId       String
+  capabilityId String   @db.VarChar(100)
+  isEnabled    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, capabilityId])
+  @@index([userId, isEnabled])
 }
 
 // ─── Durable household actions ────────────────────────────────────────────────

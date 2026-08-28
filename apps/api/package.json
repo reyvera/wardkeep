@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@wardkeep/ai-engine": "workspace:*",
+    "@wardkeep/capability-sdk": "workspace:*",
     "@wardkeep/finance-engine": "workspace:*",
     "@wardkeep/importers": "workspace:*",
     "@wardkeep/readiness": "workspace:*",
