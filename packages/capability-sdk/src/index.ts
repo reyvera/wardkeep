@@ -9,6 +9,16 @@ export type ReadinessPillar =
 export type SignalType = 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';
 export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
+/**
+ * The only household identity a capability receives when it evaluates data.
+ * Capability implementations must use this scope for every data-provider call
+ * and must publish signals instead of exposing raw records to other capabilities.
+ */
+export interface CapabilityContext {
+  householdId: string;
+  evaluatedAt: Date;
+}
+
 /** A timestamped, objective fact recorded by a capability. */
 export interface Observation {
   capabilityId: string;
@@ -74,11 +84,11 @@ export interface CapabilityMetadata {
  */
 export interface Capability {
   metadata: CapabilityMetadata;
-  observations(): Observation[] | Promise<Observation[]>;
-  signals(): Signal[] | Promise<Signal[]>;
-  recommendations(): Recommendation[] | Promise<Recommendation[]>;
-  dashboardCards(): DashboardCard[] | Promise<DashboardCard[]>;
-  timelineEvents(): TimelineEvent[] | Promise<TimelineEvent[]>;
+  observations(context: CapabilityContext): Observation[] | Promise<Observation[]>;
+  signals(context: CapabilityContext): Signal[] | Promise<Signal[]>;
+  recommendations(context: CapabilityContext): Recommendation[] | Promise<Recommendation[]>;
+  dashboardCards(context: CapabilityContext): DashboardCard[] | Promise<DashboardCard[]>;
+  timelineEvents(context: CapabilityContext): TimelineEvent[] | Promise<TimelineEvent[]>;
 }
 
 /** The single discovery point for capabilities active in the application. */

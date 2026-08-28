@@ -298,10 +298,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] API endpoints: GET /api/capabilities, POST /api/capabilities/:id/enable|disable
   - [x] At startup: auto-register all core Capabilities
 
-- [ ] 21.3 Implement Capability data isolation
-  - Each Capability's data scoped to householdId
-  - Capabilities cannot read other Capabilities' raw data
-  - Cross-capability reasoning happens only through published signals (via Readiness Engine)
+- [x] 21.3 Implement Capability data isolation
+  - [x] Each Capability's data scoped to householdId
+  - [x] Capabilities cannot read other Capabilities' raw data
+  - [x] Cross-capability reasoning happens only through published signals (via Readiness Engine)
 
 ### 22. Advisor & Morning Brief
 

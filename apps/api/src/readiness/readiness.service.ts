@@ -11,6 +11,7 @@ import {
 } from '@wardkeep/readiness';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { CapabilitiesService } from '../capabilities/capabilities.service';
 import { SignalProvenance, withSignalProvenance } from './signal-provenance';
 import { summarizeDataFreshnessByScope } from './data-freshness';
 import {
@@ -90,7 +91,10 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
 
 @Injectable()
 export class ReadinessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly capabilities: CapabilitiesService,
+  ) {}
 
   async getLastDashboardView(userId: string) {
     return this.prisma.user.findUnique({
@@ -154,12 +158,13 @@ export class ReadinessService {
         generatePreparationSignals(this.prisma, userId),
       ]);
 
-    const allSignals: Signal[] = [
+    const publishedSignals: Signal[] = [
       ...provisionSignals,
       ...prosperitySignals,
       ...protectionSignals,
       ...preparationSignals,
     ];
+    const allSignals = await this.capabilities.publishedSignalsForUser(userId, publishedSignals);
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);

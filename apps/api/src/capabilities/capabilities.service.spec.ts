@@ -43,4 +43,18 @@ describe('CapabilitiesService', () => {
 
     await expect(service.enable('user-1', 'not-registered')).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('passes downstream only signals from capabilities the household has enabled', async () => {
+    const { prisma, service } = createService();
+    vi.mocked(prisma.capabilitySetting.findMany).mockResolvedValue([
+      { capabilityId: 'vehicle', isEnabled: false },
+    ] as never);
+
+    const signals = await service.publishedSignalsForUser('user-1', [
+      { capabilityId: 'vehicle-maintenance' },
+      { capabilityId: 'budgets' },
+    ]);
+
+    expect(signals).toEqual([{ capabilityId: 'budgets' }]);
+  });
 });

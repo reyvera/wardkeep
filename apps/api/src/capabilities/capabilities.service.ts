@@ -1,16 +1,16 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
-import type { Capability, CapabilityMetadata, CapabilityRegistry, DashboardCard, Observation, ReadinessPillar, Recommendation, Signal, TimelineEvent } from '@wardkeep/capability-sdk';
+import type { Capability, CapabilityContext, CapabilityMetadata, CapabilityRegistry, DashboardCard, Observation, ReadinessPillar, Recommendation, Signal, TimelineEvent } from '@wardkeep/capability-sdk';
 
 import { PrismaService } from '../prisma/prisma.service';
 
 class RegisteredCoreCapability implements Capability {
   constructor(readonly metadata: CapabilityMetadata) {}
 
-  observations(): Observation[] { return []; }
-  signals(): Signal[] { return []; }
-  recommendations(): Recommendation[] { return []; }
-  dashboardCards(): DashboardCard[] { return []; }
-  timelineEvents(): TimelineEvent[] { return []; }
+  observations(_context: CapabilityContext): Observation[] { return []; }
+  signals(_context: CapabilityContext): Signal[] { return []; }
+  recommendations(_context: CapabilityContext): Recommendation[] { return []; }
+  dashboardCards(_context: CapabilityContext): DashboardCard[] { return []; }
+  timelineEvents(_context: CapabilityContext): TimelineEvent[] { return []; }
 }
 
 const coreCapabilities: CapabilityMetadata[] = [
@@ -22,6 +22,16 @@ const coreCapabilities: CapabilityMetadata[] = [
   { id: 'emergency-preparedness', name: 'Emergency preparedness', pillars: ['protection', 'preparation'], icon: 'alert-triangle', description: 'A practical household preparedness checklist.', source: 'core' },
   { id: 'household-transitions', name: 'Household continuity', pillars: ['peace', 'preparation'], icon: 'heart-handshake', description: 'Neutral plans for household continuity and periodic review.', source: 'core' },
 ];
+
+/** Maps existing published signal IDs to the core capability that owns them. */
+const signalCapabilityOwners: Record<string, string> = {
+  accounts: 'finance', budgets: 'finance', cashflow: 'finance', debt: 'finance', dependents: 'finance',
+  'emergency-fund': 'finance', 'fixed-obligations': 'finance', 'income-sources': 'finance',
+  'planned-expenses': 'finance', recurring: 'finance', 'secondary-liquidity': 'finance',
+  'vehicle-lease': 'vehicle', 'vehicle-maintenance': 'vehicle',
+  'insurance-coverage-target': 'insurance', 'insurance-deductibles': 'insurance', 'insurance-record-details': 'insurance',
+  'estate-documents': 'estate', 'home-assets': 'home',
+};
 
 @Injectable()
 export class CapabilitiesService implements CapabilityRegistry, OnModuleInit {
@@ -46,6 +56,17 @@ export class CapabilitiesService implements CapabilityRegistry, OnModuleInit {
 
   async enable(userId: string, capabilityId: string) { return this.setEnabled(userId, capabilityId, true); }
   async disable(userId: string, capabilityId: string) { return this.setEnabled(userId, capabilityId, false); }
+
+  /**
+   * The readiness engine receives only the signals a household has opted into.
+   * This is the cross-capability boundary: raw records remain inside their
+   * owning service, while downstream consumers operate on published signals.
+   */
+  async publishedSignalsForUser<T extends { capabilityId: string }>(userId: string, signals: T[]): Promise<T[]> {
+    const capabilities = await this.listForUser(userId);
+    const enabled = new Map(capabilities.map((capability) => [capability.id, capability.isEnabled]));
+    return signals.filter((signal) => enabled.get(signalCapabilityOwners[signal.capabilityId] ?? signal.capabilityId) !== false);
+  }
 
   private async setEnabled(userId: string, capabilityId: string, isEnabled: boolean) {
     const capability = this.get(capabilityId);
