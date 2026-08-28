@@ -45,6 +45,7 @@ model User {
   vehicles              Vehicle[]
   homeAssets            HomeAsset[]
   homeMaintenanceTasks  HomeMaintenanceTask[]
+  emergencyPreparednessItems EmergencyPreparednessItem[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
 }
@@ -486,6 +487,34 @@ model HomeMaintenanceTask {
 
   @@index([userId, dueDate])
   @@index([homeAssetId])
+}
+
+enum EmergencyPreparednessCategory {
+  FOOD
+  WATER
+  FIRST_AID
+  IMPORTANT_DOCUMENTS
+  EVACUATION_PLAN
+  OTHER
+}
+
+/// A household-entered preparedness checklist item. Completion indicates only
+/// that the household recorded it as complete; it is not a safety certification.
+model EmergencyPreparednessItem {
+  id          String                       @id @default(uuid())
+  userId      String
+  category    EmergencyPreparednessCategory
+  name        String                       @db.VarChar(120)
+  isComplete  Boolean                      @default(false)
+  reviewDate  DateTime?                    @db.Date
+  notes       String?                      @db.VarChar(1000)
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([userId, reviewDate])
 }
 
 // ─── Transactions ───────────────────────────────────────────────────────────────

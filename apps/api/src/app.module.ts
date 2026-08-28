@@ -16,6 +16,7 @@ import { CommonModule } from './common/common.module';
 import { DebtModule } from './debt/debt.module';
 import { DependentsModule } from './dependents/dependents.module';
 import { EstateDocumentsModule } from './estate-documents/estate-documents.module';
+import { EmergencyPreparednessModule } from './emergency-preparedness/emergency-preparedness.module';
 import { FinancialGoalsModule } from './financial-goals/financial-goals.module';
 import { ImportModule } from './import/import.module';
 import { IncomeSourcesModule } from './income-sources/income-sources.module';
@@ -61,6 +62,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     DebtModule,
     DependentsModule,
     EstateDocumentsModule,
+    EmergencyPreparednessModule,
     FinancialGoalsModule,
     RecurringModule,
     ReadinessModule,

@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common'; import { EmergencyPreparednessController } from './emergency-preparedness.controller'; import { EmergencyPreparednessService } from './emergency-preparedness.service'; @Module({ controllers: [EmergencyPreparednessController], providers: [EmergencyPreparednessService] }) export class EmergencyPreparednessModule {}
