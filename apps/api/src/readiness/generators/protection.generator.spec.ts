@@ -6,6 +6,7 @@ import {
   estateDocumentReviewSignal,
   estateWillRecordSignal,
   emergencyPreparednessSignal,
+  transitionPlanReviewSignal,
   fixedObligationSignal,
   insuranceCoverageTargetSignal,
   insuranceRenewalSignal,
@@ -105,6 +106,13 @@ describe('emergencyPreparednessSignal', () => {
   it('warns only from recorded incomplete checklist items', () => {
     expect(emergencyPreparednessSignal([{ isComplete: true, category: 'WATER' }, { isComplete: false, category: 'EVACUATION_PLAN' }])).toMatchObject({ capabilityId: 'emergency-preparedness', type: 'warning', magnitude: -2 });
     expect(emergencyPreparednessSignal([{ isComplete: true, category: 'WATER' }])).toMatchObject({ type: 'positive' });
+  });
+});
+
+describe('transitionPlanReviewSignal', () => {
+  it('warns only for a recorded upcoming or overdue plan review', () => {
+    expect(transitionPlanReviewSignal({ title: 'Continuity review', reviewDate: new Date('2026-08-20T00:00:00.000Z') }, now)).toMatchObject({ capabilityId: 'household-transitions', type: 'warning', magnitude: -2 });
+    expect(transitionPlanReviewSignal({ title: 'Continuity review', reviewDate: null }, now)).toBeNull();
   });
 });
 

@@ -28,6 +28,7 @@ export async function generateProtectionSignals(
   const insuranceSignals = await generateInsuranceSignals(prisma, userId);
   const estateDocumentSignals = await generateEstateDocumentSignals(prisma, userId);
   const preparednessSignals = await generateEmergencyPreparednessSignals(prisma, userId);
+  const transitionPlanSignals = await generateTransitionPlanSignals(prisma, userId);
   const incomeSources = await prisma.incomeSource.findMany({ where: { userId, isActive: true }, select: { name: true, reviewDate: true } });
   const incomeSignals = incomeSources.map((source) => incomeSourceReviewSignal(source, new Date())).filter((signal): signal is Signal => signal !== null);
   if (incomeSources.length > 0 && incomeSignals.length === 0) incomeSignals.push({ capabilityId: 'income-sources', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${incomeSources.length} active income ${incomeSources.length === 1 ? 'source is' : 'sources are'} recorded. Wardkeep does not infer job security, payment continuity, or income-interruption resilience.` });
@@ -36,7 +37,7 @@ export async function generateProtectionSignals(
   const dependents = await prisma.dependent.findMany({ where: { userId, isActive: true }, select: { label: true, relationship: true, reviewDate: true } });
   const dependentSignals = dependents.map((dependent) => dependentReviewSignal(dependent, new Date())).filter((signal): signal is Signal => signal !== null);
   if (dependents.length > 0 && dependentSignals.length === 0) dependentSignals.push({ capabilityId: 'dependents', type: 'positive', magnitude: 1, pillar: 'protection', weight: 0.5, summary: `${dependents.length} active dependent ${dependents.length === 1 ? 'record is' : 'records are'} entered. Wardkeep does not assess care needs, coverage adequacy, or financial responsibility.` });
-  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...preparednessSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals, ...dependentSignals);
+  signals.push(...emergencyFundSignals, ...insuranceSignals, ...estateDocumentSignals, ...preparednessSignals, ...transitionPlanSignals, ...incomeSignals, ...secondaryLiquiditySignals, ...fixedObligationSignals, ...dependentSignals);
 
   return signals;
 }
@@ -48,6 +49,8 @@ export function emergencyPreparednessSignal(items: Array<{ isComplete: boolean; 
   return { capabilityId: 'emergency-preparedness', type: 'warning', magnitude: incomplete.length >= 3 ? -3 : -2, pillar: 'protection', weight: 0.6, summary: `${incomplete.length} of ${items.length} recorded preparedness items are not marked complete. Review the household checklist; Wardkeep does not assess real-world safety.` };
 }
 async function generateEmergencyPreparednessSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> { const items = await prisma.emergencyPreparednessItem.findMany({ where: { userId }, select: { isComplete: true, category: true } }); const signal = emergencyPreparednessSignal(items); return signal ? [signal] : []; }
+export function transitionPlanReviewSignal(plan: { title: string; reviewDate: Date | null }, now: Date): Signal | null { if (!plan.reviewDate) return null; const days = Math.ceil((plan.reviewDate.getTime() - now.getTime()) / 86_400_000); if (days > 30) return null; return { capabilityId: 'household-transitions', type: 'warning', magnitude: days < 0 ? -2 : -1, pillar: 'protection', weight: 0.5, summary: days < 0 ? `${plan.title} has a recorded review date that has passed. Review the plan when appropriate.` : `${plan.title} is due for a recorded review in ${days} days.` }; }
+async function generateTransitionPlanSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> { const plans = await prisma.householdTransitionPlan.findMany({ where: { userId, isActive: true }, select: { title: true, reviewDate: true } }); return plans.map((plan) => transitionPlanReviewSignal(plan, new Date())).filter((signal): signal is Signal => signal !== null); }
 
 export function dependentReviewSignal(dependent: { label: string | null; relationship: string; reviewDate: Date | null }, now: Date): Signal | null { if (!dependent.reviewDate) return null; const today = new Date(now); today.setHours(0, 0, 0, 0); const days = Math.ceil((dependent.reviewDate.getTime() - today.getTime()) / 86_400_000); const name = dependent.label || dependent.relationship.toLowerCase(); if (days < 0) return { capabilityId: 'dependents', type: 'warning', magnitude: -2, pillar: 'protection', weight: 0.5, summary: `${name} has a review date that has passed. Confirm household planning context is current.` }; if (days <= 30) return { capabilityId: 'dependents', type: 'warning', magnitude: -1, pillar: 'protection', weight: 0.5, summary: `${name} is due for a household-planning review in ${days} days.` }; return null; }
 

@@ -64,6 +64,7 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
     { id: 'insurance-coverage-target', label: 'Recorded policy coverage targets' },
     { id: 'estate-documents', label: 'Estate-planning review dates' },
     { id: 'emergency-preparedness', label: 'Emergency preparedness checklist' },
+    { id: 'household-transitions', label: 'Household transition-plan review dates' },
     { id: 'income-sources', label: 'Recorded income-source reviews' },
     { id: 'secondary-liquidity', label: 'Recorded credit availability' },
     { id: 'fixed-obligations', label: 'Recorded monthly and external commitments' },
