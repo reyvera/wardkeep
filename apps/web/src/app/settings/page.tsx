@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Save, Shield, Key, Clock, AlertTriangle, Settings, LogOut } from 'lucide-react';
+import { Save, Shield, Key, Clock, AlertTriangle, Settings, LogOut, Power } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 interface UserSettings {
@@ -13,18 +13,35 @@ interface UserSettings {
   backupSchedule: string;
 }
 
+interface CapabilitySetting {
+  id: string;
+  name: string;
+  description: string;
+  pillars: string[];
+  isEnabled: boolean;
+}
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const { logout } = useAuth();
   const [form, setForm] = useState<UserSettings>({ aiPrivacyMode: 'LOCAL', openaiKey: '', anthropicKey: '', backupSchedule: 'DAILY' });
 
   const settingsQuery = useQuery({ queryKey: ['settings'], queryFn: () => apiClient.get<UserSettings>('/settings') });
+  const capabilitiesQuery = useQuery({ queryKey: ['capabilities'], queryFn: () => apiClient.get<CapabilitySetting[]>('/capabilities') });
 
   useEffect(() => { if (settingsQuery.data) setForm(settingsQuery.data); }, [settingsQuery.data]);
 
   const saveMutation = useMutation({
     mutationFn: () => apiClient.patch('/settings', form),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] }),
+  });
+  const capabilityMutation = useMutation({
+    mutationFn: ({ id, enable }: { id: string; enable: boolean }) =>
+      apiClient.post(`/capabilities/${id}/${enable ? 'enable' : 'disable'}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['capabilities'] });
+      queryClient.invalidateQueries({ queryKey: ['readiness'] });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); saveMutation.mutate(); };
@@ -113,6 +130,36 @@ export default function SettingsPage() {
           </button>
         </form>
       )}
+
+      <section className="card max-w-xl space-y-4" aria-labelledby="capabilities-heading">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-blue/10"><Power size={16} className="text-accent-blue" /></div>
+          <div>
+            <h2 id="capabilities-heading" className="card-title mb-0">HOUSEHOLD CAPABILITIES</h2>
+            <p className="mt-1 text-xs text-content-secondary">Choose which recorded household domains contribute signals to readiness.</p>
+          </div>
+        </div>
+        {capabilitiesQuery.isLoading && <div className="space-y-2"><div className="skeleton h-16 w-full" /><div className="skeleton h-16 w-full" /></div>}
+        {capabilitiesQuery.isError && <p className="text-sm text-accent-red">{capabilitiesQuery.error.message}</p>}
+        {capabilitiesQuery.data?.map((capability) => (
+          <div key={capability.id} className="flex items-center justify-between gap-4 rounded-lg border border-edge bg-surface-secondary p-3">
+            <div>
+              <p className="text-sm font-medium text-content-primary">{capability.name}</p>
+              <p className="mt-1 text-xs text-content-secondary">{capability.description}</p>
+              <p className="mt-1 text-xs text-content-tertiary">{capability.pillars.join(' · ')}</p>
+            </div>
+            <button
+              type="button"
+              className={capability.isEnabled ? 'btn-secondary shrink-0' : 'btn-primary shrink-0'}
+              disabled={capabilityMutation.isPending}
+              onClick={() => capabilityMutation.mutate({ id: capability.id, enable: !capability.isEnabled })}
+              aria-pressed={capability.isEnabled}
+            >
+              {capability.isEnabled ? 'Disable' : 'Enable'}
+            </button>
+          </div>
+        ))}
+      </section>
 
       {!settingsQuery.data && !settingsQuery.isLoading && !settingsQuery.isError && (
         <div className="card text-center py-12">
