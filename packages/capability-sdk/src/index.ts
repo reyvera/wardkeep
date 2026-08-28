@@ -9,6 +9,31 @@ export type ReadinessPillar =
 export type SignalType = 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';
 export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
+/** The current compatibility contract for independently packaged capabilities. */
+export const CAPABILITY_SDK_VERSION = '1';
+
+export interface CapabilityManifest {
+  id: string;
+  name: string;
+  version: string;
+  sdkVersion: typeof CAPABILITY_SDK_VERSION;
+  pillars: ReadinessPillar[];
+  entrypoint: string;
+  description: string;
+}
+
+/** Validates package metadata before a future marketplace installer evaluates it. */
+export function validateCapabilityManifest(value: unknown): CapabilityManifest {
+  if (!value || typeof value !== 'object') throw new Error('Capability manifest must be an object.');
+  const manifest = value as Partial<CapabilityManifest>;
+  const validPillars: ReadinessPillar[] = ['protection', 'provision', 'preparation', 'prosperity', 'peace'];
+  if (!manifest.id || !/^[a-z0-9-]+$/.test(manifest.id)) throw new Error('Capability manifest id must be a lowercase slug.');
+  if (!manifest.name || !manifest.version || !manifest.description || !manifest.entrypoint) throw new Error('Capability manifest is missing required metadata.');
+  if (manifest.sdkVersion !== CAPABILITY_SDK_VERSION) throw new Error(`Capability requires unsupported SDK version: ${String(manifest.sdkVersion)}.`);
+  if (!Array.isArray(manifest.pillars) || manifest.pillars.length === 0 || manifest.pillars.some((pillar) => !validPillars.includes(pillar))) throw new Error('Capability manifest must declare valid readiness pillars.');
+  return manifest as CapabilityManifest;
+}
+
 /**
  * The only household identity a capability receives when it evaluates data.
  * Capability implementations must use this scope for every data-provider call
