@@ -92,6 +92,7 @@ async function main() {
     await prisma.vehicle.deleteMany({ where: { userId: existing.id } });
     await prisma.homeMaintenanceTask.deleteMany({ where: { userId: existing.id } });
     await prisma.homeAsset.deleteMany({ where: { userId: existing.id } });
+    await prisma.emergencyPreparednessItem.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -390,6 +391,13 @@ async function main() {
   const gutterDue = new Date();
   gutterDue.setDate(gutterDue.getDate() + 25);
   await prisma.homeMaintenanceTask.create({ data: { userId: user.id, name: 'Clean gutters', dueDate: gutterDue, estimatedCost: '180.00' } });
+  const preparednessReview = new Date();
+  preparednessReview.setMonth(preparednessReview.getMonth() + 6);
+  await prisma.emergencyPreparednessItem.createMany({ data: [
+    { userId: user.id, category: 'WATER', name: 'Three-day water supply', isComplete: true, reviewDate: preparednessReview },
+    { userId: user.id, category: 'FIRST_AID', name: 'First-aid kit reviewed', isComplete: true, reviewDate: preparednessReview },
+    { userId: user.id, category: 'EVACUATION_PLAN', name: 'Household evacuation meeting point', isComplete: false, reviewDate: preparednessReview },
+  ] });
   await prisma.vehicle.create({
     data: {
       userId: user.id,
