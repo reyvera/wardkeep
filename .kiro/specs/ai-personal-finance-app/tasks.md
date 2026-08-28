@@ -447,8 +447,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 27. Capability Marketplace Infrastructure
 
-- [~] 27.1 Define Capability packaging format
-  - [ ] Standard directory structure for community Capabilities
+- [x] 27.1 Define Capability packaging format
+  - [x] Standard directory structure for community Capabilities
   - [x] Manifest file (metadata, pillar mapping, dependencies)
   - [x] Validation: type-check against capability-sdk interfaces
   - [x] Versioning and compatibility constraints

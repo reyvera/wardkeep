@@ -20,6 +20,7 @@ export interface CapabilityManifest {
   pillars: ReadinessPillar[];
   entrypoint: string;
   description: string;
+  dependencies?: Record<string, string>;
 }
 
 /** Validates package metadata before a future marketplace installer evaluates it. */

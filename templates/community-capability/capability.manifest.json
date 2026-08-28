@@ -1,0 +1,10 @@
+{
+  "id": "garden",
+  "name": "Garden",
+  "version": "1.0.0",
+  "sdkVersion": "1",
+  "pillars": ["preparation"],
+  "entrypoint": "./src/index.ts",
+  "description": "Seasonal household garden planning.",
+  "dependencies": {}
+}
