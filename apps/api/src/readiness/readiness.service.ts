@@ -20,6 +20,7 @@ import {
   generateProtectionSignals,
   generatePreparationSignals,
 } from './generators';
+import { calculateRecordedNetWorth } from './generators/prosperity.generator';
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
@@ -450,6 +451,7 @@ export class ReadinessService {
   ): Promise<void> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
+    const netWorth = await calculateRecordedNetWorth(this.prisma, userId);
 
     const snapshot = await this.prisma.readinessSnapshot.upsert({
       where: { userId_recordedAt: { userId, recordedAt: today } },
@@ -461,6 +463,7 @@ export class ReadinessService {
         preparation: pillars.preparation,
         prosperity: pillars.prosperity,
         peace: pillars.peace,
+        netWorth,
         recordedAt: today,
       },
       update: {
@@ -470,6 +473,7 @@ export class ReadinessService {
         preparation: pillars.preparation,
         prosperity: pillars.prosperity,
         peace: pillars.peace,
+        netWorth,
       },
     });
 

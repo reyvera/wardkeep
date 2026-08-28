@@ -952,6 +952,7 @@ model ReadinessSnapshot {
   preparation Int
   prosperity  Int
   peace       Int
+  netWorth    Decimal? @db.Decimal(19, 4)
   recordedAt  DateTime @default(now()) @db.Date
 
   signals ReadinessSignal[]

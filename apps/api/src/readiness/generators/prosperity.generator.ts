@@ -60,12 +60,10 @@ function computeAccountBalance(account: {
  * @param userId - The authenticated user's ID
  * @returns Array of net-worth-trend signals
  */
-async function generateNetWorthTrendSignals(
+export async function calculateRecordedNetWorth(
   prisma: PrismaClient,
   userId: string,
-): Promise<Signal[]> {
-  const signals: Signal[] = [];
-
+): Promise<Decimal> {
   const [accounts, vehicles] = await Promise.all([prisma.account.findMany({
     where: { userId, isArchived: false },
     include: {
@@ -100,68 +98,47 @@ async function generateNetWorthTrendSignals(
     if (vehicle.loanBalance) liabilities = liabilities.add(new Decimal(vehicle.loanBalance.toString()));
   }
 
-  const currentNetWorth = assets.sub(liabilities);
+  return assets.sub(liabilities);
+}
 
-  // Check for a historical snapshot from ~30 days ago
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const previousSnapshot = await prisma.readinessSnapshot.findFirst({
-    where: {
-      userId,
-      recordedAt: { lte: thirtyDaysAgo },
-    },
-    orderBy: { recordedAt: 'desc' },
+/** Creates a transparent signal from a current value and chronological monthly values. */
+export function netWorthTrendSignal(current: Decimal, monthlyValues: Decimal[]): Signal | null {
+  if (current.lt(0)) {
+    return { capabilityId: 'accounts', type: 'risk', magnitude: -5, pillar: 'prosperity', summary: `Net worth is negative at $${current.toFixed(2)}. Focus on debt reduction.`, weight: 1 };
+  }
+  const increasedThreeMonths = monthlyValues.length === 3 && monthlyValues.every((value, index) => {
+    const next = index === monthlyValues.length - 1 ? current : monthlyValues[index + 1]!;
+    return next.gt(value);
   });
-
-  if (!previousSnapshot) {
-    // No historical data yet — neutral
-    if (currentNetWorth.gt(0)) {
-      signals.push({
-        capabilityId: 'accounts',
-        type: 'positive',
-        magnitude: 3,
-        pillar: 'prosperity',
-        summary: `Positive net worth of $${currentNetWorth.toFixed(2)}.`,
-        weight: 1.0,
-      });
-    } else if (currentNetWorth.lt(0)) {
-      signals.push({
-        capabilityId: 'accounts',
-        type: 'risk',
-        magnitude: -4,
-        pillar: 'prosperity',
-        summary: `Negative net worth of $${currentNetWorth.toFixed(2)}. Debt exceeds assets.`,
-        weight: 1.0,
-      });
-    }
-    return signals;
+  if (increasedThreeMonths) {
+    return { capabilityId: 'accounts', type: 'positive', magnitude: 6, pillar: 'prosperity', summary: `Recorded net worth has increased across the last three monthly comparisons and is now $${current.toFixed(2)}.`, weight: 1.25 };
   }
-
-  // We have a snapshot but it only stores readiness scores, not raw net worth.
-  // For now, produce a signal based on current net worth state alone.
-  // Future: store net worth in snapshots for trend comparison.
-  if (currentNetWorth.gt(0)) {
-    signals.push({
-      capabilityId: 'accounts',
-      type: 'positive',
-      magnitude: 4,
-      pillar: 'prosperity',
-      summary: `Net worth is positive at $${currentNetWorth.toFixed(2)}.`,
-      weight: 1.0,
-    });
-  } else {
-    signals.push({
-      capabilityId: 'accounts',
-      type: 'risk',
-      magnitude: -5,
-      pillar: 'prosperity',
-      summary: `Net worth is negative at $${currentNetWorth.toFixed(2)}. Focus on debt reduction.`,
-      weight: 1.0,
-    });
+  if (current.gt(0)) {
+    return { capabilityId: 'accounts', type: 'positive', magnitude: monthlyValues.length > 0 ? 4 : 3, pillar: 'prosperity', summary: `${monthlyValues.length > 0 ? 'Net worth is positive' : 'Positive net worth'} at $${current.toFixed(2)}.`, weight: 1 };
   }
+  return null;
+}
 
-  return signals;
+async function generateNetWorthTrendSignals(
+  prisma: PrismaClient,
+  userId: string,
+): Promise<Signal[]> {
+  const currentNetWorth = await calculateRecordedNetWorth(prisma, userId);
+  const now = new Date();
+  const snapshots = await Promise.all([3, 2, 1].map(async (monthsAgo) => {
+    const cutoff = new Date(now);
+    cutoff.setUTCMonth(cutoff.getUTCMonth() - monthsAgo);
+    return prisma.readinessSnapshot.findFirst({
+      where: { userId, recordedAt: { lte: cutoff }, netWorth: { not: null } },
+      orderBy: { recordedAt: 'desc' },
+      select: { netWorth: true },
+    });
+  }));
+  const monthlyValues = snapshots.flatMap((snapshot) =>
+    snapshot?.netWorth === null || snapshot?.netWorth === undefined ? [] : [new Decimal(snapshot.netWorth.toString())],
+  );
+  const signal = netWorthTrendSignal(currentNetWorth, monthlyValues);
+  return signal ? [signal] : [];
 }
 
 /**
