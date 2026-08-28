@@ -286,11 +286,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 21. Capability Registry & SDK
 
-- [ ] 21.1 Create packages/capability-sdk with base interfaces
-  - Define Capability, CapabilityMetadata, CapabilityRegistry interfaces
-  - Define Observation, Signal, Recommendation, DashboardCard, TimelineEvent types
-  - Export ReadinessPillar type
-  - This becomes the contract for all future Capabilities (core and community)
+- [x] 21.1 Create packages/capability-sdk with base interfaces
+  - [x] Define Capability, CapabilityMetadata, CapabilityRegistry interfaces
+  - [x] Define Observation, Signal, Recommendation, DashboardCard, TimelineEvent types
+  - [x] Export ReadinessPillar type
+  - [x] This becomes the contract for all future Capabilities (core and community)
 
 - [ ] 21.2 Implement CapabilityRegistry in apps/api
   - NestJS service that manages Capability lifecycle (register, enable, disable)
