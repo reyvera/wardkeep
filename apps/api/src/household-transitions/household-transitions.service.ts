@@ -9,6 +9,7 @@ type PlanInput = {
   isActive?: boolean;
   notes?: string | null;
 };
+type ContactInput = { role?: 'INCAPACITY_AGENT' | 'POTENTIAL_EXECUTOR' | 'SURVIVING_HOUSEHOLD_CONTACT'; name?: string; email?: string | null; phone?: string | null; notes?: string | null };
 
 @Injectable()
 export class HouseholdTransitionsService {
@@ -19,6 +20,18 @@ export class HouseholdTransitionsService {
       where: { userId },
       orderBy: [{ isActive: 'desc' }, { reviewDate: 'asc' }],
     });
+  }
+
+  listContacts(userId: string) { return this.prisma.householdTransitionContact.findMany({ where: { userId }, orderBy: [{ role: 'asc' }, { name: 'asc' }] }); }
+
+  createContact(userId: string, input: ContactInput & { role: NonNullable<ContactInput['role']>; name: string }) {
+    return this.prisma.householdTransitionContact.create({ data: { userId, role: input.role, name: input.name, email: input.email ?? null, phone: input.phone ?? null, notes: input.notes ?? null } });
+  }
+
+  async removeContact(userId: string, id: string) {
+    const contact = await this.prisma.householdTransitionContact.findFirst({ where: { id, userId } });
+    if (!contact) throw new NotFoundException('Transition contact not found');
+    await this.prisma.householdTransitionContact.delete({ where: { id } });
   }
 
   /** A factual, read-only check of records a household may want to organize. */

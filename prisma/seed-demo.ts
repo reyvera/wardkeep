@@ -94,6 +94,7 @@ async function main() {
     await prisma.homeAsset.deleteMany({ where: { userId: existing.id } });
     await prisma.emergencyPreparednessItem.deleteMany({ where: { userId: existing.id } });
     await prisma.householdTransitionPlan.deleteMany({ where: { userId: existing.id } });
+    await prisma.householdTransitionContact.deleteMany({ where: { userId: existing.id } });
     await prisma.recommendation.deleteMany({ where: { userId: existing.id } });
     await prisma.advisorInsight.deleteMany({ where: { userId: existing.id } });
     await prisma.readinessSignal.deleteMany({ where: { userId: existing.id } });
@@ -402,6 +403,10 @@ async function main() {
   const transitionPlanReview = new Date();
   transitionPlanReview.setMonth(transitionPlanReview.getMonth() + 6);
   await prisma.householdTransitionPlan.create({ data: { userId: user.id, mode: 'INCAPACITY_CONTINUITY', title: 'Household continuity review', reviewDate: transitionPlanReview, notes: 'Demo: review document locations, contacts, and recurring obligations. This is not an authority designation.' } });
+  await prisma.householdTransitionContact.createMany({ data: [
+    { userId: user.id, role: 'INCAPACITY_AGENT', name: 'Morgan Rivera', email: 'morgan@example.com', phone: '555-0101', notes: 'Demo planning contact only; this does not grant access or establish authority.' },
+    { userId: user.id, role: 'POTENTIAL_EXECUTOR', name: 'Casey Rivera', email: 'casey@example.com', phone: '555-0102', notes: 'Demo planning contact only; verify authority and local requirements separately.' },
+  ] });
   await prisma.vehicle.create({
     data: {
       userId: user.id,

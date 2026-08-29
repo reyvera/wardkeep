@@ -11,6 +11,7 @@ const planSchema = z.object({
   reviewDate: z.string().date().nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
+const contactSchema = z.object({ role: z.enum(['INCAPACITY_AGENT', 'POTENTIAL_EXECUTOR', 'SURVIVING_HOUSEHOLD_CONTACT']), name: z.string().trim().min(1).max(120), email: z.string().email().max(254).nullable().optional(), phone: z.string().trim().max(40).nullable().optional(), notes: z.string().trim().max(1000).nullable().optional() });
 
 @Controller('household-transitions')
 @UseGuards(AuthGuard)
@@ -23,6 +24,19 @@ export class HouseholdTransitionsController {
 
   @Get()
   list(@Req() req: ScopedRequest) { return this.service.list(req.userId!); }
+
+  @Get('contacts')
+  listContacts(@Req() req: ScopedRequest) { return this.service.listContacts(req.userId!); }
+
+  @Post('contacts')
+  createContact(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = contactSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.service.createContact(req.userId!, parsed.data);
+  }
+
+  @Delete('contacts/:id')
+  removeContact(@Req() req: ScopedRequest, @Param('id') id: string) { return this.service.removeContact(req.userId!, id); }
 
   @Post()
   create(@Req() req: ScopedRequest, @Body() body: unknown) {
