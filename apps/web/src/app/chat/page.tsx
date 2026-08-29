@@ -22,7 +22,7 @@ interface ChatResponse {
 }
 
 const QUICK_PROMPTS = [
-  'Explain my readiness score.',
+  'Explain my household picture.',
   'What should I prioritize next?',
   'What should I review if I lose my job?',
 ];
@@ -64,7 +64,7 @@ export default function ChatPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <div className="mb-4">
         <h1 className="text-page-title text-content-primary">Advisor</h1>
-        <p className="text-sm text-content-tertiary mt-1">Ask about your finances, readiness, budget, or spending patterns. Calculations remain verified against your records.</p>
+        <p className="text-sm text-content-tertiary mt-1">Ask about your money, budget, or what needs attention. Any numbers in the reply are checked against your records.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {QUICK_PROMPTS.map((prompt) => (
             <button
@@ -105,7 +105,7 @@ export default function ChatPage() {
                 )}
                 {msg.readinessReferences && msg.readinessReferences.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1 border-t border-edge pt-2 text-xs">
-                    <span className="text-content-tertiary">Related readiness:</span>
+                    <span className="text-content-tertiary">Related areas:</span>
                     {msg.readinessReferences.map((pillar) => (
                       <Link
                         key={pillar}

@@ -31,9 +31,9 @@ export default function HomePage() {
           </div>
 
           <div className="relative mx-auto w-full max-w-md rounded-2xl border border-[var(--border-hover)] bg-[var(--bg-secondary)] p-5 shadow-2xl shadow-black/20">
-            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4"><div><p className="text-xs font-medium uppercase tracking-wider text-content-tertiary">Household readiness</p><p className="mt-1 text-sm text-content-secondary">Based on what Wardkeep can see</p></div><div className="flex h-14 w-14 items-center justify-center rounded-full border-[5px] border-accent-blue text-lg font-bold text-content-primary">—</div></div>
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4"><div><p className="text-xs font-medium uppercase tracking-wider text-content-tertiary">Your household picture</p><p className="mt-1 text-sm text-content-secondary">Based on what you have added</p></div><div className="flex h-14 w-14 items-center justify-center rounded-full border-[5px] border-accent-blue text-lg font-bold text-content-primary">—</div></div>
             <div className="space-y-3 py-5">
-              <div className="rounded-xl bg-[var(--bg-elevated)] p-3"><div className="flex items-center gap-3"><ShieldCheck className="text-accent-green" size={19} /><div className="flex-1"><p className="text-sm font-medium text-content-primary">Protection</p><p className="text-xs text-content-secondary">Your cash cushion and resilience</p></div><span className="text-xs text-content-tertiary">In view</span></div></div>
+              <div className="rounded-xl bg-[var(--bg-elevated)] p-3"><div className="flex items-center gap-3"><ShieldCheck className="text-accent-green" size={19} /><div className="flex-1"><p className="text-sm font-medium text-content-primary">Protection</p><p className="text-xs text-content-secondary">Money for surprises and backup plans</p></div><span className="text-xs text-content-tertiary">In view</span></div></div>
               <div className="rounded-xl bg-[var(--bg-elevated)] p-3"><div className="flex items-center gap-3"><TrendingUp className="text-accent-blue" size={19} /><div className="flex-1"><p className="text-sm font-medium text-content-primary">What’s changing</p><p className="text-xs text-content-secondary">Spend, bills, and financial progress</p></div><span className="text-xs text-content-tertiary">Clear</span></div></div>
               <div className="rounded-xl border border-accent-yellow/25 bg-accent-yellow/5 p-3"><p className="text-xs font-medium text-accent-yellow">Wardkeep tells you what it knows—and what still needs attention.</p></div>
             </div>
@@ -46,7 +46,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-14 sm:grid-cols-3 lg:px-8">
           {[
             ['See the whole picture', 'Accounts, spending, debt, budgets, and recurring bills together—not scattered across apps.'],
-            ['Understand your readiness', 'A plain-language view of your household’s strengths, gaps, and confidence in the data.'],
+            ['Understand your household picture', 'A plain-language view of what is going well, what needs attention, and how much information you have added.'],
             ['Take the next right step', 'Useful signals and upcoming needs, so small actions can prevent bigger surprises.'],
           ].map(([title, text]) => <div key={title}><div className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg bg-accent-blue/10 text-sm font-semibold text-accent-blue"><Check size={17} /></div><h2 className="text-base font-semibold text-content-primary">{title}</h2><p className="mt-2 text-sm leading-6 text-content-secondary">{text}</p></div>)}
         </div>

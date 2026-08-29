@@ -75,14 +75,14 @@ const PILLARS: Record<
   protection: {
     label: 'Protection',
     icon: Shield,
-    description: 'How well the household can absorb a financial shock.',
+    description: 'How prepared your household is for a surprise expense or loss of income.',
     sources: [
       'Account balances',
       'Recent debit transactions',
       'Insurance, estate-planning, and income-source records',
     ],
     observed: [
-      { capability: 'emergency-fund', label: 'Liquid reserves and ordinary expense coverage' },
+      { capability: 'emergency-fund', label: 'Money available now compared with everyday spending' },
       { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
       {
         capability: 'insurance-record-details',
@@ -90,7 +90,7 @@ const PILLARS: Record<
       },
       {
         capability: 'insurance-deductibles',
-        label: 'Recorded deductibles compared with liquid reserves',
+        label: 'Out-of-pocket insurance costs compared with money available now',
       },
       {
         capability: 'estate-documents',
@@ -103,7 +103,7 @@ const PILLARS: Record<
       },
       {
         capability: 'fixed-obligations',
-        label: 'Recorded debt minimums, recurring bills, and external commitments compared with liquid reserves',
+        label: 'Minimum debt payments, regular bills, and outside commitments compared with money available now',
       },
       { capability: 'dependents', label: 'Entered dependent records and review timing' },
     ],
@@ -117,11 +117,11 @@ const PILLARS: Record<
   provision: {
     label: 'Provision',
     icon: Wallet,
-    description: 'Whether day-to-day income, bills, and spending are sustainable.',
+    description: 'Whether money coming in can comfortably cover your bills and spending.',
     sources: ['Budgets', 'Transactions', 'Recurring bills'],
     observed: [
       { capability: 'budgets', label: 'Budget pace and overspending' },
-      { capability: 'cashflow', label: 'Cash-flow forecast' },
+      { capability: 'cashflow', label: 'Money coming in and going out' },
       { capability: 'recurring', label: 'Upcoming recurring bills' },
     ],
     next: ['Income stability', 'Essential expense coverage', 'Recurring-payment reliability'],
@@ -129,7 +129,7 @@ const PILLARS: Record<
   preparation: {
     label: 'Preparation',
     icon: Hammer,
-    description: 'How ready the household is for known future costs and responsibilities.',
+    description: 'How ready your household is for costs and responsibilities you already know are coming.',
     sources: ['User-entered planned expenses'],
     observed: [{ capability: 'planned-expenses', label: 'Recorded future expense due dates' }],
     next: [
@@ -142,10 +142,10 @@ const PILLARS: Record<
   prosperity: {
     label: 'Prosperity',
     icon: TrendingUp,
-    description: 'Whether the household’s long-term financial position is improving.',
+    description: 'Whether what you own and owe is moving in a healthy direction over time.',
     sources: ['Account balances', 'Transactions', 'Debt profiles'],
     observed: [
-      { capability: 'accounts', label: 'Net-worth position' },
+      { capability: 'accounts', label: 'What you own minus what you owe' },
       { capability: 'debt', label: 'Debt obligations and payoff progress' },
     ],
     next: ['Net-worth history', 'Savings rate', 'Investment progress', 'Interest burden'],
@@ -154,7 +154,7 @@ const PILLARS: Record<
     label: 'Peace',
     icon: PiggyBank,
     description:
-      'A derived indicator of stability, based on the least-ready observed area and recent score movement.',
+      'A simple summary based on the area that needs the most help and any recent changes.',
     sources: ['Readiness pillar scores', 'Readiness snapshots'],
     observed: [],
     next: [
@@ -174,11 +174,11 @@ function scoreColor(score: number) {
 }
 
 function confidenceLabel(coverage: number, staleAccounts = 0) {
-  if (staleAccounts > 0) return 'Freshness needs review';
-  if (coverage >= 75) return 'High confidence';
-  if (coverage >= 40) return 'Moderate confidence';
-  if (coverage > 0) return 'Limited confidence';
-  return 'Not evaluated';
+  if (staleAccounts > 0) return 'Some account info may be out of date';
+  if (coverage >= 75) return 'Most of your picture is filled in';
+  if (coverage >= 40) return 'Some of your picture is filled in';
+  if (coverage > 0) return 'Just a little information so far';
+  return 'Not enough information yet';
 }
 
 function signalColor(type: Signal['type']) {
@@ -254,7 +254,7 @@ export default function ReadinessPillarPage() {
           <div className="flex gap-3">
             <Icon size={24} style={{ color }} className="mt-1 flex-shrink-0" />
             <div>
-              <p className="card-title">READINESS PILLAR</p>
+              <p className="card-title">THIS PART OF YOUR HOUSEHOLD PICTURE</p>
               <h1 className="text-page-title">{meta.label}</h1>
               <p className="text-content-secondary max-w-2xl">{meta.description}</p>
             </div>
@@ -266,7 +266,8 @@ export default function ReadinessPillarPage() {
             <p
               className={`text-sm mt-1 ${data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : 'text-content-secondary'}`}
             >
-              {confidenceLabel(coverage, data.dataFreshness.staleAccounts)} · {coverage}% coverage
+              {confidenceLabel(coverage, data.dataFreshness.staleAccounts)} · Wardkeep can check{' '}
+              {coverage}% of this area
             </p>
             {trend && (
               <>
@@ -293,11 +294,11 @@ export default function ReadinessPillarPage() {
             <CircleHelp size={20} className="text-accent-yellow flex-shrink-0 mt-0.5" />
             <div>
               <h2 className="text-lg font-semibold text-content-primary">
-                This area has not been evaluated yet
+                Wardkeep needs a little more information here
               </h2>
               <p className="text-sm text-content-secondary mt-1">
-                Wardkeep does not have enough recorded evidence to evaluate this area, so it will
-                not present a score as if the household were prepared.
+                Add a few details in this area before Wardkeep shows a score. It will not guess or
+                make it look like everything is covered when it is not.
               </p>
             </div>
           </div>
@@ -322,7 +323,7 @@ export default function ReadinessPillarPage() {
                     <p className="text-sm text-content-primary">{signal.summary}</p>
                     <p className="text-xs text-content-tertiary mt-1">
                       {signal.provenance
-                        ? `Sources: ${signal.provenance.sources.join(' · ')}`
+                        ? `Based on: ${signal.provenance.sources.join(' · ')}`
                         : `${signal.capabilityId.replace(/-/g, ' ')} · current calculation`}
                     </p>
                     {signal.provenance && (
@@ -330,13 +331,13 @@ export default function ReadinessPillarPage() {
                         <p
                           className={`text-xs mt-1 ${signal.provenance.evidenceState === 'stale' ? 'text-accent-yellow' : 'text-content-secondary'}`}
                         >
-                          Evidence: {signal.provenance.evidenceState.replace(/_/g, ' ')}
+                          Info status: {signal.provenance.evidenceState.replace(/_/g, ' ')}
                         </p>
                         <p className="text-xs text-content-secondary mt-1">
                           {signal.provenance.method}
                         </p>
                         <p className="text-xs text-content-tertiary mt-1">
-                          Limit: {signal.provenance.limitation}
+                          What this cannot tell you: {signal.provenance.limitation}
                         </p>
                       </>
                     )}
@@ -356,7 +357,7 @@ export default function ReadinessPillarPage() {
             </h2>
             <p className="text-sm text-content-secondary mt-1">
               Add renewal dates and deductibles so Wardkeep can flag upcoming renewals and compare
-              recorded out-of-pocket costs with liquid reserves.
+              recorded out-of-pocket costs with money available now.
             </p>
           </div>
           <Link href="/insurance" className="btn-primary whitespace-nowrap">
@@ -366,18 +367,18 @@ export default function ReadinessPillarPage() {
       )}
 
       <section className="card">
-        <h2 className="card-title">DATA USED</h2>
+        <h2 className="card-title">INFORMATION USED</h2>
         {meta.sources.length === 0 ? (
           <p className="text-sm text-content-tertiary">
-            No source data is connected to this pillar yet.
+            Wardkeep does not have information for this area yet.
           </p>
         ) : (
           <>
             <p className="text-sm text-content-secondary">
-              This assessment was calculated from: {meta.sources.join(' · ')}.
+              Wardkeep used: {meta.sources.join(' · ')}.
             </p>
             <p className="text-xs text-content-tertiary mt-3">
-              Evaluated {new Date(data.evaluatedAt).toLocaleString()}. Account sources:{' '}
+              Last checked {new Date(data.evaluatedAt).toLocaleString()}. Accounts:{' '}
               {data.dataFreshness.synchronizedAccounts} synchronized ·{' '}
               {data.dataFreshness.manualAccounts} manual
               {data.dataFreshness.staleAccounts > 0
@@ -391,10 +392,10 @@ export default function ReadinessPillarPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="card">
-          <h2 className="card-title">EVALUATED FACTORS</h2>
+          <h2 className="card-title">WHAT WARDKEEP CAN CHECK</h2>
           {meta.observed.length === 0 ? (
             <p className="text-sm text-content-tertiary">
-              No direct factors are evaluated in this pillar yet.
+              There is not enough information to check anything in this area yet.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -415,7 +416,7 @@ export default function ReadinessPillarPage() {
           )}
         </section>
         <section className="card">
-          <h2 className="card-title">STILL NEEDED FOR A COMPLETE PICTURE</h2>
+          <h2 className="card-title">WHAT WOULD MAKE THIS MORE USEFUL</h2>
           <ul className="space-y-3">
             {explanation.notEvaluated.map((factor) => (
               <li key={factor.id} className="flex gap-2 text-sm">
@@ -426,12 +427,12 @@ export default function ReadinessPillarPage() {
           </ul>
           {meta.next.length > 0 && (
             <p className="text-xs text-content-tertiary mt-4">
-              Further coverage planned: {meta.next.join(' · ')}.
+              Wardkeep may add these checks later: {meta.next.join(' · ')}.
             </p>
           )}
           <p className="text-xs text-content-tertiary mt-4">
-            Coverage reflects currently evaluated factors. More source-specific freshness rules are
-            still being defined.
+            This is based only on the items Wardkeep can check today. It will be clearer about when
+            each kind of information was last updated as more connections are added.
           </p>
         </section>
       </div>

@@ -136,7 +136,7 @@ export default function SettingsPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-blue/10"><Power size={16} className="text-accent-blue" /></div>
           <div>
             <h2 id="capabilities-heading" className="card-title mb-0">HOUSEHOLD CAPABILITIES</h2>
-            <p className="mt-1 text-xs text-content-secondary">Choose which recorded household domains contribute signals to readiness.</p>
+            <p className="mt-1 text-xs text-content-secondary">Choose which parts of your household information Wardkeep uses in your household picture.</p>
           </div>
         </div>
         {capabilitiesQuery.isLoading && <div className="space-y-2"><div className="skeleton h-16 w-full" /><div className="skeleton h-16 w-full" /></div>}

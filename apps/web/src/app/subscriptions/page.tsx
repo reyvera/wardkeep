@@ -91,7 +91,7 @@ export default function SubscriptionsPage() {
           <CreditCard size={40} className="mx-auto mb-3 text-content-tertiary" />
           <p className="text-sm text-content-secondary">No subscriptions marked yet</p>
           <p className="mt-1 text-xs text-content-tertiary">
-            Open Cash Flow and use the card icon beside a recurring bill to mark it as a
+            Open Bills &amp; Money Flow and use the card icon beside a recurring bill to mark it as a
             subscription.
           </p>
         </div>

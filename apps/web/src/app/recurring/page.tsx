@@ -94,7 +94,7 @@ export default function RecurringPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-page-title text-content-primary">Cash Flow &amp; Recurring</h1>
+      <h1 className="text-page-title text-content-primary">Bills &amp; Money Flow</h1>
 
       {cashFlowQuery.data &&
         cashFlowQuery.data.projections.length > 0 &&
@@ -258,7 +258,7 @@ export default function RecurringPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-section text-content-primary">Cash Flow Forecast (90 days)</h2>
+          <h2 className="text-section text-content-primary">Money Flow Forecast (90 days)</h2>
           <div className="w-56">
             <select
               value={accountId}
@@ -338,7 +338,7 @@ export default function RecurringPage() {
             <CalendarClock size={40} className="mx-auto text-content-tertiary mb-3" />
             <p className="text-content-secondary text-sm">No forecast data available</p>
             <p className="text-content-tertiary text-xs mt-1">
-              Confirm recurring transactions to see your cash flow projection
+              Confirm your regular bills to see how money may move over time
             </p>
           </div>
         )}

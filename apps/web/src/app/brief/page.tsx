@@ -35,16 +35,16 @@ interface PeriodicBrief {
 }
 
 function readinessLabel(brief: MorningBrief) {
-  if (brief.readiness.state === 'not_evaluated') return 'Not evaluated yet';
-  if (brief.readiness.state === 'partial') return 'Partial picture';
-  return 'Readiness';
+  if (brief.readiness.state === 'not_evaluated') return 'NOT ENOUGH INFORMATION YET';
+  if (brief.readiness.state === 'partial') return 'PARTIAL PICTURE';
+  return 'YOUR HOUSEHOLD PICTURE';
 }
 
 function coverageSummary(brief: MorningBrief) {
   if (brief.readiness.state === 'not_evaluated') {
-    return 'Wardkeep has not evaluated readiness factors from the available records yet.';
+    return 'Add a few more household details so Wardkeep can give you a useful picture.';
   }
-  return `${brief.readiness.coverage}% of currently evaluated factors are covered.`;
+  return `Wardkeep has ${brief.readiness.coverage}% of the information it checks.`;
 }
 
 export default function BriefPage() {
@@ -78,7 +78,7 @@ export default function BriefPage() {
       <div>
         <div className="flex items-center gap-2 text-accent-yellow"><Sun size={20} /><span className="text-sm font-medium">MORNING BRIEF</span></div>
         <h1 className="mt-2 text-page-title">{data.greeting}</h1>
-        <p className="mt-1 text-sm text-content-secondary">A deterministic view of your recorded household information for the week ahead.</p>
+        <p className="mt-1 text-sm text-content-secondary">A simple look at the household details you have entered and what is coming up this week.</p>
       </div>
 
       <section className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -101,7 +101,7 @@ export default function BriefPage() {
                 <p className="mt-2 text-sm text-content-primary">{data.priority.summary}</p>
                 <Link href={data.priority.href} className="btn-secondary mt-3 text-xs">{data.priority.action}</Link>
               </>
-            ) : <p className="mt-2 text-sm text-content-secondary">No active recommendation is currently supported by the available records.</p>}
+            ) : <p className="mt-2 text-sm text-content-secondary">Nothing stands out from the information Wardkeep has right now.</p>}
           </div>
         </div>
       </section>
@@ -143,8 +143,8 @@ export default function BriefPage() {
           <div className="mt-4 space-y-3 text-sm">
             <p className="text-content-primary">
               {periodicBrief.data.scoreChange.delta === null
-                ? 'No score comparison is available yet; Wardkeep needs an older recorded readiness snapshot.'
-                : `Readiness ${periodicBrief.data.scoreChange.delta >= 0 ? 'increased' : 'decreased'} by ${Math.abs(periodicBrief.data.scoreChange.delta)} points over ${periodicBrief.data.scoreChange.elapsedDays} recorded days.`}
+                ? 'There is no earlier check-in to compare with yet.'
+                : `Your household picture ${periodicBrief.data.scoreChange.delta >= 0 ? 'improved' : 'dropped'} by ${Math.abs(periodicBrief.data.scoreChange.delta)} points over ${periodicBrief.data.scoreChange.elapsedDays} days.`}
             </p>
             <p className="text-content-secondary">
               {periodicBrief.data.actionsCompleted === 0
@@ -162,7 +162,7 @@ export default function BriefPage() {
             )}
             {periodicBrief.data.newRisks.length > 0 && (
               <div>
-                <p className="font-medium text-content-primary">Newly observed risks</p>
+                <p className="font-medium text-content-primary">New things that need attention</p>
                 <ul className="mt-1 space-y-1 text-content-secondary">
                   {periodicBrief.data.newRisks.map((risk) => (
                     <li key={risk}>{risk}</li>
@@ -181,7 +181,7 @@ export default function BriefPage() {
             <div className="min-w-0 flex-1">
               <h2 className="card-title">CONNECTED INSIGHTS</h2>
               <p className="mt-1 text-sm text-content-secondary">
-                Observations supported by more than one recorded readiness factor.
+                Helpful connections Wardkeep found across more than one part of your household information.
               </p>
               <ul className="mt-4 space-y-4">
                 {insights.data!.map((insight) => (

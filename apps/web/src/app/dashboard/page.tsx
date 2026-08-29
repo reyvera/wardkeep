@@ -181,43 +181,43 @@ function getSignalColor(type: Signal['type']): string {
 }
 
 function coverageLabel(coverage: number, staleAccounts = 0): string {
-  if (staleAccounts > 0) return 'Freshness needs review';
-  if (coverage >= 75) return 'High confidence';
-  if (coverage >= 40) return 'Moderate confidence';
-  if (coverage > 0) return 'Limited confidence';
-  return 'Not evaluated';
+  if (staleAccounts > 0) return 'Some account info may be out of date';
+  if (coverage >= 75) return 'Most of your picture is filled in';
+  if (coverage >= 40) return 'Some of your picture is filled in';
+  if (coverage > 0) return 'Just a little information so far';
+  return 'Not enough information yet';
 }
 
 const PILLAR_META: Record<string, { label: string; icon: typeof Shield; description: string }> = {
   protection: {
     label: 'Protection',
     icon: Shield,
-    description: 'Reserves, recorded policies, and shock resilience',
+    description: 'Money for surprises, insurance, and backup plans',
   },
   provision: {
     label: 'Provision',
     icon: Wallet,
-    description: 'Cash flow, bills, budget adherence',
+    description: 'Day-to-day money, bills, and spending plan',
   },
   preparation: {
     label: 'Preparation',
     icon: Hammer,
-    description: 'Maintenance, goals, planning',
+    description: 'Upcoming costs, upkeep, and plans',
   },
   prosperity: {
     label: 'Prosperity',
     icon: TrendingUp,
-    description: 'Net worth, debt reduction, investments',
+    description: 'What you own, what you owe, and long-term progress',
   },
   peace: {
     label: 'Peace',
     icon: PiggyBank,
-    description: 'Overall stability indicator',
+    description: 'A summary of how steady things look overall',
   },
 };
 
 const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
-  'emergency-fund': { href: '/accounts', label: 'Review liquid accounts' },
+  'emergency-fund': { href: '/accounts', label: 'Review money available now' },
   insurance: { href: '/insurance', label: 'Review policies' },
   'insurance-record-details': { href: '/insurance', label: 'Complete policy details' },
   'insurance-deductibles': { href: '/insurance', label: 'Review deductibles' },
@@ -228,7 +228,7 @@ const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   dependents: { href: '/dependents', label: 'Review dependents' },
   'planned-expenses': { href: '/planned-expenses', label: 'Review planned expenses' },
   budgets: { href: '/budget', label: 'Review budget' },
-  cashflow: { href: '/dashboard/details', label: 'Review cash flow' },
+  cashflow: { href: '/dashboard/details', label: 'Review money flow' },
   recurring: { href: '/recurring', label: 'Review recurring bills' },
   accounts: { href: '/accounts', label: 'Review accounts' },
   debt: { href: '/debt', label: 'Review debt' },
@@ -238,7 +238,7 @@ function signalAction(signal: Signal): { href: string; label: string } {
   return (
     SIGNAL_ACTIONS[signal.capabilityId] ?? {
       href: `/dashboard/readiness/${signal.pillar}`,
-      label: 'View readiness factor',
+      label: 'See what affects this',
     }
   );
 }
@@ -439,15 +439,15 @@ export default function DashboardPage() {
 
           {/* Summary text */}
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-xl font-semibold text-content-primary mb-1">Household readiness</h2>
+            <h2 className="text-xl font-semibold text-content-primary mb-1">Your household picture</h2>
             <p className="text-sm text-content-secondary">
               {observedOverall === null ? (
-                'Add accounts and ordinary expenses before Wardkeep can assess your readiness.'
+                'Add your accounts and everyday spending so Wardkeep can give you a useful picture.'
               ) : (
                 <>
                   {strongest && (
                     <>
-                      Strongest observed:{' '}
+                      Looking strongest:{' '}
                       <span className="text-content-primary">
                         {PILLAR_META[strongest[0]]?.label} {strongest[1]}
                       </span>
@@ -456,22 +456,23 @@ export default function DashboardPage() {
                   )}
                   {weakest && (
                     <>
-                      Most limited observed:{' '}
+                      Needs the most attention:{' '}
                       <span className="text-content-primary">
                         {PILLAR_META[weakest[0]]?.label} {weakest[1]}
                       </span>
                       .{' '}
                     </>
                   )}
-                  This is a {data.overallAssessment.state === 'partial' ? 'partial' : 'complete'}{' '}
-                  assessment of the information currently available.
+                  {data.overallAssessment.state === 'partial'
+                    ? 'Wardkeep is still missing some information.'
+                    : 'This is based on the information you have added so far.'}
                 </>
               )}
             </p>
             <div className="flex flex-wrap gap-4 mt-3 text-xs text-content-tertiary">
               <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>
-                {coverageLabel(data.coverage, data.dataFreshness.staleAccounts)} · {data.coverage}%
-                coverage
+                {coverageLabel(data.coverage, data.dataFreshness.staleAccounts)} · Wardkeep has{' '}
+                {data.coverage}% of the information it checks
               </span>
               <span className={data.dataFreshness.staleAccounts > 0 ? 'text-accent-yellow' : ''}>
                 {data.dataFreshness.staleAccounts > 0
@@ -507,7 +508,7 @@ export default function DashboardPage() {
                 <>
                   {data.overallAssessment.state === 'partial' && (
                     <p className="mt-2 text-xs text-content-tertiary">
-                      Trend of the factors Wardkeep has evaluated so far.
+                      How this picture has changed based on what Wardkeep can check so far.
                     </p>
                   )}
                   <p
@@ -586,8 +587,8 @@ export default function DashboardPage() {
               </div>
               <p className="text-xs text-content-tertiary mt-2">
                 {key === 'peace'
-                  ? 'Derived from observed pillars'
-                  : `${coverageLabel(coverage, data.dataFreshness.staleAccounts)} · ${coverage}% covered`}
+                  ? 'Based on the other areas above'
+                  : `${coverageLabel(coverage, data.dataFreshness.staleAccounts)} · Wardkeep can check ${coverage}% here`}
               </p>
               {pillarSignals.map((signal) => (
                 <p
@@ -715,7 +716,7 @@ export default function DashboardPage() {
           <h3 className="card-title">Needs attention</h3>
           {data.topRisks.length === 0 ? (
             <p className="text-sm text-content-tertiary">
-              No confirmed risks yet. More household information improves this assessment.
+              Nothing needs attention from the information Wardkeep has so far. Adding more details can make this more useful.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -831,7 +832,7 @@ export default function DashboardPage() {
         </h3>
         {data.recentChanges.length === 0 ? (
           <p className="text-sm text-content-tertiary">
-            No readiness changes have been recorded yet.
+            No changes in this picture have been recorded yet.
           </p>
         ) : (
           <ul className="space-y-3">
@@ -862,8 +863,8 @@ export default function DashboardPage() {
           </ul>
         )}
         <p className="text-xs text-content-tertiary mt-4">
-          Compared with the closest daily readiness snapshot available for this period. A reason is
-          shown when Wardkeep can identify a recorded factor behind the change.
+          Compared with the nearest daily check-in Wardkeep has for this period. Wardkeep explains
+          a change when it can connect it to information you entered.
         </p>
       </div>
 
