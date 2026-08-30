@@ -14,6 +14,7 @@ interface RecurringTransaction {
   nextExpected: string;
   isSubscription: boolean;
   cancelledAt: string | null;
+  chargeAfterCancellation?: boolean;
 }
 
 function formatCurrency(value: number): string {
@@ -155,7 +156,7 @@ export default function SubscriptionsPage() {
                     {record.frequency} · next charge{' '}
                     {new Date(record.nextExpected).toLocaleDateString()}
                   </p>
-                  {record.cancelledAt && <p className="text-xs text-accent-yellow">Marked cancelled {new Date(record.cancelledAt).toLocaleDateString()} · this charge is still expected</p>}
+                  {record.cancelledAt && <p className={record.chargeAfterCancellation ? 'text-xs text-accent-red' : 'text-xs text-accent-yellow'}>{record.chargeAfterCancellation ? 'A charge was recorded after cancellation' : `Marked cancelled ${new Date(record.cancelledAt).toLocaleDateString()} · a future charge is still expected`}</p>}
                 </div>
                 <p className="text-sm font-bold tabular-nums text-content-primary">
                   ${formatCurrency(Number(record.expectedAmount))}

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { TransactionType } from '@wardkeep/shared';
 
 @Injectable()
 export class RecurringService {
@@ -17,6 +18,8 @@ export class RecurringService {
       orderBy: { nextExpected: 'asc' },
     });
 
+    const cancellations = records.filter((record) => record.cancelledAt);
+    const charges = cancellations.length === 0 ? [] : await this.prisma.transaction.findMany({ where: { userId, type: TransactionType.DEBIT, OR: cancellations.map((record) => ({ merchant: record.merchant, date: { gt: record.cancelledAt! } })) }, select: { merchant: true, date: true } });
     return records.map((r) => ({
       id: r.id,
       userId: r.userId,
@@ -30,6 +33,7 @@ export class RecurringService {
       isActive: r.isActive,
       isSubscription: r.isSubscription,
       cancelledAt: r.cancelledAt,
+      chargeAfterCancellation: !!r.cancelledAt && charges.some((charge) => charge.merchant === r.merchant && charge.date > r.cancelledAt!),
       createdAt: r.createdAt,
     }));
   }
