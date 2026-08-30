@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { MODEL_2_PILLAR_BY_CAPABILITY, MODEL_2_PILLAR_WEIGHTS, reclassifySignalForModel2, reclassifySignalsForModel2 } from './model-2';
+import {
+  MODEL_2_DIRECT_PILLARS,
+  MODEL_2_PILLAR_BY_CAPABILITY,
+  MODEL_2_PILLAR_WEIGHTS,
+  MODEL_2_VERSION,
+  reclassifySignalForModel2,
+  reclassifySignalsForModel2,
+} from './model-2';
 
 describe('model 2 readiness contract', () => {
+  it('keeps Peace separate from the three direct score areas', () => {
+    expect(MODEL_2_VERSION).toBe(2);
+    expect(MODEL_2_DIRECT_PILLARS).toEqual(['protection', 'provision', 'prosperity']);
+    expect(MODEL_2_DIRECT_PILLARS).not.toContain('peace');
+  });
+
   it('publishes direct weights that total one', () => {
     expect(Object.values(MODEL_2_PILLAR_WEIGHTS).reduce((sum, weight) => sum + weight, 0)).toBe(1);
   });
@@ -31,5 +44,17 @@ describe('model 2 readiness contract', () => {
 
     expect(result).toMatchObject({ pillar: 'provision' });
     expect(signal.pillar).toBe('preparation');
+  });
+
+  it('does not silently keep an unmapped Preparation signal', () => {
+    expect(() =>
+      reclassifySignalForModel2({
+        capabilityId: 'unknown-preparation-capability',
+        type: 'warning',
+        magnitude: -1,
+        pillar: 'preparation',
+        summary: 'Needs a decision.',
+      }),
+    ).toThrow('requires a pillar mapping');
   });
 });
