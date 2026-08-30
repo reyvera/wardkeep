@@ -10,6 +10,7 @@ export {
   MODEL_2_VERSION,
   reclassifySignalForModel2,
   reclassifySignalsForModel2,
+  computeModel2Overall,
 } from './model-2';
 export type { Model2DirectPillar, Model2Pillar } from './model-2';
 export type {
