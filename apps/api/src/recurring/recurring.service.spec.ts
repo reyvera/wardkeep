@@ -8,4 +8,11 @@ describe('RecurringService cancellation checks', () => {
     const result = await new RecurringService(prisma as never).listConfirmed('user');
     expect(result[0].chargeAfterCancellation).toBe(true);
   });
+
+  it('does not flag a charge recorded before cancellation', async () => {
+    const cancelledAt = new Date('2026-08-15');
+    const prisma = { recurringTransaction: { findMany: vi.fn().mockResolvedValue([{ id: 'recurring', userId: 'user', accountId: 'account', merchant: 'StreamCo', expectedAmount: { toString: () => '12.99' }, frequency: 'MONTHLY', nextExpected: new Date('2026-09-01'), isConfirmed: true, isDismissed: false, isActive: true, isSubscription: true, cancelledAt, createdAt: new Date() }]) }, transaction: { findMany: vi.fn().mockResolvedValue([]) } };
+    const result = await new RecurringService(prisma as never).listConfirmed('user');
+    expect(result[0].chargeAfterCancellation).toBe(false);
+  });
 });
