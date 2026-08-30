@@ -97,6 +97,7 @@ export class BudgetsService {
           create: dto.allocations.map((a) => ({
             categoryId: a.categoryId,
             amount: new Decimal(a.amount),
+            rolloverEnabled: a.rolloverEnabled ?? false,
           })),
         },
       },
@@ -145,6 +146,7 @@ export class BudgetsService {
             create: dto.allocations.map((a) => ({
               categoryId: a.categoryId,
               amount: new Decimal(a.amount),
+              rolloverEnabled: a.rolloverEnabled ?? false,
             })),
           },
         },

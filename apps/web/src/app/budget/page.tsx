@@ -34,7 +34,7 @@ interface BudgetSummary {
 
 interface BudgetDetail {
   id: string;
-  allocations: Array<{ categoryId: string; amount: string }>;
+  allocations: Array<{ categoryId: string; amount: string; rolloverEnabled: boolean; rolloverAmount: string }>;
 }
 
 interface Category {
@@ -45,6 +45,7 @@ interface Category {
 interface AllocationInput {
   categoryId: string;
   amount: string;
+  rolloverEnabled: boolean;
 }
 
 function getCurrentMonth() {
@@ -73,7 +74,7 @@ export default function BudgetPage() {
   const [month, setMonth] = useState(getCurrentMonth);
   const [showForm, setShowForm] = useState(false);
   const [allocations, setAllocations] = useState<AllocationInput[]>([
-    { categoryId: '', amount: '' },
+    { categoryId: '', amount: '', rolloverEnabled: false },
   ]);
 
   const budgetQuery = useQuery({
@@ -118,7 +119,7 @@ export default function BudgetPage() {
         month,
         allocations: allocations
           .filter((a) => a.categoryId && a.amount)
-          .map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
+          .map((a) => ({ categoryId: a.categoryId, amount: a.amount, rolloverEnabled: a.rolloverEnabled })),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
@@ -132,7 +133,7 @@ export default function BudgetPage() {
       apiClient.patch(`/budgets/${budgetId}`, {
         allocations: allocations
           .filter((a) => a.categoryId && a.amount)
-          .map((a) => ({ categoryId: a.categoryId, amount: a.amount })),
+          .map((a) => ({ categoryId: a.categoryId, amount: a.amount, rolloverEnabled: a.rolloverEnabled })),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-summary', month] });
@@ -153,10 +154,11 @@ export default function BudgetPage() {
         budgetDetailQuery.data.allocations.map((a) => ({
           categoryId: a.categoryId,
           amount: a.amount,
+          rolloverEnabled: a.rolloverEnabled,
         })),
       );
     } else {
-      setAllocations([{ categoryId: '', amount: '' }]);
+      setAllocations([{ categoryId: '', amount: '', rolloverEnabled: false }]);
     }
     setShowForm(true);
   };
@@ -180,7 +182,7 @@ export default function BudgetPage() {
     }
   };
 
-  const addRow = () => setAllocations([...allocations, { categoryId: '', amount: '' }]);
+  const addRow = () => setAllocations([...allocations, { categoryId: '', amount: '', rolloverEnabled: false }]);
   const removeRow = (i: number) => setAllocations(allocations.filter((_, idx) => idx !== i));
   const updateRow = (i: number, field: keyof AllocationInput, value: string) => {
     const updated = [...allocations];
@@ -350,6 +352,7 @@ export default function BudgetPage() {
                   onChange={(e) => updateRow(idx, 'amount', e.target.value)}
                   className="input w-32"
                 />
+                <label className="flex items-center gap-1 text-xs text-content-secondary"><input type="checkbox" checked={alloc.rolloverEnabled} onChange={(e) => { const updated = [...allocations]; updated[idx] = { ...updated[idx]!, rolloverEnabled: e.target.checked }; setAllocations(updated); }} /> Carry left over</label>
                 {allocations.length > 1 && (
                   <button
                     type="button"

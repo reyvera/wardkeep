@@ -7,6 +7,7 @@ export const UpdateBudgetSchema = z.object({
     .array(
       z.object({
         categoryId: z.string().uuid(),
+        rolloverEnabled: z.boolean().optional(),
         amount: z
           .string()
           .regex(/^\d+(\.\d+)?$/)
