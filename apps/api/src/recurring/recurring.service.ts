@@ -29,6 +29,7 @@ export class RecurringService {
       isDismissed: r.isDismissed,
       isActive: r.isActive,
       isSubscription: r.isSubscription,
+      cancelledAt: r.cancelledAt,
       createdAt: r.createdAt,
     }));
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CreditCard, CalendarClock } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
@@ -13,6 +13,7 @@ interface RecurringTransaction {
   frequency: string;
   nextExpected: string;
   isSubscription: boolean;
+  cancelledAt: string | null;
 }
 
 function formatCurrency(value: number): string {
@@ -33,11 +34,13 @@ function monthlyEquivalent(record: RecurringTransaction): number {
 }
 
 export default function SubscriptionsPage() {
+  const queryClient = useQueryClient();
   const subscriptionsQuery = useQuery({
     queryKey: ['recurring', 'subscriptions'],
     queryFn: () => apiClient.get<RecurringTransaction[]>('/recurring'),
   });
   const subscriptions = (subscriptionsQuery.data ?? []).filter((record) => record.isSubscription);
+  const cancellationMutation = useMutation({ mutationFn: ({ id, cancelled }: { id: string; cancelled: boolean }) => apiClient.patch(`/recurring/${id}/cancelled`, { cancelledAt: cancelled ? new Date().toISOString().slice(0, 10) : null }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recurring'] }) });
   const monthlyTotal = subscriptions.reduce((sum, record) => sum + monthlyEquivalent(record), 0);
   const annual = subscriptions.filter((record) => record.frequency === 'ANNUAL');
   const upcoming = subscriptions.filter((record) => {
@@ -152,10 +155,12 @@ export default function SubscriptionsPage() {
                     {record.frequency} · next charge{' '}
                     {new Date(record.nextExpected).toLocaleDateString()}
                   </p>
+                  {record.cancelledAt && <p className="text-xs text-accent-yellow">Marked cancelled {new Date(record.cancelledAt).toLocaleDateString()} · this charge is still expected</p>}
                 </div>
                 <p className="text-sm font-bold tabular-nums text-content-primary">
                   ${formatCurrency(Number(record.expectedAmount))}
                 </p>
+                <button className="btn-secondary text-xs" onClick={() => cancellationMutation.mutate({ id: record.id, cancelled: !record.cancelledAt })}>{record.cancelledAt ? 'Undo cancellation' : 'Mark cancelled'}</button>
                 {record.frequency === 'ANNUAL' && (
                   <CalendarClock
                     size={15}
