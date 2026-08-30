@@ -14,6 +14,7 @@ interface CategoryProgress {
   remaining: string;
   percentUsed: string;
   status: string;
+  rolloverAmount?: string;
 }
 
 interface BudgetSummary {
@@ -425,6 +426,7 @@ export default function BudgetPage() {
                       ? `$${formatCurrency(Math.abs(Number(cp.remaining)))} over`
                       : `$${formatCurrency(Number(cp.remaining))} left`}
                   </p>
+                  {Number(cp.rolloverAmount ?? 0) > 0 && <p className="text-[10px] text-accent-green">Plus ${formatCurrency(Number(cp.rolloverAmount))} carried in</p>}
                 </div>
               );
             })}

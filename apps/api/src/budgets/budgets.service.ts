@@ -415,6 +415,7 @@ export class BudgetsService {
         remaining: cp.remaining.toFixed(2),
         percentUsed: cp.percentUsed.toFixed(2),
         status: cp.status,
+        rolloverAmount: new Decimal(budget.allocations.find((allocation) => allocation.categoryId === cp.categoryId)?.rolloverAmount?.toString() ?? 0).toFixed(2),
       })),
     };
   }
