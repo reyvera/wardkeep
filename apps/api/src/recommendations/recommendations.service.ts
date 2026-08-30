@@ -101,13 +101,13 @@ export function recommendationCandidate(
   const fingerprint = createHash('sha256')
     .update(`${signal.capabilityId}|${signal.type}|${signal.summary}`)
     .digest('hex');
-  const currentPillarScore = computePillarScore(signal.pillar, pillarSignals);
+  const currentPillarScore = signal.pillar === 'peace' ? null : computePillarScore(signal.pillar, pillarSignals);
   const remainingSignals = pillarSignals.filter((candidate) => candidate !== signal);
-  const projectedPillarScore = remainingSignals.length
+  const projectedPillarScore = signal.pillar === 'peace' ? null : remainingSignals.length
     ? computePillarScore(signal.pillar, remainingSignals)
     : null;
   const projectedPillarDelta =
-    projectedPillarScore === null ? null : Math.max(0, projectedPillarScore - currentPillarScore);
+    projectedPillarScore === null || currentPillarScore === null ? null : Math.max(0, projectedPillarScore - currentPillarScore);
   const impactPreview =
     projectedPillarDelta && projectedPillarDelta > 0
       ? `If this source risk is resolved and the other observed ${signal.pillar} factors stay the same, ${signal.pillar} could increase by about ${projectedPillarDelta} points.`
