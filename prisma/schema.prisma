@@ -696,6 +696,8 @@ model BudgetAllocation {
   budgetId   String
   categoryId String
   amount     Decimal @db.Decimal(19, 4)
+  rolloverEnabled Boolean @default(false)
+  rolloverAmount  Decimal @default(0) @db.Decimal(19, 4)
 
   budget   Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id])

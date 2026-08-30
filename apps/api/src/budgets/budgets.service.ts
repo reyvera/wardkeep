@@ -239,6 +239,8 @@ export class BudgetsService {
           create: filteredAllocations.map((a) => ({
             categoryId: a.categoryId,
             amount: a.amount,
+            rolloverEnabled: a.rolloverEnabled,
+            rolloverAmount: a.rolloverEnabled ? a.rolloverAmount : 0,
           })),
         },
       },
