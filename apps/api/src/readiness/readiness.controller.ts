@@ -1,4 +1,6 @@
-import { Controller, Get, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+
+import { READINESS_MODEL_VERSION } from '@wardkeep/readiness';
 
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
@@ -57,14 +59,30 @@ export class ReadinessController {
    * Returns historical readiness snapshots for trend visualization.
    * @param req - The scoped request with userId
    * @param days - Number of days of history to return (default: 30, max: 365)
+   * @param modelVersion - Optional deterministic scoring model version for legacy history
    * @returns Array of daily readiness snapshots
    */
   @Get('history')
-  async getHistory(@Req() req: ScopedRequest, @Query('days') daysParam?: string) {
+  async getHistory(
+    @Req() req: ScopedRequest,
+    @Query('days') daysParam?: string,
+    @Query('modelVersion') modelVersionParam?: string,
+  ) {
     const userId = req.userId!;
     const days = Math.min(Math.max(parseInt(daysParam ?? '30', 10) || 30, 1), 365);
+    const modelVersion =
+      modelVersionParam === undefined ? READINESS_MODEL_VERSION : Number(modelVersionParam);
+    if (!Number.isInteger(modelVersion) || modelVersion < 1) {
+      throw new BadRequestException('modelVersion must be a positive integer');
+    }
 
-    return this.readinessService.getHistory(userId, days);
+    return this.readinessService.getHistory(userId, days, modelVersion);
+  }
+
+  /** Lists the separate readiness scoring-model histories available to this household. */
+  @Get('history/models')
+  getHistoryModelVersions(@Req() req: ScopedRequest) {
+    return this.readinessService.getHistoryModelVersions(req.userId!);
   }
 
   /** Returns the household-scoped facts recorded alongside recent readiness snapshots. */

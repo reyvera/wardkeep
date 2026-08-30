@@ -8,6 +8,7 @@ import {
   Signal,
   PillarScores,
   PillarAssessment,
+  READINESS_MODEL_VERSION,
   ReadinessSnapshot,
 } from '@wardkeep/readiness';
 
@@ -27,6 +28,8 @@ import { calculateRecordedNetWorth } from './generators/prosperity.generator';
 export interface ReadinessResponse {
   /** The moment Wardkeep derived this readiness response from the available records. */
   evaluatedAt: Date;
+  /** Deterministic scoring contract used for this response and its history. */
+  modelVersion: number;
   overall: number;
   pillars: PillarScores;
   signals: Array<Signal & { provenance: SignalProvenance }>;
@@ -178,7 +181,7 @@ export class ReadinessService {
 
     // Fetch enough daily snapshots for both Peace and the Dashboard's 90-day trend.
     const recentSnapshots = await this.prisma.readinessSnapshot.findMany({
-      where: { userId },
+      where: { userId, modelVersion: READINESS_MODEL_VERSION },
       orderBy: { recordedAt: 'desc' },
       take: 90,
     });
@@ -193,6 +196,7 @@ export class ReadinessService {
         peace: s.peace,
       },
       recordedAt: s.recordedAt,
+      modelVersion: s.modelVersion,
     }));
 
     const observedPillarScores = Object.fromEntries(
@@ -209,7 +213,7 @@ export class ReadinessService {
     };
     const comparisonSnapshot = lastViewedAt
       ? await this.prisma.readinessSnapshot.findFirst({
-          where: { userId, recordedAt: { lte: lastViewedAt } },
+          where: { userId, modelVersion: READINESS_MODEL_VERSION, recordedAt: { lte: lastViewedAt } },
           orderBy: { recordedAt: 'desc' },
         })
       : recentSnapshots[0];
@@ -390,6 +394,7 @@ export class ReadinessService {
 
     return {
       evaluatedAt,
+      modelVersion: READINESS_MODEL_VERSION,
       overall,
       pillars,
       signals: signalsWithProvenance,
@@ -459,9 +464,16 @@ export class ReadinessService {
     )).flat();
 
     const snapshot = await this.prisma.readinessSnapshot.upsert({
-      where: { userId_recordedAt: { userId, recordedAt: today } },
+      where: {
+        userId_recordedAt_modelVersion: {
+          userId,
+          recordedAt: today,
+          modelVersion: READINESS_MODEL_VERSION,
+        },
+      },
       create: {
         userId,
+        modelVersion: READINESS_MODEL_VERSION,
         overall,
         protection: pillars.protection,
         provision: pillars.provision,
@@ -528,7 +540,11 @@ export class ReadinessService {
    * @param days - Number of days of history to return
    * @returns Array of snapshots ordered by date ascending
    */
-  async getHistory(userId: string, days: number): Promise<ReadinessSnapshot[]> {
+  async getHistory(
+    userId: string,
+    days: number,
+    modelVersion: number = READINESS_MODEL_VERSION,
+  ): Promise<ReadinessSnapshot[]> {
     const since = new Date();
     since.setDate(since.getDate() - days);
     since.setUTCHours(0, 0, 0, 0);
@@ -536,6 +552,7 @@ export class ReadinessService {
     const snapshots = await this.prisma.readinessSnapshot.findMany({
       where: {
         userId,
+        modelVersion,
         recordedAt: { gte: since },
       },
       orderBy: { recordedAt: 'asc' },
@@ -551,6 +568,26 @@ export class ReadinessService {
         peace: s.peace,
       },
       recordedAt: s.recordedAt,
+      modelVersion: s.modelVersion,
+    }));
+  }
+
+  /** Lists independently comparable deterministic readiness-history series for a household. */
+  async getHistoryModelVersions(userId: string) {
+    const versions = await this.prisma.readinessSnapshot.groupBy({
+      by: ['modelVersion'],
+      where: { userId },
+      _count: { id: true },
+      _min: { recordedAt: true },
+      _max: { recordedAt: true },
+      orderBy: { modelVersion: 'desc' },
+    });
+    return versions.map((version) => ({
+      modelVersion: version.modelVersion,
+      snapshotCount: version._count.id,
+      firstRecordedAt: version._min.recordedAt,
+      lastRecordedAt: version._max.recordedAt,
+      isActive: version.modelVersion === READINESS_MODEL_VERSION,
     }));
   }
 
