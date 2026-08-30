@@ -178,4 +178,10 @@ export class RecurringService {
     });
     return { id: updated.id, isSubscription: updated.isSubscription };
   }
+
+  async setCancelled(userId: string, id: string, cancelledAt: Date | null) {
+    const record = await this.prisma.recurringTransaction.findFirst({ where: { id, userId }, select: { id: true } });
+    if (!record) throw new NotFoundException('Recurring transaction not found');
+    return this.prisma.recurringTransaction.update({ where: { id }, data: { cancelledAt } });
+  }
 }

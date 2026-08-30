@@ -102,4 +102,13 @@ export class RecurringController {
     }
     return this.recurringService.setSubscription(req.userId!, id, isSubscription);
   }
+
+  @Patch(':id/cancelled')
+  async setCancelled(@Req() req: ScopedRequest, @Param('id') id: string) {
+    const cancelledAt = req.body?.cancelledAt;
+    if (cancelledAt !== null && (typeof cancelledAt !== 'string' || Number.isNaN(Date.parse(cancelledAt)))) {
+      throw new BadRequestException('cancelledAt must be an ISO date or null');
+    }
+    return this.recurringService.setCancelled(req.userId!, id, cancelledAt ? new Date(cancelledAt) : null);
+  }
 }
