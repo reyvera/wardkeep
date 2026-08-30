@@ -1,0 +1,1 @@
+ALTER TYPE "ReadinessPillarEnum" ADD VALUE IF NOT EXISTS 'PEACE';

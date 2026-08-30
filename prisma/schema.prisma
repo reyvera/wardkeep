@@ -1055,4 +1055,5 @@ enum ReadinessPillarEnum {
   PROVISION
   PREPARATION
   PROSPERITY
+  PEACE
 }
