@@ -11,7 +11,9 @@ interface Recommendation {
   signalSummary: string;
   action: string;
   actionHref: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
   priority: 'critical' | 'high' | 'medium' | 'low';
+  priorityExplanation: string;
   confidence: string;
   supportingData: string[];
   relevanceDate: string | null;
@@ -127,15 +129,23 @@ export default function RecommendationsPage() {
                             <span
                               className={`text-xs font-medium capitalize ${priorityClass(recommendation.priority)}`}
                             >
-                              {recommendation.priority} priority
+                              Needs attention: {recommendation.priority}
                             </span>
                             <span className="text-xs text-content-tertiary">
-                              {Math.round(Number(recommendation.confidence) * 100)}% confidence
+                              How serious: {recommendation.severity}
+                            </span>
+                            <span className="text-xs text-content-tertiary">
+                              Info quality: {Math.round(Number(recommendation.confidence) * 100)}%
                             </span>
                           </div>
                           {recommendation.relevanceDate && (
                             <p className="mt-1 text-xs text-content-secondary">
                               Relevant by {new Date(recommendation.relevanceDate).toLocaleDateString()}.
+                            </p>
+                          )}
+                          {recommendation.priorityExplanation && (
+                            <p className="mt-1 text-xs text-content-tertiary">
+                              Why this is suggested: {recommendation.priorityExplanation}
                             </p>
                           )}
                           <p className="mt-1 text-xs text-content-tertiary">

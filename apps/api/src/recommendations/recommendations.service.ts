@@ -8,7 +8,12 @@ import { PrismaService } from '../prisma/prisma.service';
 
 type EvidenceState = 'synchronized' | 'manual' | 'mixed' | 'stale' | 'calculated' | 'unknown';
 type SignalWithProvenance = Signal & {
-  provenance: { limitation: string; evidenceState: EvidenceState };
+  provenance: {
+    limitation: string;
+    evidenceState: EvidenceState;
+    sources?: string[];
+    method?: string;
+  };
 };
 type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
@@ -22,18 +27,40 @@ const ACTIONS: Record<string, { action: string; href: string }> = {
   recurring: { action: 'Review recurring bills', href: '/recurring' },
   accounts: { action: 'Review accounts', href: '/accounts' },
   debt: { action: 'Review debt', href: '/debt' },
+  'planned-expenses': { action: 'Review planned expenses', href: '/planned-expenses' },
+  'vehicle-maintenance': { action: 'Review vehicle maintenance', href: '/vehicles' },
+  'vehicle-lease': { action: 'Review vehicle plan', href: '/vehicles' },
+  'home-assets': { action: 'Review home maintenance', href: '/home-maintenance' },
 };
 
 export function recommendationCandidate(
   signal: SignalWithProvenance,
   pillarSignals: readonly Signal[] = [signal],
+  now: Date = new Date(),
 ) {
-  const route = ACTIONS[signal.capabilityId] ?? {
+  const directRoute = ACTIONS[signal.capabilityId];
+  const route = directRoute ?? {
     action: 'View readiness factor',
     href: `/dashboard/readiness/${signal.pillar}`,
   };
   const severity = Math.min(10, Math.abs(signal.magnitude));
-  const urgency = signal.type === 'risk' ? 3 : 2;
+  const severityLabel =
+    severity >= 7 ? 'critical' : severity >= 4 ? 'high' : severity >= 2 ? 'medium' : 'low';
+  const daysUntilRelevant = signal.relevanceDate
+    ? Math.ceil((signal.relevanceDate.getTime() - now.getTime()) / 86_400_000)
+    : null;
+  const urgency =
+    daysUntilRelevant === null
+      ? signal.type === 'risk'
+        ? 3
+        : 2
+      : daysUntilRelevant <= 0
+        ? 4
+        : daysUntilRelevant <= 7
+          ? 3
+          : daysUntilRelevant <= 30
+            ? 2
+            : 1;
   const confidenceByEvidenceState: Record<EvidenceState, number> = {
     synchronized: 1,
     manual: 0.85,
@@ -43,6 +70,7 @@ export function recommendationCandidate(
     unknown: 0.65,
   };
   const confidence = confidenceByEvidenceState[signal.provenance.evidenceState];
+  const actionability = directRoute ? 1 : 0.7;
   const supportingSources = Array.isArray(signal.provenance.sources)
     ? signal.provenance.sources
     : ['Current Wardkeep records'];
@@ -50,7 +78,7 @@ export function recommendationCandidate(
   const financialImpactWeight =
     signal.financialImpact?.amount || signal.financialImpact?.monthlyAmount ? 10 : 0;
   const priorityScore = Math.round(
-    (severity * 30 + urgency * 20 + 20 + financialImpactWeight) * confidence,
+    (severity * 30 + urgency * 20 + actionability * 20 + financialImpactWeight) * confidence,
   );
   const priority: RecommendationPriority =
     priorityScore >= 280
@@ -60,6 +88,16 @@ export function recommendationCandidate(
         : priorityScore >= 120
           ? 'medium'
           : 'low';
+  const priorityExplanation = [
+    `${severity}/10 observed severity`,
+    daysUntilRelevant === null
+      ? 'no recorded due date'
+      : daysUntilRelevant <= 0
+        ? 'overdue'
+        : `relevant in ${daysUntilRelevant} days`,
+    `${Math.round(confidence * 100)}% evidence confidence`,
+    directRoute ? 'direct action available' : 'factor review available',
+  ].join(' · ');
   const fingerprint = createHash('sha256')
     .update(`${signal.capabilityId}|${signal.type}|${signal.summary}`)
     .digest('hex');
@@ -83,8 +121,10 @@ export function recommendationCandidate(
     action: route.action,
     actionHref: route.href,
     reasoning: signal.summary,
+    severity: severityLabel,
     priority,
     priorityScore,
+    priorityExplanation,
     confidence: new Decimal(confidence),
     supportingData: [
       ...supportingSources,

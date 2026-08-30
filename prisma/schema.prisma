@@ -111,8 +111,10 @@ model Recommendation {
   action               String               @db.VarChar(240)
   actionHref           String               @db.VarChar(240)
   reasoning            String               @db.VarChar(1500)
+  severity             String               @default("low") @db.VarChar(20)
   priority             String               @db.VarChar(20)
   priorityScore        Int
+  priorityExplanation  String               @default("") @db.VarChar(500)
   confidence           Decimal              @default(1.00) @db.Decimal(3, 2)
   supportingData       String[]             @default([])
   relevanceDate        DateTime?

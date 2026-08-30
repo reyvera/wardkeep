@@ -40,12 +40,13 @@ interface Signal {
 
 interface ReadinessResponse {
   evaluatedAt: string;
+  modelVersion: number;
   overall: number;
   pillars: PillarScores;
   signals: Signal[];
   topRisks: Signal[];
   topOpportunities: Signal[];
-  history: Array<{ overall: number; pillars: PillarScores; recordedAt: string }>;
+  history: Array<{ overall: number; pillars: PillarScores; recordedAt: string; modelVersion: number }>;
   trendWindows: Array<{
     days: 7 | 30 | 90;
     delta: number | null;
@@ -125,7 +126,9 @@ interface Recommendation {
   signalSummary: string;
   action: string;
   actionHref: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
   priority: 'critical' | 'high' | 'medium' | 'low';
+  priorityExplanation: string;
   confidence: string;
   supportingData: string[];
   relevanceDate: string | null;
@@ -483,6 +486,7 @@ export default function DashboardPage() {
                   ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated`
                   : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}
               </span>
+              <span>Readiness model v{data.modelVersion}</span>
             </div>
             <div className="mt-3">
               <div className="flex items-center gap-1" aria-label="Readiness trend range">
@@ -619,11 +623,24 @@ export default function DashboardPage() {
                 {recommendedNextStep.impactPreview}
               </p>
               <p className="mt-2 text-xs text-content-tertiary">
-                {recommendedNextStep.priority} priority · {Math.round(Number(recommendedNextStep.confidence) * 100)}% confidence
+                How serious: {recommendedNextStep.severity} · Needs attention: {recommendedNextStep.priority} · Info quality: {Math.round(Number(recommendedNextStep.confidence) * 100)}%
                 {recommendedNextStep.relevanceDate
                   ? ` · relevant by ${new Date(recommendedNextStep.relevanceDate).toLocaleDateString()}`
                   : ''}
               </p>
+              {recommendedNextStep.priorityExplanation && (
+                <p className="mt-1 text-xs text-content-tertiary">
+                  Why this is suggested: {recommendedNextStep.priorityExplanation}
+                </p>
+              )}
+              {recommendedNextStep.supportingData.length > 0 && (
+                <details className="mt-1 text-xs text-content-tertiary">
+                  <summary className="cursor-pointer">Supporting data</summary>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                    {recommendedNextStep.supportingData.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </details>
+              )}
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               <Link href={recommendedNextStep.actionHref} className="btn-primary text-sm">
@@ -822,7 +839,7 @@ export default function DashboardPage() {
                         {recommendation.signalSummary}
                       </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
-                        {recommendation.priority} priority · {Math.round(Number(recommendation.confidence) * 100)}% confidence
+                        How serious: {recommendation.severity} · Needs attention: {recommendation.priority} · Info quality: {Math.round(Number(recommendation.confidence) * 100)}%
                       </p>
                       {recommendation.relevanceDate && (
                         <p className="mt-0.5 text-xs text-content-secondary">
@@ -832,6 +849,11 @@ export default function DashboardPage() {
                       <p className="mt-0.5 text-xs text-content-tertiary">
                         Assumption: {recommendation.assumptions}
                       </p>
+                      {recommendation.priorityExplanation && (
+                        <p className="mt-0.5 text-xs text-content-tertiary">
+                          Why this is suggested: {recommendation.priorityExplanation}
+                        </p>
+                      )}
                       {recommendation.supportingData.length > 0 && (
                         <details className="mt-1 text-xs text-content-tertiary">
                           <summary className="cursor-pointer">Supporting data</summary>

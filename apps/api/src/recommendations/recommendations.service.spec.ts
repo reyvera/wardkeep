@@ -22,10 +22,12 @@ describe('recommendationCandidate', () => {
     expect(first).toMatchObject({
       action: 'Review liquid accounts',
       actionHref: '/accounts',
+      severity: 'critical',
       priority: 'critical',
     });
     expect(first.confidence.toFixed(2)).toBe('1.00');
     expect(first.supportingData).toContain('Current Wardkeep records');
+    expect(first.priorityExplanation).toContain('7/10 observed severity');
     expect(first.fingerprint).toBe(second.fingerprint);
   });
 
@@ -89,6 +91,42 @@ describe('recommendationCandidate', () => {
     expect(candidate.estimatedAmount?.toFixed(2)).toBe('1200.00');
     expect(candidate.estimatedAmountLabel).toBe('Recorded reserve target gap');
     expect(candidate.estimatedCompletionDays).toBeNull();
+  });
+
+  it('links a planned household obligation to its direct workflow', () => {
+    const candidate = recommendationCandidate({
+      capabilityId: 'planned-expenses',
+      type: 'warning',
+      magnitude: -3,
+      pillar: 'preparation',
+      summary: 'Property tax is due soon.',
+      provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
+    });
+
+    expect(candidate).toMatchObject({ action: 'Review planned expenses', actionHref: '/planned-expenses' });
+  });
+
+  it('raises urgency for a recorded relevance date that is imminent', () => {
+    const now = new Date('2026-08-29T00:00:00.000Z');
+    const later = recommendationCandidate(
+      { capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Later obligation.', relevanceDate: new Date('2026-10-15T00:00:00.000Z'), provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } },
+      undefined,
+      now,
+    );
+    const imminent = recommendationCandidate(
+      { capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Imminent obligation.', relevanceDate: new Date('2026-08-31T00:00:00.000Z'), provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } },
+      undefined,
+      now,
+    );
+
+    expect(imminent.priorityScore).toBeGreaterThan(later.priorityScore);
+  });
+
+  it('favors an action with a direct Wardkeep workflow', () => {
+    const direct = recommendationCandidate({ capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Direct action.', provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } });
+    const generic = recommendationCandidate({ capabilityId: 'unmapped-capability', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Generic action.', provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } });
+
+    expect(direct.priorityScore).toBeGreaterThan(generic.priorityScore);
   });
 });
 
