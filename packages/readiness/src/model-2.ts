@@ -16,6 +16,15 @@ export const MODEL_2_PILLAR_WEIGHTS = {
   prosperity: 0.3,
 } as const;
 
+/** Computes the Model 2 direct overall score; Peace remains derived. */
+export function computeModel2Overall(scores: Record<Model2DirectPillar, number>): number {
+  return Math.round(
+    scores.protection * MODEL_2_PILLAR_WEIGHTS.protection +
+      scores.provision * MODEL_2_PILLAR_WEIGHTS.provision +
+      scores.prosperity * MODEL_2_PILLAR_WEIGHTS.prosperity,
+  );
+}
+
 /** Reclassifies transitional Preparation capabilities by their household consequence. */
 export const MODEL_2_PILLAR_BY_CAPABILITY: Record<string, Model2Pillar> = {
   'planned-expenses': 'provision',

@@ -5,6 +5,7 @@ import {
   MODEL_2_PILLAR_BY_CAPABILITY,
   MODEL_2_PILLAR_WEIGHTS,
   MODEL_2_VERSION,
+  computeModel2Overall,
   reclassifySignalForModel2,
   reclassifySignalsForModel2,
 } from './model-2';
@@ -18,6 +19,10 @@ describe('model 2 readiness contract', () => {
 
   it('publishes direct weights that total one', () => {
     expect(Object.values(MODEL_2_PILLAR_WEIGHTS).reduce((sum, weight) => sum + weight, 0)).toBe(1);
+  });
+
+  it('uses the published direct weights without Peace', () => {
+    expect(computeModel2Overall({ protection: 80, provision: 60, prosperity: 50 })).toBe(64);
   });
 
   it('reclassifies a generated signal set consistently', () => {
