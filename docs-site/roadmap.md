@@ -9,6 +9,10 @@ permalink: /roadmap/
 
 Wardkeep is becoming a private household-readiness command center. Finance is the evidence layer—not the destination. The work is sequenced so the product earns trust before it expands its claims.
 
+## Product compass
+
+Every release should make at least one of these questions easier to answer: what is happening in my household, why does it matter, how prepared am I, or what should I do next? The target model organizes readiness around **Protection**, **Provision**, **Prosperity**, and **Peace**. Current implementation still includes a transitional Preparation pillar while its signals are reclassified; public product claims must remain explicit about that distinction.
+
 ## Release map
 
 <svg viewBox="0 0 760 245" role="img" aria-labelledby="roadmap-title roadmap-desc" style="width:100%; max-width:760px; height:auto; display:block; margin:1.5rem 0;">

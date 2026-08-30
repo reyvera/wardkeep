@@ -152,10 +152,11 @@ The current codebase already implements the finance Capability. Here's how exist
 ### Next implementation priorities
 
 1. **Reliable data and coverage** — Model freshness, provenance, and known/partial/unknown explicitly. Keep scores and coverage coherent when accounts are manual, synchronized, estimated, or stale.
-2. **Composite Protection** — Add data models and generators for insurance, estate, income interruption, fixed obligations, dependents, and secondary backstops. Maintain independent, explainable signals.
-3. **Recommendation and explanation services** — Persist score-change reasons and rank actions by severity, urgency, financial impact, actionability, and confidence.
-4. **Household Timeline and change feed** — Aggregate bills, renewals, maintenance, taxes, sinking-fund targets, and replacement windows into “Coming up” and “Since your last visit.”
-5. **Scenarios and planning** — Model deterministic what-ifs, show impact previews, and connect recommendations to plans and measured outcomes.
+2. **Four-pillar model migration** — Snapshot model versioning is implemented at version `1`, with one stored snapshot per household, day, and model. Reclassify the transitional Preparation signals, add a legacy-history presentation, publish revised weights and coverage targets, and release API and dashboard changes atomically. Never rewrite history as if the old and new models were directly comparable.
+3. **Composite Protection** — Add data models and generators for insurance, estate, income interruption, fixed obligations, dependents, and secondary backstops. Maintain independent, explainable signals.
+4. **Recommendation and explanation services** — Persist score-change reasons and rank actions by severity, urgency, financial impact, actionability, and confidence.
+5. **Household Timeline and change feed** — Aggregate bills, renewals, maintenance, taxes, sinking-fund targets, and replacement windows into “Coming up” and “Since your last visit.”
+6. **Scenarios and planning** — Model deterministic what-ifs, show impact previews, and connect recommendations to plans and measured outcomes.
 
 ## API Design
 
@@ -296,4 +297,4 @@ The existing technology stack supports this architecture without changes:
 - Custom Capability SDK for third-party developers (Phase 4)
 - White-label theming (Phase 5+)
 
-Stay focused on Phase 1: best self-hosted finance platform with the Readiness Engine as the differentiator. Everything else is informed by these documents but not built until its phase arrives.
+Stay focused on the finance foundation as evidence for the Readiness Engine. Finance features earn priority when they improve household awareness, readiness evaluation, useful action, or important data coverage; future domains arrive only when their phase is ready.

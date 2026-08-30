@@ -102,13 +102,13 @@ That isn't accounting. That's household leadership—provided Wardkeep is clear 
 
 ## The Long-Term Vision
 
-Wardkeep begins as the best self-hosted finance platform. It grows into a Household Intelligence Platform — modular, privacy-first, community-driven, and AI-enhanced.
+Wardkeep begins with a deep, self-hosted finance foundation. It grows into a household-readiness platform — modular, privacy-first, community-driven, and AI-enhanced.
 
 Finance is the entry point. Not the destination.
 
 Every capability added — vehicles, insurance, maintenance, education, estate planning — plugs into the same intelligence pipeline and contributes to a unified understanding of household readiness.
 
-The model is Home Assistant, not Mint. Open core. Self-hostable. Marketplace-driven. The community builds with you, not for you.
+The model is Home Assistant, not Mint. The objective is a coherent household command center, not a generic finance dashboard. Open core. Self-hostable. Marketplace-driven. The community builds with you, not for you.
 
 ## Identity
 

@@ -216,7 +216,7 @@ interface TimelineEvent {
 
 ## Readiness Pillars
 
-Every signal maps to one of five pillars. These form the top-level structure of household readiness:
+The target product model has four readiness pillars. The code snippet below documents the current transitional implementation, which still contains `preparation`; new capability design must map to the target taxonomy in [product-differentiation.md](product-differentiation.md).
 
 ```typescript
 type ReadinessPillar =
@@ -231,9 +231,8 @@ type ReadinessPillar =
 |--------|--------|---------------------|
 | Protection | Insurance, emergency fund, passwords, estate, security | Insurance, Estate, Emergency Fund |
 | Provision | Cash flow, bills, income, budget, spending | Finance (core), Bank Sync |
-| Preparation | Maintenance, taxes, goals, education, inventory | Vehicle, Home, Garden, Homeschool |
 | Prosperity | Investments, debt payoff, net worth, giving | Investments, Debt Strategy, Giving |
-| Peace | Overall household stability, family communication | Derived from all other pillars |
+| Peace | Outstanding household administration requiring attention | Renewals, incomplete data, unresolved recommendations |
 
 ## Phase 1 Capabilities (Core Finance)
 
@@ -256,14 +255,14 @@ These extend the platform beyond finance:
 
 | Capability | Pillar | Description |
 |-----------|--------|-------------|
-| `vehicle` | Preparation | Maintenance schedules, fuel, registration |
+| `vehicle` | Protection, Provision | Insurance, registration, maintenance, loans, and replacement planning |
 | `insurance` | Protection | Policies, renewals, coverage gaps |
-| `home` | Preparation | Maintenance, repairs, appliance lifecycles |
-| `garden` | Preparation | Seasonal tasks, supplies, harvests |
+| `home` | Protection, Provision | Maintenance, repairs, appliance lifecycle, and insurance context |
+| `garden` | Provision | Seasonal tasks, supplies, and household maintenance |
 | `estate` | Protection | Wills, beneficiaries, document locations |
 | `medical` | Protection | HSA, prescriptions, appointments |
-| `education` | Preparation | Curriculum, supplies, schedules |
-| `inventory` | Preparation | Household items, warranties, valuations |
+| `education` | Provision | Curriculum, supplies, and schedules |
+| `inventory` | Protection | Household items, warranties, and valuations |
 
 ## Registration and Discovery
 

@@ -16,22 +16,23 @@ Consistency in language shapes how people think about a product — both the tea
 | **Signal** | An interpreted observation that affects readiness (risk, opportunity, milestone). | Alert, Notification, Flag |
 | **Observation** | A raw fact about the household, produced by a Capability. | Data point, Record |
 | **Insight** | A human-readable explanation derived from signals and cross-capability reasoning. | Report, Summary |
-| **Pillar** | One of five dimensions of household readiness. | Category, Area, Domain |
+| **Pillar** | One of four strategic dimensions of household readiness. | Category, Area, Domain |
 | **Household Timeline** | A unified chronological view of past and future events across all Capabilities. | Calendar, History, Schedule |
 | **Morning Brief** | The daily summary of what matters today. | Dashboard, Home screen, Daily digest |
 | **Dashboard** | The current household-readiness command center: readiness, coverage, attention, and recommendations. | Metrics dashboard |
 | **Financial Overview** | Detailed accounts, net worth, spending, budgets, and transactions. | Dashboard |
 | **Recommendation** | A specific action the user could take to improve readiness. | Suggestion, Tip, Alert |
 
-## The Five Pillars
+## The Four Strategic Pillars
 
 | Pillar | Meaning | Covers |
 |--------|---------|--------|
 | **Protection** | Shielding the household from financial shocks | Liquid reserves today; eventually insurance, income resilience, estate, obligations, and security |
 | **Provision** | Ensuring the household runs smoothly day to day | Cash flow, bills, income, budget, spending |
-| **Preparation** | Being ready for what's ahead | Maintenance, taxes, goals, education, seasonal tasks |
 | **Prosperity** | Growing the household's position over time | Net worth, investments, debt reduction, giving |
-| **Peace** | Overall stability and confidence | Derived from the health of all other pillars |
+| **Peace** | Outstanding household administration requiring attention | Overdue obligations, renewals, incomplete data, maintenance deadlines, and unresolved recommendations |
+
+`Preparation` remains a transitional implementation label in the current scoring engine. It is not part of the target product taxonomy; its signals will be reclassified into the four strategic pillars. See [product-differentiation.md](product-differentiation.md).
 
 ## UI Language
 

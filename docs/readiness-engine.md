@@ -2,6 +2,12 @@
 
 ## Purpose
 
+> **Strategic taxonomy note:** Wardkeep's target product framework has four pillars—Protection, Provision, Prosperity, and Peace. The current engine still exposes `Preparation` as a transitional direct pillar. This document describes the deployed implementation; [product-differentiation.md](product-differentiation.md) defines the intended product model and migration direction.
+
+The transition is not a UI rename. It requires versioned score history, reclassification of each Preparation signal by household consequence, published score/coverage changes, and an atomic API-plus-dashboard cutover. Snapshots now carry deterministic scoring model version `1` and are uniquely stored by household, day, and model version, so a future model cannot overwrite legacy snapshot data. The current history API intentionally returns only the active model's series; a legacy-history presentation remains required before the taxonomy changes. Historical Preparation values must remain identified as legacy data unless recalculated from the same source observations under the new deterministic rules.
+
+The target model's published default direct weights are Protection 35%, Provision 35%, and Prosperity 30%; Peace is derived and excluded from weighted overall readiness. These are a transparent initial policy, not an attempt to preserve version-1 scores.
+
 Wardkeep answers a practical household question:
 
 > How prepared are we for what is happening now and what is coming next—and how certain is that answer?
@@ -121,7 +127,8 @@ Every displayed factor also names its evidence state. Current states are **synch
 
 ```text
 GET /api/readiness              assessments, signals, coverage, freshness, history, and recent changes
-GET /api/readiness/history      daily snapshots for 1–365 days
+GET /api/readiness/history      daily snapshots for 1–365 days; `modelVersion` selects an explicit legacy scoring series
+GET /api/readiness/history/models available deterministic score-model series and their date ranges
 GET /api/readiness/explain      read-only pillar factors, factor gaps, freshness, and recent score changes
 ```
 

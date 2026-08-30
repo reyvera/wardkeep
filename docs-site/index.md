@@ -9,7 +9,7 @@ permalink: /
   <div>
     <p class="wardkeep-eyebrow">Private household command center</p>
     <h1>Guard your ground.<br>Know what your household needs next.</h1>
-    <p class="wardkeep-hero-copy">Wardkeep turns your finances into a clear picture of readiness—what is covered, what needs attention, and the next useful action.</p>
+    <p class="wardkeep-hero-copy">Connect your finances, obligations, assets, and household information. Wardkeep explains where you stand, identifies what needs attention, and helps you prepare for what comes next.</p>
     <div class="wardkeep-actions">
       <a class="btn btn-primary" href="{{ site.baseurl }}/quick-start">Start your private command center</a>
       <a class="btn btn-outline" href="{{ site.baseurl }}/screenshots">Explore the dashboard →</a>
@@ -23,7 +23,7 @@ permalink: /
 
 ## Your money is part of the picture. Your household is the point.
 
-<p class="wardkeep-section-intro">Most finance apps stop at transactions. Wardkeep helps you understand the practical questions behind them, without pretending a household can be reduced to one perfect score.</p>
+<p class="wardkeep-section-intro">Most finance apps stop at transactions. Wardkeep helps you understand what is happening, why it matters, how prepared you are, and what to do next—without pretending a household can be reduced to one perfect score.</p>
 
 <div class="feature-grid">
   <div class="feature-card"><div class="feature-icon">◈</div><h3>See the whole picture</h3><p>Accounts, spending, budgets, debt, and recurring bills together instead of spread across tools.</p></div>
@@ -62,6 +62,7 @@ Wardkeep is open source. The technical material is here when you need it—not r
 [Release roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
 [All screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
 [Readiness model](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md){: .btn .btn-outline }
+[Product differentiation](https://github.com/reyvera/wardkeep/blob/main/docs/product-differentiation.md){: .btn .btn-outline }
 [Source on GitHub](https://github.com/reyvera/wardkeep){: .btn .btn-outline }
 
 Wardkeep is open source under [AGPL-3.0](https://github.com/reyvera/wardkeep/blob/main/LICENSE).
