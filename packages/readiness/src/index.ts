@@ -14,6 +14,8 @@ export {
 export type { Model2DirectPillar, Model2Pillar } from './model-2';
 export type {
   Observation,
+  ActivePillarScores,
+  LegacyPillarScores,
   PillarScores,
   PillarWeights,
   ReadinessPillar,

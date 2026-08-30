@@ -59,6 +59,12 @@ export interface Recommendation {
 
 export type PillarScores = Record<ReadinessPillar, number>;
 
+/** Snapshot taxonomy retained only for model-1 history. */
+export type LegacyPillarScores = PillarScores;
+
+/** The active model-2 response deliberately excludes the retired Preparation pillar. */
+export type ActivePillarScores = Pick<PillarScores, 'protection' | 'provision' | 'prosperity' | 'peace'>;
+
 /** Describes whether a score is based on a sufficiently complete observation set. */
 export type ReadinessAssessmentState = 'known' | 'partial' | 'not_evaluated';
 
