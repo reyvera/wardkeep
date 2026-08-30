@@ -22,7 +22,7 @@ export interface Signal {
   type: SignalType;
   /** Impact from -10 (strong risk) to +10 (strong positive). */
   magnitude: number;
-  pillar: Exclude<ReadinessPillar, 'peace'>;
+  pillar: ReadinessPillar;
   summary: string;
   observationId?: string;
   weight?: number;
