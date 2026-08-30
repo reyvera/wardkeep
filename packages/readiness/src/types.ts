@@ -6,6 +6,12 @@ export const READINESS_PILLARS = [
   'peace',
 ] as const;
 
+/**
+ * Identifies the deterministic readiness taxonomy and scoring contract used for a snapshot.
+ * Increment only when a change makes historical scores non-comparable.
+ */
+export const READINESS_MODEL_VERSION = 1;
+
 export type ReadinessPillar = (typeof READINESS_PILLARS)[number];
 export type SignalType = 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';
 
@@ -21,6 +27,8 @@ export interface Signal {
   observationId?: string;
   weight?: number;
   expiresAt?: Date;
+  /** A recorded or calculated date that makes this signal relevant to household action. */
+  relevanceDate?: Date;
   /** Recorded financial context for a recommendation; absent when Wardkeep cannot estimate it. */
   financialImpact?: {
     amount?: string;
@@ -67,6 +75,7 @@ export interface ReadinessSnapshot {
   overall: number;
   pillars: PillarScores;
   recordedAt: Date;
+  modelVersion: number;
 }
 
 export type PillarWeights = Partial<Record<Exclude<ReadinessPillar, 'peace'>, number>>;

@@ -126,6 +126,9 @@ interface Recommendation {
   action: string;
   actionHref: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
+  confidence: string;
+  supportingData: string[];
+  relevanceDate: string | null;
   assumptions: string;
   impactPreview: string;
   projectedPillarDelta: number | null;
@@ -359,6 +362,7 @@ export default function DashboardPage() {
   const activeRecommendations = (recommendationsQuery.data ?? [])
     .filter((recommendation) => recommendation.status === 'ACTIVE')
     .slice(0, 3);
+  const [recommendedNextStep, ...additionalRecommendations] = activeRecommendations;
   const activePolicies = insuranceQuery.data?.filter((policy) => policy.isActive) ?? [];
   const policyDetailsNeeded = activePolicies.filter(
     (policy) => !policy.renewalDate || !policy.deductible || !policy.coverageAmount,
@@ -603,6 +607,46 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {recommendedNextStep && (
+        <section className="card mb-6 border-accent-blue/30 bg-accent-blue/5">
+          <p className="card-title text-accent-blue">Recommended next step</p>
+          <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-content-primary">
+                {recommendedNextStep.signalSummary}
+              </h2>
+              <p className="mt-1 text-sm text-content-secondary">
+                {recommendedNextStep.impactPreview}
+              </p>
+              <p className="mt-2 text-xs text-content-tertiary">
+                {recommendedNextStep.priority} priority · {Math.round(Number(recommendedNextStep.confidence) * 100)}% confidence
+                {recommendedNextStep.relevanceDate
+                  ? ` · relevant by ${new Date(recommendedNextStep.relevanceDate).toLocaleDateString()}`
+                  : ''}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <Link href={recommendedNextStep.actionHref} className="btn-primary text-sm">
+                {recommendedNextStep.action}
+              </Link>
+              <button
+                onClick={() =>
+                  updateRecommendationMutation.mutate({
+                    id: recommendedNextStep.id,
+                    status: 'COMPLETED',
+                  })
+                }
+                className="btn-ghost p-2 text-content-tertiary hover:text-accent-green"
+                title="Mark recommendation complete"
+                aria-label="Mark recommendation complete"
+              >
+                <Check size={15} />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {!insuranceQuery.isLoading && (
         <section className="card mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
@@ -744,18 +788,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <h3 className="card-title">Wardkeep recommends</h3>
+          <h3 className="card-title">More recommended actions</h3>
           {recommendationsQuery.isLoading ? (
             <p className="text-sm text-content-tertiary">Updating your recommendations…</p>
-          ) : activeRecommendations.length === 0 ? (
+          ) : additionalRecommendations.length === 0 ? (
             <p className="text-sm text-content-tertiary">
               {recommendationsQuery.isError
                 ? 'Recommendations are unavailable right now. Review the readiness factors above for current next steps.'
-                : 'No active recommendations right now. Add more household information for a broader assessment.'}
+                : recommendedNextStep
+                  ? 'No additional actions need attention right now.'
+                  : 'No active recommendations right now. Add more household information for a broader assessment.'}
             </p>
           ) : (
             <ul className="space-y-3">
-              {activeRecommendations.map((recommendation) => {
+              {additionalRecommendations.map((recommendation) => {
                 const priorityColor =
                   recommendation.priority === 'critical'
                     ? 'var(--accent-red)'
@@ -776,8 +822,24 @@ export default function DashboardPage() {
                         {recommendation.signalSummary}
                       </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
-                        {recommendation.priority} priority · {recommendation.assumptions}
+                        {recommendation.priority} priority · {Math.round(Number(recommendation.confidence) * 100)}% confidence
                       </p>
+                      {recommendation.relevanceDate && (
+                        <p className="mt-0.5 text-xs text-content-secondary">
+                          Relevant by {new Date(recommendation.relevanceDate).toLocaleDateString()}.
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-xs text-content-tertiary">
+                        Assumption: {recommendation.assumptions}
+                      </p>
+                      {recommendation.supportingData.length > 0 && (
+                        <details className="mt-1 text-xs text-content-tertiary">
+                          <summary className="cursor-pointer">Supporting data</summary>
+                          <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                            {recommendation.supportingData.map((item) => <li key={item}>{item}</li>)}
+                          </ul>
+                        </details>
+                      )}
                       <p className="mt-1 text-xs text-content-secondary">
                         {recommendation.impactPreview}
                       </p>

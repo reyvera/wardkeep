@@ -113,6 +113,9 @@ model Recommendation {
   reasoning            String               @db.VarChar(1500)
   priority             String               @db.VarChar(20)
   priorityScore        Int
+  confidence           Decimal              @default(1.00) @db.Decimal(3, 2)
+  supportingData       String[]             @default([])
+  relevanceDate        DateTime?
   assumptions          String               @db.VarChar(1500)
   impactPreview        String               @default("Wardkeep cannot reliably project a numeric score change from this action yet.") @db.VarChar(1500)
   projectedPillarDelta Int?
@@ -978,12 +981,13 @@ model ReadinessSnapshot {
   peace       Int
   netWorth    Decimal? @db.Decimal(19, 4)
   recordedAt  DateTime @default(now()) @db.Date
+  modelVersion Int    @default(1)
 
   signals ReadinessSignal[]
   observations ReadinessObservation[]
 
-  @@unique([userId, recordedAt])
-  @@index([userId, recordedAt])
+  @@unique([userId, recordedAt, modelVersion])
+  @@index([userId, modelVersion, recordedAt])
 }
 
 /// Raw, household-scoped facts published by capabilities for a daily readiness snapshot.

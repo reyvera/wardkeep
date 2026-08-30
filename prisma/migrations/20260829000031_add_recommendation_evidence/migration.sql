@@ -1,0 +1,4 @@
+ALTER TABLE "Recommendation"
+  ADD COLUMN "confidence" DECIMAL(3,2) NOT NULL DEFAULT 1.00,
+  ADD COLUMN "supportingData" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  ADD COLUMN "relevanceDate" TIMESTAMP(3);

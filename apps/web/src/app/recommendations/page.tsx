@@ -12,6 +12,9 @@ interface Recommendation {
   action: string;
   actionHref: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
+  confidence: string;
+  supportingData: string[];
+  relevanceDate: string | null;
   assumptions: string;
   impactPreview: string;
   projectedPillarDelta: number | null;
@@ -126,10 +129,26 @@ export default function RecommendationsPage() {
                             >
                               {recommendation.priority} priority
                             </span>
+                            <span className="text-xs text-content-tertiary">
+                              {Math.round(Number(recommendation.confidence) * 100)}% confidence
+                            </span>
                           </div>
+                          {recommendation.relevanceDate && (
+                            <p className="mt-1 text-xs text-content-secondary">
+                              Relevant by {new Date(recommendation.relevanceDate).toLocaleDateString()}.
+                            </p>
+                          )}
                           <p className="mt-1 text-xs text-content-tertiary">
                             Assumption: {recommendation.assumptions}
                           </p>
+                          {recommendation.supportingData.length > 0 && (
+                            <details className="mt-1 text-xs text-content-tertiary">
+                              <summary className="cursor-pointer">Supporting data</summary>
+                              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                                {recommendation.supportingData.map((item) => <li key={item}>{item}</li>)}
+                              </ul>
+                            </details>
+                          )}
                           <p className="mt-1 text-xs text-content-secondary">
                             Impact preview: {recommendation.impactPreview}
                           </p>

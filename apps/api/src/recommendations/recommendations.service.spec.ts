@@ -24,6 +24,8 @@ describe('recommendationCandidate', () => {
       actionHref: '/accounts',
       priority: 'critical',
     });
+    expect(first.confidence.toFixed(2)).toBe('1.00');
+    expect(first.supportingData).toContain('Current Wardkeep records');
     expect(first.fingerprint).toBe(second.fingerprint);
   });
 
@@ -46,6 +48,7 @@ describe('recommendationCandidate', () => {
     });
 
     expect(stale.priorityScore).toBeLessThan(current.priorityScore);
+    expect(stale.confidence.toFixed(2)).toBe('0.50');
   });
 
   it('previews a pillar-only improvement when other observed factors remain', () => {

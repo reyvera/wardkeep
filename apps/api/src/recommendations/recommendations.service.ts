@@ -34,7 +34,19 @@ export function recommendationCandidate(
   };
   const severity = Math.min(10, Math.abs(signal.magnitude));
   const urgency = signal.type === 'risk' ? 3 : 2;
-  const confidence = signal.provenance.evidenceState === 'stale' ? 0.5 : 1;
+  const confidenceByEvidenceState: Record<EvidenceState, number> = {
+    synchronized: 1,
+    manual: 0.85,
+    mixed: 0.8,
+    stale: 0.5,
+    calculated: 0.9,
+    unknown: 0.65,
+  };
+  const confidence = confidenceByEvidenceState[signal.provenance.evidenceState];
+  const supportingSources = Array.isArray(signal.provenance.sources)
+    ? signal.provenance.sources
+    : ['Current Wardkeep records'];
+  const supportingMethod = signal.provenance.method ?? 'Derives an explainable signal from available records.';
   const financialImpactWeight =
     signal.financialImpact?.amount || signal.financialImpact?.monthlyAmount ? 10 : 0;
   const priorityScore = Math.round(
@@ -73,6 +85,12 @@ export function recommendationCandidate(
     reasoning: signal.summary,
     priority,
     priorityScore,
+    confidence: new Decimal(confidence),
+    supportingData: [
+      ...supportingSources,
+      `Method: ${supportingMethod}`,
+    ],
+    relevanceDate: signal.relevanceDate ?? null,
     assumptions: signal.provenance.limitation,
     impactPreview,
     projectedPillarDelta,
