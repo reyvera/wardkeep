@@ -46,6 +46,7 @@ interface AllocationInput {
   categoryId: string;
   amount: string;
   rolloverEnabled: boolean;
+  rolloverAmount?: string;
 }
 
 function getCurrentMonth() {
@@ -155,6 +156,7 @@ export default function BudgetPage() {
           categoryId: a.categoryId,
           amount: a.amount,
           rolloverEnabled: a.rolloverEnabled,
+          rolloverAmount: a.rolloverAmount,
         })),
       );
     } else {
@@ -353,6 +355,7 @@ export default function BudgetPage() {
                   className="input w-32"
                 />
                 <label className="flex items-center gap-1 text-xs text-content-secondary"><input type="checkbox" checked={alloc.rolloverEnabled} onChange={(e) => { const updated = [...allocations]; updated[idx] = { ...updated[idx]!, rolloverEnabled: e.target.checked }; setAllocations(updated); }} /> Carry left over</label>
+                {Number(alloc.rolloverAmount ?? 0) > 0 && <span className="text-xs text-accent-green">${formatCurrency(Number(alloc.rolloverAmount))} carried in</span>}
                 {allocations.length > 1 && (
                   <button
                     type="button"

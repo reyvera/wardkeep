@@ -66,6 +66,8 @@ export class BudgetsService {
         budgetId: a.budgetId,
         categoryId: a.categoryId,
         amount: new Decimal(a.amount.toString()).toFixed(2),
+        rolloverEnabled: a.rolloverEnabled,
+        rolloverAmount: new Decimal(a.rolloverAmount.toString()).toFixed(2),
       })),
     };
   }
