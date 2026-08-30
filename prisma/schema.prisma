@@ -320,6 +320,12 @@ enum IncomeSourceKind {
   OTHER
 }
 
+enum EmploymentPayType {
+  SALARY
+  HOURLY
+  OTHER
+}
+
 /// Household-entered income planning context, not evidence of employment or payment continuity.
 model IncomeSource {
   id                String           @id @default(uuid())
@@ -328,6 +334,9 @@ model IncomeSource {
   kind              IncomeSourceKind @default(EMPLOYMENT)
   frequency         IncomeFrequency
   expectedNetAmount Decimal?         @db.Decimal(19, 4)
+  employmentPayType EmploymentPayType?
+  hourlyRate        Decimal?         @db.Decimal(19, 4)
+  typicalHoursPerPayPeriod Decimal?  @db.Decimal(9, 2)
   nextExpectedDate  DateTime?        @db.Date
   reviewDate        DateTime?        @db.Date
   isActive          Boolean          @default(true)
