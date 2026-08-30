@@ -231,6 +231,17 @@ export class BudgetsService {
       throw new NotFoundException('No valid allocations to copy from previous month');
     }
 
+    const previousMonthEnd = new Date(targetMonthDate);
+    const previousTransactions = await this.prisma.transaction.findMany({
+      where: { userId, type: TransactionType.DEBIT, date: { gte: previousMonthDate, lt: previousMonthEnd } },
+      select: { categoryId: true, amount: true },
+    });
+    const spentByCategory = new Map<string, Decimal>();
+    for (const transaction of previousTransactions) {
+      if (!transaction.categoryId) continue;
+      spentByCategory.set(transaction.categoryId, (spentByCategory.get(transaction.categoryId) ?? new Decimal(0)).plus(transaction.amount.toString()));
+    }
+
     const budget = await this.prisma.budget.create({
       data: {
         userId,
@@ -240,7 +251,9 @@ export class BudgetsService {
             categoryId: a.categoryId,
             amount: a.amount,
             rolloverEnabled: a.rolloverEnabled,
-            rolloverAmount: a.rolloverEnabled ? a.rolloverAmount : 0,
+            rolloverAmount: a.rolloverEnabled
+              ? Decimal.max(0, new Decimal(a.amount.toString()).plus(a.rolloverAmount.toString()).minus(spentByCategory.get(a.categoryId) ?? 0))
+              : 0,
           })),
         },
       },
