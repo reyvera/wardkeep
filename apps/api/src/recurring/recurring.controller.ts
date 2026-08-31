@@ -13,13 +13,17 @@ import {
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { RecurringService } from './recurring.service';
+import { ReadinessService } from '../readiness/readiness.service';
 import { RecurringActionSchema } from './dto/recurring-action.dto';
 
 @Controller('recurring')
 @UseGuards(AuthGuard)
 @UseInterceptors(UserScopeInterceptor)
 export class RecurringController {
-  constructor(private readonly recurringService: RecurringService) {}
+  constructor(
+    private readonly recurringService: RecurringService,
+    private readonly readiness: ReadinessService,
+  ) {}
 
   /**
    * Lists confirmed and active recurring transactions for the authenticated user.
@@ -57,7 +61,9 @@ export class RecurringController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.recurringService.confirm(userId, result.data.id);
+    const recurring = await this.recurringService.confirm(userId, result.data.id);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return recurring;
   }
 
   /**
@@ -74,7 +80,9 @@ export class RecurringController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.recurringService.dismiss(userId, result.data.id);
+    const recurring = await this.recurringService.dismiss(userId, result.data.id);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return recurring;
   }
 
   /**
@@ -91,7 +99,9 @@ export class RecurringController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.recurringService.deactivate(userId, result.data.id);
+    const recurring = await this.recurringService.deactivate(userId, result.data.id);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return recurring;
   }
 
   @Patch(':id/subscription')
@@ -100,15 +110,28 @@ export class RecurringController {
     if (typeof isSubscription !== 'boolean') {
       throw new BadRequestException('isSubscription must be a boolean');
     }
-    return this.recurringService.setSubscription(req.userId!, id, isSubscription);
+    const userId = req.userId!;
+    const recurring = await this.recurringService.setSubscription(userId, id, isSubscription);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return recurring;
   }
 
   @Patch(':id/cancelled')
   async setCancelled(@Req() req: ScopedRequest, @Param('id') id: string) {
     const cancelledAt = req.body?.cancelledAt;
-    if (cancelledAt !== null && (typeof cancelledAt !== 'string' || Number.isNaN(Date.parse(cancelledAt)))) {
+    if (
+      cancelledAt !== null &&
+      (typeof cancelledAt !== 'string' || Number.isNaN(Date.parse(cancelledAt)))
+    ) {
       throw new BadRequestException('cancelledAt must be an ISO date or null');
     }
-    return this.recurringService.setCancelled(req.userId!, id, cancelledAt ? new Date(cancelledAt) : null);
+    const userId = req.userId!;
+    const recurring = await this.recurringService.setCancelled(
+      userId,
+      id,
+      cancelledAt ? new Date(cancelledAt) : null,
+    );
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return recurring;
   }
 }

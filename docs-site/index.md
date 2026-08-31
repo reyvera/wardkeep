@@ -41,13 +41,13 @@ Connect or import your accounts, organize transactions, and set a budget when yo
 
 ## Built for privacy and clarity
 
-Wardkeep can run in your own environment. Deterministic calculations—not AI—handle balances, forecasts, budgets, debt math, and readiness signals. AI is optional and can help explain, categorize, summarize, and surface patterns.
+Wardkeep can run in your own environment. Its distinction is deterministic, explainable whole-household readiness evaluation—not AI features. Deterministic calculations handle balances, forecasts, budgets, debt math, and readiness signals; AI is optional support for explaining, categorizing, summarizing, and surfacing patterns.
 
-| Your preference | Wardkeep supports |
-|:--|:--|
-| Keep AI fully local | Ollama, with no external AI calls |
-| Use a mix | Sensitive data stays local while general prompts can use a cloud provider |
-| Move quickly | Optional OpenAI or Anthropic integrations |
+| Your preference     | Wardkeep supports                                                         |
+| :------------------ | :------------------------------------------------------------------------ |
+| Keep AI fully local | Ollama, with no external AI calls                                         |
+| Use a mix           | Sensitive data stays local while general prompts can use a cloud provider |
+| Move quickly        | Optional OpenAI or Anthropic integrations                                 |
 
 [Self-host Wardkeep]({{ site.baseurl }}/deployment){: .btn .btn-primary }
 [See the product direction]({{ site.baseurl }}/roadmap){: .btn .btn-outline }

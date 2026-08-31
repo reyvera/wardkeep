@@ -226,7 +226,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 19.2 Implement signal aggregation and snapshot storage
   - [x] ReadinessService collects current finance-generator signals
-  - [ ] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
+  - [x] Store durable signals and observations in PostgreSQL (Signal model from technical-architecture.md)
   - [x] ReadinessSnapshot model — daily score persistence
   - [x] Run daily snapshot creation through a BullMQ worker job; the Dashboard endpoint retains a best-effort current-day snapshot for immediate history
   - [x] API endpoint: GET /api/readiness — returns score, pillars, signals, coverage, and history
@@ -235,7 +235,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Current response includes contributing signals and dashboard surfaces their summaries
   - [x] Create a structured readiness explanation response with pillar details, evaluated/not-evaluated factors, and score-change reasons
   - [x] API endpoint: GET /api/readiness/explain — full breakdown with signal attributions
-  - [ ] Link every point to a durable observation/capability and add per-pillar trend labels
+  - [x] Link every point to a durable observation/capability and add per-pillar trend labels
+    - [x] Add per-pillar trend labels from recorded snapshot history
+    - [x] Link each scored signal to its durable source observation
 
 - [~] 19.4 Implement readiness history and trends
   - [x] API endpoint: GET /api/readiness/history — score snapshots over time
@@ -244,7 +246,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] Compute 7-day, 30-day, 90-day trend indicators and score-change reasons
   - [x] Return available 7-, 30-, and 90-day score comparisons with their actual elapsed period.
   - [x] Store the observed overall score used by the Dashboard, never a synthetic score for an unevaluated household.
-  - [ ] Add durable causal explanations for score changes, not only changed factors.
+  - [x] Add durable causal explanations for score changes, not only changed factors.
   - [ ] Detect seasonal patterns (optional, AI-enhanced later)
 
 - [x] 19.5 Write property tests for Readiness Engine
@@ -255,21 +257,21 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] **Property 38:** Signal magnitude bounded to [-10, +10] clamps correctly
   - [x] Generate random signal sets; verify deterministic, bounded, explainable output
 
-### 20. Finance Capability Signals [PARTIAL]
+### 20. Finance Capability Signals [COMPLETE]
 
-- [~] 20.1 Define finance signal generators
-  - Budget adherence signal: risk when >90% spent, opportunity when consistently under
+- [x] 20.1 Define finance signal generators
+  - [x] Budget adherence signal: risk when >90% spent, opportunity when consistently under
   - [x] Graduated liquid-reserve signal from 0 through 12 months of filtered ordinary expenses
-  - [ ] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
-  - Debt-to-income ratio signal: risk when >36%, warning when >28%
-  - Cashflow forecast signal: risk when projected negative within 30 days
-  - Net worth trend signal: positive when growing month-over-month
-  - Recurring payment reliability signal: risk when missed payments detected
+  - [x] Essential-versus-normal burn rate, transfer matching, and one-time-expense handling
+  - [x] Debt-to-income ratio signal: risk when >36%, warning when >28%
+  - [x] Cashflow forecast signal: risk when projected negative within 30 days
+  - [x] Net worth trend signal: positive when growing month-over-month
+  - [x] Recurring payment reliability signal: risk when missed payments detected
 
-- [~] 20.2 Wire existing finance services to emit signals
+- [x] 20.2 Wire existing finance services to emit signals
   - [x] Current generators derive signals on readiness evaluation
-  - [ ] Recompute signals on relevant writes and scheduled syncs
-  - [~] Store signals/observations in DB and feed them through a versioned pipeline
+  - [x] Recompute signals after transaction, budget, and recurring-obligation writes; the daily BullMQ job covers scheduled syncs
+  - [x] Store signals/observations in DB, link scored signals to their durable source facts, and feed them through a versioned snapshot pipeline
 
 - [x] 20.3 Implement Capability interface for finance
   - [x] Create FinanceCapability class implementing the Capability interface
@@ -391,12 +393,12 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 25. Phase 2 Checkpoint
 
 - [x] 25.1 Verify Readiness Engine produces correct, explainable scores (automated readiness and API suites)
-- [ ] 25.2 Verify Morning Brief renders with real finance data
-- [ ] 25.3 Verify Timeline shows upcoming bills, paydays, and milestones
-- [ ] 25.4 Verify Advisor can explain readiness changes
+- [x] 25.2 Verify Morning Brief renders with real finance data
+- [x] 25.3 Verify Timeline shows upcoming bills, paydays, and milestones
+- [x] 25.4 Verify Advisor can explain readiness changes
 - [x] 25.5 All property tests pass (Properties 34–38+)
-- [ ] 25.6 Docker Compose stack works with new features
-- [~] 25.7 Demo instance updated with readiness, Timeline, and Advisor data
+- [x] 25.6 Docker Compose stack works with new features
+- [x] 25.7 Demo instance updated with readiness, Timeline, and Advisor data
 
 ---
 
@@ -439,6 +441,14 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Add a pre-event readiness check: confirm who is designated, what they can see, where documents and contacts are located, what information is missing, and whether the household has reviewed the plan recently. Provide a downloadable, owner-approved handoff summary; never release it automatically based on inactivity or a reported death.
   - Make the first release a neutral organizer and checklist, not a marketplace, legal-document generator, bank-action tool, credential vault, or automated notification sender.
   - Pillars: Protection and Peace. Readiness uses only explainable record-completeness or review-date signals; bereavement status and access designations must not be scored as preparedness or risk.
+  - [x] Neutral plan modes, recorded trusted-contact organizer, and factual pre-event record check.
+  - [x] Owner-approved downloadable organizer summary; it is never automatically released.
+  - [x] Optional neutral planning prompts for arrangements, notifications, bills/documents, and professional support.
+  - [x] Pre-event check distinguishes recently reviewed plans and explicitly reports that planning contacts have no viewing access.
+  - [x] Trusted-access foundation: explicit invitation, recipient approval, handoff-summary-only scope, owner-side revocation, and append-only audit events.
+  - [x] Owner-controlled sharing: only an immutable, explicitly shared handoff-summary snapshot may be downloaded by an active approved recipient; every share and view is audited.
+  - [x] Surviving-household walkthrough: a manually started, non-legal organizing sequence that does not report a death or change authority.
+  - [x] Same-household lead: explicit household membership is created only after recipient acceptance; an accepted member may manually activate a Wardkeep-only surviving-household lead state. Trusted access alone is not household membership or financial authority.
 
 - [x] 26.5 Emergency Preparedness Capability
   - [x] Track: food storage, water, first aid, important documents, evacuation plan
@@ -974,7 +984,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - Phases 3–7 are documented for architectural alignment but not scheduled.
 - "Ongoing Enhancements" can be interleaved with Phase 2 based on user demand.
 - Every new Capability (Phase 3+) automatically benefits from the Readiness Engine and Advisor built in Phase 2.
-- The Readiness Engine is deterministic. The Advisor is AI-powered. They are architecturally separate.
+- The Readiness Engine is deterministic. The Advisor may use AI as a foundational support capability; it is architecturally separate and is not Wardkeep's primary competitive differentiation. Wardkeep differentiates through deterministic, explainable whole-household readiness evaluation across financial and non-financial domains.
 - Property tests continue to validate correctness. New properties (34+) cover Readiness Engine invariants.
 - The terminology in this document follows `/docs/terminology.md`. Code, UI, and docs should match.
 - Phase 7 (Wardkeep Home) depends on stable deployment (Phase 1 Docker), mature features (Phase 2+), and ARM64 image builds. Target only after software is production-hardened.

@@ -23,6 +23,8 @@ import {
   generatePreparationSignals,
 } from './generators';
 import { calculateRecordedNetWorth } from './generators/prosperity.generator';
+import { deriveDurableReadinessChanges } from './readiness-change';
+import { buildPillarTrends, PillarTrend } from './readiness-trends';
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
@@ -42,6 +44,7 @@ export interface ReadinessResponse {
     comparedTo: Date | null;
     elapsedDays: number | null;
   }>;
+  pillarTrends: Record<keyof PillarScores, PillarTrend>;
   overallAssessment: PillarAssessment;
   coverage: number;
   pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
@@ -147,6 +150,23 @@ export class ReadinessService {
   }
 
   /**
+   * Records an updated current-day snapshot after a readiness-relevant write.
+   * A failed refresh never invalidates the already-committed household change;
+   * the scheduled daily job remains the recovery path.
+   */
+  async refreshAfterRelevantWrite(userId: string): Promise<void> {
+    try {
+      const readiness = await this.getReadiness(userId);
+      const observedOverall = readiness.overallAssessment.score;
+      if (observedOverall !== null) {
+        await this.recordSnapshot(userId, observedOverall, readiness.pillars, readiness.signals);
+      }
+    } catch {
+      // Snapshot refresh is deliberately best-effort after a successful write.
+    }
+  }
+
+  /**
    * Computes the full readiness state for a user.
    * Collects signals from all generators, scores each pillar,
    * computes overall readiness and Peace, and returns the full picture.
@@ -213,7 +233,11 @@ export class ReadinessService {
     };
     const comparisonSnapshot = lastViewedAt
       ? await this.prisma.readinessSnapshot.findFirst({
-          where: { userId, modelVersion: READINESS_MODEL_VERSION, recordedAt: { lte: lastViewedAt } },
+          where: {
+            userId,
+            modelVersion: READINESS_MODEL_VERSION,
+            recordedAt: { lte: lastViewedAt },
+          },
           orderBy: { recordedAt: 'desc' },
         })
       : recentSnapshots[0];
@@ -361,6 +385,7 @@ export class ReadinessService {
         ),
       };
     });
+    const pillarTrends = buildPillarTrends(pillars, history, evaluatedAt);
 
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
@@ -402,6 +427,7 @@ export class ReadinessService {
       topOpportunities,
       history: history.reverse(),
       trendWindows,
+      pillarTrends,
       overallAssessment,
       coverage,
       pillarCoverage,
@@ -438,6 +464,7 @@ export class ReadinessService {
       dataFreshness: readiness.dataFreshness,
       recentChanges: readiness.recentChanges,
       changeWindow: readiness.changeWindow,
+      pillarTrends: readiness.pillarTrends,
       pillars,
     };
   }
@@ -459,9 +486,23 @@ export class ReadinessService {
     today.setUTCHours(0, 0, 0, 0);
     const netWorth = await calculateRecordedNetWorth(this.prisma, userId);
     const observationContext = { householdId: userId, evaluatedAt: today };
-    const observations = (await Promise.all(
-      (await this.capabilities.enabledForUser(userId)).map((capability) => capability.observations(observationContext)),
-    )).flat();
+    const observations = (
+      await Promise.all(
+        (await this.capabilities.enabledForUser(userId)).map((capability) =>
+          capability.observations(observationContext),
+        ),
+      )
+    ).flat();
+
+    const previousSnapshot = await this.prisma.readinessSnapshot.findFirst({
+      where: {
+        userId,
+        modelVersion: READINESS_MODEL_VERSION,
+        recordedAt: { lt: today },
+      },
+      include: { signals: true },
+      orderBy: { recordedAt: 'desc' },
+    });
 
     const snapshot = await this.prisma.readinessSnapshot.upsert({
       where: {
@@ -494,13 +535,49 @@ export class ReadinessService {
       },
     });
 
-    await this.prisma.$transaction([
-      this.prisma.readinessSignal.deleteMany({ where: { snapshotId: snapshot.id } }),
-      this.prisma.readinessObservation.deleteMany({ where: { snapshotId: snapshot.id } }),
-      this.prisma.readinessSignal.createMany({
-        data: signals.map((signal) => ({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.readinessSignal.deleteMany({ where: { snapshotId: snapshot.id } });
+      await tx.readinessObservation.deleteMany({ where: { snapshotId: snapshot.id } });
+      await tx.readinessScoreChange.deleteMany({ where: { snapshotId: snapshot.id } });
+
+      await tx.readinessObservation.createMany({
+        data: observations.map((observation) => ({
           userId,
           snapshotId: snapshot.id,
+          capabilityId: observation.capabilityId,
+          fact: observation.fact,
+          value: observation.value as Prisma.InputJsonValue,
+          confidence: observation.confidence,
+          observedAt: observation.observedAt,
+        })),
+      });
+      const signalObservations = await Promise.all(
+        signals.map((signal) =>
+          tx.readinessObservation.create({
+            data: {
+              userId,
+              snapshotId: snapshot.id,
+              capabilityId: signal.capabilityId,
+              fact: `Readiness signal: ${signal.summary}`,
+              value: {
+                type: signal.type,
+                magnitude: Math.round(signal.magnitude),
+                pillar: signal.pillar,
+                weight: signal.weight ?? 1,
+                relevanceDate: signal.relevanceDate?.toISOString() ?? null,
+              },
+              confidence: 1,
+              observedAt: today,
+            },
+            select: { id: true },
+          }),
+        ),
+      );
+      await tx.readinessSignal.createMany({
+        data: signals.map((signal, index) => ({
+          userId,
+          snapshotId: snapshot.id,
+          observationId: signalObservations[index].id,
           capabilityId: signal.capabilityId,
           type: signal.type.toUpperCase() as
             'RISK' | 'OPPORTUNITY' | 'MILESTONE' | 'WARNING' | 'POSITIVE',
@@ -511,19 +588,33 @@ export class ReadinessService {
           weight: signal.weight ?? 1,
           expiresAt: signal.expiresAt ?? null,
         })),
-      }),
-      this.prisma.readinessObservation.createMany({
-        data: observations.map((observation) => ({
-          userId,
-          snapshotId: snapshot.id,
-          capabilityId: observation.capabilityId,
-          fact: observation.fact,
-          value: observation.value as Prisma.InputJsonValue,
-          confidence: observation.confidence,
-          observedAt: observation.observedAt,
-        })),
-      }),
-    ]);
+      });
+      if (previousSnapshot) {
+        await tx.readinessScoreChange.createMany({
+          data: deriveDurableReadinessChanges(
+            {
+              protection: previousSnapshot.protection,
+              provision: previousSnapshot.provision,
+              preparation: previousSnapshot.preparation,
+              prosperity: previousSnapshot.prosperity,
+              peace: previousSnapshot.peace,
+            },
+            pillars,
+            previousSnapshot.signals,
+            signals,
+          ).map((change) => ({
+            snapshotId: snapshot.id,
+            pillar: change.pillar.toUpperCase() as
+              'PROTECTION' | 'PROVISION' | 'PREPARATION' | 'PROSPERITY' | 'PEACE',
+            previous: change.previous,
+            current: change.current,
+            delta: change.delta,
+            reason: change.reason,
+            evidence: change.evidence as Prisma.InputJsonValue,
+          })),
+        });
+      }
+    });
 
     // Keep one year of daily history. Snapshot signals cascade with the snapshot,
     // so pruning does not leave orphaned factor records behind.
@@ -591,7 +682,10 @@ export class ReadinessService {
     }));
   }
 
-  /** Returns recorded capability facts for a household's recent readiness snapshots. */
+  /**
+   * Returns recorded capability facts for recent snapshots, including the
+   * persisted scored signal that cites each signal-observation as its source.
+   */
   async getObservations(userId: string, days: number) {
     const since = new Date();
     since.setDate(since.getDate() - days);
@@ -605,6 +699,16 @@ export class ReadinessService {
         confidence: true,
         observedAt: true,
         snapshot: { select: { recordedAt: true } },
+        signals: {
+          select: {
+            id: true,
+            capabilityId: true,
+            type: true,
+            pillar: true,
+            magnitude: true,
+            summary: true,
+          },
+        },
       },
       orderBy: [{ observedAt: 'desc' }, { capabilityId: 'asc' }, { fact: 'asc' }],
     });

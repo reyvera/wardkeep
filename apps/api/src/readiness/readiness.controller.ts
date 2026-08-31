@@ -1,4 +1,12 @@
-import { BadRequestException, Controller, Get, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Query,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 
 import { READINESS_MODEL_VERSION } from '@wardkeep/readiness';
 
@@ -85,7 +93,7 @@ export class ReadinessController {
     return this.readinessService.getHistoryModelVersions(req.userId!);
   }
 
-  /** Returns the household-scoped facts recorded alongside recent readiness snapshots. */
+  /** Returns recent household facts and any scored signal that cites each fact. */
   @Get('observations')
   getObservations(@Req() req: ScopedRequest, @Query('days') daysParam?: string) {
     const days = Math.min(Math.max(parseInt(daysParam ?? '30', 10) || 30, 1), 365);

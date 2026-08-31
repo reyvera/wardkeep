@@ -19,7 +19,7 @@ Wardkeep competes on household readiness and decision support, not on collecting
 
 Budgeting, aggregation, transaction management, net-worth tracking, recurring bills, investments, category analysis, and dashboards are increasingly commoditized. Self-hosting alone is also not enough: established open-source tools already provide private financial management.
 
-Wardkeep differentiates through **household readiness + explainable analysis + privacy + self-hosting + actionable guidance**. It should answer four questions exceptionally well:
+Wardkeep differentiates through **deterministic, explainable whole-household readiness evaluation** across financial and non-financial domains, supported by privacy, self-hosting, and actionable guidance. It should answer four questions exceptionally well:
 
 1. What is happening in my household?
 2. Why does it matter?
@@ -27,6 +27,8 @@ Wardkeep differentiates through **household readiness + explainable analysis + p
 4. What should I do next?
 
 Major features must contribute to at least one of those questions. Information presentation alone is not sufficient priority unless it improves the readiness model.
+
+Conversational AI, financial recommendations, and AI-powered forecasting are foundational product capabilities—not primary competitive differentiation. They may help people understand and act on the evaluation, but Wardkeep's distinct value is the deterministic, explainable evaluation itself: what evidence was considered, what was not evaluated, how each readiness pillar was assessed, and why attention is needed.
 
 ## 3. Household model
 
@@ -48,12 +50,12 @@ Finance is Wardkeep's first and deepest domain, but it must not permanently defi
 
 The strategic readiness model has four pillars:
 
-| Pillar | Question | Representative signals |
-| --- | --- | --- |
-| **Protection** | How resilient is the household against unexpected loss? | Emergency reserves, insurance and renewals, income protection, liability exposure, emergency documents, estate-plan completeness |
-| **Provision** | Can the household reliably meet near-term needs and obligations? | Cash flow, essential expenses, runway, upcoming bills, income stability, recurring obligations, cash reserves, budget sustainability |
-| **Prosperity** | Is the household moving toward long-term financial strength? | Debt trajectory, savings rate, retirement contributions, investment growth, net-worth direction, goals, major future purchases |
-| **Peace** | How much unresolved household administration requires attention? | Overdue obligations, renewals, uncategorized transactions, unreviewed alerts, irregular cash flow, incomplete data, maintenance deadlines, outstanding recommendations |
+| Pillar         | Question                                                         | Representative signals                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Protection** | How resilient is the household against unexpected loss?          | Emergency reserves, insurance and renewals, income protection, liability exposure, emergency documents, estate-plan completeness                                       |
+| **Provision**  | Can the household reliably meet near-term needs and obligations? | Cash flow, essential expenses, runway, upcoming bills, income stability, recurring obligations, cash reserves, budget sustainability                                   |
+| **Prosperity** | Is the household moving toward long-term financial strength?     | Debt trajectory, savings rate, retirement contributions, investment growth, net-worth direction, goals, major future purchases                                         |
+| **Peace**      | How much unresolved household administration requires attention? | Overdue obligations, renewals, uncategorized transactions, unreviewed alerts, irregular cash flow, incomplete data, maintenance deadlines, outstanding recommendations |
 
 Protection surfaces weaknesses and missing information. Provision emphasizes upcoming risk, not merely historical spending. Prosperity measures trajectory, not only current wealth. Peace is an attention-load measure; it does not claim to measure emotional or psychological well-being.
 
@@ -130,15 +132,15 @@ Detailed financial views remain available, but are secondary to the readiness la
 
 ## 8. AI, privacy, and self-hosting
 
-**AI is not the source of truth.** Deterministic systems calculate balances, cash flow, debt payoff, budgets, forecasts, readiness scores, ratios, deadlines, and coverage. AI can assist with categorization, explanation, summarization, pattern recognition, conversation, and recommendation wording.
+**AI is not the source of truth or the primary differentiator.** Deterministic systems calculate balances, cash flow, debt payoff, budgets, forecasts, readiness scores, ratios, deadlines, and coverage. AI can assist with categorization, explanation, summarization, pattern recognition, conversation, and recommendation wording. Those foundational capabilities must remain subordinate to, and clearly distinguishable from, the deterministic readiness evaluation.
 
 Wardkeep supports three clear privacy modes:
 
-| Mode | Data and AI posture |
-| --- | --- |
-| **Local** | Local database and financial data; Ollama; no external AI |
+| Mode       | Data and AI posture                                                         |
+| ---------- | --------------------------------------------------------------------------- |
+| **Local**  | Local database and financial data; Ollama; no external AI                   |
 | **Hybrid** | Sensitive calculations stay local; optional cloud AI handles selected tasks |
-| **Cloud** | Wardkeep operates infrastructure for users who prefer convenience |
+| **Cloud**  | Wardkeep operates infrastructure for users who prefer convenience           |
 
 The product clearly indicates when information leaves the user's environment.
 
@@ -180,4 +182,4 @@ Within roughly ten seconds, a new user should understand that Wardkeep is more t
 
 Near-term work prioritizes strengthening explainable readiness scoring, data-coverage reporting, the recommendation/action system, an attention-first dashboard, household models that improve readiness, and robust self-hosting followed by managed-cloud delivery. Traditional finance expansion is selective and supports those systems.
 
-> Do not compete on who can display the most financial information. Compete on who can turn household information into the clearest understanding of readiness and the most useful next action.
+> Do not compete on who can display the most financial information or offer the flashiest AI. Compete on who can deterministically and transparently evaluate whole-household readiness from financial and non-financial evidence, then provide the clearest understanding of what to do next.

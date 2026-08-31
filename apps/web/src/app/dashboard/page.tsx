@@ -46,13 +46,28 @@ interface ReadinessResponse {
   signals: Signal[];
   topRisks: Signal[];
   topOpportunities: Signal[];
-  history: Array<{ overall: number; pillars: PillarScores; recordedAt: string; modelVersion: number }>;
+  history: Array<{
+    overall: number;
+    pillars: PillarScores;
+    recordedAt: string;
+    modelVersion: number;
+  }>;
   trendWindows: Array<{
     days: 7 | 30 | 90;
     delta: number | null;
     comparedTo: string | null;
     elapsedDays: number | null;
   }>;
+  pillarTrends: Record<
+    string,
+    {
+      direction: 'improving' | 'declining' | 'steady' | 'not_enough_history';
+      label: string;
+      delta: number | null;
+      comparedTo: string | null;
+      elapsedDays: number | null;
+    }
+  >;
   overallAssessment: {
     state: 'known' | 'partial' | 'not_evaluated';
     score: number | null;
@@ -446,7 +461,9 @@ export default function DashboardPage() {
 
           {/* Summary text */}
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-xl font-semibold text-content-primary mb-1">Your household picture</h2>
+            <h2 className="text-xl font-semibold text-content-primary mb-1">
+              Your household picture
+            </h2>
             <p className="text-sm text-content-secondary">
               {observedOverall === null ? (
                 'Add your accounts and everyday spending so Wardkeep can give you a useful picture.'
@@ -569,6 +586,7 @@ export default function DashboardPage() {
           const assessment = data.pillarAssessments[key];
           const coverage = assessment?.coverage ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
+          const trend = data.pillarTrends[key];
           return (
             <Link
               href={`/dashboard/readiness/${key}`}
@@ -598,6 +616,25 @@ export default function DashboardPage() {
                   ? 'Based on the other areas above'
                   : `${coverageLabel(coverage, data.dataFreshness.staleAccounts)} · Wardkeep can check ${coverage}% here`}
               </p>
+              {trend && (
+                <p
+                  className={`text-xs mt-1 ${
+                    trend.direction === 'improving'
+                      ? 'text-accent-green'
+                      : trend.direction === 'declining'
+                        ? 'text-accent-red'
+                        : 'text-content-tertiary'
+                  }`}
+                >
+                  {trend.direction === 'improving'
+                    ? '↑'
+                    : trend.direction === 'declining'
+                      ? '↓'
+                      : '•'}{' '}
+                  {trend.label}
+                  {trend.elapsedDays ? ` over ${trend.elapsedDays} days` : ''}
+                </p>
+              )}
               {pillarSignals.map((signal) => (
                 <p
                   key={signal.capabilityId}
@@ -623,7 +660,9 @@ export default function DashboardPage() {
                 {recommendedNextStep.impactPreview}
               </p>
               <p className="mt-2 text-xs text-content-tertiary">
-                How serious: {recommendedNextStep.severity} · Needs attention: {recommendedNextStep.priority} · Info quality: {Math.round(Number(recommendedNextStep.confidence) * 100)}%
+                How serious: {recommendedNextStep.severity} · Needs attention:{' '}
+                {recommendedNextStep.priority} · Info quality:{' '}
+                {Math.round(Number(recommendedNextStep.confidence) * 100)}%
                 {recommendedNextStep.relevanceDate
                   ? ` · relevant by ${new Date(recommendedNextStep.relevanceDate).toLocaleDateString()}`
                   : ''}
@@ -637,7 +676,9 @@ export default function DashboardPage() {
                 <details className="mt-1 text-xs text-content-tertiary">
                   <summary className="cursor-pointer">Supporting data</summary>
                   <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                    {recommendedNextStep.supportingData.map((item) => <li key={item}>{item}</li>)}
+                    {recommendedNextStep.supportingData.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
                   </ul>
                 </details>
               )}
@@ -777,7 +818,8 @@ export default function DashboardPage() {
           <h3 className="card-title">Needs attention</h3>
           {data.topRisks.length === 0 ? (
             <p className="text-sm text-content-tertiary">
-              Nothing needs attention from the information Wardkeep has so far. Adding more details can make this more useful.
+              Nothing needs attention from the information Wardkeep has so far. Adding more details
+              can make this more useful.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -839,7 +881,9 @@ export default function DashboardPage() {
                         {recommendation.signalSummary}
                       </span>
                       <p className="text-xs text-content-tertiary mt-0.5">
-                        How serious: {recommendation.severity} · Needs attention: {recommendation.priority} · Info quality: {Math.round(Number(recommendation.confidence) * 100)}%
+                        How serious: {recommendation.severity} · Needs attention:{' '}
+                        {recommendation.priority} · Info quality:{' '}
+                        {Math.round(Number(recommendation.confidence) * 100)}%
                       </p>
                       {recommendation.relevanceDate && (
                         <p className="mt-0.5 text-xs text-content-secondary">
@@ -858,7 +902,9 @@ export default function DashboardPage() {
                         <details className="mt-1 text-xs text-content-tertiary">
                           <summary className="cursor-pointer">Supporting data</summary>
                           <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                            {recommendation.supportingData.map((item) => <li key={item}>{item}</li>)}
+                            {recommendation.supportingData.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
                           </ul>
                         </details>
                       )}
@@ -947,8 +993,8 @@ export default function DashboardPage() {
           </ul>
         )}
         <p className="text-xs text-content-tertiary mt-4">
-          Compared with the nearest daily check-in Wardkeep has for this period. Wardkeep explains
-          a change when it can connect it to information you entered.
+          Compared with the nearest daily check-in Wardkeep has for this period. Wardkeep explains a
+          change when it can connect it to information you entered.
         </p>
       </div>
 

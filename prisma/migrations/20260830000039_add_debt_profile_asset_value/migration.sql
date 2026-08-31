@@ -1,0 +1,2 @@
+ALTER TABLE "DebtProfile"
+  ADD COLUMN IF NOT EXISTS "assetValue" DECIMAL(19, 4);

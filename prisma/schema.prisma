@@ -48,6 +48,12 @@ model User {
   emergencyPreparednessItems EmergencyPreparednessItem[]
   householdTransitionPlans HouseholdTransitionPlan[]
   householdTransitionContacts HouseholdTransitionContact[]
+  trustedAccessInvitations TrustedAccessInvitation[] @relation("TrustedAccessOwner")
+  trustedAccessGrantsOwned TrustedAccessGrant[] @relation("TrustedAccessGrantOwner")
+  trustedAccessGrantsReceived TrustedAccessGrant[] @relation("TrustedAccessRecipient")
+  handoffSummaries       HandoffSummary[]
+  ownedHousehold         Household? @relation("HouseholdOwner")
+  householdMembership    HouseholdMembership?
   capabilitySettings    CapabilitySetting[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
@@ -57,6 +63,118 @@ enum HouseholdTransitionContactRole {
   INCAPACITY_AGENT
   POTENTIAL_EXECUTOR
   SURVIVING_HOUSEHOLD_CONTACT
+}
+
+enum TrustedAccessInvitationStatus {
+  PENDING
+  APPROVED
+  REVOKED
+  EXPIRED
+}
+
+enum HouseholdMembershipRole {
+  MEMBER
+  SURVIVING_HOUSEHOLD_LEAD
+}
+
+/// A Wardkeep coordination household. It does not merge personal financial records or confer authority.
+model Household {
+  id          String                @id @default(uuid())
+  ownerUserId String                @unique
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  owner       User                  @relation("HouseholdOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  members     HouseholdMembership[]
+  invitations TrustedAccessInvitation[] @relation("HouseholdInvitations")
+}
+
+model HouseholdMembership {
+  id          String                  @id @default(uuid())
+  householdId String
+  userId      String                  @unique
+  role        HouseholdMembershipRole @default(MEMBER)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+}
+
+/// An owner-created, recipient-approved access request. It grants no data by itself.
+model TrustedAccessInvitation {
+  id             String                       @id @default(uuid())
+  ownerUserId    String
+  recipientEmail String                       @db.VarChar(254)
+  scopes         String[]
+  tokenHash      String                       @unique @db.VarChar(64)
+  householdId    String?
+  status         TrustedAccessInvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  approvedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  owner User @relation("TrustedAccessOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  household Household? @relation("HouseholdInvitations", fields: [householdId], references: [id], onDelete: SetNull)
+  audits TrustedAccessAuditEvent[]
+
+  @@index([ownerUserId, status])
+  @@index([recipientEmail, status])
+  @@index([householdId])
+}
+
+/// A least-privilege grant created only after an invitation is accepted.
+model TrustedAccessGrant {
+  id              String   @id @default(uuid())
+  ownerUserId     String
+  recipientUserId String
+  scopes          String[]
+  isActive        Boolean  @default(true)
+  approvedAt      DateTime @default(now())
+  revokedAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  owner     User @relation("TrustedAccessGrantOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  recipient User @relation("TrustedAccessRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  audits TrustedAccessAuditEvent[]
+
+  @@unique([ownerUserId, recipientUserId])
+  @@index([recipientUserId, isActive])
+}
+
+/// Append-only operational history for invitations and access grants.
+model TrustedAccessAuditEvent {
+  id           String   @id @default(uuid())
+  invitationId String?
+  grantId      String?
+  actorUserId  String
+  event        String   @db.VarChar(80)
+  metadata     Json
+  createdAt    DateTime @default(now())
+
+  invitation TrustedAccessInvitation? @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  grant      TrustedAccessGrant? @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId, createdAt])
+  @@index([grantId, createdAt])
+}
+
+/// An immutable organizer snapshot released only by its owner to active, approved recipients.
+model HandoffSummary {
+  id        String   @id @default(uuid())
+  userId    String
+  payload   Json
+  sharedAt  DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sharedAt, createdAt])
 }
 
 /// A planning reference only. This record does not grant authority or access.
@@ -999,6 +1117,7 @@ model ReadinessSnapshot {
 
   signals ReadinessSignal[]
   observations ReadinessObservation[]
+  changes ReadinessScoreChange[]
 
   @@unique([userId, recordedAt, modelVersion])
   @@index([userId, modelVersion, recordedAt])
@@ -1017,6 +1136,7 @@ model ReadinessObservation {
   createdAt    DateTime @default(now())
 
   snapshot ReadinessSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  signals ReadinessSignal[] @relation("SignalObservation")
 
   @@index([userId, capabilityId, observedAt])
   @@index([snapshotId])
@@ -1036,9 +1156,30 @@ model ReadinessSignal {
   snapshotId   String?
 
   snapshot ReadinessSnapshot? @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  observationId String?
+  observation ReadinessObservation? @relation("SignalObservation", fields: [observationId], references: [id], onDelete: SetNull)
 
   @@index([userId, pillar])
   @@index([userId, createdAt])
+  @@index([snapshotId])
+  @@index([observationId])
+}
+
+/// A durable, deterministic explanation of how a daily readiness score changed.
+model ReadinessScoreChange {
+  id       String              @id @default(uuid())
+  snapshotId String
+  pillar   ReadinessPillarEnum
+  previous Int
+  current  Int
+  delta    Int
+  reason   String              @db.VarChar(1000)
+  evidence Json
+  createdAt DateTime           @default(now())
+
+  snapshot ReadinessSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, pillar])
   @@index([snapshotId])
 }
 

@@ -4,11 +4,11 @@ _Guard your ground._
 
 A private, self-hostable household-readiness platform. Wardkeep starts with finance—spending, income, debt, savings, bills, and cash flow—and is becoming the calm command center for what a household needs to prepare for next.
 
-**The key difference:** instead of only showing numbers, Wardkeep explains what is happening, shows how complete that picture is, anticipates what is coming, and recommends the next useful action.
+**The key difference:** Wardkeep deterministically evaluates whole-household readiness across financial and non-financial domains, explains the evidence and gaps behind each assessment, and identifies the next useful action.
 
 ## Core Principle
 
-AI is never the source of truth. Deterministic math handles balances, forecasts, debt calculations, and budgets. AI explains, categorizes, summarizes, detects patterns, and suggests actions.
+AI is never the source of truth or the primary competitive differentiator. Deterministic systems handle balances, forecasts, debt calculations, budgets, and readiness evaluation. AI is a foundational support feature: it explains, categorizes, summarizes, detects patterns, and suggests actions.
 
 ## Tech Stack
 

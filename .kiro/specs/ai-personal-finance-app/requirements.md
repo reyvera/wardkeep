@@ -2,11 +2,11 @@
 
 ## Introduction
 
-This document defines the MVP requirements for an AI-powered personal finance application. The application is a private, self-hostable budgeting and finance assistant that helps users track spending, income, debt, savings, and cash flow. Unlike traditional finance tools that only display numbers, this application explains what is happening, predicts what is coming, and recommends actions — all while keeping user data private and under their control.
+This document defines the finance-foundation MVP requirements for Wardkeep, a private, self-hostable household-readiness platform. The foundation helps users track spending, income, debt, savings, and cash flow as evidence for a broader, deterministic readiness evaluation across financial and non-financial domains. Unlike traditional finance tools that only display numbers, Wardkeep explains what is happening, evaluates what it can support with evidence, identifies gaps, and recommends useful actions while keeping user data private and under their control.
 
 The MVP scope covers: manual accounts, CSV import, categories, monthly budgeting, transactions, a rules engine, AI categorization, AI chat assistant, debt payoff calculator, cash-flow forecast, Docker Compose deployment, PWA support, and encrypted backups.
 
-**Key Design Principle:** AI is never the source of truth. Deterministic math handles balances, forecasts, debt calculations, and budgets. AI explains, categorizes, summarizes, detects patterns, and suggests actions.
+**Key Design Principle:** AI is never the source of truth or Wardkeep's primary competitive differentiator. Deterministic systems handle balances, forecasts, debt calculations, budgets, and readiness evaluation. AI is a foundational support feature that explains, categorizes, summarizes, detects patterns, and suggests actions.
 
 ## Glossary
 

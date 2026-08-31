@@ -1,12 +1,10 @@
 {
-  "name": "Wardkeep - Personal Finance",
+  "name": "Wardkeep - Household Readiness",
   "short_name": "Wardkeep",
-  "description": "Self-hosted, AI-powered personal finance. Guard your ground.",
+  "description": "Self-hosted, deterministic household-readiness evaluation. Guard your ground.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f9fafb",
   "theme_color": "#2563eb",
-  "icons": [
-    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
-  ]
+  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
 }

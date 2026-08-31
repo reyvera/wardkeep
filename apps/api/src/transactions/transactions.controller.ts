@@ -17,6 +17,7 @@ import {
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { TransactionsService, TransactionFilters } from './transactions.service';
+import { ReadinessService } from '../readiness/readiness.service';
 import { CreateTransactionSchema } from './dto/create-transaction.dto';
 import { UpdateTransactionSchema } from './dto/update-transaction.dto';
 
@@ -29,7 +30,10 @@ const SEARCH_MAX_LENGTH = 200;
 @UseGuards(AuthGuard)
 @UseInterceptors(UserScopeInterceptor)
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly readiness: ReadinessService,
+  ) {}
 
   /**
    * Returns groups of potential duplicate transactions.
@@ -162,7 +166,9 @@ export class TransactionsController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.transactionsService.createTransaction(userId, result.data);
+    const transaction = await this.transactionsService.createTransaction(userId, result.data);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return transaction;
   }
 
   /**
@@ -180,7 +186,9 @@ export class TransactionsController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.transactionsService.updateTransaction(userId, id, result.data);
+    const transaction = await this.transactionsService.updateTransaction(userId, id, result.data);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return transaction;
   }
 
   @Patch(':id/review')
@@ -198,5 +206,6 @@ export class TransactionsController {
   async deleteTransaction(@Req() req: ScopedRequest, @Param('id') id: string) {
     const userId = req.userId!;
     await this.transactionsService.deleteTransaction(userId, id);
+    await this.readiness.refreshAfterRelevantWrite(userId);
   }
 }

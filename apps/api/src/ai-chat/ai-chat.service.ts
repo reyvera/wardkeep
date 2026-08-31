@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 
-import { AIChat, OllamaProvider, OpenAIProvider, AnthropicProvider, ChatMessage } from '@wardkeep/ai-engine';
-import type { AIProvider } from '@wardkeep/ai-engine';
 import {
-  verifyAIClaim,
-  FinancialContext,
-  NumericalClaim,
-} from '@wardkeep/finance-engine';
+  AIChat,
+  OllamaProvider,
+  OpenAIProvider,
+  AnthropicProvider,
+  ChatMessage,
+} from '@wardkeep/ai-engine';
+import type { AIProvider } from '@wardkeep/ai-engine';
+import { verifyAIClaim, FinancialContext, NumericalClaim } from '@wardkeep/finance-engine';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { EncryptionService } from '../common/services/encryption.service';
@@ -21,7 +23,10 @@ type ReadinessReference = 'protection' | 'provision' | 'preparation' | 'prosperi
 
 /** Formats evaluated readiness evidence for the Advisor conversation context. */
 export function formatReadinessContext(readiness: ReadinessResponse): string {
-  const score = readiness.overallAssessment.score === null ? 'not evaluated' : `${readiness.overallAssessment.score}%`;
+  const score =
+    readiness.overallAssessment.score === null
+      ? 'not evaluated'
+      : `${readiness.overallAssessment.score}%`;
   const pillars = Object.entries(readiness.pillarAssessments)
     .filter(([, assessment]) => assessment.score !== null)
     .map(([pillar, assessment]) => `${pillar}: ${assessment.score}% (${assessment.state})`)
@@ -33,6 +38,39 @@ export function formatReadinessContext(readiness: ReadinessResponse): string {
     risks ? `Observed risks: ${risks}.` : 'No observed readiness risks are currently recorded.',
     'Readiness scores and signals are deterministic records. Explain them, but do not claim to change or override them.',
   ].join('\n');
+}
+
+/**
+ * Preserves useful readiness guidance when an optional AI provider is offline.
+ * It only restates deterministic scores, recorded comparisons, and observed
+ * factors; it does not infer a cause where Wardkeep has not recorded one.
+ */
+export function deterministicAdvisorFallback(readiness: ReadinessResponse): string {
+  const score = readiness.overallAssessment.score;
+  const recordedChange =
+    readiness.recentChanges.find((change) => change.reason) ?? readiness.recentChanges[0];
+  const trend = readiness.trendWindows.find(
+    (window) => window.delta !== null && window.elapsedDays !== null,
+  );
+  const summary =
+    score === null
+      ? `Wardkeep has not evaluated an overall readiness score yet; current coverage is ${readiness.overallAssessment.coverage}%.`
+      : `Your current readiness assessment is ${score}% with ${readiness.overallAssessment.coverage}% coverage.`;
+  const changeExplanation = recordedChange
+    ? `The ${recordedChange.pillar} pillar is ${recordedChange.current > recordedChange.previous ? 'up' : 'down'} ${Math.abs(recordedChange.delta)} points from the recorded comparison. ${recordedChange.reason ? `The newly observed factor is: ${recordedChange.reason}` : 'Wardkeep has not recorded a factor-level reason for that movement.'}`
+    : trend
+      ? `Your recorded readiness is ${trend.delta! >= 0 ? 'up' : 'down'} ${Math.abs(trend.delta!)} points over ${trend.elapsedDays} days. Wardkeep has not recorded a factor-level cause for that comparison.`
+      : 'There is not yet a recorded comparison for a readiness change.';
+  const currentRisk = readiness.topRisks[0]?.summary;
+
+  return [
+    "I couldn't reach your configured AI provider, so here's the deterministic readiness summary.",
+    summary,
+    changeExplanation,
+    currentRisk ? `Current attention: ${currentRisk}` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 @Injectable()
@@ -86,7 +124,9 @@ export class AiChatService {
       this.readiness.getReadiness(userId),
     ]);
     const advisorContext = `${financialContext}\n\n${formatReadinessContext(readiness)}`;
-    const readinessReferences = [...new Set(readiness.topRisks.map((signal) => signal.pillar))] as ReadinessReference[];
+    const readinessReferences = [
+      ...new Set(readiness.topRisks.map((signal) => signal.pillar)),
+    ] as ReadinessReference[];
 
     // Resolve the AI provider based on user settings
     const provider = await this.resolveProvider(userId);
@@ -95,23 +135,19 @@ export class AiChatService {
     // Call AI chat engine
     let aiResponse;
     try {
-      aiResponse = await aiChat.chat(
-        dto.query,
-        advisorContext,
-        history,
-      );
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'AI service unavailable';
+      aiResponse = await aiChat.chat(dto.query, advisorContext, history);
+    } catch {
       // Return a friendly message instead of crashing
+      const fallback = deterministicAdvisorFallback(readiness);
       await this.prisma.chatMessage.create({
         data: { sessionId, role: 'user', content: dto.query },
       });
       await this.prisma.chatMessage.create({
-        data: { sessionId, role: 'assistant', content: `Sorry, I couldn't process your request: ${msg}` },
+        data: { sessionId, role: 'assistant', content: fallback },
       });
       return {
         sessionId,
-        message: `Sorry, I couldn't process your request: ${msg}`,
+        message: fallback,
         verifiedData: null,
         readinessReferences,
       };

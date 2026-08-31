@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Wardkeep - Personal Finance',
-  description: 'Self-hosted, AI-powered personal finance. Guard your ground.',
+  title: 'Wardkeep - Household Readiness',
+  description: 'Self-hosted, deterministic household-readiness evaluation. Guard your ground.',
   manifest: '/manifest.json',
 };
 

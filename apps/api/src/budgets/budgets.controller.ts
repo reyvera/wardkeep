@@ -15,11 +15,9 @@ import {
 import { z } from 'zod';
 
 import { AuthGuard } from '../common/guards/auth.guard';
-import {
-  UserScopeInterceptor,
-  ScopedRequest,
-} from '../common/interceptors/user-scope.interceptor';
+import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { BudgetsService } from './budgets.service';
+import { ReadinessService } from '../readiness/readiness.service';
 import { CreateBudgetSchema } from './dto/create-budget.dto';
 import { UpdateBudgetSchema } from './dto/update-budget.dto';
 
@@ -27,15 +25,16 @@ const CopyBudgetSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format'),
 });
 
-const MonthParamSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format');
+const MonthParamSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Month must be in YYYY-MM format');
 
 @Controller('budgets')
 @UseGuards(AuthGuard)
 @UseInterceptors(UserScopeInterceptor)
 export class BudgetsController {
-  constructor(private readonly budgetsService: BudgetsService) {}
+  constructor(
+    private readonly budgetsService: BudgetsService,
+    private readonly readiness: ReadinessService,
+  ) {}
 
   /**
    * Creates a new budget with allocations for a specific month.
@@ -51,7 +50,9 @@ export class BudgetsController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.budgetsService.createBudget(userId, result.data);
+    const budget = await this.budgetsService.createBudget(userId, result.data);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return budget;
   }
 
   /**
@@ -68,7 +69,9 @@ export class BudgetsController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.budgetsService.copyFromPreviousMonth(userId, result.data.month);
+    const budget = await this.budgetsService.copyFromPreviousMonth(userId, result.data.month);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return budget;
   }
 
   /**
@@ -78,10 +81,7 @@ export class BudgetsController {
    * @returns Budget summary with totals and per-category progress
    */
   @Get(':month/summary')
-  async getBudgetSummary(
-    @Req() req: ScopedRequest,
-    @Param('month') month: string,
-  ) {
+  async getBudgetSummary(@Req() req: ScopedRequest, @Param('month') month: string) {
     const userId = req.userId!;
     const parsed = MonthParamSchema.safeParse(month);
 
@@ -99,10 +99,7 @@ export class BudgetsController {
    * @returns The budget with allocations for the given month
    */
   @Get(':month')
-  async getBudgetByMonth(
-    @Req() req: ScopedRequest,
-    @Param('month') month: string,
-  ) {
+  async getBudgetByMonth(@Req() req: ScopedRequest, @Param('month') month: string) {
     const userId = req.userId!;
     const parsed = MonthParamSchema.safeParse(month);
 
@@ -128,7 +125,9 @@ export class BudgetsController {
       throw new BadRequestException(result.error.flatten().fieldErrors);
     }
 
-    return this.budgetsService.updateBudget(userId, id, result.data);
+    const budget = await this.budgetsService.updateBudget(userId, id, result.data);
+    await this.readiness.refreshAfterRelevantWrite(userId);
+    return budget;
   }
 
   /**
@@ -141,5 +140,6 @@ export class BudgetsController {
   async deleteBudget(@Req() req: ScopedRequest, @Param('id') id: string) {
     const userId = req.userId!;
     await this.budgetsService.deleteBudget(userId, id);
+    await this.readiness.refreshAfterRelevantWrite(userId);
   }
 }

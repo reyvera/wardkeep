@@ -58,6 +58,16 @@ interface ReadinessExplanation {
     comparedTo: string;
     reason: string | null;
   }>;
+  pillarTrends: Record<
+    PillarKey,
+    {
+      direction: 'improving' | 'declining' | 'steady' | 'not_enough_history';
+      label: string;
+      delta: number | null;
+      comparedTo: string | null;
+      elapsedDays: number | null;
+    }
+  >;
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
@@ -82,7 +92,10 @@ const PILLARS: Record<
       'Insurance, estate-planning, and income-source records',
     ],
     observed: [
-      { capability: 'emergency-fund', label: 'Money available now compared with everyday spending' },
+      {
+        capability: 'emergency-fund',
+        label: 'Money available now compared with everyday spending',
+      },
       { capability: 'insurance', label: 'Entered insurance policies and renewal timing' },
       {
         capability: 'insurance-record-details',
@@ -103,7 +116,8 @@ const PILLARS: Record<
       },
       {
         capability: 'fixed-obligations',
-        label: 'Minimum debt payments, regular bills, and outside commitments compared with money available now',
+        label:
+          'Minimum debt payments, regular bills, and outside commitments compared with money available now',
       },
       { capability: 'dependents', label: 'Entered dependent records and review timing' },
     ],
@@ -129,7 +143,8 @@ const PILLARS: Record<
   preparation: {
     label: 'Preparation',
     icon: Hammer,
-    description: 'How ready your household is for costs and responsibilities you already know are coming.',
+    description:
+      'How ready your household is for costs and responsibilities you already know are coming.',
     sources: ['User-entered planned expenses'],
     observed: [{ capability: 'planned-expenses', label: 'Recorded future expense due dates' }],
     next: [
@@ -239,6 +254,7 @@ export default function ReadinessPillarPage() {
   const signals = explanation.factors;
   const observedCapabilities = new Set(signals.map((signal) => signal.capabilityId));
   const trend = data.recentChanges.find((change) => change.pillar === pillar);
+  const pillarTrend = data.pillarTrends[pillar];
   const Icon = meta.icon;
   const color = scoreColor(score);
 
@@ -283,6 +299,20 @@ export default function ReadinessPillarPage() {
                   <p className="text-xs mt-1 text-content-tertiary">{trend.reason}</p>
                 )}
               </>
+            )}
+            {!trend && pillarTrend && (
+              <p
+                className={`text-xs mt-2 ${
+                  pillarTrend.direction === 'improving'
+                    ? 'text-accent-green'
+                    : pillarTrend.direction === 'declining'
+                      ? 'text-accent-red'
+                      : 'text-content-tertiary'
+                }`}
+              >
+                {pillarTrend.label}
+                {pillarTrend.elapsedDays ? ` over ${pillarTrend.elapsedDays} recorded days` : ''}
+              </p>
             )}
           </div>
         </div>
