@@ -38,6 +38,7 @@
     --chart-6: #fbbf24;
     --chart-7: #2dd4bf;
     --chart-8: #f472b6;
+    --font-display: var(--font-inter);
 
     color-scheme: dark;
   }
@@ -98,6 +99,11 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  .text-page-title,
+  .card-title {
+    font-family: var(--font-display), var(--font-inter), system-ui, sans-serif;
   }
 
   /* Tabular numbers for financial data */
