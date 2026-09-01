@@ -91,6 +91,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const preset = accentTheme === 'custom' ? ACCENT_PRESETS.midnight : ACCENT_PRESETS[accentTheme];
     root.style.setProperty('--accent-blue', accentTheme === 'custom' ? customAccent : preset.color);
     Object.entries(preset.variables).forEach(([name, value]) => root.style.setProperty(name, value));
+    root.style.setProperty('--font-theme', preset.variables['--font-display']);
   }, [accentTheme, customAccent]);
 
   const setTheme = (newTheme: Theme) => {

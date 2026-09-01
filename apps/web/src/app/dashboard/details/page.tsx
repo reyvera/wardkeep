@@ -578,12 +578,12 @@ export default function DashboardPage() {
             <AreaChart data={statsQuery.data.monthlyTrend}>
               <defs>
                 <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-green)" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="var(--accent-green)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-2)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="var(--chart-2)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-red)" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="var(--accent-red)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-5)" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="var(--chart-5)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -615,7 +615,7 @@ export default function DashboardPage() {
               <Area
                 type="monotone"
                 dataKey="income"
-                stroke="var(--accent-green)"
+                stroke="var(--chart-2)"
                 fill="url(#incomeGrad)"
                 strokeWidth={2}
                 name="Income"
@@ -623,7 +623,7 @@ export default function DashboardPage() {
               <Area
                 type="monotone"
                 dataKey="expenses"
-                stroke="var(--accent-red)"
+                stroke="var(--chart-5)"
                 fill="url(#expenseGrad)"
                 strokeWidth={2}
                 name="Expenses"

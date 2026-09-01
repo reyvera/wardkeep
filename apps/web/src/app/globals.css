@@ -39,6 +39,7 @@
     --chart-7: #2dd4bf;
     --chart-8: #f472b6;
     --font-display: var(--font-inter);
+    --font-theme: var(--font-inter);
 
     color-scheme: dark;
   }

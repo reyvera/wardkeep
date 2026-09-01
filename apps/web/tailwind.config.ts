@@ -57,7 +57,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-theme)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'hero': ['2.5rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.02em' }],
