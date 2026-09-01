@@ -39,9 +39,11 @@ export class TimelineService {
   async listUpcoming(userId: string, requestedDays?: number): Promise<TimelineEvent[]> {
     const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays!, 1), 365) : 30;
     const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    // Timeline source dates are stored as UTC date-only values. Normalizing this
+    // window in UTC keeps a due date on "today" visible in every user timezone.
+    start.setUTCHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setDate(end.getDate() + days);
+    end.setUTCDate(end.getUTCDate() + days);
 
     const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance, homeMaintenance] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
@@ -215,9 +217,9 @@ export class TimelineService {
   async listHistory(userId: string, requestedDays?: number): Promise<TimelineHistoryEvent[]> {
     const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays!, 1), 365) : 30;
     const end = new Date();
-    end.setHours(0, 0, 0, 0);
+    end.setUTCHours(0, 0, 0, 0);
     const start = new Date(end);
-    start.setDate(start.getDate() - days);
+    start.setUTCDate(start.getUTCDate() - days);
     const [policies, income, plannedExpenses, goals, vehicleMaintenance, homeMaintenance] = await Promise.all([
       this.prisma.insurancePolicy.findMany({
         where: { userId, renewalDate: { gte: start, lt: end } },

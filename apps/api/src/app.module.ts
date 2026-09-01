@@ -25,6 +25,8 @@ import { HouseholdObligationsModule } from './household-obligations/household-ob
 import { HouseholdTransitionsModule } from './household-transitions/household-transitions.module';
 import { PlannedExpensesModule } from './planned-expenses/planned-expenses.module';
 import { InsuranceModule } from './insurance/insurance.module';
+import { InvestmentsModule } from './investments/investments.module';
+import { RealEstateModule } from './real-estate/real-estate.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -81,6 +83,8 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     HouseholdTransitionsModule,
     PlannedExpensesModule,
     InsuranceModule,
+    InvestmentsModule,
+    RealEstateModule,
   ],
   providers: [
     {

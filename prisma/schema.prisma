@@ -322,6 +322,8 @@ model Account {
   linkedBankAccounts       LinkedBankAccount[]
   debtProfile              DebtProfile?
   bundledInsurancePolicies InsurancePolicy[]      @relation("BundledInsurancePayments")
+  investmentHoldings       InvestmentHolding[]
+  realEstateProfile        RealEstateProfile?
 
   @@unique([userId, name])
   @@index([userId, isArchived])
@@ -336,6 +338,57 @@ enum AccountType {
   HELOC
   CASH
   MANUAL
+  BROKERAGE
+  RETIREMENT
+  CRYPTO
+  REAL_ESTATE
+}
+
+/// A user-recorded or authorized-broker holding. Quotes are factual snapshots, not advice.
+model InvestmentHolding {
+  id             String   @id @default(uuid())
+  accountId      String
+  symbol         String   @db.VarChar(32)
+  quantity       Decimal  @db.Decimal(24, 8)
+  costBasis      Decimal? @db.Decimal(19, 4)
+  quotePrice     Decimal? @db.Decimal(19, 4)
+  quoteSource    String?  @db.VarChar(80)
+  quoteAsOf      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  quoteSnapshots InvestmentQuoteSnapshot[]
+
+  @@unique([accountId, symbol])
+  @@index([symbol])
+}
+
+/// An immutable, user-recorded or authorized-source quote observation. These facts
+/// support historical comparison without inferring market movement between dates.
+model InvestmentQuoteSnapshot {
+  id        String   @id @default(uuid())
+  holdingId String
+  price     Decimal  @db.Decimal(19, 4)
+  source    String   @db.VarChar(80)
+  asOf      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  holding InvestmentHolding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+
+  @@index([holdingId, asOf])
+}
+
+model RealEstateProfile {
+  id                String   @id @default(uuid())
+  accountId         String   @unique
+  mortgageAccountId String?
+  recordedValue     Decimal  @db.Decimal(19, 4)
+  valuationDate     DateTime @db.Date
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 // ─── Household Protection ───────────────────────────────────────────────────────

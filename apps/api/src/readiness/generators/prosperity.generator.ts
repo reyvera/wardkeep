@@ -70,6 +70,7 @@ export async function calculateRecordedNetWorth(
       transactions: true,
       linkedBankAccounts: { select: { id: true } },
       debtProfile: { select: { assetValue: true } },
+      realEstateProfile: { select: { recordedValue: true } },
     },
   }), prisma.vehicle.findMany({ where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } }, select: { estimatedValue: true, loanBalance: true } })]);
 
@@ -86,6 +87,10 @@ export async function calculateRecordedNetWorth(
       if (assetValue) {
         assets = assets.add(new Decimal(assetValue.toString()));
       }
+    } else if (account.type === 'REAL_ESTATE' && account.realEstateProfile) {
+      // Use the property profile's dated recorded value once; its linked mortgage
+      // remains a separately recorded liability account.
+      assets = assets.add(new Decimal(account.realEstateProfile.recordedValue.toString()));
     } else {
       assets = assets.add(balance);
     }

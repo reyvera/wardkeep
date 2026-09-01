@@ -77,9 +77,9 @@ const PROVENANCE_BY_CAPABILITY: Record<string, SignalProvenance> = {
     evidenceState: 'mixed',
   },
   accounts: {
-    sources: ['Account balances', 'Account transactions', 'Readiness snapshots'],
+    sources: ['Account balances', 'Account transactions', 'Dated manual property valuations', 'Readiness snapshots'],
     method: 'Calculates net-worth position and compares it with available history.',
-    limitation: 'Asset values and historical snapshots are limited to records in Wardkeep.',
+    limitation: 'Property values are dated manual inputs; asset values and historical snapshots are limited to records in Wardkeep.',
     evidenceState: 'calculated',
   },
   debt: {

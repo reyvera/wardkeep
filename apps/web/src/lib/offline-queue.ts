@@ -8,7 +8,7 @@ interface QueuedAction {
   timestamp: number;
 }
 
-class OfflineQueue {
+export class OfflineQueue {
   private queue: QueuedAction[] = [];
 
   add(action: Omit<QueuedAction, 'id' | 'timestamp'>): boolean {
@@ -31,11 +31,14 @@ class OfflineQueue {
       try {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        await fetch(`${apiBase}${action.path}`, {
+        const response = await fetch(`${apiBase}${action.path}`, {
           method: action.method,
           headers,
           body: action.body ? JSON.stringify(action.body) : undefined,
         });
+        if (!response.ok) {
+          throw new Error(`Queued request failed with HTTP ${response.status}`);
+        }
         this.queue = this.queue.filter((a) => a.id !== action.id);
         synced++;
       } catch {

@@ -4,8 +4,13 @@
  * Feature: ai-personal-finance-app
  * Property 32: Offline action queue enforces capacity (max 100) and FIFO sync order
  */
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import * as fc from 'fast-check';
+import { OfflineQueue } from './offline-queue';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 // ─── Test-friendly OfflineQueue implementation ───────────────────────────────────
 // We re-implement the class here for isolated testing since the module exports
@@ -220,5 +225,16 @@ describe('Feature: ai-personal-finance-app, Property 32: Offline action queue en
       ),
       { numRuns: 100 },
     );
+  });
+});
+
+describe('OfflineQueue replay failures', () => {
+  it('retains a queued action when the server rejects it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 422 }));
+    const queue = new OfflineQueue();
+    queue.add({ method: 'PUT', path: '/real-estate/property-1', body: { recordedValue: '500000' } });
+
+    await expect(queue.flush('http://api.test', null)).resolves.toEqual({ synced: 0, failed: 1 });
+    expect(queue.getSize()).toBe(1);
   });
 });

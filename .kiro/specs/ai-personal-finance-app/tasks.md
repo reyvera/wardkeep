@@ -431,7 +431,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Signals: no will → critical risk, outdated beneficiaries → warning
   - Pillar: Protection
 
-- [ ] 26.4a Household transition and trusted-access workspace
+- [x] 26.4a Household transition and trusted-access workspace
   - Provide two distinct modes: an **incapacity continuity plan** for a living household member and an **after-death settlement plan**. Starting either mode is a deliberate, auditable household workflow—not a legal finding that someone is incapacitated or deceased—and must never change financial accounts, sessions, ownership, or scores automatically.
   - Provide a calm, step-by-step view of the household information already recorded: accounts and institutions, insurance policies and contacts, recurring obligations, estate-document locations, trusted contacts, and user-entered instructions. It must identify missing information rather than inventing it.
   - Include optional planning checklists for immediate arrangements, including funeral or memorial planning, notifications, recurring-bill review, document gathering, and professional-support prompts. The product provides organization, not legal, tax, financial, medical, or funeral-direction advice.
@@ -449,6 +449,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Owner-controlled sharing: only an immutable, explicitly shared handoff-summary snapshot may be downloaded by an active approved recipient; every share and view is audited.
   - [x] Surviving-household walkthrough: a manually started, non-legal organizing sequence that does not report a death or change authority.
   - [x] Same-household lead: explicit household membership is created only after recipient acceptance; an accepted member may manually activate a Wardkeep-only surviving-household lead state. Trusted access alone is not household membership or financial authority.
+  - [x] Emergency lockout: owner-confirmed action revokes every pending invitation and active trusted-access grant, with an immutable audit event.
+  - [x] Access-record export: owner may download their invitations, grants, and related trusted-access audit events.
+  - [x] Stored-snapshot deletion: owner-confirmed control removes stored handoff snapshots while preserving the audit record; it cannot recall downloaded files.
 
 - [x] 26.5 Emergency Preparedness Capability
   - [x] Track: food storage, water, first aid, important documents, evacuation plan
@@ -576,7 +579,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
     - [x] Let households record external funding commitments outside Wardkeep’s tracked accounts and label variable amounts as estimates; tracked spending must not be duplicated
   - Keep every component independently explainable; missing data remains unknown
 
-- [~] 39.5 Create durable recommendations and impact previews
+- [x] 39.5 Create durable recommendations and impact previews
   - [x] Link each current dashboard signal to its relevant household workflow (accounts, policies, budget, cash flow, recurring bills, debt, or an explainable readiness factor)
   - [x] Persist active risk and warning recommendations with stable source-signal fingerprints; preserve dismissed/completed state and resolve only active recommendations whose source signal disappears
   - [x] Expose `GET /api/recommendations` and completion/dismissal updates, ranked deterministically by severity, urgency, actionability, and evidence freshness
@@ -584,7 +587,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Provide a Recommendations page for active actions and completed, dismissed, or automatically resolved history
   - [x] Show a truthful 30-day Coming Up view from recorded recurring-payment dates and policy renewals, without inventing unrecorded events
   - [x] Show a qualified pillar-only impact preview when removing a source risk leaves other observed pillar factors; otherwise state that Wardkeep will measure rather than predict the change
-  - [~] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
+  - [x] Add financial-impact weighting, estimated monthly amount, time to completion, and an impact-preview interface
     - [x] Persist and display recorded financial gaps and known due dates without estimating missing timing
     - [x] Show the recorded monthly commitment amount alongside its immediate liquid-reserve shortfall
 
@@ -597,13 +600,13 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 33. Income & Spending Intelligence
 
-- [ ] 33.1 Income configuration and pay schedule
+- [x] 33.1 Income configuration and pay schedule
   - [x] Record pay frequency and an optional next expected income date; show only recorded income dates in Dashboard Coming Up
-  - Expected net per paycheck
-  - Salary vs hourly tracking
-  - Dashboard: "Next paycheck: ~[date]"
+  - [x] Expected net per paycheck
+  - [x] Salary vs hourly tracking
+  - [x] Dashboard: recorded next expected paycheck date and optional expected net amount
 
-- [ ] 33.2 Spending trends and monthly comparisons
+- [x] 33.2 Spending trends and monthly comparisons
   - [x] Show current-month recorded income, spending, net, and income-relative savings rate on the dashboard
   - [x] Month-over-month category spending comparison
   - [x] Income vs expenses and savings rate
@@ -631,28 +634,28 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Rules engine can auto-apply tags
   - [x] Inline transaction tag editing and filtering UI
 
-- [ ] 34.3 Refund matching
+- [x] 34.3 Refund matching
   - [x] Detect equal credits from the same merchant within 90 days
   - [x] Return candidate purchase/refund pairs and require explicit confirmation
   - [x] Confirmed refunds reduce the linked purchase in Budget totals while preserving both transactions
 
 ### 35. Budgeting Enhancements
 
-- [ ] 35.1 Budget rollovers
-  - Track unspent per category at month end
-  - Roll forward to next month automatically
-  - Show rollover amount separately in UI
-  - Per-category opt-in/out
+- [x] 35.1 Budget rollovers
+  - [x] Track unspent per category at month end
+  - [x] Roll forward to next month automatically
+  - [x] Show rollover amount separately in UI
+  - [x] Per-category opt-in/out
 
 - [x] Planned-expense lifecycle
   - [x] Mark a one-time planned expense as no longer planned without deleting it, excluding it from readiness and Timeline.
   - [x] Restore an inactive planned expense when it becomes relevant again.
 
-- [ ] 35.2 Subscription management view
+- [x] 35.2 Subscription management view
   - [x] Dedicated /subscriptions page
   - [x] Group subscriptions by active, upcoming, and annual renewals
   - [x] Total monthly-equivalent subscription burn rate
-  - Alert on cancelled subscription still charging
+  - [x] Alert on cancelled subscription still charging
   - [x] Recurring workflow now lists confirmed and detected records from their separate API sources, with working confirm/dismiss actions and reversible stop-monitoring control.
   - [x] Demo household includes confirmed and detected recurring-bill records for immediate workflow verification.
 
@@ -683,26 +686,28 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 ### 36. Investment & Asset Tracking
 
 - [ ] 36.1 Investment account support
-  - Account types: BROKERAGE, RETIREMENT, CRYPTO
-  - Holdings model: ticker, quantity, cost basis
+  - [x] Account types: BROKERAGE, RETIREMENT, CRYPTO
+  - [x] Holdings foundation: ticker, quantity, optional cost basis, and factual quote snapshot fields
+  - [x] Manual, dated quote snapshots and a transparent quoted-value total; coverage explicitly excludes unquoted holdings
   - Market data API integration for live prices
-  - Portfolio value, daily change, asset allocation
+  - [~] Portfolio value and allocation (available from dated recorded quotes only; change is shown only between actual recorded snapshots; live daily change remains pending)
   - Include in net worth
+  - Direct broker-sync policy: begin with read-only Alpaca positions and official Robinhood Crypto holdings; do not support general Robinhood securities access without its written authorization. See `/docs/broker-connection-policy.md`.
 
-- [ ] 36.2 Real estate tracking
-  - Account type: REAL_ESTATE
-  - Property valuation (manual or API)
-  - Home equity calculation (value - mortgage)
-  - Include in net worth
+- [x] 36.2 Real estate tracking
+  - [x] Account type: REAL_ESTATE
+  - [x] Manual, dated property valuation
+  - [x] Explainable home equity calculation (recorded value minus linked mortgage balance)
+  - [x] Include recorded property value in net worth without double-counting its linked mortgage
 
 ### 37. Personalization
 
-- [ ] 37.1 Custom themes and color personalization
-  - Theme engine with CSS variables
-  - Preset themes: Midnight, Slate, Ocean, Forest, Sunset, Lavender, Mono
-  - Custom accent color picker
-  - Export/import themes as JSON
-  - Accessibility contrast checks
+- [x] 37.1 Custom themes and color personalization
+  - [x] Theme engine with CSS variables
+  - [x] Preset themes: Midnight, Slate, Ocean, Forest, Sunset, Lavender, Mono
+  - [x] Custom accent color picker with visible contrast check
+  - [x] Export/import themes as JSON
+  - [x] Accessibility contrast checks for the active accent against the active appearance background
 
 ### 38. Remote Wardkeep Backup (Peer-to-Peer Off-Site)
 

@@ -130,9 +130,11 @@ export default function HouseholdTransitionsPage() {
   });
   const [approvedHandoff, setApprovedHandoff] = useState(false);
   const [approvedSharedHandoff, setApprovedSharedHandoff] = useState(false);
+  const [confirmedHandoffDeletion, setConfirmedHandoffDeletion] = useState(false);
   const [showSurvivingHouseholdWalkthrough, setShowSurvivingHouseholdWalkthrough] = useState(false);
   const [trustedAccessEmail, setTrustedAccessEmail] = useState('');
   const [sameHouseholdMember, setSameHouseholdMember] = useState(false);
+  const [confirmedEmergencyLock, setConfirmedEmergencyLock] = useState(false);
   const [invitationCode, setInvitationCode] = useState<string | null>(null);
   const [receivedInvitationCode, setReceivedInvitationCode] = useState('');
   const plans = useQuery({
@@ -176,6 +178,16 @@ export default function HouseholdTransitionsPage() {
           confirmed: true,
         },
       ),
+  });
+  const deleteSharedHandoffSummaries = useMutation({
+    mutationFn: () =>
+      apiClient.post<{ deletedCount: number }>(
+        '/household-transitions/handoff-summary/delete-all',
+        {
+          confirmed: true,
+        },
+      ),
+    onSuccess: () => setConfirmedHandoffDeletion(false),
   });
   const downloadSharedHandoff = useMutation({
     mutationFn: () =>
@@ -271,6 +283,29 @@ export default function HouseholdTransitionsPage() {
       apiClient.delete(`/household-transitions/trusted-access/grants/${id}`),
     onSuccess: refresh,
   });
+  const emergencyLockTrustedAccess = useMutation({
+    mutationFn: () =>
+      apiClient.post<{ revokedInvitations: number; revokedGrants: number }>(
+        '/household-transitions/trusted-access/emergency-lock',
+        { confirmed: true },
+      ),
+    onSuccess: () => {
+      setConfirmedEmergencyLock(false);
+      refresh();
+    },
+  });
+  const downloadTrustedAccessExport = useMutation({
+    mutationFn: () => apiClient.get('/household-transitions/trusted-access/export'),
+    onSuccess: (record) => {
+      const blob = new Blob([JSON.stringify(record, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'wardkeep-trusted-access-record.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
   const activateSurvivingHouseholdLead = useMutation({
     mutationFn: () =>
       apiClient.post<{ role: string }>('/household-transitions/surviving-household/lead', {
@@ -345,6 +380,35 @@ export default function HouseholdTransitionsPage() {
               Shared snapshot created. Future changes will require a new owner-approved snapshot.
             </p>
           )}
+          <div className="mt-4 border-t border-edge pt-4">
+            <p className="text-sm font-medium text-content-primary">Delete stored snapshots</p>
+            <p className="mt-1 text-xs text-content-secondary">
+              This removes every handoff-summary snapshot stored by Wardkeep. It cannot recall a
+              file another person has already downloaded.
+            </p>
+            <label className="mt-3 flex items-start gap-2 text-xs text-content-secondary">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={confirmedHandoffDeletion}
+                onChange={(event) => setConfirmedHandoffDeletion(event.target.checked)}
+              />
+              I understand this permanently deletes all stored handoff snapshots.
+            </label>
+            <button
+              type="button"
+              className="btn-secondary mt-3 text-accent-red"
+              disabled={!confirmedHandoffDeletion || deleteSharedHandoffSummaries.isPending}
+              onClick={() => deleteSharedHandoffSummaries.mutate()}
+            >
+              Delete stored snapshots
+            </button>
+            {deleteSharedHandoffSummaries.isSuccess && (
+              <p className="mt-2 text-xs text-accent-green">
+                Deleted {deleteSharedHandoffSummaries.data.deletedCount} stored snapshot(s).
+              </p>
+            )}
+          </div>
         </div>
       </section>
       <section className="card" aria-labelledby="surviving-household-heading">
@@ -576,6 +640,50 @@ export default function HouseholdTransitionsPage() {
             </ul>
           </div>
         ) : null}
+        <div className="mt-4 border-t border-edge pt-4">
+          <p className="text-sm font-medium text-content-primary">Access record export</p>
+          <p className="mt-1 text-xs text-content-secondary">
+            Download your invitations, grants, and related Wardkeep audit events for your records.
+          </p>
+          <button
+            type="button"
+            className="btn-secondary mt-3"
+            disabled={downloadTrustedAccessExport.isPending}
+            onClick={() => downloadTrustedAccessExport.mutate()}
+          >
+            Download access record
+          </button>
+        </div>
+        <div className="mt-4 border-t border-edge pt-4">
+          <p className="text-sm font-medium text-content-primary">Emergency access lockout</p>
+          <p className="mt-1 text-xs text-content-secondary">
+            This immediately revokes all pending invitations and active handoff access. It does not
+            erase a summary a recipient has already downloaded.
+          </p>
+          <label className="mt-3 flex items-start gap-2 text-xs text-content-secondary">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={confirmedEmergencyLock}
+              onChange={(event) => setConfirmedEmergencyLock(event.target.checked)}
+            />
+            I understand this removes all current trusted access for this Wardkeep household.
+          </label>
+          <button
+            type="button"
+            className="btn-secondary mt-3 text-accent-red"
+            disabled={!confirmedEmergencyLock || emergencyLockTrustedAccess.isPending}
+            onClick={() => emergencyLockTrustedAccess.mutate()}
+          >
+            Lock all trusted access
+          </button>
+          {emergencyLockTrustedAccess.isSuccess && (
+            <p className="mt-2 text-xs text-accent-green">
+              Trusted access locked: {emergencyLockTrustedAccess.data.revokedInvitations}{' '}
+              invitation(s) and {emergencyLockTrustedAccess.data.revokedGrants} grant(s) revoked.
+            </p>
+          )}
+        </div>
       </section>
       <section className="card" aria-labelledby="planning-prompts-heading">
         <h2 id="planning-prompts-heading" className="card-title">

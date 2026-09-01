@@ -258,4 +258,85 @@ describe('HouseholdTransitionsService trusted access', () => {
       new HouseholdTransitionsService(prisma).activateSurvivingHouseholdLead('trusted-user'),
     ).rejects.toThrow('accepted same-household membership is required');
   });
+
+  it('emergency-locks all pending invitations and active grants with an audit event', async () => {
+    const invitationUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
+    const grantUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const auditCreate = vi.fn().mockResolvedValue({});
+    const prisma = {
+      $transaction: vi.fn((callback) =>
+        callback({
+          trustedAccessInvitation: { updateMany: invitationUpdateMany },
+          trustedAccessGrant: { updateMany: grantUpdateMany },
+          trustedAccessAuditEvent: { create: auditCreate },
+        }),
+      ),
+    } as unknown as PrismaService;
+
+    await expect(
+      new HouseholdTransitionsService(prisma).emergencyLockTrustedAccess('owner-1'),
+    ).resolves.toEqual({ revokedInvitations: 2, revokedGrants: 1 });
+    expect(invitationUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ownerUserId: 'owner-1', status: 'PENDING' } }),
+    );
+    expect(grantUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ownerUserId: 'owner-1', isActive: true } }),
+    );
+    expect(auditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ event: 'EMERGENCY_LOCKOUT' }) }),
+    );
+  });
+
+  it('deletes only the owner’s stored handoff snapshots and audits the deletion', async () => {
+    const deleteMany = vi.fn().mockResolvedValue({ count: 2 });
+    const auditCreate = vi.fn().mockResolvedValue({});
+    const prisma = {
+      $transaction: vi.fn((callback) =>
+        callback({
+          handoffSummary: { deleteMany },
+          trustedAccessAuditEvent: { create: auditCreate },
+        }),
+      ),
+    } as unknown as PrismaService;
+
+    await expect(
+      new HouseholdTransitionsService(prisma).deleteSharedHandoffSummaries('owner-1'),
+    ).resolves.toEqual({ deletedCount: 2 });
+    expect(deleteMany).toHaveBeenCalledWith({ where: { userId: 'owner-1' } });
+    expect(auditCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ event: 'HANDOFF_SUMMARIES_DELETED' }),
+      }),
+    );
+  });
+
+  it('exports only the owner’s trusted-access records and related audit events', async () => {
+    const invitationFindMany = vi.fn().mockResolvedValue([{ id: 'invite-1' }]);
+    const grantFindMany = vi.fn().mockResolvedValue([{ id: 'grant-1' }]);
+    const auditFindMany = vi.fn().mockResolvedValue([{ event: 'APPROVED' }]);
+    const prisma = {
+      trustedAccessInvitation: { findMany: invitationFindMany },
+      trustedAccessGrant: { findMany: grantFindMany },
+      trustedAccessAuditEvent: { findMany: auditFindMany },
+    } as unknown as PrismaService;
+
+    await expect(
+      new HouseholdTransitionsService(prisma).trustedAccessExport('owner-1'),
+    ).resolves.toMatchObject({
+      invitations: [{ id: 'invite-1' }],
+      grants: [{ id: 'grant-1' }],
+      auditEvents: [{ event: 'APPROVED' }],
+    });
+    expect(invitationFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ownerUserId: 'owner-1' } }),
+    );
+    expect(grantFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ownerUserId: 'owner-1' } }),
+    );
+    expect(auditFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { OR: [{ invitationId: { in: ['invite-1'] } }, { grantId: { in: ['grant-1'] } }] },
+      }),
+    );
+  });
 });

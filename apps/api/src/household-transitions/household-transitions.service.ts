@@ -206,6 +206,21 @@ export class HouseholdTransitionsService {
     });
   }
 
+  /** Deletes stored handoff snapshots; it cannot recall files recipients already downloaded. */
+  async deleteSharedHandoffSummaries(userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.handoffSummary.deleteMany({ where: { userId } });
+      await tx.trustedAccessAuditEvent.create({
+        data: {
+          actorUserId: userId,
+          event: 'HANDOFF_SUMMARIES_DELETED',
+          metadata: { deletedCount: deleted.count },
+        },
+      });
+      return { deletedCount: deleted.count };
+    });
+  }
+
   /** Returns only an owner-shared snapshot to an active, recipient-approved grant holder. */
   async sharedHandoffSummary(recipientUserId: string) {
     const grants = await this.prisma.trustedAccessGrant.findMany({
@@ -426,6 +441,89 @@ export class HouseholdTransitionsService {
         data: { grantId, actorUserId: userId, event: 'GRANT_REVOKED', metadata: {} },
       }),
     ]);
+  }
+
+  /** Immediately revokes every pending invitation and active grant owned by this household user. */
+  async emergencyLockTrustedAccess(userId: string) {
+    const now = new Date();
+    return this.prisma.$transaction(async (tx) => {
+      const [invitations, grants] = await Promise.all([
+        tx.trustedAccessInvitation.updateMany({
+          where: { ownerUserId: userId, status: 'PENDING' },
+          data: { status: 'REVOKED', revokedAt: now },
+        }),
+        tx.trustedAccessGrant.updateMany({
+          where: { ownerUserId: userId, isActive: true },
+          data: { isActive: false, revokedAt: now },
+        }),
+      ]);
+      await tx.trustedAccessAuditEvent.create({
+        data: {
+          actorUserId: userId,
+          event: 'EMERGENCY_LOCKOUT',
+          metadata: { revokedInvitations: invitations.count, revokedGrants: grants.count },
+        },
+      });
+      return { revokedInvitations: invitations.count, revokedGrants: grants.count };
+    });
+  }
+
+  /** Exports only the owner's trusted-access records and their related audit history. */
+  async trustedAccessExport(userId: string) {
+    const [invitations, grants] = await Promise.all([
+      this.prisma.trustedAccessInvitation.findMany({
+        where: { ownerUserId: userId },
+        select: {
+          id: true,
+          recipientEmail: true,
+          scopes: true,
+          status: true,
+          expiresAt: true,
+          approvedAt: true,
+          revokedAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.trustedAccessGrant.findMany({
+        where: { ownerUserId: userId },
+        select: {
+          id: true,
+          scopes: true,
+          isActive: true,
+          approvedAt: true,
+          revokedAt: true,
+          createdAt: true,
+          recipient: { select: { email: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+    const audits = await this.prisma.trustedAccessAuditEvent.findMany({
+      where: {
+        OR: [
+          { invitationId: { in: invitations.map((invitation) => invitation.id) } },
+          { grantId: { in: grants.map((grant) => grant.id) } },
+        ],
+      },
+      select: {
+        invitationId: true,
+        grantId: true,
+        actorUserId: true,
+        event: true,
+        metadata: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return {
+      generatedAt: new Date(),
+      notice:
+        'Owner-requested trusted-access record. It documents Wardkeep access events only and does not establish authority or recover already downloaded files.',
+      invitations,
+      grants,
+      auditEvents: audits,
+    };
   }
 
   private hashInvitationToken(token: string) {

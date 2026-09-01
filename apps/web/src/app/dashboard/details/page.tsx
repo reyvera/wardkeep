@@ -22,6 +22,8 @@ interface NetWorth {
   assets: string;
   liabilities: string;
   netWorth: string;
+  recordedPropertyValue: string;
+  propertyValuationCount: number;
 }
 
 interface Account {
@@ -358,6 +360,11 @@ export default function DashboardPage() {
               <TrendingDown size={12} /> ${formatCurrency(liabilities)}
             </span>
           </div>
+          {Number(netWorthQuery.data?.recordedPropertyValue ?? 0) > 0 && (
+            <p className="mt-2 text-xs text-content-tertiary">
+              Includes ${formatCurrency(Number(netWorthQuery.data?.recordedPropertyValue))} from {netWorthQuery.data?.propertyValuationCount} dated manual property valuation{netWorthQuery.data?.propertyValuationCount === 1 ? '' : 's'}.
+            </p>
+          )}
         </div>
 
         {/* Monthly Spending Card */}

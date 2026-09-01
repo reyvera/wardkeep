@@ -39,7 +39,9 @@ const trustedAccessInvitationSchema = z.object({
 });
 const trustedAccessAcceptSchema = z.object({ invitationCode: z.string().min(20).max(200) });
 const shareHandoffSummarySchema = z.object({ confirmed: z.literal(true) });
+const deleteHandoffSummariesSchema = z.object({ confirmed: z.literal(true) });
 const activateSurvivingHouseholdLeadSchema = z.object({ confirmed: z.literal(true) });
+const emergencyLockSchema = z.object({ confirmed: z.literal(true) });
 
 @Controller('household-transitions')
 @UseGuards(AuthGuard)
@@ -67,6 +69,13 @@ export class HouseholdTransitionsController {
     const parsed = shareHandoffSummarySchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('Confirm before sharing a handoff summary');
     return this.service.createSharedHandoffSummary(req.userId!);
+  }
+
+  @Post('handoff-summary/delete-all')
+  deleteSharedHandoffSummaries(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = deleteHandoffSummariesSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Confirm before deleting handoff summaries');
+    return this.service.deleteSharedHandoffSummaries(req.userId!);
   }
 
   @Get('trusted-access')
@@ -116,6 +125,18 @@ export class HouseholdTransitionsController {
   @Delete('trusted-access/grants/:id')
   revokeTrustedAccessGrant(@Req() req: ScopedRequest, @Param('id') id: string) {
     return this.service.revokeTrustedAccessGrant(req.userId!, id);
+  }
+
+  @Post('trusted-access/emergency-lock')
+  emergencyLockTrustedAccess(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = emergencyLockSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Confirm before revoking trusted access');
+    return this.service.emergencyLockTrustedAccess(req.userId!);
+  }
+
+  @Get('trusted-access/export')
+  trustedAccessExport(@Req() req: ScopedRequest) {
+    return this.service.trustedAccessExport(req.userId!);
   }
 
   @Get()

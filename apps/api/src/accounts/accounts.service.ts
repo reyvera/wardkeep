@@ -333,6 +333,7 @@ export class AccountsService {
         transactions: true,
         linkedBankAccounts: { select: { id: true } },
         debtProfile: { select: { assetValue: true } },
+        realEstateProfile: { select: { recordedValue: true } },
       },
     }), this.prisma.vehicle.findMany({
       where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } },
@@ -341,6 +342,8 @@ export class AccountsService {
 
     let assets = new Decimal(0);
     let liabilities = new Decimal(0);
+    let recordedPropertyValue = new Decimal(0);
+    let propertyValuationCount = 0;
 
     const liabilityTypes = ['CREDIT_CARD', 'LOAN', 'MORTGAGE', 'HELOC'];
 
@@ -369,6 +372,13 @@ export class AccountsService {
         if (account.debtProfile?.assetValue) {
           assets = assets.plus(new Decimal(account.debtProfile.assetValue.toString()));
         }
+      } else if (account.type === 'REAL_ESTATE' && account.realEstateProfile) {
+        // A property profile is the authoritative, dated value for this asset.
+        // Do not add the account's bookkeeping balance as well.
+        const propertyValue = new Decimal(account.realEstateProfile.recordedValue.toString());
+        assets = assets.plus(propertyValue);
+        recordedPropertyValue = recordedPropertyValue.plus(propertyValue);
+        propertyValuationCount += 1;
       } else {
         assets = assets.plus(balance);
       }
@@ -385,6 +395,8 @@ export class AccountsService {
       assets: assets.toFixed(2),
       liabilities: liabilities.toFixed(2),
       netWorth: netWorth.toFixed(2),
+      recordedPropertyValue: recordedPropertyValue.toFixed(2),
+      propertyValuationCount,
     };
   }
 }

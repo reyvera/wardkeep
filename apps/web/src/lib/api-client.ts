@@ -77,7 +77,7 @@ class ApiClient {
       if (
         typeof navigator !== 'undefined' &&
         !navigator.onLine &&
-        ['POST', 'PATCH', 'DELETE'].includes(method)
+        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
       ) {
         const body = options?.body ? JSON.parse(options.body as string) : undefined;
         const queued = offlineQueue.add({ method, path, body });
@@ -104,6 +104,13 @@ class ApiClient {
   patch<T>(path: string, body?: unknown) {
     return this.request<T>(path, {
       method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  put<T>(path: string, body?: unknown) {
+    return this.request<T>(path, {
+      method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     });
   }

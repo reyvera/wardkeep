@@ -1,11 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TimelineService } from './timeline.service';
 
 const decimal = (value: string) => ({ toString: () => value });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('TimelineService', () => {
   it('returns only recorded upcoming events in chronological order', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-24T12:00:00.000Z'));
     const prisma = {
       recurringTransaction: {
         findMany: vi

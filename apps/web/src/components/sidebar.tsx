@@ -35,6 +35,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/brief', label: 'Morning Brief', icon: Sun },
   { href: '/accounts', label: 'Accounts', icon: Wallet },
+  { href: '/investments', label: 'Investments', icon: PieChart },
   { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { href: '/categories', label: 'Categories', icon: Tag },
   { href: '/budget', label: 'Budget', icon: PieChart },
