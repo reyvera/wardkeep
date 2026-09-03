@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Wallet,
   PiggyBank,
-  Hammer,
   AlertTriangle,
   Lightbulb,
   Activity,
@@ -24,7 +23,6 @@ import {
 interface PillarScores {
   protection: number;
   provision: number;
-  preparation: number;
   prosperity: number;
   peace: number;
 }
@@ -75,7 +73,7 @@ interface ReadinessResponse {
     evaluatedCapabilities: string[];
   };
   coverage: number;
-  pillarCoverage: Record<'protection' | 'provision' | 'preparation' | 'prosperity', number>;
+  pillarCoverage: Record<'protection' | 'provision' | 'prosperity', number>;
   pillarAssessments: Record<
     string,
     {
@@ -219,11 +217,6 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
     label: 'Provision',
     icon: Wallet,
     description: 'Day-to-day money, bills, and spending plan',
-  },
-  preparation: {
-    label: 'Preparation',
-    icon: Hammer,
-    description: 'Upcoming costs, upkeep, and plans',
   },
   prosperity: {
     label: 'Prosperity',
@@ -410,6 +403,9 @@ export default function DashboardPage() {
   const recordedNet = currentSpending ? currentSpending.income - currentSpending.expenses : null;
   const savingsRate =
     currentSpending && currentSpending.income > 0 ? recordedNet! / currentSpending.income : null;
+  const incompletePillars = Object.entries(data.pillarAssessments).filter(
+    ([pillar, assessment]) => pillar !== 'peace' && assessment.state !== 'known',
+  );
 
   return (
     <div>
@@ -647,6 +643,27 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {incompletePillars.length > 0 && (
+        <section className="card mb-6 border-accent-blue/20 bg-accent-blue/5">
+          <h2 className="card-title">COMPLETE YOUR HOUSEHOLD PICTURE</h2>
+          <p className="mt-1 text-sm text-content-secondary">
+            These areas are not fully evaluated yet. Adding records improves what Wardkeep can
+            explain; it does not assume an unrecorded area is healthy or unhealthy.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {incompletePillars.map(([pillar, assessment]) => (
+              <Link
+                key={pillar}
+                href={`/dashboard/readiness/${pillar}`}
+                className="btn-secondary text-xs"
+              >
+                {PILLAR_META[pillar]?.label ?? pillar} · {assessment.coverage}% checked
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {recommendedNextStep && (
         <section className="card mb-6 border-accent-blue/30 bg-accent-blue/5">

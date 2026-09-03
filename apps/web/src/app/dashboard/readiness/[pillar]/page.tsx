@@ -11,13 +11,12 @@ import {
   Shield,
   TrendingUp,
   Wallet,
-  Hammer,
   PiggyBank,
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
 
-type PillarKey = 'protection' | 'provision' | 'preparation' | 'prosperity' | 'peace';
+type PillarKey = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 interface Signal {
   capabilityId: string;
@@ -120,6 +119,7 @@ const PILLARS: Record<
           'Minimum debt payments, regular bills, and outside commitments compared with money available now',
       },
       { capability: 'dependents', label: 'Entered dependent records and review timing' },
+      { capability: 'home-assets', label: 'Recorded home asset lifespan and replacement context' },
     ],
     next: [
       'Insurance adequacy and coverage gaps',
@@ -132,27 +132,15 @@ const PILLARS: Record<
     label: 'Provision',
     icon: Wallet,
     description: 'Whether money coming in can comfortably cover your bills and spending.',
-    sources: ['Budgets', 'Transactions', 'Recurring bills'],
+    sources: ['Budgets', 'Transactions', 'Recurring bills', 'Planned expenses', 'Vehicle leases'],
     observed: [
       { capability: 'budgets', label: 'Budget pace and overspending' },
       { capability: 'cashflow', label: 'Money coming in and going out' },
       { capability: 'recurring', label: 'Upcoming recurring bills' },
+      { capability: 'planned-expenses', label: 'Recorded future expenses and funds set aside' },
+      { capability: 'vehicle-lease', label: 'Recorded vehicle lease end dates' },
     ],
     next: ['Income stability', 'Essential expense coverage', 'Recurring-payment reliability'],
-  },
-  preparation: {
-    label: 'Preparation',
-    icon: Hammer,
-    description:
-      'How ready your household is for costs and responsibilities you already know are coming.',
-    sources: ['User-entered planned expenses'],
-    observed: [{ capability: 'planned-expenses', label: 'Recorded future expense due dates' }],
-    next: [
-      'Goals and sinking funds',
-      'Funds set aside for planned expenses',
-      'Home and vehicle maintenance',
-      'Replacement planning',
-    ],
   },
   prosperity: {
     label: 'Prosperity',
@@ -171,7 +159,7 @@ const PILLARS: Record<
     description:
       'A simple summary based on the area that needs the most help and any recent changes.',
     sources: ['Readiness pillar scores', 'Readiness snapshots'],
-    observed: [],
+    observed: [{ capability: 'vehicle-maintenance', label: 'Recorded vehicle maintenance reminders' }],
     next: [
       'Better explanations of the upstream pillars',
       'Data freshness and confidence rules',

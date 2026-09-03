@@ -28,7 +28,7 @@ type TimelineEventKind =
   | 'FINANCIAL_GOAL'
   | 'VEHICLE_MAINTENANCE'
   | 'HOME_MAINTENANCE';
-type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
+type TimelinePillar = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 interface TimelineEvent {
   id: string;
@@ -210,7 +210,7 @@ export default function TimelinePage() {
       </div>
 
       <div className="flex flex-wrap gap-2" aria-label="Filter timeline pillars">
-        {(['ALL', 'protection', 'provision', 'preparation', 'prosperity'] as Array<'ALL' | TimelinePillar>).map(
+        {(['ALL', 'protection', 'provision', 'prosperity', 'peace'] as Array<'ALL' | TimelinePillar>).map(
           (option) => (
             <button
               key={option}

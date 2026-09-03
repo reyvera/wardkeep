@@ -19,7 +19,7 @@ import { ReadinessResponse, ReadinessService } from '../readiness/readiness.serv
 /** Default Ollama endpoint for local AI. */
 const OLLAMA_ENDPOINT = process.env['OLLAMA_URL'] ?? 'http://localhost:11434';
 
-type ReadinessReference = 'protection' | 'provision' | 'preparation' | 'prosperity';
+type ReadinessReference = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 /** Formats evaluated readiness evidence for the Advisor conversation context. */
 export function formatReadinessContext(readiness: ReadinessResponse): string {

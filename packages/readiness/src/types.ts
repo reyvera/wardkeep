@@ -10,7 +10,7 @@ export const READINESS_PILLARS = [
  * Identifies the deterministic readiness taxonomy and scoring contract used for a snapshot.
  * Increment only when a change makes historical scores non-comparable.
  */
-export const READINESS_MODEL_VERSION = 1;
+export const READINESS_MODEL_VERSION = 2;
 
 export type ReadinessPillar = (typeof READINESS_PILLARS)[number];
 export type SignalType = 'risk' | 'opportunity' | 'milestone' | 'warning' | 'positive';

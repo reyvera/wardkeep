@@ -216,15 +216,14 @@ interface TimelineEvent {
 
 ## Readiness Pillars
 
-The target product model has four readiness pillars. The code snippet below documents the current transitional implementation, which still contains `preparation`; new capability design must map to the target taxonomy in [product-differentiation.md](product-differentiation.md).
+The active product model has three directly scored readiness pillars and derived Peace. Model-1 snapshots retain the retired `preparation` pillar only as explicitly labeled legacy history. New capability design must map to the active taxonomy in [product-differentiation.md](product-differentiation.md).
 
 ```typescript
 type ReadinessPillar =
   | 'protection'   // Insurance, emergency fund, security, estate
   | 'provision'    // Cash flow, income, bills, budget
-  | 'preparation'  // Maintenance, taxes, goals, planning
   | 'prosperity'   // Investments, debt reduction, net worth, giving
-  | 'peace';       // Overall stability indicator, family wellbeing
+  | 'peace';       // Derived attention-load indicator; not part of the direct weighted score
 ```
 
 | Pillar | Covers | Example Capabilities |

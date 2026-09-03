@@ -3,12 +3,14 @@ import { Prisma } from '@prisma/client';
 
 import {
   computePillarScore,
-  computeOverallReadiness,
+  computeModel2Overall,
   computePeace,
   Signal,
   PillarScores,
   PillarAssessment,
   READINESS_MODEL_VERSION,
+  ActivePillarScores,
+  reclassifySignalsForModel2,
   ReadinessSnapshot,
 } from '@wardkeep/readiness';
 
@@ -33,22 +35,22 @@ export interface ReadinessResponse {
   /** Deterministic scoring contract used for this response and its history. */
   modelVersion: number;
   overall: number;
-  pillars: PillarScores;
+  pillars: ActivePillarScores;
   signals: Array<Signal & { provenance: SignalProvenance }>;
   topRisks: Array<Signal & { provenance: SignalProvenance }>;
   topOpportunities: Array<Signal & { provenance: SignalProvenance }>;
-  history: ReadinessSnapshot[];
+  history: Array<Omit<ReadinessSnapshot, 'pillars'> & { pillars: ActivePillarScores }>;
   trendWindows: Array<{
     days: 7 | 30 | 90;
     delta: number | null;
     comparedTo: Date | null;
     elapsedDays: number | null;
   }>;
-  pillarTrends: Record<keyof PillarScores, PillarTrend>;
+  pillarTrends: Record<keyof ActivePillarScores, PillarTrend>;
   overallAssessment: PillarAssessment;
   coverage: number;
-  pillarCoverage: Record<Exclude<keyof PillarScores, 'peace'>, number>;
-  pillarAssessments: Record<keyof PillarScores, PillarAssessment>;
+  pillarCoverage: Record<Exclude<keyof ActivePillarScores, 'peace'>, number>;
+  pillarAssessments: Record<keyof ActivePillarScores, PillarAssessment>;
   dataFreshness: {
     synchronizedAccounts: number;
     manualAccounts: number;
@@ -56,7 +58,7 @@ export interface ReadinessResponse {
     lastSynchronizedAt: Date | null;
   };
   recentChanges: Array<{
-    pillar: keyof PillarScores;
+    pillar: keyof ActivePillarScores;
     previous: number;
     current: number;
     delta: number;
@@ -66,7 +68,7 @@ export interface ReadinessResponse {
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
-const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label: string }>> = {
+const EXPLANATION_FACTORS: Record<keyof ActivePillarScores, Array<{ id: string; label: string }>> = {
   protection: [
     { id: 'emergency-fund', label: 'Liquid reserves' },
     { id: 'insurance', label: 'Recorded insurance policies' },
@@ -84,18 +86,20 @@ const EXPLANATION_FACTORS: Record<keyof PillarScores, Array<{ id: string; label:
     { id: 'cashflow', label: 'Recorded cash-flow forecast' },
     { id: 'recurring', label: 'Recorded upcoming recurring bills' },
   ],
-  preparation: [
-    { id: 'planned-expenses', label: 'Recorded planned expenses' },
-    { id: 'vehicle-maintenance', label: 'Vehicle maintenance reminders' },
-    { id: 'vehicle-lease', label: 'Vehicle lease end dates' },
-    { id: 'home-assets', label: 'Home asset lifespan records' },
-  ],
   prosperity: [
     { id: 'net-worth', label: 'Recorded net worth' },
     { id: 'debt-to-income', label: 'Recorded debt-to-income ratio' },
   ],
-  peace: [{ id: 'derived-peace', label: 'Observed direct readiness pillars' }],
+  peace: [
+    { id: 'derived-peace', label: 'Observed direct readiness pillars' },
+    { id: 'vehicle-maintenance', label: 'Vehicle maintenance reminders' },
+  ],
 };
+
+/** The database retains the model-1 column so historical records remain readable. */
+function asLegacyPillars(pillars: ActivePillarScores): PillarScores {
+  return { ...pillars, preparation: 0 };
+}
 
 @Injectable()
 export class ReadinessService {
@@ -189,15 +193,15 @@ export class ReadinessService {
       ...protectionSignals,
       ...preparationSignals,
     ];
-    const allSignals = await this.capabilities.publishedSignalsForUser(userId, publishedSignals);
+    const allSignals = reclassifySignalsForModel2(
+      await this.capabilities.publishedSignalsForUser(userId, publishedSignals),
+    ) as Signal[];
 
     // Compute pillar scores using the readiness package
     const provision = computePillarScore('provision', allSignals);
     const prosperity = computePillarScore('prosperity', allSignals);
     const protection = computePillarScore('protection', allSignals);
-    const preparation = computePillarScore('preparation', allSignals);
-
-    const pillarScoresWithoutPeace = { protection, provision, preparation, prosperity };
+    const pillarScoresWithoutPeace = { protection, provision, prosperity };
 
     // Fetch enough daily snapshots for both Peace and the Dashboard's 90-day trend.
     const recentSnapshots = await this.prisma.readinessSnapshot.findMany({
@@ -219,15 +223,25 @@ export class ReadinessService {
       modelVersion: s.modelVersion,
     }));
 
+    const activeHistory = history.map(({ pillars: historicalPillars, ...snapshot }) => ({
+      ...snapshot,
+      pillars: {
+        protection: historicalPillars.protection,
+        provision: historicalPillars.provision,
+        prosperity: historicalPillars.prosperity,
+        peace: historicalPillars.peace,
+      },
+    }));
+
     const observedPillarScores = Object.fromEntries(
       (Object.keys(pillarScoresWithoutPeace) as Array<keyof typeof pillarScoresWithoutPeace>)
         .filter((pillar) => allSignals.some((signal) => signal.pillar === pillar))
         .map((pillar) => [pillar, pillarScoresWithoutPeace[pillar]]),
     );
     const peace = computePeace(observedPillarScores, history);
-    const overall = computeOverallReadiness(pillarScoresWithoutPeace);
+    const overall = computeModel2Overall(pillarScoresWithoutPeace);
 
-    const pillars: PillarScores = {
+    const pillars: ActivePillarScores = {
       ...pillarScoresWithoutPeace,
       peace,
     };
@@ -250,7 +264,7 @@ export class ReadinessService {
       ? await this.prisma.readinessSignal.findMany({ where: { snapshotId: comparisonSnapshot.id } })
       : [];
     const recentChanges = comparisonSnapshot
-      ? (Object.keys(pillars) as Array<keyof PillarScores>)
+      ? (Object.keys(pillars) as Array<keyof ActivePillarScores>)
           .map((pillar) => {
             const changedSignal =
               previousSignals.length === 0
@@ -279,11 +293,10 @@ export class ReadinessService {
           .slice(0, 5)
       : [];
 
-    const directPillars = ['protection', 'provision', 'preparation', 'prosperity'] as const;
+    const directPillars = ['protection', 'provision', 'prosperity'] as const;
     const capabilityTargets: Record<(typeof directPillars)[number], number> = {
       protection: 5,
       provision: 3,
-      preparation: 4,
       prosperity: 3,
     };
     const pillarCoverage = Object.fromEntries(
@@ -336,12 +349,7 @@ export class ReadinessService {
         ),
       },
     };
-    const overallWeights = {
-      protection: 0.25,
-      provision: 0.3,
-      preparation: 0.2,
-      prosperity: 0.25,
-    } as const;
+    const overallWeights = { protection: 0.35, provision: 0.35, prosperity: 0.3 } as const;
     const evaluatedPillars = directPillars.filter(
       (pillar) => pillarAssessments[pillar].score !== null,
     );
@@ -385,7 +393,11 @@ export class ReadinessService {
         ),
       };
     });
-    const pillarTrends = buildPillarTrends(pillars, history, evaluatedAt);
+    const pillarTrends = buildPillarTrends(
+      { ...pillars, preparation: 0 },
+      history,
+      evaluatedAt,
+    ) as Record<keyof ActivePillarScores, PillarTrend>;
 
     const accounts = await this.prisma.account.findMany({
       where: { userId, isArchived: false },
@@ -425,7 +437,7 @@ export class ReadinessService {
       signals: signalsWithProvenance,
       topRisks,
       topOpportunities,
-      history: history.reverse(),
+      history: activeHistory.reverse(),
       trendWindows,
       pillarTrends,
       overallAssessment,
@@ -444,7 +456,7 @@ export class ReadinessService {
    */
   async getExplanation(userId: string) {
     const readiness = await this.getReadiness(userId);
-    const pillars = (Object.keys(readiness.pillars) as Array<keyof PillarScores>).map((pillar) => {
+    const pillars = (Object.keys(readiness.pillars) as Array<keyof ActivePillarScores>).map((pillar) => {
       const factors = readiness.signals
         .filter((signal) => signal.pillar === pillar)
         .sort((left, right) => Math.abs(right.magnitude) - Math.abs(left.magnitude));
@@ -479,7 +491,7 @@ export class ReadinessService {
   async recordSnapshot(
     userId: string,
     overall: number,
-    pillars: PillarScores,
+    pillars: ActivePillarScores,
     signals: Signal[] = [],
   ): Promise<void> {
     const today = new Date();
@@ -518,7 +530,7 @@ export class ReadinessService {
         overall,
         protection: pillars.protection,
         provision: pillars.provision,
-        preparation: pillars.preparation,
+        preparation: 0,
         prosperity: pillars.prosperity,
         peace: pillars.peace,
         netWorth,
@@ -528,7 +540,7 @@ export class ReadinessService {
         overall,
         protection: pillars.protection,
         provision: pillars.provision,
-        preparation: pillars.preparation,
+        preparation: 0,
         prosperity: pillars.prosperity,
         peace: pillars.peace,
         netWorth,
@@ -599,7 +611,7 @@ export class ReadinessService {
               prosperity: previousSnapshot.prosperity,
               peace: previousSnapshot.peace,
             },
-            pillars,
+            asLegacyPillars(pillars),
             previousSnapshot.signals,
             signals,
           ).map((change) => ({
@@ -635,7 +647,7 @@ export class ReadinessService {
     userId: string,
     days: number,
     modelVersion: number = READINESS_MODEL_VERSION,
-  ): Promise<ReadinessSnapshot[]> {
+  ): Promise<Array<ReadinessSnapshot | (Omit<ReadinessSnapshot, 'pillars'> & { pillars: ActivePillarScores })>> {
     const since = new Date();
     since.setDate(since.getDate() - days);
     since.setUTCHours(0, 0, 0, 0);
@@ -649,7 +661,8 @@ export class ReadinessService {
       orderBy: { recordedAt: 'asc' },
     });
 
-    return snapshots.map((s) => ({
+    return snapshots.map((s) => {
+      const snapshot = {
       overall: s.overall,
       pillars: {
         protection: s.protection,
@@ -660,7 +673,11 @@ export class ReadinessService {
       },
       recordedAt: s.recordedAt,
       modelVersion: s.modelVersion,
-    }));
+      } satisfies ReadinessSnapshot;
+      if (modelVersion !== READINESS_MODEL_VERSION) return snapshot;
+      const { preparation: _preparation, ...activePillars } = snapshot.pillars;
+      return { ...snapshot, pillars: activePillars };
+    });
   }
 
   /** Lists independently comparable deterministic readiness-history series for a household. */

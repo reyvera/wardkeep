@@ -12,7 +12,7 @@ export type TimelineEventKind =
   | 'FINANCIAL_GOAL'
   | 'VEHICLE_MAINTENANCE'
   | 'HOME_MAINTENANCE';
-export type TimelinePillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
+export type TimelinePillar = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 export interface TimelineEvent {
   id: string;
@@ -124,7 +124,7 @@ export class TimelineService {
         return {
           id: `planned-${record.id}`,
           kind: 'PLANNED_EXPENSE' as const,
-          pillar: 'preparation' as const,
+          pillar: 'provision' as const,
           date: record.dueDate!,
           title: record.name,
           detail: amount
@@ -186,7 +186,7 @@ export class TimelineService {
       ...goals.map((goal) => ({
         id: `goal-${goal.id}`,
         kind: 'FINANCIAL_GOAL' as const,
-        pillar: 'preparation' as const,
+        pillar: 'prosperity' as const,
         date: goal.targetDate!,
         title: `${goal.name} target date`,
         detail: goal.targetAmount
@@ -198,14 +198,14 @@ export class TimelineService {
       ...vehicleMaintenance.map((record) => ({
         id: `vehicle-maintenance-${record.id}`,
         kind: 'VEHICLE_MAINTENANCE' as const,
-        pillar: 'preparation' as const,
+        pillar: 'peace' as const,
         date: record.dueDate!,
         title: `${record.vehicle.year ?? ''} ${record.vehicle.make} ${record.vehicle.model} · ${record.name}`.trim(),
         detail: `${record.dueMileage ? `${record.dueMileage.toLocaleString()} mi reminder` : 'Recorded maintenance reminder'}${record.estimatedCost ? ` · ${this.currency(record.estimatedCost.toString())} estimated` : ''}`,
         href: '/vehicles',
         actionRequired: true,
       })),
-      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'preparation' as const, date: record.dueDate!, title: record.name, detail: `${record.homeAsset ? `${record.homeAsset.name} · ` : ''}recorded home-maintenance reminder${record.estimatedCost ? ` · ${this.currency(record.estimatedCost.toString())} estimated` : ''}`, href: '/home-maintenance', actionRequired: true })),
+      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'protection' as const, date: record.dueDate!, title: record.name, detail: `${record.homeAsset ? `${record.homeAsset.name} · ` : ''}recorded home-maintenance reminder${record.estimatedCost ? ` · ${this.currency(record.estimatedCost.toString())} estimated` : ''}`, href: '/home-maintenance', actionRequired: true })),
     ].sort((left, right) => left.date.getTime() - right.date.getTime());
   }
 
@@ -271,7 +271,7 @@ export class TimelineService {
       ...plannedExpenses.map((record) => ({
         id: `planned-${record.id}-${record.dueDate!.toISOString()}`,
         kind: 'PLANNED_EXPENSE' as const,
-        pillar: 'preparation' as const,
+        pillar: 'provision' as const,
         date: record.dueDate!,
         title: record.name,
         detail: 'Recorded planned-expense date; review whether it was completed or rescheduled.',
@@ -282,7 +282,7 @@ export class TimelineService {
       ...goals.map((goal) => ({
         id: `goal-${goal.id}-${goal.targetDate!.toISOString()}`,
         kind: 'FINANCIAL_GOAL' as const,
-        pillar: 'preparation' as const,
+        pillar: 'prosperity' as const,
         date: goal.targetDate!,
         title: `${goal.name} target date`,
         detail: 'Recorded goal target date; review whether the goal was achieved or needs a new date.',
@@ -293,7 +293,7 @@ export class TimelineService {
       ...vehicleMaintenance.map((record) => ({
         id: `vehicle-maintenance-${record.id}-${record.dueDate!.toISOString()}`,
         kind: 'VEHICLE_MAINTENANCE' as const,
-        pillar: 'preparation' as const,
+        pillar: 'peace' as const,
         date: record.dueDate!,
         title: `${record.vehicle.year ?? ''} ${record.vehicle.make} ${record.vehicle.model} · ${record.name}`.trim(),
         detail: 'Recorded maintenance reminder date; review whether the service was completed or rescheduled.',
@@ -301,7 +301,7 @@ export class TimelineService {
         actionRequired: true,
         status: 'RECORDED_PAST' as const,
       })),
-      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}-${record.dueDate!.toISOString()}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'preparation' as const, date: record.dueDate!, title: record.name, detail: 'Recorded home-maintenance reminder date; review whether the task was completed or rescheduled.', href: '/home-maintenance', actionRequired: true, status: 'RECORDED_PAST' as const })),
+      ...homeMaintenance.map((record) => ({ id: `home-maintenance-${record.id}-${record.dueDate!.toISOString()}`, kind: 'HOME_MAINTENANCE' as const, pillar: 'protection' as const, date: record.dueDate!, title: record.name, detail: 'Recorded home-maintenance reminder date; review whether the task was completed or rescheduled.', href: '/home-maintenance', actionRequired: true, status: 'RECORDED_PAST' as const })),
     ].sort((left, right) => right.date.getTime() - left.date.getTime());
   }
 

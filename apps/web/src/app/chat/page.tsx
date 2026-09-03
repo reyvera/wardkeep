@@ -6,7 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { Send, MessageSquare, Bot, User } from 'lucide-react';
 
-type ReadinessPillar = 'protection' | 'provision' | 'preparation' | 'prosperity';
+type ReadinessPillar = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 interface Message {
   role: 'user' | 'assistant';

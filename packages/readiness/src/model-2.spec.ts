@@ -9,10 +9,12 @@ import {
   reclassifySignalForModel2,
   reclassifySignalsForModel2,
 } from './model-2';
+import { READINESS_MODEL_VERSION } from './types';
 
 describe('model 2 readiness contract', () => {
   it('keeps Peace separate from the three direct score areas', () => {
     expect(MODEL_2_VERSION).toBe(2);
+    expect(READINESS_MODEL_VERSION).toBe(MODEL_2_VERSION);
     expect(MODEL_2_DIRECT_PILLARS).toEqual(['protection', 'provision', 'prosperity']);
     expect(MODEL_2_DIRECT_PILLARS).not.toContain('peace');
   });

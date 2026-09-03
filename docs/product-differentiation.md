@@ -59,7 +59,7 @@ The strategic readiness model has four pillars:
 
 Protection surfaces weaknesses and missing information. Provision emphasizes upcoming risk, not merely historical spending. Prosperity measures trajectory, not only current wealth. Peace is an attention-load measure; it does not claim to measure emotional or psychological well-being.
 
-The current implementation retains a transitional `Preparation` pillar. It should be migrated into the four-pillar model as its signals are reclassified (for example, future obligations under Provision, asset resilience under Protection, and long-term planned purchases under Prosperity). This specification is the target taxonomy; it does not misrepresent the currently deployed scoring contract.
+Model 2 is active. It replaced the transitional `Preparation` pillar by deterministically reclassifying its signals: future obligations under Provision, asset resilience under Protection, long-term plans under Prosperity, and unresolved maintenance under Peace. Model-1 history remains explicitly labeled as the legacy five-pillar model and is never compared as a model-2 trend.
 
 ### Pillar migration contract
 

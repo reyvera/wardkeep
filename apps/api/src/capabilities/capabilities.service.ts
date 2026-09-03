@@ -16,12 +16,12 @@ class RegisteredCoreCapability implements Capability {
 
 const coreCapabilities: CapabilityMetadata[] = [
   financeCapabilityMetadata,
-  { id: 'vehicle', name: 'Vehicles', pillars: ['preparation', 'prosperity'], icon: 'car', description: 'Vehicle ownership, values, leases, and maintenance planning.', source: 'core' },
+  { id: 'vehicle', name: 'Vehicles', pillars: ['protection', 'provision', 'peace'], icon: 'car', description: 'Vehicle ownership, leases, maintenance, and household continuity.', source: 'core' },
   { id: 'insurance', name: 'Insurance', pillars: ['protection'], icon: 'shield', description: 'Policies, renewals, deductibles, and coverage gaps.', source: 'core' },
-  { id: 'home', name: 'Home maintenance', pillars: ['preparation'], icon: 'home', description: 'Home assets, maintenance work, and replacement planning.', source: 'core' },
+  { id: 'home', name: 'Home maintenance', pillars: ['protection'], icon: 'home', description: 'Home assets, maintenance work, and replacement resilience.', source: 'core' },
   { id: 'estate', name: 'Estate planning', pillars: ['protection'], icon: 'file-text', description: 'Recorded estate documents and review reminders.', source: 'core' },
-  { id: 'emergency-preparedness', name: 'Emergency preparedness', pillars: ['protection', 'preparation'], icon: 'alert-triangle', description: 'A practical household preparedness checklist.', source: 'core' },
-  { id: 'household-transitions', name: 'Household continuity', pillars: ['peace', 'preparation'], icon: 'heart-handshake', description: 'Neutral plans for household continuity and periodic review.', source: 'core' },
+  { id: 'emergency-preparedness', name: 'Emergency preparedness', pillars: ['protection', 'peace'], icon: 'alert-triangle', description: 'A practical household preparedness checklist.', source: 'core' },
+  { id: 'household-transitions', name: 'Household continuity', pillars: ['protection', 'peace'], icon: 'heart-handshake', description: 'Neutral plans for household continuity and periodic review.', source: 'core' },
 ];
 
 /** Maps existing published signal IDs to the core capability that owns them. */
