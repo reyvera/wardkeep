@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BackupService } from './backup.service';
+import { EncryptionService } from '../common/services/encryption.service';
 
 type BackupServiceInternals = {
   encrypt(data: Buffer, passphrase: string): {
@@ -19,6 +20,10 @@ type BackupServiceInternals = {
 
 function internals(service: BackupService): BackupServiceInternals {
   return service as unknown as BackupServiceInternals;
+}
+
+function createService(prisma: unknown): BackupService {
+  return new BackupService(prisma as never, new EncryptionService());
 }
 
 describe('BackupService local storage', () => {
@@ -38,7 +43,7 @@ describe('BackupService local storage', () => {
     const id = '22222222-2222-4222-8222-222222222222';
     const payload = Buffer.from('encrypted bytes');
 
-    await internals(new BackupService({} as never)).writeBackup(id, payload);
+    await internals(createService({})).writeBackup(id, payload);
     const stored = await readFile(join(directory, `${id}.enc`));
 
     expect(stored).toEqual(payload);
@@ -49,7 +54,7 @@ describe('BackupService local storage', () => {
     directories.push(directory);
     process.env['WARDKEEP_BACKUP_DIR'] = directory;
     const id = '33333333-3333-4333-8333-333333333333';
-    const writer = internals(new BackupService({} as never));
+    const writer = internals(createService({}));
     const encrypted = writer.encrypt(Buffer.from('{"accounts":[]}'), 'correct passphrase');
     await writer.writeBackup(
       id,
@@ -63,7 +68,7 @@ describe('BackupService local storage', () => {
     };
 
     await expect(
-      new BackupService(prisma as never).restoreBackup('household-1', id, 'wrong passphrase'),
+      createService(prisma).restoreBackup('household-1', id, 'wrong passphrase'),
     ).rejects.toMatchObject({ message: 'Invalid passphrase' });
   });
 
@@ -80,7 +85,7 @@ describe('BackupService local storage', () => {
         deleteMany: async () => ({ count: 1 }),
       },
     };
-    const service = internals(new BackupService(prisma as never));
+    const service = internals(createService(prisma));
     await service.writeBackup(expiredId, Buffer.from('expired'));
 
     await service.enforceRetention('household-1');
@@ -108,7 +113,7 @@ describe('BackupService local storage', () => {
         ],
       },
     };
-    const service = new BackupService(prisma as never);
+    const service = createService(prisma);
     const createScheduledBackup = vi
       .spyOn(service, 'createScheduledBackup')
       .mockResolvedValue({} as never);

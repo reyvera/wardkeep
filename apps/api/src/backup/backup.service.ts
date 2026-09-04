@@ -12,7 +12,10 @@ function backupDirectory(): string {
 
 @Injectable()
 export class BackupService {
-  constructor(private readonly prisma: PrismaService, private readonly encryption = new EncryptionService()) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
+  ) {}
 
   /** Creates a scheduled backup using a random per-user key protected by the deployment key. */
   async createScheduledBackup(userId: string) {

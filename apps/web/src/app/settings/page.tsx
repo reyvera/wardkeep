@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { Save, Shield, Key, Clock, AlertTriangle, Settings, LogOut, Power, Monitor, Moon, Sun } from 'lucide-react';
+import { Save, Shield, Key, Clock, AlertTriangle, Settings, LogOut, Power, Monitor, Moon, Sun, DatabaseBackup, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { ACCENT_PRESETS, useTheme } from '@/components/theme-provider';
 
@@ -21,6 +21,14 @@ interface CapabilitySetting {
   description: string;
   pillars: string[];
   isEnabled: boolean;
+}
+
+interface BackupRecord {
+  id: string;
+  filename: string;
+  size: number;
+  isAutomated: boolean;
+  createdAt: string;
 }
 
 export default function SettingsPage() {
@@ -67,9 +75,14 @@ export default function SettingsPage() {
     }
   };
   const [form, setForm] = useState<UserSettings>({ aiPrivacyMode: 'LOCAL', openaiKey: '', anthropicKey: '', backupSchedule: null });
+  const [backupPassphrase, setBackupPassphrase] = useState('');
+  const [backupPassphraseConfirmation, setBackupPassphraseConfirmation] = useState('');
+  const [restoreTarget, setRestoreTarget] = useState<BackupRecord | null>(null);
+  const [restorePassphrase, setRestorePassphrase] = useState('');
 
   const settingsQuery = useQuery({ queryKey: ['settings'], queryFn: () => apiClient.get<UserSettings>('/settings') });
   const capabilitiesQuery = useQuery({ queryKey: ['capabilities'], queryFn: () => apiClient.get<CapabilitySetting[]>('/capabilities') });
+  const backupsQuery = useQuery({ queryKey: ['backups'], queryFn: () => apiClient.get<BackupRecord[]>('/backup/list') });
 
   useEffect(() => { if (settingsQuery.data) setForm(settingsQuery.data); }, [settingsQuery.data]);
 
@@ -85,8 +98,42 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['readiness'] });
     },
   });
+  const createBackupMutation = useMutation({
+    mutationFn: (passphrase: string) => apiClient.post<BackupRecord>('/backup/create', { passphrase }),
+    onSuccess: () => {
+      setBackupPassphrase('');
+      setBackupPassphraseConfirmation('');
+      queryClient.invalidateQueries({ queryKey: ['backups'] });
+    },
+  });
+  const restoreBackupMutation = useMutation({
+    mutationFn: ({ backup, passphrase }: { backup: BackupRecord; passphrase?: string }) =>
+      apiClient.post('/backup/restore', { backupId: backup.id, ...(passphrase ? { passphrase } : {}) }),
+    onSuccess: () => {
+      setRestoreTarget(null);
+      setRestorePassphrase('');
+      queryClient.invalidateQueries({ queryKey: ['backups'] });
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['readiness'] });
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); saveMutation.mutate(); };
+  const handleCreateBackup = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (backupPassphrase !== backupPassphraseConfirmation) return;
+    createBackupMutation.mutate(backupPassphrase);
+  };
+  const handleRestoreBackup = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!restoreTarget) return;
+    if (!restoreTarget.isAutomated && restorePassphrase.length < 12) return;
+    if (!window.confirm('Restore this backup? This permanently replaces the household data currently in Wardkeep.')) return;
+    restoreBackupMutation.mutate({
+      backup: restoreTarget,
+      ...(restoreTarget.isAutomated ? {} : { passphrase: restorePassphrase }),
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -232,6 +279,61 @@ export default function SettingsPage() {
           </button>
         </form>
       )}
+
+      <section className="card max-w-xl space-y-4" aria-labelledby="backup-recovery-heading">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-green/10"><DatabaseBackup size={16} className="text-accent-green" /></div>
+          <div>
+            <h2 id="backup-recovery-heading" className="card-title mb-0">BACKUP & RECOVERY</h2>
+            <p className="mt-1 text-xs text-content-secondary">Create a manual encrypted copy, or restore a previous household state.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleCreateBackup} className="space-y-3 rounded-lg border border-edge bg-surface-secondary p-3">
+          <p className="text-sm font-medium text-content-primary">Create manual backup</p>
+          <input type="password" value={backupPassphrase} onChange={(event) => setBackupPassphrase(event.target.value)} minLength={12} required placeholder="Backup passphrase (12+ characters)" className="input" />
+          <input type="password" value={backupPassphraseConfirmation} onChange={(event) => setBackupPassphraseConfirmation(event.target.value)} minLength={12} required placeholder="Confirm backup passphrase" className="input" />
+          {backupPassphraseConfirmation && backupPassphrase !== backupPassphraseConfirmation && <p className="text-xs text-accent-red">Passphrases do not match.</p>}
+          {createBackupMutation.isError && <p className="text-xs text-accent-red">{createBackupMutation.error.message}</p>}
+          {createBackupMutation.isSuccess && <p className="text-xs text-accent-green">Manual backup created.</p>}
+          <button type="submit" className="btn-secondary" disabled={createBackupMutation.isPending || backupPassphrase.length < 12 || backupPassphrase !== backupPassphraseConfirmation}>
+            <DatabaseBackup size={16} /> {createBackupMutation.isPending ? 'Creating backup…' : 'Create backup'}
+          </button>
+        </form>
+
+        <div className="space-y-2">
+          <p className="input-label">Available backups</p>
+          {backupsQuery.isLoading && <div className="skeleton h-16 w-full" />}
+          {backupsQuery.isError && <p className="text-xs text-accent-red">{backupsQuery.error.message}</p>}
+          {backupsQuery.data?.length === 0 && <p className="text-sm text-content-secondary">No backups yet.</p>}
+          {backupsQuery.data?.map((backup) => (
+            <div key={backup.id} className="flex items-center justify-between gap-3 rounded-lg border border-edge bg-surface-secondary p-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-content-primary">{backup.isAutomated ? 'Automatic backup' : 'Manual backup'}</p>
+                <p className="mt-1 truncate text-xs text-content-secondary">{new Date(backup.createdAt).toLocaleString()} · {(backup.size / 1024).toFixed(1)} KB</p>
+              </div>
+              <button type="button" className="btn-secondary shrink-0 text-xs" onClick={() => setRestoreTarget(backup)}>
+                <RotateCcw size={14} /> Restore
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {restoreTarget && (
+          <form onSubmit={handleRestoreBackup} className="space-y-3 rounded-lg border border-accent-yellow/30 bg-accent-yellow/5 p-3">
+            <p className="text-sm font-medium text-content-primary">Restore {restoreTarget.isAutomated ? 'automatic' : 'manual'} backup?</p>
+            <p className="text-xs text-content-secondary">This replaces the data currently stored for this household. This cannot be undone.</p>
+            {!restoreTarget.isAutomated && <input type="password" value={restorePassphrase} onChange={(event) => setRestorePassphrase(event.target.value)} minLength={12} required placeholder="Manual backup passphrase" className="input" />}
+            {restoreBackupMutation.isError && <p className="text-xs text-accent-red">{restoreBackupMutation.error.message}</p>}
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary" disabled={restoreBackupMutation.isPending || (!restoreTarget.isAutomated && restorePassphrase.length < 12)}>
+                <RotateCcw size={16} /> {restoreBackupMutation.isPending ? 'Restoring…' : 'Restore backup'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => { setRestoreTarget(null); setRestorePassphrase(''); }}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </section>
 
       <section className="card max-w-xl space-y-4" aria-labelledby="capabilities-heading">
         <div className="flex items-center gap-3">

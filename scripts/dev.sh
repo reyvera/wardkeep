@@ -124,6 +124,13 @@ log "Building packages..."
 pnpm turbo build --filter='./packages/*' > /dev/null 2>&1
 success "Packages built."
 
+# A previous production `next build` leaves hashed assets in `.next`. Starting
+# dev against those artifacts can make the generated page reference a CSS path
+# that no longer exists. This directory is generated-only and is rebuilt by
+# `next dev` below.
+log "Clearing generated web build cache..."
+rm -rf "$ROOT_DIR/apps/web/.next"
+
 # ─── Start dev servers ───────────────────────────────────────────────────────
 
 echo ""
