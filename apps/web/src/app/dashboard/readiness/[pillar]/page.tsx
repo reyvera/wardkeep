@@ -157,11 +157,13 @@ const PILLARS: Record<
     label: 'Peace',
     icon: PiggyBank,
     description:
-      'A simple summary based on the area that needs the most help and any recent changes.',
-    sources: ['Readiness pillar scores', 'Readiness snapshots'],
-    observed: [{ capability: 'vehicle-maintenance', label: 'Recorded vehicle maintenance reminders' }],
+      'A derived attention-load signal, not a separate assessment of your well-being. It reflects the least-secure directly evaluated area, recent stability, and recorded household administration that needs attention.',
+    sources: ['Direct readiness scores', 'Readiness snapshots', 'Recorded maintenance reminders'],
+    observed: [
+      { capability: 'vehicle-maintenance', label: 'Recorded vehicle maintenance reminders' },
+    ],
     next: [
-      'Better explanations of the upstream pillars',
+      'More complete upstream household records',
       'Data freshness and confidence rules',
       'Meaningful score-change reasons',
     ],
@@ -244,7 +246,7 @@ export default function ReadinessPillarPage() {
   const trend = data.recentChanges.find((change) => change.pillar === pillar);
   const pillarTrend = data.pillarTrends[pillar];
   const Icon = meta.icon;
-  const color = scoreColor(score);
+  const color = assessment.score === null ? 'var(--text-tertiary)' : scoreColor(score);
 
   return (
     <div className="space-y-6">

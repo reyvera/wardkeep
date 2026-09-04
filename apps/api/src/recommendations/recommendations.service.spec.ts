@@ -103,18 +103,37 @@ describe('recommendationCandidate', () => {
       provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
     });
 
-    expect(candidate).toMatchObject({ action: 'Review planned expenses', actionHref: '/planned-expenses' });
+    expect(candidate).toMatchObject({
+      action: 'Review planned expenses',
+      actionHref: '/planned-expenses',
+    });
   });
 
   it('raises urgency for a recorded relevance date that is imminent', () => {
     const now = new Date('2026-08-29T00:00:00.000Z');
     const later = recommendationCandidate(
-      { capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Later obligation.', relevanceDate: new Date('2026-10-15T00:00:00.000Z'), provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } },
+      {
+        capabilityId: 'planned-expenses',
+        type: 'warning',
+        magnitude: -3,
+        pillar: 'preparation',
+        summary: 'Later obligation.',
+        relevanceDate: new Date('2026-10-15T00:00:00.000Z'),
+        provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
+      },
       undefined,
       now,
     );
     const imminent = recommendationCandidate(
-      { capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Imminent obligation.', relevanceDate: new Date('2026-08-31T00:00:00.000Z'), provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } },
+      {
+        capabilityId: 'planned-expenses',
+        type: 'warning',
+        magnitude: -3,
+        pillar: 'preparation',
+        summary: 'Imminent obligation.',
+        relevanceDate: new Date('2026-08-31T00:00:00.000Z'),
+        provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
+      },
       undefined,
       now,
     );
@@ -123,10 +142,38 @@ describe('recommendationCandidate', () => {
   });
 
   it('favors an action with a direct Wardkeep workflow', () => {
-    const direct = recommendationCandidate({ capabilityId: 'planned-expenses', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Direct action.', provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } });
-    const generic = recommendationCandidate({ capabilityId: 'unmapped-capability', type: 'warning', magnitude: -3, pillar: 'preparation', summary: 'Generic action.', provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' } });
+    const direct = recommendationCandidate({
+      capabilityId: 'planned-expenses',
+      type: 'warning',
+      magnitude: -3,
+      pillar: 'preparation',
+      summary: 'Direct action.',
+      provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
+    });
+    const generic = recommendationCandidate({
+      capabilityId: 'unmapped-capability',
+      type: 'warning',
+      magnitude: -3,
+      pillar: 'preparation',
+      summary: 'Generic action.',
+      provenance: { limitation: 'Recorded planning input only.', evidenceState: 'manual' },
+    });
 
     expect(direct.priorityScore).toBeGreaterThan(generic.priorityScore);
+  });
+
+  it('does not project a direct pillar delta for a derived Peace signal', () => {
+    const candidate = recommendationCandidate({
+      capabilityId: 'vehicle-maintenance',
+      type: 'risk',
+      magnitude: -4,
+      pillar: 'peace',
+      summary: 'Service is overdue.',
+      provenance: { limitation: 'Recorded maintenance reminder.', evidenceState: 'manual' },
+    });
+
+    expect(candidate.projectedPillarDelta).toBeNull();
+    expect(candidate.impactPreview).toContain('cannot reliably project a numeric change');
   });
 });
 
@@ -155,9 +202,9 @@ describe('RecommendationsService completion observations', () => {
   it('reports observed score movement since completion without attributing causation', async () => {
     const prisma = {
       recommendation: {
-        findMany: vi.fn().mockResolvedValue([
-          { id: 'rec-1', status: 'COMPLETED', scoreAtCompletion: 64 },
-        ]),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ id: 'rec-1', status: 'COMPLETED', scoreAtCompletion: 64 }]),
       },
       readinessSnapshot: {
         findFirst: vi.fn().mockResolvedValue({ overall: 67, recordedAt: new Date('2026-08-27') }),

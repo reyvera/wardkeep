@@ -73,12 +73,14 @@ describe('Readiness Engine scoring', () => {
         (pillars, overallHistory) => {
           const lowestPillar = Math.min(...Object.values(pillars));
           const recentHistory = overallHistory.slice(-7);
-          const totalChange = recentHistory.slice(1).reduce(
-            (total, score, index) => total + Math.abs(score - recentHistory[index]!),
-            0,
-          );
+          const totalChange = recentHistory
+            .slice(1)
+            .reduce((total, score, index) => total + Math.abs(score - recentHistory[index]!), 0);
           const expected = Math.round(
-            Math.max(0, Math.min(100, lowestPillar - Math.min(20, totalChange / (recentHistory.length - 1)))),
+            Math.max(
+              0,
+              Math.min(100, lowestPillar - Math.min(20, totalChange / (recentHistory.length - 1))),
+            ),
           );
           const history = recentHistory.map((overall, index) => ({
             overall,
@@ -94,6 +96,16 @@ describe('Readiness Engine scoring', () => {
 
   it('derives peace from observed pillars without treating an omitted pillar as zero', () => {
     expect(computePeace({ protection: 47, provision: 61, prosperity: 100 })).toBe(47);
+  });
+
+  it('limits peace when recorded administrative attention needs action', () => {
+    expect(
+      computePeace(
+        { protection: 80, provision: 85, prosperity: 90 },
+        [],
+        [{ magnitude: -4, weight: 0.75 }],
+      ),
+    ).toBe(60);
   });
 
   it('does not treat an unevaluated pillar as perfectly ready', () => {

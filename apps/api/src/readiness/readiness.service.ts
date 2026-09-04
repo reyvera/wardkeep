@@ -11,6 +11,8 @@ import {
   READINESS_MODEL_VERSION,
   ActivePillarScores,
   reclassifySignalsForModel2,
+  MODEL_2_EFFECTIVE_DATE,
+  MODEL_2_PILLAR_WEIGHTS,
   ReadinessSnapshot,
 } from '@wardkeep/readiness';
 
@@ -34,6 +36,11 @@ export interface ReadinessResponse {
   evaluatedAt: Date;
   /** Deterministic scoring contract used for this response and its history. */
   modelVersion: number;
+  model: {
+    effectiveDate: string;
+    directWeights: typeof MODEL_2_PILLAR_WEIGHTS;
+    peaceIsDerived: true;
+  };
   overall: number;
   pillars: ActivePillarScores;
   signals: Array<Signal & { provenance: SignalProvenance }>;
@@ -68,7 +75,10 @@ export interface ReadinessResponse {
   changeWindow: 'since_last_visit' | 'since_last_snapshot' | 'none';
 }
 
-const EXPLANATION_FACTORS: Record<keyof ActivePillarScores, Array<{ id: string; label: string }>> = {
+const EXPLANATION_FACTORS: Record<
+  keyof ActivePillarScores,
+  Array<{ id: string; label: string }>
+> = {
   protection: [
     { id: 'emergency-fund', label: 'Liquid reserves' },
     { id: 'insurance', label: 'Recorded insurance policies' },
@@ -238,7 +248,11 @@ export class ReadinessService {
         .filter((pillar) => allSignals.some((signal) => signal.pillar === pillar))
         .map((pillar) => [pillar, pillarScoresWithoutPeace[pillar]]),
     );
-    const peace = computePeace(observedPillarScores, history);
+    const peace = computePeace(
+      observedPillarScores,
+      history,
+      allSignals.filter((signal) => signal.pillar === 'peace'),
+    );
     const overall = computeModel2Overall(pillarScoresWithoutPeace);
 
     const pillars: ActivePillarScores = {
@@ -432,6 +446,11 @@ export class ReadinessService {
     return {
       evaluatedAt,
       modelVersion: READINESS_MODEL_VERSION,
+      model: {
+        effectiveDate: MODEL_2_EFFECTIVE_DATE,
+        directWeights: MODEL_2_PILLAR_WEIGHTS,
+        peaceIsDerived: true,
+      },
       overall,
       pillars,
       signals: signalsWithProvenance,
@@ -456,19 +475,35 @@ export class ReadinessService {
    */
   async getExplanation(userId: string) {
     const readiness = await this.getReadiness(userId);
-    const pillars = (Object.keys(readiness.pillars) as Array<keyof ActivePillarScores>).map((pillar) => {
-      const factors = readiness.signals
-        .filter((signal) => signal.pillar === pillar)
-        .sort((left, right) => Math.abs(right.magnitude) - Math.abs(left.magnitude));
-      const evaluated = new Set(factors.map((factor) => factor.capabilityId));
+    const pillars = (Object.keys(readiness.pillars) as Array<keyof ActivePillarScores>).map(
+      (pillar) => {
+        const scoredFactors = readiness.signals
+          .filter((signal) => signal.pillar === pillar)
+          .sort((left, right) => Math.abs(right.magnitude) - Math.abs(left.magnitude));
+        const factors =
+          pillar === 'peace' && readiness.pillarAssessments.peace.score !== null
+            ? [
+                {
+                  capabilityId: 'derived-peace',
+                  type: 'milestone' as const,
+                  magnitude: 0,
+                  pillar: 'peace' as const,
+                  summary:
+                    'Peace is derived from the least-secure directly evaluated pillar, recent readiness stability, and recorded household administration that needs attention.',
+                },
+                ...scoredFactors,
+              ]
+            : scoredFactors;
+        const evaluated = new Set(factors.map((factor) => factor.capabilityId));
 
-      return {
-        pillar,
-        assessment: readiness.pillarAssessments[pillar],
-        factors,
-        notEvaluated: EXPLANATION_FACTORS[pillar].filter((factor) => !evaluated.has(factor.id)),
-      };
-    });
+        return {
+          pillar,
+          assessment: readiness.pillarAssessments[pillar],
+          factors,
+          notEvaluated: EXPLANATION_FACTORS[pillar].filter((factor) => !evaluated.has(factor.id)),
+        };
+      },
+    );
 
     return {
       evaluatedAt: readiness.evaluatedAt,
@@ -647,7 +682,11 @@ export class ReadinessService {
     userId: string,
     days: number,
     modelVersion: number = READINESS_MODEL_VERSION,
-  ): Promise<Array<ReadinessSnapshot | (Omit<ReadinessSnapshot, 'pillars'> & { pillars: ActivePillarScores })>> {
+  ): Promise<
+    Array<
+      ReadinessSnapshot | (Omit<ReadinessSnapshot, 'pillars'> & { pillars: ActivePillarScores })
+    >
+  > {
     const since = new Date();
     since.setDate(since.getDate() - days);
     since.setUTCHours(0, 0, 0, 0);
@@ -663,16 +702,16 @@ export class ReadinessService {
 
     return snapshots.map((s) => {
       const snapshot = {
-      overall: s.overall,
-      pillars: {
-        protection: s.protection,
-        provision: s.provision,
-        preparation: s.preparation,
-        prosperity: s.prosperity,
-        peace: s.peace,
-      },
-      recordedAt: s.recordedAt,
-      modelVersion: s.modelVersion,
+        overall: s.overall,
+        pillars: {
+          protection: s.protection,
+          provision: s.provision,
+          preparation: s.preparation,
+          prosperity: s.prosperity,
+          peace: s.peace,
+        },
+        recordedAt: s.recordedAt,
+        modelVersion: s.modelVersion,
       } satisfies ReadinessSnapshot;
       if (modelVersion !== READINESS_MODEL_VERSION) return snapshot;
       const { preparation: _preparation, ...activePillars } = snapshot.pillars;

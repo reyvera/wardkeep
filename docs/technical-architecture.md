@@ -152,7 +152,7 @@ The current codebase already implements the finance Capability. Here's how exist
 ### Next implementation priorities
 
 1. **Reliable data and coverage** — Model freshness, provenance, and known/partial/unknown explicitly. Keep scores and coverage coherent when accounts are manual, synchronized, estimated, or stale.
-2. **Four-pillar model migration** — Snapshot model versioning is implemented at version `1`, with one stored snapshot per household, day, and model. Reclassify the transitional Preparation signals, add a legacy-history presentation, publish revised weights and coverage targets, and release API and dashboard changes atomically. Never rewrite history as if the old and new models were directly comparable.
+2. **Model-2 readiness history** — Snapshot model versioning is active at version `2`, with one stored snapshot per household, day, and model. The dashboard presents model 1 as a separate legacy five-pillar series when it exists and never compares it with model-2 trends. The legacy `preparation` column remains a storage compatibility placeholder only.
 3. **Composite Protection** — Add data models and generators for insurance, estate, income interruption, fixed obligations, dependents, and secondary backstops. Maintain independent, explainable signals.
 4. **Recommendation and explanation services** — Persist score-change reasons and rank actions by severity, urgency, financial impact, actionability, and confidence.
 5. **Household Timeline and change feed** — Aggregate bills, renewals, maintenance, taxes, sinking-fund targets, and replacement windows into “Coming up” and “Since your last visit.”

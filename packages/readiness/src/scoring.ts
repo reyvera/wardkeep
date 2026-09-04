@@ -73,25 +73,39 @@ export function computeOverallReadiness(
 }
 
 /**
- * Peace represents the household's least-secure dimension, moderated by recent score stability.
- * A volatile score is less reassuring even when the current point-in-time score looks healthy.
+ * Peace is derived from the household's least-secure direct dimension, recent score stability,
+ * and any recorded administrative attention. It is limited by the weaker of direct readiness
+ * and administrative attention, rather than becoming an independently weighted pillar.
  */
 export function computePeace(
   pillarScores: Partial<Pick<PillarScores, Exclude<ReadinessPillar, 'peace'>>>,
   history: readonly ReadinessSnapshot[] = [],
+  administrativeSignals: readonly Pick<Signal, 'magnitude' | 'weight'>[] = [],
 ): number {
   const observedScores = Object.values(pillarScores).filter(
     (score): score is number => typeof score === 'number',
   );
   if (observedScores.length === 0) return SCORE_MIN;
   const lowestPillar = Math.min(...observedScores.map(clampScore));
-  if (history.length < 2) return Math.round(lowestPillar);
-
-  const recent = history.slice(-7);
-  let totalChange = 0;
-  for (let index = 1; index < recent.length; index++) {
-    totalChange += Math.abs(recent[index]!.overall - recent[index - 1]!.overall);
+  let directPeace = Math.round(lowestPillar);
+  if (history.length >= 2) {
+    const recent = history.slice(-7);
+    let totalChange = 0;
+    for (let index = 1; index < recent.length; index++) {
+      totalChange += Math.abs(recent[index]!.overall - recent[index - 1]!.overall);
+    }
+    const averageChange = totalChange / (recent.length - 1);
+    directPeace = Math.round(clampScore(lowestPillar - Math.min(20, averageChange)));
   }
-  const averageChange = totalChange / (recent.length - 1);
-  return Math.round(clampScore(lowestPillar - Math.min(20, averageChange)));
+
+  if (administrativeSignals.length === 0) return directPeace;
+  let weightedImpact = 0;
+  let totalWeight = 0;
+  for (const signal of administrativeSignals) {
+    const weight = usableWeight(signal.weight);
+    weightedImpact += clampMagnitude(signal.magnitude) * weight;
+    totalWeight += weight;
+  }
+  const administrativePeace = clampScore(SCORE_MAX + (weightedImpact / totalWeight) * 10);
+  return Math.min(directPeace, administrativePeace);
 }

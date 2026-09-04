@@ -39,6 +39,11 @@ interface Signal {
 interface ReadinessResponse {
   evaluatedAt: string;
   modelVersion: number;
+  model: {
+    effectiveDate: string;
+    directWeights: { protection: number; provision: number; prosperity: number };
+    peaceIsDerived: boolean;
+  };
   overall: number;
   pillars: PillarScores;
   signals: Signal[];
@@ -134,6 +139,20 @@ interface TimelineEvent {
   href: string;
 }
 
+interface HistoryModel {
+  modelVersion: number;
+  snapshotCount: number;
+  firstRecordedAt: string;
+  lastRecordedAt: string;
+  isActive: boolean;
+}
+
+interface LegacyHistoryPoint {
+  overall: number;
+  recordedAt: string;
+  modelVersion: number;
+}
+
 interface Recommendation {
   id: string;
   signalSummary: string;
@@ -226,7 +245,7 @@ const PILLAR_META: Record<string, { label: string; icon: typeof Shield; descript
   peace: {
     label: 'Peace',
     icon: PiggyBank,
-    description: 'A summary of how steady things look overall',
+    description: 'A derived view of unresolved household attention, not a separate life score',
   },
 };
 
@@ -241,6 +260,9 @@ const SIGNAL_ACTIONS: Record<string, { href: string; label: string }> = {
   'fixed-obligations': { href: '/external-commitments', label: 'Review external commitments' },
   dependents: { href: '/dependents', label: 'Review dependents' },
   'planned-expenses': { href: '/planned-expenses', label: 'Review planned expenses' },
+  'vehicle-lease': { href: '/vehicles', label: 'Review vehicle plan' },
+  'vehicle-maintenance': { href: '/vehicles', label: 'Review vehicle maintenance' },
+  'home-assets': { href: '/home-maintenance', label: 'Review home maintenance' },
   budgets: { href: '/budget', label: 'Review budget' },
   cashflow: { href: '/dashboard/details', label: 'Review money flow' },
   recurring: { href: '/recurring', label: 'Review recurring bills' },
@@ -262,6 +284,7 @@ function signalAction(signal: Signal): { href: string; label: string } {
 export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [trendRange, setTrendRange] = useState<7 | 30 | 90>(30);
+  const [selectedHistoryModel, setSelectedHistoryModel] = useState<number | null>(null);
   const readinessQuery = useQuery({
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
@@ -286,6 +309,20 @@ export default function DashboardPage() {
     queryKey: ['recommendations'],
     queryFn: () => apiClient.get<Recommendation[]>('/recommendations'),
     enabled: readinessQuery.isSuccess,
+  });
+  const historyModelsQuery = useQuery({
+    queryKey: ['readiness-history-models'],
+    queryFn: () => apiClient.get<HistoryModel[]>('/readiness/history/models'),
+    enabled: readinessQuery.isSuccess,
+  });
+  const legacyHistoryQuery = useQuery({
+    queryKey: ['readiness-history', selectedHistoryModel],
+    queryFn: () =>
+      apiClient.get<LegacyHistoryPoint[]>(
+        `/readiness/history?days=90&modelVersion=${selectedHistoryModel}`,
+      ),
+    enabled:
+      selectedHistoryModel !== null && selectedHistoryModel !== readinessQuery.data?.modelVersion,
   });
   const updateRecommendationMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: 'COMPLETED' | 'DISMISSED' }) =>
@@ -340,7 +377,8 @@ export default function DashboardPage() {
 
   const data = readinessQuery.data!;
   const observedOverall = data.overallAssessment.score;
-  const scoreColor = getScoreColor(observedOverall ?? 0);
+  const scoreColor =
+    observedOverall === null ? 'var(--text-tertiary)' : getScoreColor(observedOverall);
   const scoreLabel = observedOverall === null ? 'Unknown' : getScoreLabel(observedOverall);
   const scoredPillars = Object.entries(data.pillars).filter(
     ([key]) => key !== 'peace' && data.pillarAssessments[key]?.score !== null,
@@ -348,6 +386,10 @@ export default function DashboardPage() {
   const strongest = scoredPillars.sort((a, b) => b[1] - a[1])[0];
   const weakest = scoredPillars.sort((a, b) => a[1] - b[1])[0];
   const history = data.history.slice(-90);
+  const historyModels = historyModelsQuery.data ?? [];
+  const hasMultipleHistoryModels = historyModels.length > 1;
+  const viewingLegacyHistory =
+    selectedHistoryModel !== null && selectedHistoryModel !== data.modelVersion;
   const selectedTrendWindow = data.trendWindows.find((trend) => trend.days === trendRange) ?? {
     days: trendRange,
     delta: null,
@@ -499,7 +541,11 @@ export default function DashboardPage() {
                   ? `${data.dataFreshness.staleAccounts} account${data.dataFreshness.staleAccounts === 1 ? '' : 's'} may be outdated`
                   : `${data.dataFreshness.synchronizedAccounts} synced · ${data.dataFreshness.manualAccounts} manual`}
               </span>
-              <span>Readiness model v{data.modelVersion}</span>
+              <span>
+                Model v{data.modelVersion} · Protection {data.model.directWeights.protection * 100}%
+                · Provision {data.model.directWeights.provision * 100}% · Prosperity{' '}
+                {data.model.directWeights.prosperity * 100}% · Peace derived
+              </span>
             </div>
             <div className="mt-3">
               <div className="flex items-center gap-1" aria-label="Readiness trend range">
@@ -571,15 +617,78 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {hasMultipleHistoryModels && (
+        <section className="card mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="card-title">READINESS HISTORY</h2>
+              <p className="mt-1 text-sm text-content-secondary">
+                Each scoring model is shown as its own series. Wardkeep does not compare scores
+                across model versions.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {historyModels.map((model) => {
+                const selected = (selectedHistoryModel ?? data.modelVersion) === model.modelVersion;
+                const label = model.isActive
+                  ? `Current model v${model.modelVersion}`
+                  : model.modelVersion === 1
+                    ? 'Legacy five-pillar model'
+                    : `Legacy model v${model.modelVersion}`;
+                return (
+                  <button
+                    key={model.modelVersion}
+                    type="button"
+                    className={selected ? 'btn-primary text-xs' : 'btn-secondary text-xs'}
+                    aria-pressed={selected}
+                    onClick={() =>
+                      setSelectedHistoryModel(model.isActive ? null : model.modelVersion)
+                    }
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {viewingLegacyHistory && (
+            <div className="mt-4 border-t border-edge pt-4">
+              {legacyHistoryQuery.isLoading ? (
+                <div className="skeleton h-16 w-full" />
+              ) : legacyHistoryQuery.isError ? (
+                <p className="text-sm text-content-secondary">
+                  That legacy history is unavailable right now.
+                </p>
+              ) : (legacyHistoryQuery.data?.length ?? 0) === 0 ? (
+                <p className="text-sm text-content-secondary">
+                  No snapshots are available in the last 90 days for this legacy model.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-content-secondary">
+                  {legacyHistoryQuery.data!.slice(-5).map((point) => (
+                    <span key={point.recordedAt}>
+                      {new Date(point.recordedAt).toLocaleDateString()} ·{' '}
+                      <strong className="text-content-primary">{point.overall}%</strong>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Pillar Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
         {Object.entries(data.pillars).map(([key, score]) => {
           const meta = PILLAR_META[key];
           if (!meta) return null;
           const Icon = meta.icon;
-          const color = getScoreColor(score);
-
           const assessment = data.pillarAssessments[key];
+          const color =
+            assessment?.score === null || !assessment
+              ? 'var(--text-tertiary)'
+              : getScoreColor(score);
           const coverage = assessment?.coverage ?? 0;
           const pillarSignals = data.signals.filter((signal) => signal.pillar === key).slice(0, 2);
           const trend = data.pillarTrends[key];

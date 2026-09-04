@@ -1,8 +1,8 @@
 # Readiness Model 2 Implementation Checklist
 
-## Objective
+## Completion record
 
-Replace the transitional five-pillar scoring model with Protection, Provision, Prosperity, and derived Peace while retaining model-1 history as a separately labeled series.
+Implemented: the active model uses Protection, Provision, Prosperity, and derived Peace, while model-1 history remains a separately labeled legacy series.
 
 ## Signal reclassification
 
@@ -13,15 +13,15 @@ Replace the transitional five-pillar scoring model with Protection, Provision, P
 | Home asset lifecycle | Protection | It identifies an asset-resilience and replacement-risk gap. |
 | Vehicle maintenance | Peace | It represents unresolved household administration requiring attention. |
 
-## Cutover sequence
+## Implemented cutover
 
-1. Increment `READINESS_MODEL_VERSION` to `2` and publish its taxonomy, weights (Protection 35%, Provision 35%, Prosperity 30%), coverage targets, and effective date.
-2. Allow Peace signals and define its deterministic calculation as the more limited of direct readiness and recorded administrative attention; document that it is excluded from the weighted overall score.
-3. Reclassify generators and their provenance, then remove Preparation from active score types, API responses, dashboard cards, detail routes, chat, and timeline filters.
-4. Continue writing the legacy `preparation` database column as a compatibility placeholder for model-2 snapshots until a later archival migration; do not expose it in model-2 APIs.
-5. Return model-1 history with an explicit legacy pillar payload, not as model-2 `PillarScores`.
-6. Add a dashboard history selector only when two or more model versions exist. Its labels must identify version 1 as the legacy five-pillar model and prevent cross-version trend deltas.
-7. Add scoring, generator, API, snapshot, and UI regression tests. Verify model-2 writes a new same-day snapshot beside model 1, rather than replacing it.
+1. `READINESS_MODEL_VERSION` is `2`, effective **September 3, 2026**, with published 35% / 35% / 30% direct weights.
+2. Peace is derived from observed direct readiness and recorded administrative attention; it is excluded from the weighted overall score.
+3. Former Preparation signals are reclassified, and active score types, API responses, dashboard cards, detail routes, chat, and timeline filters exclude Preparation.
+4. The legacy `preparation` database column remains a compatibility placeholder for model-2 snapshots and is not exposed in model-2 APIs.
+5. Model-1 history returns its original legacy pillar payload rather than model-2 `PillarScores`.
+6. The dashboard history selector appears only when two or more model versions exist, labels version 1 as the legacy five-pillar model, and prevents cross-version deltas.
+7. Readiness package, API, and web validation cover the cutover contract; model-2 snapshots are keyed separately from model 1.
 
 ## Acceptance criteria
 

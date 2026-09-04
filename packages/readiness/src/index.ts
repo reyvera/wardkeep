@@ -1,10 +1,17 @@
 export const PACKAGE_NAME = '@wardkeep/readiness';
 
-export { clampScore, computeOverallReadiness, computePeace, computePillarScore, DEFAULT_PILLAR_WEIGHTS } from './scoring';
+export {
+  clampScore,
+  computeOverallReadiness,
+  computePeace,
+  computePillarScore,
+  DEFAULT_PILLAR_WEIGHTS,
+} from './scoring';
 export type { PillarAssessment, ReadinessAssessmentState } from './types';
 export { READINESS_MODEL_VERSION, READINESS_PILLARS } from './types';
 export {
   MODEL_2_DIRECT_PILLARS,
+  MODEL_2_EFFECTIVE_DATE,
   MODEL_2_PILLAR_BY_CAPABILITY,
   MODEL_2_PILLAR_WEIGHTS,
   MODEL_2_VERSION,

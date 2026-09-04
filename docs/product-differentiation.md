@@ -59,17 +59,17 @@ The strategic readiness model has four pillars:
 
 Protection surfaces weaknesses and missing information. Provision emphasizes upcoming risk, not merely historical spending. Prosperity measures trajectory, not only current wealth. Peace is an attention-load measure; it does not claim to measure emotional or psychological well-being.
 
-Model 2 is active. It replaced the transitional `Preparation` pillar by deterministically reclassifying its signals: future obligations under Provision, asset resilience under Protection, long-term plans under Prosperity, and unresolved maintenance under Peace. Model-1 history remains explicitly labeled as the legacy five-pillar model and is never compared as a model-2 trend.
+Model 2 has been active since **September 3, 2026**. It replaced the transitional `Preparation` pillar by deterministically reclassifying its signals: future obligations under Provision, asset resilience under Protection, long-term plans under Prosperity, and unresolved maintenance under Peace. Model-1 history remains explicitly labeled as the legacy five-pillar model and is never compared as a model-2 trend.
 
 ### Pillar migration contract
 
-The transition from the current five-pillar implementation must preserve user trust and historical meaning:
+The completed transition preserves user trust and historical meaning:
 
-1. Reclassify each current `Preparation` signal by its household consequence before removing the pillar. Recorded planned expenses and near-term lease decisions belong in **Provision**; asset replacement resilience belongs in **Protection**; long-term purchase and payoff plans belong in **Prosperity**; unresolved maintenance and administrative deadlines contribute to **Peace**.
+1. Each former `Preparation` signal is reclassified by household consequence. Recorded planned expenses and near-term lease decisions belong in **Provision**; asset replacement resilience belongs in **Protection**; long-term purchase and payoff plans belong in **Prosperity**; unresolved maintenance and administrative deadlines contribute to **Peace**.
 2. Version readiness snapshots and signal provenance with the taxonomy used to calculate them. Historical `Preparation` values remain visible as legacy history and must not be relabeled as a current pillar.
 3. Expose old and new score series as non-comparable during the cutover unless Wardkeep can recalculate a historical period from the same underlying observations using the new deterministic rules.
 4. Do not choose new weights solely to preserve a familiar overall score. Publish the weights, coverage targets, factor changes, and effective date with the new model.
-5. Ship the API and dashboard migration together: clients must never receive a four-pillar label set with five-pillar data, or the reverse.
+5. The API and dashboard migrated together: active clients never receive a four-pillar label set with five-pillar data, or the reverse.
 
 This is a product-model migration, not a cosmetic rename.
 

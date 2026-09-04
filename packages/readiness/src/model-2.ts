@@ -3,6 +3,9 @@ import type { Signal } from './types';
 /** The next published scoring contract. It is not active until the API cutover ships. */
 export const MODEL_2_VERSION = 2;
 
+/** Date the model-2 taxonomy became the active readiness contract. */
+export const MODEL_2_EFFECTIVE_DATE = '2026-09-03';
+
 /** Model 2 has three directly scored areas. Peace is shown separately as a summary. */
 export const MODEL_2_DIRECT_PILLARS = ['protection', 'provision', 'prosperity'] as const;
 
