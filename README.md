@@ -51,7 +51,7 @@ packages/
 - **Debt payoff calculator** — Snowball, avalanche, custom strategies with what-if mode
 - **Cash-flow forecast** — 90-day projections based on recurring transactions
 - **Readiness foundations** — Deterministic Protection, Provision, Prosperity, and Peace signals with score history and explicit data coverage
-- **Encrypted backups** — AES-256-GCM with user passphrase
+- **Encrypted backups** — Manual AES-256-GCM backups plus optional scheduled backups protected by the deployment key
 - **Progressive Web App** — Offline support, installable on any device
 - **Docker Compose** — Single-command self-hosted deployment with pre-built images
 
@@ -287,6 +287,7 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 | `REDIS_PORT`        | 6379                                                   | Redis port                                                                                                                              |
 | `AI_PRIVACY_MODE`   | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD                                                                                                     |
 | `OLLAMA_URL`        | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
+| `WARDKEEP_BACKUP_DIR` | /data/backups                                         | Durable directory for AES-256-GCM encrypted household backups. Docker Compose mounts the persistent `backups` volume here.           |
 | `SESSION_TIMEOUT`   | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
 | `PORT`              | 4000                                                   | API server port                                                                                                                         |
 | `WEB_PORT`          | 3000                                                   | Host port for web UI (prod compose)                                                                                                     |

@@ -1008,6 +1008,8 @@ model UserSettings {
   anthropicKey     String?
   backupSchedule   BackupSchedule?
   backupPassphrase String?
+  scheduledBackupKey String?
+  scheduledBackupLastRunAt DateTime?
   backupRetention  Int             @default(5)
   sessionTimeout   Int             @default(30)
   createdAt        DateTime        @default(now())
@@ -1031,11 +1033,12 @@ enum BackupSchedule {
 // ─── Backups ────────────────────────────────────────────────────────────────────
 
 model Backup {
-  id        String   @id @default(uuid())
-  userId    String
-  filename  String
-  size      BigInt
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  userId      String
+  filename    String
+  size        BigInt
+  isAutomated Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
 

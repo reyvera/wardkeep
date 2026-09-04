@@ -9,6 +9,7 @@ import { QUEUE_NAMES, QUEUE_CONCURRENCY } from './queues';
 import { processAICategorization } from './processors/ai-categorization.processor';
 import { processRecurringDetection } from './processors/recurring-detection.processor';
 import { processReadinessSnapshot } from './processors/readiness-snapshot.processor';
+import { processScheduledBackups } from './processors/backup.processor';
 
 const workers: Worker[] = [];
 const queues: Queue[] = [];
@@ -49,6 +50,22 @@ async function bootstrap(): Promise<void> {
     concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.READINESS_SNAPSHOTS],
   });
   workers.push(readinessWorker);
+
+  // Backups run after readiness snapshots. The API decides which household
+  // schedules are due, making missed runs safe to catch up on the next job.
+  const backupQueue = new Queue(QUEUE_NAMES.BACKUP, { connection });
+  queues.push(backupQueue);
+  await backupQueue.upsertJobScheduler(
+    'scheduled-backups',
+    { pattern: '0 4 * * *' },
+    { name: 'create-due-backups', data: {} },
+  );
+  log('Scheduled automatic backups for 04:00 UTC.');
+  const backupWorker = new Worker(QUEUE_NAMES.BACKUP, processScheduledBackups, {
+    connection,
+    concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.BACKUP],
+  });
+  workers.push(backupWorker);
 
   log('Started. Listening for jobs...');
 }

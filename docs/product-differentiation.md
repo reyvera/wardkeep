@@ -160,6 +160,21 @@ Evaluate each proposed feature:
 
 Before significant work, ask: **Are we building a better Wardkeep or merely matching Monarch?** “A competitor has this” is not a sufficient rationale; “Wardkeep needs this data to improve its readiness model” is.
 
+### Readiness Dependency Rule
+
+A new first-party household domain enters Wardkeep only when it produces observations that materially affect one or more readiness capabilities or enables a meaningful household action. This permits strategically relevant domains—such as insurance, property, vehicles, maintenance, preparedness, household transitions, and trusted access—without turning Wardkeep into a generic collection of household utilities.
+
+The same rule applies to financial expansion: investments and real estate are included to supply Prosperity and Protection evidence, not to compete with brokerage dashboards or property-search products. A feature justified only by competitor parity waits.
+
+### Delivery balance
+
+Near-term development advances two tracks together:
+
+1. **Ship Wardkeep:** security, authorization isolation, migration and restore testing, backups, CI gates, Docker and installation diagnostics, onboarding, accessibility, and release engineering.
+2. **Define the category:** the readiness model, household and capability architecture, high-value financial and non-financial evidence domains, trusted access, and cross-domain recommendations.
+
+Category-defining work must not outrun shippability. Wardkeep should launch when both its differentiation and operational reliability are credible, rather than maximizing either one in isolation.
+
 ## 10. Target experiences
 
 An emergency fund is not merely a balance against a goal. Wardkeep interprets it as reserve months against essential expenses, adjusts that view for recorded upcoming pressure, and recommends the next prudent allocation of funds.

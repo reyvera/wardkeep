@@ -1,7 +1,5 @@
 import { PillarScores, ReadinessPillar, Signal } from '@wardkeep/readiness';
 
-type DirectPillar = Exclude<ReadinessPillar, 'peace'>;
-
 export interface SnapshotSignal {
   capabilityId: string;
   type: string;

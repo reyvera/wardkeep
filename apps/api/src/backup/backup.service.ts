@@ -1,18 +1,47 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { EncryptionService } from '../common/services/encryption.service';
 
-/** In-memory store for encrypted backup data (filesystem/S3 can replace this later). */
-const backupStore = new Map<string, Buffer>();
+function backupDirectory(): string {
+  return process.env['WARDKEEP_BACKUP_DIR'] ?? '/data/backups';
+}
 
 @Injectable()
 export class BackupService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly encryption = new EncryptionService()) {}
+
+  /** Creates a scheduled backup using a random per-user key protected by the deployment key. */
+  async createScheduledBackup(userId: string) {
+    const settings = await this.prisma.userSettings.findUnique({ where: { userId }, select: { scheduledBackupKey: true } });
+    let key = settings?.scheduledBackupKey ? this.encryption.decrypt(settings.scheduledBackupKey) : null;
+    if (!key) {
+      key = randomBytes(32).toString('base64');
+      await this.prisma.userSettings.upsert({
+        where: { userId },
+        create: { userId, scheduledBackupKey: this.encryption.encrypt(key) },
+        update: { scheduledBackupKey: this.encryption.encrypt(key) },
+      });
+    }
+    const backup = await this.createBackup(userId, key, { isAutomated: true });
+    await this.prisma.userSettings.update({ where: { userId }, data: { scheduledBackupLastRunAt: new Date() } });
+    return backup;
+  }
+
+  async runDueScheduledBackups(now = new Date()) {
+    const settings = await this.prisma.userSettings.findMany({ where: { backupSchedule: { not: null } }, select: { userId: true, backupSchedule: true, scheduledBackupLastRunAt: true } });
+    let created = 0;
+    for (const setting of settings) {
+      if (this.isScheduleDue(setting.backupSchedule, setting.scheduledBackupLastRunAt, now)) {
+        await this.createScheduledBackup(setting.userId);
+        created++;
+      }
+    }
+    return { created };
+  }
 
   /**
    * Creates an encrypted backup of all user data.
@@ -23,7 +52,11 @@ export class BackupService {
    * @param passphrase - User-provided passphrase for AES-256-GCM encryption
    * @returns The created backup metadata
    */
-  async createBackup(userId: string, passphrase: string) {
+  async createBackup(
+    userId: string,
+    passphrase: string,
+    options: { isAutomated?: boolean } = {},
+  ) {
     const [
       accounts,
       transactions,
@@ -100,10 +133,16 @@ export class BackupService {
         userId,
         filename: `backup-${Date.now()}.enc`,
         size: BigInt(packed.length),
+        isAutomated: options.isAutomated ?? false,
       },
     });
 
-    backupStore.set(backup.id, packed);
+    try {
+      await this.writeBackup(backup.id, packed);
+    } catch (error) {
+      await this.prisma.backup.delete({ where: { id: backup.id } });
+      throw error;
+    }
 
     // Enforce retention limit
     await this.enforceRetention(userId);
@@ -122,12 +161,12 @@ export class BackupService {
    * throws BadRequestException without altering existing data.
    * @param userId - The authenticated user's ID
    * @param backupId - The backup ID to restore from
-   * @param passphrase - The passphrase used when creating the backup
+   * @param passphrase - The passphrase for a manual backup; automatic backups use their protected service key
    * @returns Success confirmation
    * @throws NotFoundException if backup does not exist or belongs to another user
    * @throws BadRequestException if passphrase is incorrect (auth tag validation fails)
    */
-  async restoreBackup(userId: string, backupId: string, passphrase: string) {
+  async restoreBackup(userId: string, backupId: string, passphrase?: string) {
     const backup = await this.prisma.backup.findFirst({
       where: { id: backupId, userId },
     });
@@ -136,8 +175,10 @@ export class BackupService {
       throw new NotFoundException('Backup not found');
     }
 
-    const packed = backupStore.get(backupId);
-    if (!packed) {
+    let packed: Buffer;
+    try {
+      packed = await readFile(this.backupPath(backupId));
+    } catch {
       throw new NotFoundException('Backup data not found');
     }
 
@@ -147,9 +188,13 @@ export class BackupService {
     const authTag = packed.subarray(48, 64);
     const encrypted = packed.subarray(64);
 
+    const restoreKey = backup.isAutomated
+      ? await this.scheduledBackupKey(userId)
+      : (passphrase ?? '');
+
     let decrypted: Buffer;
     try {
-      decrypted = this.decrypt(encrypted, passphrase, iv, salt, authTag);
+      decrypted = this.decrypt(encrypted, restoreKey, iv, salt, authTag);
     } catch {
       throw new BadRequestException('Invalid passphrase');
     }
@@ -251,6 +296,7 @@ export class BackupService {
         id: true,
         filename: true,
         size: true,
+        isAutomated: true,
         createdAt: true,
       },
     });
@@ -259,6 +305,7 @@ export class BackupService {
       id: b.id,
       filename: b.filename,
       size: Number(b.size),
+      isAutomated: b.isAutomated,
       createdAt: b.createdAt,
     }));
   }
@@ -351,10 +398,42 @@ export class BackupService {
         where: { id: { in: idsToDelete } },
       });
 
-      // Clean up in-memory store
-      for (const id of idsToDelete) {
-        backupStore.delete(id);
-      }
+      await Promise.all(
+        idsToDelete.map((id) => unlink(this.backupPath(id)).catch(() => undefined)),
+      );
     }
+  }
+
+  private backupPath(backupId: string): string {
+    return join(backupDirectory(), `${backupId}.enc`);
+  }
+
+  private async writeBackup(backupId: string, packed: Buffer): Promise<void> {
+    await mkdir(backupDirectory(), { recursive: true });
+    await writeFile(this.backupPath(backupId), packed, { mode: 0o600 });
+  }
+
+  private isScheduleDue(
+    schedule: 'DAILY' | 'WEEKLY' | 'MONTHLY' | null,
+    lastRunAt: Date | null,
+    now: Date,
+  ): boolean {
+    if (!schedule || !lastRunAt) return Boolean(schedule);
+    const dueAt = new Date(lastRunAt);
+    if (schedule === 'DAILY') dueAt.setUTCDate(dueAt.getUTCDate() + 1);
+    if (schedule === 'WEEKLY') dueAt.setUTCDate(dueAt.getUTCDate() + 7);
+    if (schedule === 'MONTHLY') dueAt.setUTCMonth(dueAt.getUTCMonth() + 1);
+    return now >= dueAt;
+  }
+
+  private async scheduledBackupKey(userId: string): Promise<string> {
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { scheduledBackupKey: true },
+    });
+    if (!settings?.scheduledBackupKey) {
+      throw new NotFoundException('Automatic backup key not found');
+    }
+    return this.encryption.decrypt(settings.scheduledBackupKey);
   }
 }

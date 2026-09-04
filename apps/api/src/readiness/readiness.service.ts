@@ -714,7 +714,12 @@ export class ReadinessService {
         modelVersion: s.modelVersion,
       } satisfies ReadinessSnapshot;
       if (modelVersion !== READINESS_MODEL_VERSION) return snapshot;
-      const { preparation: _preparation, ...activePillars } = snapshot.pillars;
+      const activePillars = {
+        protection: snapshot.pillars.protection,
+        provision: snapshot.pillars.provision,
+        prosperity: snapshot.pillars.prosperity,
+        peace: snapshot.pillars.peace,
+      };
       return { ...snapshot, pillars: activePillars };
     });
   }

@@ -11,7 +11,8 @@ interface UserSettings {
   aiPrivacyMode: string;
   openaiKey?: string | null;
   anthropicKey?: string | null;
-  backupSchedule: string;
+  backupSchedule: string | null;
+  scheduledBackupLastRunAt?: string | null;
 }
 
 interface CapabilitySetting {
@@ -65,7 +66,7 @@ export default function SettingsPage() {
       setThemeImportError(error instanceof Error ? error.message : 'Theme file could not be imported.');
     }
   };
-  const [form, setForm] = useState<UserSettings>({ aiPrivacyMode: 'LOCAL', openaiKey: '', anthropicKey: '', backupSchedule: 'DAILY' });
+  const [form, setForm] = useState<UserSettings>({ aiPrivacyMode: 'LOCAL', openaiKey: '', anthropicKey: '', backupSchedule: null });
 
   const settingsQuery = useQuery({ queryKey: ['settings'], queryFn: () => apiClient.get<UserSettings>('/settings') });
   const capabilitiesQuery = useQuery({ queryKey: ['capabilities'], queryFn: () => apiClient.get<CapabilitySetting[]>('/capabilities') });
@@ -211,11 +212,18 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="input-label">Frequency</label>
-              <select value={form.backupSchedule} onChange={(e) => setForm({ ...form, backupSchedule: e.target.value })} className="input">
+              <select value={form.backupSchedule ?? ''} onChange={(e) => setForm({ ...form, backupSchedule: e.target.value || null })} className="input">
+                <option value="">Off</option>
                 <option value="DAILY">Daily</option>
                 <option value="WEEKLY">Weekly</option>
                 <option value="MONTHLY">Monthly</option>
               </select>
+              <p className="mt-2 text-xs text-content-secondary">Automatic backups are encrypted and kept on this Wardkeep deployment. You can turn them off at any time.</p>
+              {form.scheduledBackupLastRunAt && (
+                <p className="mt-1 text-xs text-content-tertiary">
+                  Last automatic backup: {new Date(form.scheduledBackupLastRunAt).toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
 
