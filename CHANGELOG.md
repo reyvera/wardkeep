@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Durable backup recovery** — Manual passphrase-protected backups and scheduled deployment-local backups are listed and restored from Settings; restoring requires an explicit destructive confirmation.
-- **Saved future cash-flow events** — Record a one-time future bill or deposit for an account, keep it across restarts and backup/restore, and include it in that account's 90-day forecast and deterministic Provision readiness signal.
+- **Saved future cash-flow events** — Record, correct, resolve, or restore a one-time future bill or deposit for an account. Active events feed that account's 90-day forecast, household Timeline, and deterministic Provision readiness signal; resolved events remain in the household record without affecting future projections.
 - **Transaction workflow** — Transactions now have a visible review inbox with individual or selected bulk review, a navigation count, optional tags, and tag filtering.
 - **Subscription management** — Explicitly mark recurring bills as subscriptions and review their normalized monthly cost, upcoming 30-day charges, and annual renewals in a dedicated workspace.
 - **Transaction review foundation** — New imported and bank-synced transactions now enter an explicit review state; existing and manual records remain reviewed during upgrade.

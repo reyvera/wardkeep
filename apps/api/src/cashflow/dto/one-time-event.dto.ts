@@ -10,3 +10,8 @@ export const OneTimeEventSchema = z.object({
 });
 
 export type OneTimeEventDto = z.infer<typeof OneTimeEventSchema>;
+
+/** Schema for correcting an existing future event without moving it between accounts. */
+export const UpdateOneTimeEventSchema = OneTimeEventSchema.omit({ accountId: true });
+
+export type UpdateOneTimeEventDto = z.infer<typeof UpdateOneTimeEventSchema>;

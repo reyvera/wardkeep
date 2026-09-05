@@ -170,6 +170,8 @@ Wardkeep keeps encrypted household backups in the durable `backups` Compose volu
 
 Optional daily, weekly, or monthly scheduled backups are encrypted with a per-household key protected by the deployment's required `ENCRYPTION_KEY`. They remain recoverable through the same Settings workflow while that deployment and encryption key are retained. Keep a separate database-level backup before infrastructure upgrades or a Postgres major-version migration.
 
+These in-app backups are currently recovery records for the same Wardkeep deployment. Cross-deployment backup export and import is not yet available; use a verified PostgreSQL dump for a migration between deployments.
+
 ---
 
 ## Compose variants

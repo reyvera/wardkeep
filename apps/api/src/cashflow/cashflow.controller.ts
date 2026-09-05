@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -19,7 +20,7 @@ import {
   ScopedRequest,
 } from '../common/interceptors/user-scope.interceptor';
 import { CashflowService } from './cashflow.service';
-import { OneTimeEventSchema } from './dto/one-time-event.dto';
+import { OneTimeEventSchema, UpdateOneTimeEventSchema } from './dto/one-time-event.dto';
 
 @Controller('cashflow')
 @UseGuards(AuthGuard)
@@ -68,6 +69,25 @@ export class CashflowController {
   async listOneTimeEvents(@Req() req: ScopedRequest, @Query('accountId') accountId?: string) {
     if (!accountId) throw new BadRequestException('accountId query parameter is required');
     return this.cashflowService.listOneTimeEvents(req.userId!, accountId);
+  }
+
+  @Patch('one-time/:id')
+  async updateOneTimeEvent(@Req() req: ScopedRequest, @Param('id') eventId: string) {
+    const result = UpdateOneTimeEventSchema.safeParse(req.body);
+    if (!result.success) throw new BadRequestException(result.error.flatten().fieldErrors);
+    return this.cashflowService.updateOneTimeEvent(req.userId!, eventId, result.data);
+  }
+
+  @Post('one-time/:id/complete')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async completeOneTimeEvent(@Req() req: ScopedRequest, @Param('id') eventId: string) {
+    await this.cashflowService.completeOneTimeEvent(req.userId!, eventId);
+  }
+
+  @Post('one-time/:id/reopen')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reopenOneTimeEvent(@Req() req: ScopedRequest, @Param('id') eventId: string) {
+    await this.cashflowService.reopenOneTimeEvent(req.userId!, eventId);
   }
 
   @Delete('one-time/:id')

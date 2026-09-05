@@ -1142,8 +1142,8 @@ export default function DashboardPage() {
           <div className="skeleton mt-4 h-16 w-full" />
         ) : comingUp.length === 0 ? (
           <p className="mt-4 text-sm text-content-tertiary">
-            No upcoming recorded bills, income dates, planned expenses, or policy renewals in the
-            next 30 days.
+            No upcoming recorded bills, future cash-flow events, income dates, planned expenses,
+            or policy renewals in the next 30 days.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">

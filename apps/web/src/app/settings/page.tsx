@@ -112,9 +112,9 @@ export default function SettingsPage() {
     onSuccess: () => {
       setRestoreTarget(null);
       setRestorePassphrase('');
-      queryClient.invalidateQueries({ queryKey: ['backups'] });
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
-      queryClient.invalidateQueries({ queryKey: ['readiness'] });
+      // A restore replaces the household's entire record set. Mark every cached
+      // household view stale so later navigation cannot present pre-restore data.
+      queryClient.invalidateQueries();
     },
   });
 

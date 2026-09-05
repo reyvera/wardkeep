@@ -15,7 +15,7 @@ import {
 } from '@wardkeep/shared';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { OneTimeEventDto } from './dto/one-time-event.dto';
+import { OneTimeEventDto, UpdateOneTimeEventDto } from './dto/one-time-event.dto';
 
 @Injectable()
 export class CashflowService {
@@ -88,7 +88,7 @@ export class CashflowService {
     // Future events are household records, not process-local state, so a restart
     // never changes a forecast merely by losing an entered bill or deposit.
     const oneTimeEventRecords = await this.prisma.cashflowEvent.findMany({
-      where: { userId, accountId },
+      where: { userId, accountId, isActive: true },
       orderBy: { date: 'asc' },
     });
     const oneTimeEvents: OneTimeEvent[] = oneTimeEventRecords.map((event) => ({
@@ -169,7 +169,63 @@ export class CashflowService {
       amount: event.amount.toFixed(2),
       type: event.type.toLowerCase(),
       description: event.description,
+      isActive: event.isActive,
+      completedAt: event.completedAt?.toISOString() ?? null,
     }));
+  }
+
+  /** Corrects a household-owned future event while preserving its account assignment. */
+  async updateOneTimeEvent(userId: string, eventId: string, dto: UpdateOneTimeEventDto) {
+    const existing = await this.prisma.cashflowEvent.findFirst({
+      where: { id: eventId, userId, isActive: true },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Active cash-flow event not found');
+
+    const event = await this.prisma.cashflowEvent.update({
+      where: { id: eventId },
+      data: {
+        date: new Date(dto.date),
+        amount: new Decimal(dto.amount),
+        type: dto.type === 'credit' ? 'CREDIT' : 'DEBIT',
+        description: dto.description,
+      },
+    });
+
+    return {
+      id: event.id,
+      accountId: event.accountId,
+      date: event.date.toISOString(),
+      amount: event.amount.toFixed(2),
+      type: event.type.toLowerCase(),
+      description: event.description,
+    };
+  }
+
+  /** Marks an event resolved so it no longer affects future household projections. */
+  async completeOneTimeEvent(userId: string, eventId: string) {
+    const existing = await this.prisma.cashflowEvent.findFirst({
+      where: { id: eventId, userId, isActive: true },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Active cash-flow event not found');
+    await this.prisma.cashflowEvent.update({
+      where: { id: eventId },
+      data: { isActive: false, completedAt: new Date() },
+    });
+  }
+
+  /** Restores a resolved event to future household projections. */
+  async reopenOneTimeEvent(userId: string, eventId: string) {
+    const existing = await this.prisma.cashflowEvent.findFirst({
+      where: { id: eventId, userId, isActive: false },
+      select: { id: true },
+    });
+    if (!existing) throw new NotFoundException('Resolved cash-flow event not found');
+    await this.prisma.cashflowEvent.update({
+      where: { id: eventId },
+      data: { isActive: true, completedAt: null },
+    });
   }
 
   /** Removes a household-owned future event from its forecast. */

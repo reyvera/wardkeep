@@ -27,7 +27,8 @@ type TimelineEventKind =
   | 'BUDGET_PERIOD'
   | 'FINANCIAL_GOAL'
   | 'VEHICLE_MAINTENANCE'
-  | 'HOME_MAINTENANCE';
+  | 'HOME_MAINTENANCE'
+  | 'CASHFLOW_EVENT';
 type TimelinePillar = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 interface TimelineEvent {
@@ -52,6 +53,7 @@ const eventIcons = {
   FINANCIAL_GOAL: Target,
   VEHICLE_MAINTENANCE: Wrench,
   HOME_MAINTENANCE: House,
+  CASHFLOW_EVENT: CalendarClock,
 };
 
 const eventLabels: Record<TimelineEventKind, string> = {
@@ -64,6 +66,7 @@ const eventLabels: Record<TimelineEventKind, string> = {
   FINANCIAL_GOAL: 'Goal target',
   VEHICLE_MAINTENANCE: 'Vehicle maintenance',
   HOME_MAINTENANCE: 'Home maintenance',
+  CASHFLOW_EVENT: 'Future cash-flow event',
 };
 
 const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = {
@@ -76,6 +79,7 @@ const eventStyles: Record<TimelineEventKind, { icon: string; badge: string }> = 
   FINANCIAL_GOAL: { icon: 'text-accent-purple', badge: 'bg-accent-purple/10 text-accent-purple' },
   VEHICLE_MAINTENANCE: { icon: 'text-accent-orange', badge: 'bg-accent-orange/10 text-accent-orange' },
   HOME_MAINTENANCE: { icon: 'text-accent-green', badge: 'bg-accent-green/10 text-accent-green' },
+  CASHFLOW_EVENT: { icon: 'text-accent-blue', badge: 'bg-accent-blue/10 text-accent-blue' },
 };
 
 function dayKey(date: string) {
@@ -185,7 +189,7 @@ export default function TimelinePage() {
           <CalendarDays className="mt-0.5 shrink-0 text-accent-blue" size={20} />
           <p className="text-sm text-content-secondary">
             {view === 'UPCOMING' || view === 'TODAY'
-              ? 'Includes confirmed recurring bills, policy renewals, expected income dates, and planned expenses. Add or change a record in its source workspace.'
+              ? 'Includes confirmed recurring bills, saved future cash-flow events, policy renewals, expected income dates, and planned expenses. Add or change a record in its source workspace.'
               : 'Includes past policy renewal, expected-income, and planned-expense dates. Open the source workspace to confirm or update its outcome.'}
           </p>
         </div>
@@ -247,7 +251,7 @@ export default function TimelinePage() {
           </p>
           <p className="mt-1 text-sm text-content-secondary">
             {view === 'UPCOMING' || view === 'TODAY'
-              ? 'Add a recurring bill, policy renewal, expected income date, or planned expense when you know it.'
+              ? 'Add a recurring bill, future cash-flow event, policy renewal, expected income date, or planned expense when you know it.'
               : 'Past scheduled dates remain separate from confirmed payments, renewals, or income.'}
           </p>
         </div>

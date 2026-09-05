@@ -11,7 +11,8 @@ export type TimelineEventKind =
   | 'BUDGET_PERIOD'
   | 'FINANCIAL_GOAL'
   | 'VEHICLE_MAINTENANCE'
-  | 'HOME_MAINTENANCE';
+  | 'HOME_MAINTENANCE'
+  | 'CASHFLOW_EVENT';
 export type TimelinePillar = 'protection' | 'provision' | 'prosperity' | 'peace';
 
 export interface TimelineEvent {
@@ -45,7 +46,7 @@ export class TimelineService {
     const end = new Date(start);
     end.setUTCDate(end.getUTCDate() + days);
 
-    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance, homeMaintenance] = await Promise.all([
+    const [recurring, policies, income, plannedExpenses, payoffPlans, budgets, goals, vehicleMaintenance, homeMaintenance, cashflowEvents] = await Promise.all([
       this.prisma.recurringTransaction.findMany({
         where: {
           userId,
@@ -82,6 +83,10 @@ export class TimelineService {
         orderBy: { dueDate: 'asc' },
       }),
       this.prisma.homeMaintenanceTask.findMany({ where: { userId, completedAt: null, dueDate: { gte: start, lte: end } }, include: { homeAsset: true }, orderBy: { dueDate: 'asc' } }),
+      this.prisma.cashflowEvent.findMany({
+        where: { userId, isActive: true, date: { gte: start, lte: end } },
+        orderBy: { date: 'asc' },
+      }),
     ]);
 
     return [
@@ -134,6 +139,16 @@ export class TimelineService {
           actionRequired: shortfall !== null && shortfall > 0,
         };
       }),
+      ...cashflowEvents.map((record) => ({
+        id: `cashflow-event-${record.id}`,
+        kind: 'CASHFLOW_EVENT' as const,
+        pillar: 'provision' as const,
+        date: record.date,
+        title: record.description,
+        detail: `${this.currency(record.amount.toString())} scheduled ${record.type === 'CREDIT' ? 'inflow' : 'outflow'}`,
+        href: '/recurring',
+        actionRequired: record.type === 'DEBIT',
+      })),
       ...payoffPlans
         .map((plan) => {
           const date = new Date(plan.createdAt);

@@ -72,6 +72,63 @@ describe('BackupService local storage', () => {
     ).rejects.toMatchObject({ message: 'Invalid passphrase' });
   });
 
+  it('restores an automatic backup of saved future cash-flow events without a passphrase', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'wardkeep-backup-'));
+    directories.push(directory);
+    process.env['WARDKEEP_BACKUP_DIR'] = directory;
+    const id = '66666666-6666-4666-8666-666666666666';
+    const cashflowEvents = [{
+      id: '77777777-7777-4777-8777-777777777777',
+      userId: 'household-1',
+      accountId: '88888888-8888-4888-8888-888888888888',
+      date: '2026-09-20T12:00:00.000Z',
+      amount: '1200.00',
+      type: 'DEBIT',
+      description: 'Roof repair deposit',
+    }];
+    const scheduledBackupKey = 'deployment-protected-backup-key';
+    const writer = internals(createService({}));
+    const encrypted = writer.encrypt(
+      Buffer.from(JSON.stringify({ accounts: [], cashflowEvents })),
+      scheduledBackupKey,
+    );
+    await writer.writeBackup(
+      id,
+      Buffer.concat([encrypted.salt, encrypted.iv, encrypted.authTag, encrypted.encrypted]),
+    );
+
+    const deleteMany = vi.fn().mockResolvedValue({ count: 0 });
+    const createMany = vi.fn().mockResolvedValue({ count: 1 });
+    const tx = {
+      transactionTag: { deleteMany }, transaction: { deleteMany },
+      cashflowEvent: { deleteMany, createMany }, budgetAllocation: { deleteMany, createMany },
+      budget: { deleteMany, createMany }, ruleCondition: { deleteMany, createMany },
+      ruleAction: { deleteMany, createMany }, rule: { deleteMany, createMany },
+      recurringTransaction: { deleteMany, createMany }, financialGoal: { deleteMany, createMany },
+      vehicleMaintenance: { deleteMany, createMany }, vehicle: { deleteMany, createMany },
+      homeMaintenanceTask: { deleteMany, createMany }, homeAsset: { deleteMany, createMany },
+      emergencyPreparednessItem: { deleteMany, createMany },
+      householdTransitionPlan: { deleteMany, createMany }, category: { deleteMany, createMany },
+      account: { deleteMany, createMany }, userSettings: { deleteMany, create: vi.fn() },
+    };
+    const prisma = {
+      backup: { findFirst: vi.fn().mockResolvedValue({ id, userId: 'household-1', isAutomated: true }) },
+      userSettings: {
+        findUnique: vi.fn().mockResolvedValue({
+          scheduledBackupKey: new EncryptionService().encrypt(scheduledBackupKey),
+        }),
+      },
+      $transaction: async (callback: (transaction: typeof tx) => Promise<unknown>) => callback(tx),
+    };
+
+    await expect(
+      createService(prisma).restoreBackup('household-1', id),
+    ).resolves.toEqual({ message: 'Backup restored successfully' });
+
+    expect(tx.cashflowEvent.deleteMany).toHaveBeenCalledWith({ where: { userId: 'household-1' } });
+    expect(tx.cashflowEvent.createMany).toHaveBeenCalledWith({ data: cashflowEvents });
+  });
+
   it('removes the encrypted file when retention expires a backup', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'wardkeep-backup-'));
     directories.push(directory);

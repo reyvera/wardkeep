@@ -173,7 +173,7 @@ async function generateCashFlowSignals(
     where: { userId, isConfirmed: true, isActive: true },
   });
   const cashFlowEvents = await prisma.cashflowEvent.findMany({
-    where: { userId },
+    where: { userId, isActive: true },
     orderBy: { date: 'asc' },
   });
 

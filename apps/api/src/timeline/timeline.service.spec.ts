@@ -103,6 +103,17 @@ describe('TimelineService', () => {
         ]),
       },
       homeMaintenanceTask: { findMany: vi.fn().mockResolvedValue([]) },
+      cashflowEvent: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'future-event',
+            description: 'Roof repair deposit',
+            amount: decimal('1200'),
+            type: 'DEBIT',
+            date: new Date('2026-08-27T12:00:00.000Z'),
+          },
+        ]),
+      },
     };
     const service = new TimelineService(prisma as never);
 
@@ -112,15 +123,17 @@ describe('TimelineService', () => {
       'POLICY_RENEWAL',
       'INCOME',
       'RECURRING_BILL',
+      'CASHFLOW_EVENT',
       'PLANNED_EXPENSE',
       'FINANCIAL_GOAL',
       'VEHICLE_MAINTENANCE',
       'BUDGET_PERIOD',
       'DEBT_PAYOFF',
     ]);
-    expect(events[3]).toMatchObject({ detail: '$400.00 planned · $275.00 not marked set aside' });
+    expect(events[4]).toMatchObject({ detail: '$400.00 planned · $275.00 not marked set aside' });
     expect(events.filter((event) => event.actionRequired).map((event) => event.kind)).toEqual([
       'POLICY_RENEWAL',
+      'CASHFLOW_EVENT',
       'PLANNED_EXPENSE',
       'VEHICLE_MAINTENANCE',
     ]);
@@ -148,6 +161,13 @@ describe('TimelineService', () => {
         where: expect.objectContaining({ userId: 'user-1', isConfirmed: true, isActive: true }),
       }),
     );
+    expect(events.find((event) => event.kind === 'CASHFLOW_EVENT')).toMatchObject({
+      title: 'Roof repair deposit',
+      detail: '$1,200.00 scheduled outflow',
+      href: '/recurring',
+      pillar: 'provision',
+      actionRequired: true,
+    });
   });
 
   it('labels past source dates without inferring that the underlying event happened', async () => {
@@ -167,6 +187,7 @@ describe('TimelineService', () => {
       financialGoal: { findMany: vi.fn().mockResolvedValue([]) },
       vehicleMaintenance: { findMany: vi.fn().mockResolvedValue([]) },
       homeMaintenanceTask: { findMany: vi.fn().mockResolvedValue([]) },
+      cashflowEvent: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const service = new TimelineService(prisma as never);
 
