@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BackupService } from './backup.service';
 import { EncryptionService } from '../common/services/encryption.service';
+import { NotFoundException } from '@nestjs/common';
 
 type BackupServiceInternals = {
   encrypt(data: Buffer, passphrase: string): {
@@ -72,6 +73,23 @@ describe('BackupService local storage', () => {
     ).rejects.toMatchObject({ message: 'Invalid passphrase' });
   });
 
+  it('rejects another household’s backup before it reads or restores data', async () => {
+    const prisma = {
+      backup: { findFirst: vi.fn().mockResolvedValue(null) },
+      $transaction: vi.fn(),
+    };
+
+    await expect(
+      createService(prisma).restoreBackup(
+        'household-1',
+        '99999999-9999-4999-8999-999999999999',
+        'correct passphrase',
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it('restores an automatic backup of saved future cash-flow events without a passphrase', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'wardkeep-backup-'));
     directories.push(directory);
@@ -85,6 +103,16 @@ describe('BackupService local storage', () => {
       amount: '1200.00',
       type: 'DEBIT',
       description: 'Roof repair deposit',
+      isActive: false,
+      completedAt: '2026-09-21T12:00:00.000Z',
+    }, {
+      id: '99999999-9999-4999-8999-999999999999',
+      userId: 'household-1',
+      accountId: '88888888-8888-4888-8888-888888888888',
+      date: '2026-10-01T12:00:00.000Z',
+      amount: '90.00',
+      type: 'DEBIT',
+      description: 'Older backup event',
     }];
     const scheduledBackupKey = 'deployment-protected-backup-key';
     const writer = internals(createService({}));

@@ -1,4 +1,4 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller, Get, Logger, ServiceUnavailableException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -35,12 +35,18 @@ export class HealthController {
       databaseStatus = 'down';
     }
 
-    return {
+    const response: HealthResponse = {
       status: databaseStatus === 'up' ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
       services: {
         database: databaseStatus,
       },
     };
+
+    // Container health checks must fail when Wardkeep cannot reach its source
+    // of household data; returning a 200 here would mask an unusable API.
+    if (databaseStatus === 'down') throw new ServiceUnavailableException(response);
+
+    return response;
   }
 }

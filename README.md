@@ -57,7 +57,7 @@ packages/
 
 ## Screenshots
 
-> Full gallery with all pages at desktop and mobile viewports coming soon via GitHub Pages. These highlight the core experience.
+> Browse the full [desktop and mobile screenshot gallery](https://reyvera.github.io/wardkeep/screenshots/) on GitHub Pages. These highlights show the core experience.
 
 **Dashboard** — A household-readiness command center: readiness coverage, explainable pillars, concrete areas needing attention, and recommended next steps. The accompanying Financial Overview shows net worth, accounts, budgets, and actual spending pace.
 
@@ -183,7 +183,7 @@ The demo includes three insurance policies, including an auto policy renewing so
 
 - **Web UI:** http://localhost:3000 (redirects to /login if unauthenticated)
 - **API:** http://localhost:4000
-- **API Health:** http://localhost:4000/api/health
+- **API Health:** http://localhost:4000/api/health — returns a non-2xx response when PostgreSQL is unavailable
 
 ### First-Time App Setup
 

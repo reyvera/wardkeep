@@ -41,7 +41,7 @@ docker compose pull
 docker compose up -d
 ```
 
-The app is available at [http://localhost:3000](http://localhost:3000). API health check at [http://localhost:4000/api/health](http://localhost:4000/api/health).
+The app is available at [http://localhost:3000](http://localhost:3000). API health check at [http://localhost:4000/api/health](http://localhost:4000/api/health). It returns a non-2xx response when the API cannot reach PostgreSQL, so a container marked unhealthy is not serving usable household data.
 
 ---
 
