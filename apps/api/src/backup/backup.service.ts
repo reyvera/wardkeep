@@ -78,6 +78,7 @@ export class BackupService {
       homeMaintenanceTasks,
       emergencyPreparednessItems,
       householdTransitionPlans,
+      cashflowEvents,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -101,6 +102,7 @@ export class BackupService {
       this.prisma.homeMaintenanceTask.findMany({ where: { userId } }),
       this.prisma.emergencyPreparednessItem.findMany({ where: { userId } }),
       this.prisma.householdTransitionPlan.findMany({ where: { userId } }),
+      this.prisma.cashflowEvent.findMany({ where: { userId } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -122,6 +124,7 @@ export class BackupService {
       homeMaintenanceTasks,
       emergencyPreparednessItems,
       householdTransitionPlans,
+      cashflowEvents,
       settings,
     });
 
@@ -209,6 +212,7 @@ export class BackupService {
       // Delete in reverse dependency order
       await tx.transactionTag.deleteMany({ where: { transaction: { userId } } });
       await tx.transaction.deleteMany({ where: { userId } });
+      await tx.cashflowEvent.deleteMany({ where: { userId } });
       await tx.budgetAllocation.deleteMany({ where: { budget: { userId } } });
       await tx.budget.deleteMany({ where: { userId } });
       await tx.ruleCondition.deleteMany({ where: { rule: { userId } } });
@@ -229,6 +233,9 @@ export class BackupService {
       // Re-insert data
       if (payload.accounts?.length) {
         await tx.account.createMany({ data: payload.accounts });
+      }
+      if (payload.cashflowEvents?.length) {
+        await tx.cashflowEvent.createMany({ data: payload.cashflowEvents });
       }
       if (payload.categories?.length) {
         await tx.category.createMany({ data: payload.categories });

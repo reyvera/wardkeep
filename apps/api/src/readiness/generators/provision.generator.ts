@@ -172,6 +172,10 @@ async function generateCashFlowSignals(
   const recurringRecords = await prisma.recurringTransaction.findMany({
     where: { userId, isConfirmed: true, isActive: true },
   });
+  const cashFlowEvents = await prisma.cashflowEvent.findMany({
+    where: { userId },
+    orderBy: { date: 'asc' },
+  });
 
   let totalBelowZeroCount = 0;
 
@@ -217,7 +221,16 @@ async function generateCashFlowSignals(
         createdAt: r.createdAt,
       }));
 
-    const result = projectCashFlow(cashFlowAccount, accountRecurring, []);
+    const accountEvents = cashFlowEvents
+      .filter((event) => event.accountId === account.id)
+      .map((event) => ({
+        date: event.date,
+        amount: event.amount.toString(),
+        type: event.type === TransactionType.CREDIT ? 'credit' as const : 'debit' as const,
+        description: event.description,
+      }));
+
+    const result = projectCashFlow(cashFlowAccount, accountRecurring, accountEvents);
 
     // Count below-zero notifications within the next 30 days
     const thirtyDaysFromNow = new Date();

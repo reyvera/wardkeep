@@ -35,6 +35,14 @@ interface CashFlowResult {
     projectedAmount: string;
   }[];
 }
+interface OneTimeEvent {
+  id: string;
+  accountId: string;
+  date: string;
+  amount: string;
+  type: 'credit' | 'debit';
+  description: string;
+}
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -43,6 +51,12 @@ function formatCurrency(value: number): string {
 export default function RecurringPage() {
   const queryClient = useQueryClient();
   const [accountId, setAccountId] = useState('');
+  const [oneTimeEvent, setOneTimeEvent] = useState({
+    date: '',
+    amount: '',
+    type: 'debit' as 'credit' | 'debit',
+    description: '',
+  });
 
   const accountsQuery = useQuery({
     queryKey: ['accounts'],
@@ -69,6 +83,11 @@ export default function RecurringPage() {
     queryFn: () => apiClient.get<CashFlowResult>(`/cashflow/forecast?accountId=${accountId}`),
     enabled: !!accountId,
   });
+  const oneTimeEventsQuery = useQuery({
+    queryKey: ['cashflow', 'one-time', accountId],
+    queryFn: () => apiClient.get<OneTimeEvent[]>(`/cashflow/one-time?accountId=${accountId}`),
+    enabled: !!accountId,
+  });
 
   const refreshRecurring = () => queryClient.invalidateQueries({ queryKey: ['recurring'] });
   const confirmMutation = useMutation({
@@ -88,9 +107,37 @@ export default function RecurringPage() {
       apiClient.patch(`/recurring/${id}/subscription`, { isSubscription }),
     onSuccess: refreshRecurring,
   });
+  const refreshCashFlow = () => {
+    queryClient.invalidateQueries({ queryKey: ['cashflow', accountId] });
+    queryClient.invalidateQueries({ queryKey: ['cashflow', 'one-time', accountId] });
+  };
+  const addOneTimeEventMutation = useMutation({
+    mutationFn: () =>
+      apiClient.post('/cashflow/one-time', {
+        accountId,
+        date: new Date(`${oneTimeEvent.date}T12:00:00.000Z`).toISOString(),
+        amount: oneTimeEvent.amount,
+        type: oneTimeEvent.type,
+        description: oneTimeEvent.description,
+      }),
+    onSuccess: () => {
+      setOneTimeEvent({ date: '', amount: '', type: 'debit', description: '' });
+      refreshCashFlow();
+    },
+  });
+  const removeOneTimeEventMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/cashflow/one-time/${id}`),
+    onSuccess: refreshCashFlow,
+  });
 
   const confirmed = recurringQuery.data ?? [];
   const detected = detectedQuery.data ?? [];
+  const handleAddOneTimeEvent = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (accountId && oneTimeEvent.date && oneTimeEvent.amount && oneTimeEvent.description) {
+      addOneTimeEventMutation.mutate();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -276,6 +323,42 @@ export default function RecurringPage() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="card space-y-4">
+          <div>
+            <h3 className="card-title mb-0">ONE-TIME FUTURE EVENTS</h3>
+            <p className="mt-1 text-xs text-content-secondary">Add a known bill or deposit that should affect this account’s 90-day forecast.</p>
+          </div>
+          <form onSubmit={handleAddOneTimeEvent} className="grid gap-3 md:grid-cols-4">
+            <input type="date" value={oneTimeEvent.date} onChange={(event) => setOneTimeEvent({ ...oneTimeEvent, date: event.target.value })} className="input" required />
+            <input type="number" min="0.01" step="0.01" inputMode="decimal" value={oneTimeEvent.amount} onChange={(event) => setOneTimeEvent({ ...oneTimeEvent, amount: event.target.value })} placeholder="Amount" className="input" required />
+            <select value={oneTimeEvent.type} onChange={(event) => setOneTimeEvent({ ...oneTimeEvent, type: event.target.value as 'credit' | 'debit' })} className="input">
+              <option value="debit">Money out</option>
+              <option value="credit">Money in</option>
+            </select>
+            <input value={oneTimeEvent.description} onChange={(event) => setOneTimeEvent({ ...oneTimeEvent, description: event.target.value })} placeholder="What is this for?" maxLength={200} className="input" required />
+            <button type="submit" className="btn-secondary md:col-span-4 justify-self-start" disabled={addOneTimeEventMutation.isPending || !accountId}>
+              <CalendarClock size={16} /> {addOneTimeEventMutation.isPending ? 'Adding event…' : 'Add future event'}
+            </button>
+          </form>
+          {addOneTimeEventMutation.isError && <p className="text-xs text-accent-red">{addOneTimeEventMutation.error.message}</p>}
+          {oneTimeEventsQuery.isError && <p className="text-xs text-accent-red">{oneTimeEventsQuery.error.message}</p>}
+          {oneTimeEventsQuery.data && oneTimeEventsQuery.data.length > 0 && (
+            <div className="space-y-2 border-t border-edge pt-3">
+              {oneTimeEventsQuery.data.map((event) => (
+                <div key={event.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-content-primary">{event.description}</p>
+                    <p className="text-xs text-content-secondary">{new Date(event.date).toLocaleDateString()} · {event.type === 'credit' ? 'Money in' : 'Money out'} · ${formatCurrency(Number(event.amount))}</p>
+                  </div>
+                  <button type="button" className="btn-ghost p-2 text-content-tertiary hover:text-accent-red" aria-label={`Remove ${event.description}`} title="Remove future event" disabled={removeOneTimeEventMutation.isPending} onClick={() => {
+                    if (window.confirm(`Remove “${event.description}” from this forecast?`)) removeOneTimeEventMutation.mutate(event.id);
+                  }}><X size={15} /></button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {cashFlowQuery.isLoading && (

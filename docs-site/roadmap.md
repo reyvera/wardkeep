@@ -11,7 +11,7 @@ Wardkeep is becoming a private household-readiness command center. Finance is th
 
 ## Product compass
 
-Every release should make at least one of these questions easier to answer: what is happening in my household, why does it matter, how prepared am I, or what should I do next? The target model organizes readiness around **Protection**, **Provision**, **Prosperity**, and **Peace**. Current implementation still includes a transitional Preparation pillar while its signals are reclassified; public product claims must remain explicit about that distinction.
+Every release should make at least one of these questions easier to answer: what is happening in my household, why does it matter, how prepared am I, or what should I do next? The active model organizes readiness around **Protection**, **Provision**, **Prosperity**, and derived **Peace**. The legacy Preparation pillar remains visible only in explicitly labeled model-1 history; it is not part of current readiness scoring.
 
 ## Release map
 

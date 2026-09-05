@@ -164,6 +164,12 @@ Three container images built from the repo:
 - **Prisma in Alpine:** Requires `openssl` package. Entrypoint runs only checked-in `prisma migrate deploy` migrations before starting. It never falls back to `db push`, accepts data loss, or seeds demo data.
 - **Postgres versions:** Dev compose uses postgres:15, prod uses postgres:16. Data volumes are NOT compatible between versions.
 
+## Household backup and recovery
+
+Wardkeep keeps encrypted household backups in the durable `backups` Compose volume, mounted to `/data/backups` in the API container. In **Settings**, a household can create a manual backup protected by its own passphrase and restore it from the available-backups list. Restoring permanently replaces that household's current Wardkeep records, so review the selected backup and confirmation carefully.
+
+Optional daily, weekly, or monthly scheduled backups are encrypted with a per-household key protected by the deployment's required `ENCRYPTION_KEY`. They remain recoverable through the same Settings workflow while that deployment and encryption key are retained. Keep a separate database-level backup before infrastructure upgrades or a Postgres major-version migration.
+
 ---
 
 ## Compose variants

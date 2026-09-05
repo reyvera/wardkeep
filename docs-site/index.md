@@ -26,7 +26,7 @@ permalink: /
 <p class="wardkeep-section-intro">Most finance apps stop at transactions. Wardkeep helps you understand what is happening, why it matters, how prepared you are, and what to do next—without pretending a household can be reduced to one perfect score.</p>
 
 <div class="feature-grid">
-  <div class="feature-card"><div class="feature-icon">◈</div><h3>See the whole picture</h3><p>Accounts, spending, budgets, debt, and recurring bills together instead of spread across tools.</p></div>
+  <div class="feature-card"><div class="feature-icon">◈</div><h3>See the whole picture</h3><p>Accounts, spending, budgets, debt, protection records, household assets, and obligations together instead of spread across tools.</p></div>
   <div class="feature-card"><div class="feature-icon">⌁</div><h3>Understand what matters</h3><p>A plain-language readiness view that separates what Wardkeep knows from what it has not evaluated.</p></div>
   <div class="feature-card"><div class="feature-icon">→</div><h3>Take the next right step</h3><p>Clear signals about spending pace, cash flow, and resilience before small issues become bigger surprises.</p></div>
 </div>
@@ -41,7 +41,7 @@ Connect or import your accounts, organize transactions, and set a budget when yo
 
 ## Built for privacy and clarity
 
-Wardkeep can run in your own environment. Its distinction is deterministic, explainable whole-household readiness evaluation—not AI features. Deterministic calculations handle balances, forecasts, budgets, debt math, and readiness signals; AI is optional support for explaining, categorizing, summarizing, and surfacing patterns.
+Wardkeep can run in your own environment. Its distinction is deterministic, explainable whole-household readiness evaluation—not AI features. Deterministic calculations handle balances, forecasts, budgets, debt math, recorded future cash-flow events, and readiness signals; AI is optional support for explaining, categorizing, summarizing, and surfacing patterns. Encrypted manual backups, optional scheduled backups, and in-app recovery controls help keep the household record recoverable.
 
 | Your preference     | Wardkeep supports                                                         |
 | :------------------ | :------------------------------------------------------------------------ |

@@ -17,9 +17,6 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { OneTimeEventDto } from './dto/one-time-event.dto';
 
-/** In-memory store for one-time events (per account). */
-const oneTimeEventsStore: Map<string, OneTimeEvent[]> = new Map();
-
 @Injectable()
 export class CashflowService {
   constructor(private readonly prisma: PrismaService) {}
@@ -88,8 +85,18 @@ export class CashflowService {
       createdAt: r.createdAt,
     }));
 
-    // Get stored one-time events for this account
-    const oneTimeEvents = oneTimeEventsStore.get(accountId) ?? [];
+    // Future events are household records, not process-local state, so a restart
+    // never changes a forecast merely by losing an entered bill or deposit.
+    const oneTimeEventRecords = await this.prisma.cashflowEvent.findMany({
+      where: { userId, accountId },
+      orderBy: { date: 'asc' },
+    });
+    const oneTimeEvents: OneTimeEvent[] = oneTimeEventRecords.map((event) => ({
+      date: event.date,
+      amount: event.amount.toFixed(2),
+      type: event.type === 'CREDIT' ? 'credit' : 'debit',
+      description: event.description,
+    }));
 
     // Project cash flow using finance engine
     const result = projectCashFlow(cashFlowAccount, recurring, oneTimeEvents);
@@ -113,7 +120,7 @@ export class CashflowService {
   }
 
   /**
-   * Adds a one-time event to the in-memory store for future forecasts.
+   * Persists a one-time event for future forecasts.
    * @param userId - The authenticated user's ID
    * @param dto - The one-time event data
    * @returns The stored one-time event
@@ -128,23 +135,50 @@ export class CashflowService {
       throw new NotFoundException('Account not found');
     }
 
-    const event: OneTimeEvent = {
-      date: new Date(dto.date),
-      amount: dto.amount,
-      type: dto.type,
-      description: dto.description,
-    };
-
-    const existing = oneTimeEventsStore.get(dto.accountId) ?? [];
-    existing.push(event);
-    oneTimeEventsStore.set(dto.accountId, existing);
+    const event = await this.prisma.cashflowEvent.create({
+      data: {
+        userId,
+        accountId: dto.accountId,
+        date: new Date(dto.date),
+        amount: new Decimal(dto.amount),
+        type: dto.type === 'credit' ? 'CREDIT' : 'DEBIT',
+        description: dto.description,
+      },
+    });
 
     return {
-      accountId: dto.accountId,
+      id: event.id,
+      accountId: event.accountId,
       date: event.date.toISOString(),
-      amount: dto.amount,
-      type: dto.type,
-      description: dto.description,
+      amount: event.amount.toFixed(2),
+      type: event.type.toLowerCase(),
+      description: event.description,
     };
+  }
+
+  /** Lists future one-time cash-flow events for one household account. */
+  async listOneTimeEvents(userId: string, accountId: string) {
+    const events = await this.prisma.cashflowEvent.findMany({
+      where: { userId, accountId },
+      orderBy: { date: 'asc' },
+    });
+    return events.map((event) => ({
+      id: event.id,
+      accountId: event.accountId,
+      date: event.date.toISOString(),
+      amount: event.amount.toFixed(2),
+      type: event.type.toLowerCase(),
+      description: event.description,
+    }));
+  }
+
+  /** Removes a household-owned future event from its forecast. */
+  async removeOneTimeEvent(userId: string, eventId: string): Promise<void> {
+    const event = await this.prisma.cashflowEvent.findFirst({
+      where: { id: eventId, userId },
+      select: { id: true },
+    });
+    if (!event) throw new NotFoundException('Cash-flow event not found');
+    await this.prisma.cashflowEvent.delete({ where: { id: eventId } });
   }
 }

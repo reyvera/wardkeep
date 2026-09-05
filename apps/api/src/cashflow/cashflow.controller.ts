@@ -1,7 +1,11 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  Param,
   Post,
   Query,
   Req,
@@ -58,5 +62,17 @@ export class CashflowController {
     }
 
     return this.cashflowService.addOneTimeEvent(userId, result.data);
+  }
+
+  @Get('one-time')
+  async listOneTimeEvents(@Req() req: ScopedRequest, @Query('accountId') accountId?: string) {
+    if (!accountId) throw new BadRequestException('accountId query parameter is required');
+    return this.cashflowService.listOneTimeEvents(req.userId!, accountId);
+  }
+
+  @Delete('one-time/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeOneTimeEvent(@Req() req: ScopedRequest, @Param('id') eventId: string) {
+    await this.cashflowService.removeOneTimeEvent(req.userId!, eventId);
   }
 }
