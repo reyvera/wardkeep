@@ -1,7 +1,9 @@
 # Remote Backup Protocol (Design)
 
-Status: protocol design and database foundation complete. No remote-backup
-endpoint, pairing UI, blob storage, or background job exists yet.
+Status: protocol design, peer/blob metadata, pairing-offer, replay-nonce,
+pairing-route, authenticated blob-upload route, and verified opaque-storage
+foundations are complete. There is no pairing UI, blob download/restore route,
+or background job yet.
 
 ## Purpose and boundary
 

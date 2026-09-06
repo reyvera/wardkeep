@@ -27,6 +27,7 @@ import { PlannedExpensesModule } from './planned-expenses/planned-expenses.modul
 import { InsuranceModule } from './insurance/insurance.module';
 import { InvestmentsModule } from './investments/investments.module';
 import { RealEstateModule } from './real-estate/real-estate.module';
+import { RemoteBackupModule } from './remote-backup/remote-backup.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -85,6 +86,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     InsuranceModule,
     InvestmentsModule,
     RealEstateModule,
+    RemoteBackupModule,
   ],
   providers: [
     {

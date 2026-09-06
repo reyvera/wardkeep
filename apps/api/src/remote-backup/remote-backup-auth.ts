@@ -106,6 +106,31 @@ export function verifyRemoteBackupRequest({
   >;
   now?: Date;
 }): boolean {
+  const contentSha256 = remoteBackupContentSha256(body);
+  if (!safeEqual(contentSha256, headers['x-wardkeep-content-sha256'])) return false;
+
+  return verifyRemoteBackupSignature({ secret, method, path, headers, now });
+}
+
+export function verifyRemoteBackupSignature({
+  secret,
+  method,
+  path,
+  headers,
+  now = new Date(),
+}: {
+  secret: string;
+  method: string;
+  path: string;
+  headers: Pick<
+    RemoteBackupSignedHeaders,
+    | 'x-wardkeep-timestamp'
+    | 'x-wardkeep-nonce'
+    | 'x-wardkeep-content-sha256'
+    | 'x-wardkeep-signature'
+  >;
+  now?: Date;
+}): boolean {
   const signaturePrefix = `${REMOTE_BACKUP_SIGNATURE_VERSION}=`;
   if (
     !headers['x-wardkeep-signature'].startsWith(signaturePrefix) ||
@@ -115,15 +140,12 @@ export function verifyRemoteBackupRequest({
     return false;
   }
 
-  const contentSha256 = remoteBackupContentSha256(body);
-  if (!safeEqual(contentSha256, headers['x-wardkeep-content-sha256'])) return false;
-
   const expected = signRemoteBackupRequest(secret, {
     method,
     path,
     timestamp: headers['x-wardkeep-timestamp'],
     nonce: headers['x-wardkeep-nonce'],
-    contentSha256,
+    contentSha256: headers['x-wardkeep-content-sha256'],
   });
   return safeEqual(expected, headers['x-wardkeep-signature'].slice(signaturePrefix.length));
 }

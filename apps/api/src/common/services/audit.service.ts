@@ -10,7 +10,10 @@ export type AuditAction =
   | 'auth.login_failed'
   | 'auth.logout'
   | 'auth.password_reset'
-  | 'auth.account_locked';
+  | 'auth.account_locked'
+  | 'remote_backup.offer_created'
+  | 'remote_backup.offer_revoked'
+  | 'remote_backup.offer_redeemed';
 
 @Injectable()
 export class AuditService {

@@ -60,6 +60,7 @@ model User {
   cashflowEvents        CashflowEvent[]
   remoteBackupPeers     RemoteBackupPeer[]
   remoteBackups         RemoteBackup[]
+  remoteBackupPairingOffers RemoteBackupPairingOffer[]
 }
 
 enum HouseholdTransitionContactRole {
@@ -1087,6 +1088,24 @@ enum RemoteBackupRecoveryClass {
   PORTABLE_MANUAL
 }
 
+/// A single-use pairing offer. Only a SHA-256 hash of the secret is retained;
+/// the plaintext is shown to its creator once and transferred out of band.
+model RemoteBackupPairingOffer {
+  id         String                     @id @default(uuid())
+  userId     String
+  secretHash String                     @unique @db.VarChar(64)
+  direction  RemoteBackupPeerDirection @default(BOTH)
+  peerName   String?                    @db.VarChar(120)
+  expiresAt  DateTime
+  redeemedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime                   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
 /// A future authenticated peer for opaque off-site backup storage. The secret
 /// is encrypted at rest and never appears in household backups or API output.
 model RemoteBackupPeer {
@@ -1105,9 +1124,25 @@ model RemoteBackupPeer {
 
   user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   backups RemoteBackup[]
+  requestNonces RemoteBackupRequestNonce[]
 
   @@unique([userId, peerUrl])
   @@index([userId, status])
+}
+
+/// A short-lived HMAC nonce already accepted from a peer. It prevents an
+/// otherwise valid authenticated request from being replayed within its clock window.
+model RemoteBackupRequestNonce {
+  id        String   @id @default(uuid())
+  peerId    String
+  nonceHash String   @db.VarChar(64)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  peer RemoteBackupPeer @relation(fields: [peerId], references: [id], onDelete: Cascade)
+
+  @@unique([peerId, nonceHash])
+  @@index([expiresAt])
 }
 
 /// Opaque encrypted backup metadata. The peer stores the corresponding blob

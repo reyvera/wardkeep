@@ -713,6 +713,14 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 38.1 Design remote backup protocol and authentication
   - [x] Define the protocol, encryption/recovery classes, HMAC envelope, replay protection, opaque-storage boundary, SSRF controls, endpoint contract, and verification gates in [`docs/remote-backup-protocol.md`](../../../docs/remote-backup-protocol.md).
+  - [x] Add the persistence foundations for one-time hashed pairing offers and expiring, peer-scoped replay nonces; endpoint behavior remains pending.
+  - [x] Implement and test pairing-secret generation, hashing, constant-time verification, expiry, and revoked/redeemed offer checks.
+  - [x] Implement and test a transaction-scoped pairing service that creates hashed offers and consumes a valid offer exactly once while encrypting the resulting peer secret at rest.
+  - [x] Implement and test persistent peer-scoped nonce claims that purge expired entries, retain only nonce hashes, and reject duplicate requests atomically.
+  - [x] Expose authenticated offer creation/revocation and secret-gated offer redemption routes; reject unsafe peer URLs before storing a peer. Blob endpoints remain disabled.
+  - [x] Implement and test receiver-side peer authentication: paired-peer lookup, decrypted secret verification, HMAC body binding, and atomic nonce claim before a future blob handler sees storage.
+  - [x] Implement and test opaque blob storage that writes a 0600 temporary file, verifies exact size and SHA-256 before persistence, atomically renames verified files, and enforces per-peer retention. No transfer route exists yet.
+  - [x] Expose an authenticated `application/octet-stream` upload route that verifies HMAC headers and a nonce before streaming the opaque blob into verified storage. Download and restore remain disabled.
   - Define API endpoints on the receiving server: POST /api/remote-backup/register (pair devices), POST /api/remote-backup/push (receive encrypted backup), GET /api/remote-backup/pull (retrieve backup for restore)
   - Pairing flow: server A generates a one-time pairing token, user enters it on server B to establish trust
   - Store pairing as `RemoteBackupPeer` model: peerId, peerUrl, peerName, sharedSecret (for HMAC verification), status (PAIRED/REVOKED), lastSyncAt

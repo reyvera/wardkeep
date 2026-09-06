@@ -1,6 +1,12 @@
 import { isIP } from 'node:net';
+import { lookup } from 'node:dns/promises';
 
 export type RemotePeerAddressResolver = (hostname: string) => Promise<string[]>;
+
+export async function resolveRemoteBackupPeerAddresses(hostname: string): Promise<string[]> {
+  const results = await lookup(hostname, { all: true, verbatim: true });
+  return results.map((result) => result.address);
+}
 
 /**
  * Validates a peer URL and all DNS answers immediately before a connection.
