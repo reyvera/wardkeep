@@ -9,7 +9,9 @@ export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     return '/api';
   }
-  return process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+  return (
+    process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api'
+  );
 }
 
 const API_BASE = getApiBase();
@@ -75,7 +77,8 @@ class ApiClient {
       if (
         typeof navigator !== 'undefined' &&
         !navigator.onLine &&
-        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+        !path.startsWith('/readiness/scenario')
       ) {
         const body = options?.body ? JSON.parse(options.body as string) : undefined;
         const queued = offlineQueue.add({ method, path, body });

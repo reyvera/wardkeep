@@ -454,10 +454,15 @@ export default function DashboardPage() {
       {/* Header with link to detailed analytics */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-page-title">Dashboard</h1>
-        <Link href="/dashboard/details" className="btn-ghost text-xs">
-          <BarChart3 size={14} />
-          Financial overview
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard/scenarios" className="btn-ghost text-xs">
+            Compare readiness
+          </Link>
+          <Link href="/dashboard/details" className="btn-ghost text-xs">
+            <BarChart3 size={14} />
+            Financial overview
+          </Link>
+        </div>
       </div>
 
       {/* Overall score and explainable trend */}
@@ -1142,8 +1147,8 @@ export default function DashboardPage() {
           <div className="skeleton mt-4 h-16 w-full" />
         ) : comingUp.length === 0 ? (
           <p className="mt-4 text-sm text-content-tertiary">
-            No upcoming recorded bills, future cash-flow events, income dates, planned expenses,
-            or policy renewals in the next 30 days.
+            No upcoming recorded bills, future cash-flow events, income dates, planned expenses, or
+            policy renewals in the next 30 days.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">

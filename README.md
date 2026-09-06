@@ -51,6 +51,7 @@ packages/
 - **Debt payoff calculator** — Snowball, avalanche, custom strategies with what-if mode
 - **Cash-flow forecast** — 90-day projections based on recurring transactions and saved one-time future bills or deposits
 - **Readiness foundations** — Deterministic Protection, Provision, Prosperity, and Peace signals with score history and explicit data coverage
+- **Readiness comparisons** — Temporarily vary or remove an already-evaluated factor to see a deterministic before/after comparison, without saving a scenario or forecasting an outcome
 - **Encrypted backups and recovery** — Manual AES-256-GCM backups with a user passphrase, plus optional scheduled deployment-local backups and in-app restore controls
 - **Progressive Web App** — Offline support, installable on any device
 - **Docker Compose** — Single-command self-hosted deployment with pre-built images
@@ -379,10 +380,10 @@ For a containerized one-time baseline, set `WARDKEEP_BASELINE_EXISTING_DATABASE=
 | CI/CD pipeline                                                                                                                | ✅     |
 | Readiness Engine (household decision engine)                                                                                  | 🟡     |
 | Composite Protection (insurance records and renewal awareness shipped; adequacy, income resilience, estate, obligations next) | 🟡     |
-| Household transition and trusted-access workspace (survivor checklists and recorded-information organization)                 | 📋     |
-| Capability SDK (extensible domain modules)                                                                                    | 📋     |
-| Coming Up timeline, change feed, and Morning Brief / Advisor                                                                  | 📋     |
-| Readiness scenarios and recommendation impact previews                                                                        | 📋     |
+| Household transition and trusted-access workspace (survivor walkthrough, owner-approved handoff, and Wardkeep-only lead)      | 🟡     |
+| Capability SDK (registered first-party capability foundation; third-party installation remains planned)                       | 🟡     |
+| Coming Up timeline, change feed, and Morning Brief / Advisor                                                                  | 🟡     |
+| Readiness scenarios and recommendation impact previews                                                                        | 🟡     |
 | Multi-currency support                                                                                                        | 📋     |
 
 Full task breakdown: [`.kiro/specs/ai-personal-finance-app/tasks.md`](.kiro/specs/ai-personal-finance-app/tasks.md)

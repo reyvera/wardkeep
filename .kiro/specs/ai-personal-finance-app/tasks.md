@@ -785,17 +785,17 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 39. What-If Engine
 
-- [ ] 39.1 Implement scenario readiness computation
-  - Accept hypothetical signal changes (lose job, buy house, pay off debt)
-  - Recompute all pillar scores with modified signals
-  - Show projected readiness trajectory over time
-  - API endpoint: POST /api/readiness/scenario
+- [~] 39.1 Implement scenario readiness computation
+  - [x] `POST /api/readiness/scenario` accepts temporary removal or replacement of an already-evaluated capability factor, recomputes the direct pillars and derived Peace, and returns current and comparison assessments with explicit limitations.
+  - [x] Keep comparisons in memory only: no household record, recommendation, readiness-history snapshot, or offline action is created.
+  - [ ] Add structured builders for bounded record changes such as cash reserves, recurring obligations, and debt minimums; every builder must disclose its source records and assumptions.
+  - [ ] Do not model job loss, property purchase, market movement, insurance outcomes, or score trajectories until Wardkeep can express the exact recorded inputs and limitations without forecasting.
 
-- [ ] 39.2 Implement scenario UI
-  - "What if" panel with common scenarios as presets
-  - Custom scenario builder (adjust income, add expense, remove account)
-  - Side-by-side: current readiness vs projected
-  - Advisor explains implications of each scenario
+- [~] 39.2 Implement scenario UI
+  - [x] Dashboard **Compare readiness** page selects an already-evaluated factor, sets its hypothetical effect or removes it, and shows current and comparison assessments side by side.
+  - [x] State that a comparison is not saved, predicted, recommended, or treated as an observed household change.
+  - [ ] Add only evidence-bound scenario presets after their underlying structured builders exist.
+  - [ ] Advisor interpretation remains optional supporting explanation, never a scenario authority or product differentiator.
 
 ---
 

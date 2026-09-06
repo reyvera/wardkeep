@@ -61,6 +61,7 @@ Wardkeep is open source. The technical material is here when you need it—not r
 [Quick start]({{ site.baseurl }}/quick-start){: .btn .btn-outline }
 [Release roadmap]({{ site.baseurl }}/roadmap){: .btn .btn-outline }
 [All screenshots]({{ site.baseurl }}/screenshots){: .btn .btn-outline }
+[Readiness comparisons]({{ site.baseurl }}/readiness-scenarios){: .btn .btn-outline }
 [Readiness model](https://github.com/reyvera/wardkeep/blob/main/docs/readiness-engine.md){: .btn .btn-outline }
 [Product differentiation](https://github.com/reyvera/wardkeep/blob/main/docs/product-differentiation.md){: .btn .btn-outline }
 [Source on GitHub](https://github.com/reyvera/wardkeep){: .btn .btn-outline }

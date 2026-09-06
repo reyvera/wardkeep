@@ -1,19 +1,50 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  Post,
   Query,
   Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { z } from 'zod';
 
 import { READINESS_MODEL_VERSION } from '@wardkeep/readiness';
 
 import { AuthGuard } from '../common/guards/auth.guard';
 import { UserScopeInterceptor, ScopedRequest } from '../common/interceptors/user-scope.interceptor';
 import { ReadinessService } from './readiness.service';
+import { ScenarioChange } from './readiness-scenario';
 import { RecommendationsService } from '../recommendations/recommendations.service';
+
+const scenarioSignalSchema = z.object({
+  capabilityId: z.string().trim().min(1).max(80),
+  pillar: z.enum(['protection', 'provision', 'prosperity']),
+  type: z.enum(['risk', 'opportunity', 'milestone', 'warning', 'positive']),
+  magnitude: z.number().finite().min(-10).max(10),
+  summary: z.string().trim().min(1).max(500),
+  weight: z.number().finite().positive().max(10).optional(),
+});
+const scenarioSchema = z.object({
+  changes: z
+    .array(
+      z.discriminatedUnion('operation', [
+        z.object({
+          operation: z.literal('remove'),
+          capabilityId: z.string().trim().min(1).max(80),
+        }),
+        z.object({
+          operation: z.literal('replace'),
+          capabilityId: z.string().trim().min(1).max(80),
+          signal: scenarioSignalSchema,
+        }),
+      ]),
+    )
+    .min(1)
+    .max(10),
+});
 
 @Controller('readiness')
 @UseGuards(AuthGuard)
@@ -61,6 +92,14 @@ export class ReadinessController {
     }
 
     return readiness;
+  }
+
+  /** Returns a read-only deterministic readiness comparison; it never writes household data. */
+  @Post('scenario')
+  getScenario(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = scenarioSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.readinessService.getScenario(req.userId!, parsed.data.changes as ScenarioChange[]);
   }
 
   /**

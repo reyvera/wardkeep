@@ -29,6 +29,7 @@ import {
 import { calculateRecordedNetWorth } from './generators/prosperity.generator';
 import { deriveDurableReadinessChanges } from './readiness-change';
 import { buildPillarTrends, PillarTrend } from './readiness-trends';
+import { evaluateReadinessScenario, ScenarioChange } from './readiness-scenario';
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
@@ -123,6 +124,11 @@ export class ReadinessService {
       where: { id: userId },
       select: { lastDashboardViewedAt: true },
     });
+  }
+
+  /** Computes an explicit, non-persistent what-if comparison from current evidence. */
+  async getScenario(userId: string, changes: ScenarioChange[]) {
+    return evaluateReadinessScenario(await this.getReadiness(userId), changes);
   }
 
   async recordDashboardView(userId: string): Promise<void> {
