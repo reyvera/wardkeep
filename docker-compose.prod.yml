@@ -38,6 +38,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wardkeep}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       - AI_PRIVACY_MODE=${AI_PRIVACY_MODE:-LOCAL}
       - OLLAMA_URL=http://ollama:11434
       - SESSION_TIMEOUT=${SESSION_TIMEOUT:-30}

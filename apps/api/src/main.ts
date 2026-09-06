@@ -9,6 +9,7 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+import { createCorsOptions } from './common/config/cors';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 /**
@@ -18,7 +19,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());
-  app.enableCors();
+  app.enableCors(createCorsOptions());
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new HttpExceptionFilter());
 

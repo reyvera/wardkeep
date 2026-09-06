@@ -94,6 +94,7 @@ cd wardkeep && git pull && docker compose up -d --build
 | `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                               |
 | `REDIS_HOST`        | redis               | Redis hostname                                                                             |
 | `REDIS_PORT`        | 6379                | Redis port                                                                                 |
+| `CORS_ORIGINS`      | local port 3000     | Comma-separated browser origins allowed to call the API; set this for a hosted domain.     |
 | `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.     |
 | `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                               |
 | `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                      |

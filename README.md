@@ -281,21 +281,22 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 
 ## Environment Variables
 
-| Variable            | Default                                                | Description                                                                                                                             |
-| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENCRYPTION_KEY`    | _(required)_                                           | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. App refuses to start with placeholder value. |
-| `POSTGRES_PASSWORD` | postgres                                               | PostgreSQL password. Set a unique value in production.                                                                                  |
-| `DATABASE_URL`      | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker)                                                                               |
-| `REDIS_HOST`        | localhost (redis in Docker)                            | Redis hostname                                                                                                                          |
-| `REDIS_PORT`        | 6379                                                   | Redis port                                                                                                                              |
-| `AI_PRIVACY_MODE`   | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL in Docker requires the optional `ai` profile.                                               |
-| `OLLAMA_URL`        | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
-| `WARDKEEP_BACKUP_DIR` | /data/backups                                         | Durable directory for AES-256-GCM encrypted household backups. Docker Compose mounts the persistent `backups` volume here.           |
-| `SESSION_TIMEOUT`   | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
-| `PORT`              | 4000                                                   | API server port                                                                                                                         |
-| `WEB_PORT`          | 3000                                                   | Host port for web UI (prod compose)                                                                                                     |
-| `API_PORT`          | 4000                                                   | Host port for API (prod compose)                                                                                                        |
-| `DEMO_MODE`         | false                                                  | Set to `true` to bypass ENCRYPTION_KEY safety check                                                                                     |
+| Variable              | Default                                                | Description                                                                                                                             |
+| --------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENCRYPTION_KEY`      | _(required)_                                           | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. App refuses to start with placeholder value. |
+| `POSTGRES_PASSWORD`   | postgres                                               | PostgreSQL password. Set a unique value in production.                                                                                  |
+| `DATABASE_URL`        | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker)                                                                               |
+| `REDIS_HOST`          | localhost (redis in Docker)                            | Redis hostname                                                                                                                          |
+| `REDIS_PORT`          | 6379                                                   | Redis port                                                                                                                              |
+| `CORS_ORIGINS`        | localhost and 127.0.0.1 port 3000                      | Comma-separated browser origins allowed to call the API; set this for a hosted domain.                                                  |
+| `AI_PRIVACY_MODE`     | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL in Docker requires the optional `ai` profile.                                                |
+| `OLLAMA_URL`          | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
+| `WARDKEEP_BACKUP_DIR` | /data/backups                                          | Durable directory for AES-256-GCM encrypted household backups. Docker Compose mounts the persistent `backups` volume here.              |
+| `SESSION_TIMEOUT`     | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
+| `PORT`                | 4000                                                   | API server port                                                                                                                         |
+| `WEB_PORT`            | 3000                                                   | Host port for web UI (prod compose)                                                                                                     |
+| `API_PORT`            | 4000                                                   | Host port for API (prod compose)                                                                                                        |
+| `DEMO_MODE`           | false                                                  | Set to `true` to bypass ENCRYPTION_KEY safety check                                                                                     |
 
 ### Minimum Hardware Requirements
 
