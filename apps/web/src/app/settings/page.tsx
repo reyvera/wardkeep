@@ -55,6 +55,13 @@ interface RemoteBackupPeer {
   lastError?: string | null;
 }
 
+interface RemoteBackupOffer {
+  offerId: string;
+  secret: string;
+  direction: 'PUSH' | 'PULL' | 'BOTH';
+  expiresAt: string;
+}
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const { logout } = useAuth();
@@ -133,6 +140,16 @@ export default function SettingsPage() {
   const [backupPassphraseConfirmation, setBackupPassphraseConfirmation] = useState('');
   const [restoreTarget, setRestoreTarget] = useState<BackupRecord | null>(null);
   const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [pairingOffer, setPairingOffer] = useState<RemoteBackupOffer | null>(null);
+  const [offerPeerName, setOfferPeerName] = useState('Wardkeep off-site destination');
+  const [connectForm, setConnectForm] = useState({
+    offerId: '',
+    secret: '',
+    peerUrl: '',
+    peerName: '',
+    localPeerName: 'Wardkeep',
+    direction: 'BOTH' as const,
+  });
 
   const settingsQuery = useQuery({
     queryKey: ['settings'],
@@ -194,6 +211,32 @@ export default function SettingsPage() {
     mutationFn: ({ peerId, backupId }: { peerId: string; backupId: string }) =>
       apiClient.post(`/remote-backup/peers/${peerId}/backups/${backupId}/push`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['remote-backup-peers'] }),
+  });
+  const revokePeerMutation = useMutation({
+    mutationFn: (peerId: string) => apiClient.post(`/remote-backup/peers/${peerId}/revoke`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['remote-backup-peers'] }),
+  });
+  const createPairingOfferMutation = useMutation({
+    mutationFn: () =>
+      apiClient.post<RemoteBackupOffer>('/remote-backup/pair/offers', {
+        peerName: offerPeerName,
+        direction: 'BOTH',
+      }),
+    onSuccess: setPairingOffer,
+  });
+  const connectPeerMutation = useMutation({
+    mutationFn: () => apiClient.post('/remote-backup/pair/connect', connectForm),
+    onSuccess: () => {
+      setConnectForm({
+        offerId: '',
+        secret: '',
+        peerUrl: '',
+        peerName: '',
+        localPeerName: 'Wardkeep',
+        direction: 'BOTH',
+      });
+      queryClient.invalidateQueries({ queryKey: ['remote-backup-peers'] });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -556,6 +599,174 @@ export default function SettingsPage() {
           {remotePeersQuery.data?.length === 0 && (
             <p className="text-xs text-content-secondary">No paired off-site destination yet.</p>
           )}
+
+          <details className="border-t border-edge pt-3">
+            <summary className="cursor-pointer text-xs font-medium text-content-primary">
+              Pair another Wardkeep deployment
+            </summary>
+            <div className="mt-3 space-y-4">
+              <form
+                className="space-y-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  createPairingOfferMutation.mutate();
+                }}
+              >
+                <p className="text-xs text-content-secondary">
+                  Create a short-lived offer if this deployment will receive encrypted copies.
+                </p>
+                <label htmlFor="pairing-offer-name" className="input-label">
+                  Destination name
+                </label>
+                <input
+                  id="pairing-offer-name"
+                  value={offerPeerName}
+                  onChange={(event) => setOfferPeerName(event.target.value)}
+                  required
+                  maxLength={120}
+                  placeholder="Destination name"
+                  className="input"
+                />
+                <button
+                  type="submit"
+                  className="btn-secondary text-xs"
+                  disabled={createPairingOfferMutation.isPending}
+                >
+                  {createPairingOfferMutation.isPending
+                    ? 'Creating offer…'
+                    : 'Create pairing offer'}
+                </button>
+                {createPairingOfferMutation.isError && (
+                  <p className="text-xs text-accent-red">
+                    The pairing offer could not be created. Try again.
+                  </p>
+                )}
+              </form>
+
+              {pairingOffer && (
+                <div className="space-y-2 rounded-lg border border-accent-yellow/30 bg-accent-yellow/5 p-3">
+                  <p className="text-xs text-content-primary">
+                    Share these values only with the Wardkeep deployment you want to pair. They
+                    expire {new Date(pairingOffer.expiresAt).toLocaleString()}.
+                  </p>
+                  <label htmlFor="pairing-offer-id" className="input-label">
+                    Offer ID
+                  </label>
+                  <input
+                    id="pairing-offer-id"
+                    readOnly
+                    value={pairingOffer.offerId}
+                    className="input text-xs"
+                  />
+                  <label htmlFor="pairing-offer-secret" className="input-label">
+                    Pairing secret
+                  </label>
+                  <input
+                    id="pairing-offer-secret"
+                    readOnly
+                    value={pairingOffer.secret}
+                    className="input text-xs"
+                  />
+                </div>
+              )}
+
+              <form
+                className="space-y-2 border-t border-edge pt-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  connectPeerMutation.mutate();
+                }}
+              >
+                <p className="text-xs text-content-secondary">
+                  Connect to an offer created by the deployment that will store your encrypted
+                  copies.
+                </p>
+                <label htmlFor="pairing-destination-name" className="input-label">
+                  Destination name
+                </label>
+                <input
+                  id="pairing-destination-name"
+                  value={connectForm.peerName}
+                  onChange={(event) =>
+                    setConnectForm((current) => ({ ...current, peerName: event.target.value }))
+                  }
+                  required
+                  maxLength={120}
+                  placeholder="Destination name"
+                  className="input"
+                />
+                <label htmlFor="pairing-local-name" className="input-label">
+                  This deployment name
+                </label>
+                <input
+                  id="pairing-local-name"
+                  value={connectForm.localPeerName}
+                  onChange={(event) =>
+                    setConnectForm((current) => ({
+                      ...current,
+                      localPeerName: event.target.value,
+                    }))
+                  }
+                  required
+                  maxLength={120}
+                  placeholder="This deployment name"
+                  className="input"
+                />
+                <label htmlFor="pairing-destination-url" className="input-label">
+                  Destination URL
+                </label>
+                <input
+                  id="pairing-destination-url"
+                  type="url"
+                  value={connectForm.peerUrl}
+                  onChange={(event) =>
+                    setConnectForm((current) => ({ ...current, peerUrl: event.target.value }))
+                  }
+                  required
+                  placeholder="https://destination.example"
+                  className="input"
+                />
+                <label htmlFor="pairing-connect-offer-id" className="input-label">
+                  Offer ID
+                </label>
+                <input
+                  id="pairing-connect-offer-id"
+                  value={connectForm.offerId}
+                  onChange={(event) =>
+                    setConnectForm((current) => ({ ...current, offerId: event.target.value }))
+                  }
+                  required
+                  placeholder="Offer ID"
+                  className="input"
+                />
+                <label htmlFor="pairing-connect-secret" className="input-label">
+                  Pairing secret
+                </label>
+                <input
+                  id="pairing-connect-secret"
+                  value={connectForm.secret}
+                  onChange={(event) =>
+                    setConnectForm((current) => ({ ...current, secret: event.target.value }))
+                  }
+                  required
+                  placeholder="Pairing secret"
+                  className="input"
+                />
+                <button
+                  type="submit"
+                  className="btn-secondary text-xs"
+                  disabled={connectPeerMutation.isPending}
+                >
+                  {connectPeerMutation.isPending ? 'Pairing…' : 'Pair destination'}
+                </button>
+                {connectPeerMutation.isError && (
+                  <p className="text-xs text-accent-red">
+                    The destination could not be paired. Check the URL and offer, then try again.
+                  </p>
+                )}
+              </form>
+            </div>
+          </details>
           {remotePeersQuery.data?.map((peer) => (
             <div
               key={peer.id}
@@ -572,31 +783,52 @@ export default function SettingsPage() {
                 </p>
                 {peer.lastError && <p className="mt-1 text-xs text-accent-red">{peer.lastError}</p>}
               </div>
-              {peer.status === 'PAIRED' && peer.direction !== 'PULL' && backupsQuery.data?.[0] && (
-                <button
-                  type="button"
-                  className="btn-secondary shrink-0 text-xs"
-                  disabled={pushBackupMutation.isPending}
-                  onClick={() => {
-                    const backup = backupsQuery.data![0];
-                    const label = backup.isAutomated
-                      ? 'This automatic backup can only be restored by this same deployment.'
-                      : 'You will still need the manual backup passphrase to restore it.';
-                    if (
-                      window.confirm(
-                        `Send the latest encrypted backup to ${peer.peerName}? ${label}`,
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                {peer.status === 'PAIRED' &&
+                  peer.direction !== 'PULL' &&
+                  backupsQuery.data?.[0] && (
+                    <button
+                      type="button"
+                      className="btn-secondary text-xs"
+                      disabled={pushBackupMutation.isPending}
+                      onClick={() => {
+                        const backup = backupsQuery.data![0];
+                        const label = backup.isAutomated
+                          ? 'This automatic backup can only be restored by this same deployment.'
+                          : 'You will still need the manual backup passphrase to restore it.';
+                        if (
+                          window.confirm(
+                            `Send the latest encrypted backup to ${peer.peerName}? ${label}`,
+                          )
+                        )
+                          pushBackupMutation.mutate({ peerId: peer.id, backupId: backup.id });
+                      }}
+                    >
+                      <DatabaseBackup size={14} />{' '}
+                      {pushBackupMutation.isPending ? 'Sending…' : 'Send latest'}
+                    </button>
+                  )}
+                {peer.status === 'PAIRED' && peer.direction === 'PULL' && (
+                  <span className="text-xs text-content-tertiary">Receive only</span>
+                )}
+                {peer.status !== 'REVOKED' && (
+                  <button
+                    type="button"
+                    className="btn-secondary text-xs text-accent-red"
+                    disabled={revokePeerMutation.isPending}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Stop using ${peer.peerName} as an off-site destination? Existing encrypted copies will remain there.`,
+                        )
                       )
-                    )
-                      pushBackupMutation.mutate({ peerId: peer.id, backupId: backup.id });
-                  }}
-                >
-                  <DatabaseBackup size={14} />{' '}
-                  {pushBackupMutation.isPending ? 'Sending…' : 'Send latest'}
-                </button>
-              )}
-              {peer.status === 'PAIRED' && peer.direction === 'PULL' && (
-                <span className="shrink-0 text-xs text-content-tertiary">Receive only</span>
-              )}
+                        revokePeerMutation.mutate(peer.id);
+                    }}
+                  >
+                    {revokePeerMutation.isPending ? 'Stopping…' : 'Stop using'}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {pushBackupMutation.isError && (
@@ -607,6 +839,11 @@ export default function SettingsPage() {
           {pushBackupMutation.isSuccess && (
             <p className="text-xs text-accent-green">
               Encrypted copy sent to the paired destination.
+            </p>
+          )}
+          {revokePeerMutation.isError && (
+            <p className="text-xs text-accent-red">
+              The off-site destination could not be stopped. No copies were removed.
             </p>
           )}
         </div>
