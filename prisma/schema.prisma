@@ -58,6 +58,8 @@ model User {
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
   cashflowEvents        CashflowEvent[]
+  remoteBackupPeers     RemoteBackupPeer[]
+  remoteBackups         RemoteBackup[]
 }
 
 enum HouseholdTransitionContactRole {
@@ -1066,6 +1068,68 @@ model Backup {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
+}
+
+enum RemoteBackupPeerDirection {
+  PUSH
+  PULL
+  BOTH
+}
+
+enum RemoteBackupPeerStatus {
+  PENDING
+  PAIRED
+  REVOKED
+}
+
+enum RemoteBackupRecoveryClass {
+  SOURCE_TIED_AUTOMATED
+  PORTABLE_MANUAL
+}
+
+/// A future authenticated peer for opaque off-site backup storage. The secret
+/// is encrypted at rest and never appears in household backups or API output.
+model RemoteBackupPeer {
+  id             String                     @id @default(uuid())
+  userId         String
+  remotePeerId   String?                    @unique @db.VarChar(100)
+  peerUrl        String                     @db.VarChar(2048)
+  peerName       String                     @db.VarChar(120)
+  sharedSecret   String?                    @db.Text
+  direction      RemoteBackupPeerDirection  @default(BOTH)
+  status         RemoteBackupPeerStatus     @default(PENDING)
+  lastSyncAt     DateTime?
+  lastError      String?                    @db.VarChar(1000)
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  backups RemoteBackup[]
+
+  @@unique([userId, peerUrl])
+  @@index([userId, status])
+}
+
+/// Opaque encrypted backup metadata. The peer stores the corresponding blob
+/// without decrypting it or inspecting household records.
+model RemoteBackup {
+  id            String                    @id @default(uuid())
+  userId        String
+  peerId        String
+  sourceBackupId String                   @db.VarChar(100)
+  recoveryClass RemoteBackupRecoveryClass
+  filename      String                    @db.VarChar(255)
+  size          BigInt
+  checksum      String                    @db.VarChar(64)
+  createdAt     DateTime                  @default(now())
+  receivedAt    DateTime                  @default(now())
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  peer RemoteBackupPeer @relation(fields: [peerId], references: [id], onDelete: Cascade)
+
+  @@unique([peerId, sourceBackupId])
+  @@index([userId, createdAt])
+  @@index([peerId, createdAt])
 }
 
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────

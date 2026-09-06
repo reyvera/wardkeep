@@ -33,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This p
 ### Added
 
 - **Readiness comparisons** — Dashboard users can temporarily vary or remove one already-evaluated readiness factor and compare the resulting direct pillars and derived Peace. Comparisons name their evidence and limitations, are never saved, and do not forecast life, market, property, insurance, or institutional outcomes.
+- **Broader household recovery** — Encrypted household backups now preserve Protection records, obligations, investments and recorded quotes, capability preferences, durable recommendations, and readiness history alongside the existing financial and preparedness records. Credentials, sessions, and shared-access grants remain deployment-local by design.
 - **Durable backup recovery** — Manual passphrase-protected backups and scheduled deployment-local backups are listed and restored from Settings; restoring requires an explicit destructive confirmation.
 - **Saved future cash-flow events** — Record, correct, resolve, or restore a one-time future bill or deposit for an account. Active events feed that account's 90-day forecast, household Timeline, and deterministic Provision readiness signal; resolved events remain in the household record without affecting future projections.
 - **Transaction workflow** — Transactions now have a visible review inbox with individual or selected bulk review, a navigation count, optional tags, and tag filtering.

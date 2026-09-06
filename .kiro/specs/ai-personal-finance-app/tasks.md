@@ -711,7 +711,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 38. Remote Wardkeep Backup (Peer-to-Peer Off-Site)
 
-- [ ] 38.1 Design remote backup protocol and authentication
+- [~] 38.1 Design remote backup protocol and authentication
+  - [x] Define the protocol, encryption/recovery classes, HMAC envelope, replay protection, opaque-storage boundary, SSRF controls, endpoint contract, and verification gates in [`docs/remote-backup-protocol.md`](../../../docs/remote-backup-protocol.md).
   - Define API endpoints on the receiving server: POST /api/remote-backup/register (pair devices), POST /api/remote-backup/push (receive encrypted backup), GET /api/remote-backup/pull (retrieve backup for restore)
   - Pairing flow: server A generates a one-time pairing token, user enters it on server B to establish trust
   - Store pairing as `RemoteBackupPeer` model: peerId, peerUrl, peerName, sharedSecret (for HMAC verification), status (PAIRED/REVOKED), lastSyncAt
@@ -719,13 +720,15 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - HMAC signature on every request using shared secret (prevents unauthorized pushes)
   - TLS required for transport (reject plain HTTP peer URLs)
 
-- [ ] 38.2 Implement RemoteBackupPeer Prisma model and migrations
+- [x] 38.2 Implement RemoteBackupPeer Prisma model and migrations
   - Add `RemoteBackupPeer` model: id, userId, peerUrl, peerName, sharedSecret (encrypted at rest), direction (PUSH/PULL/BOTH), status, lastSyncAt, lastError, createdAt, updatedAt
   - Add `RemoteBackup` model: id, peerId, userId, filename, size, checksum (SHA-256), createdAt
   - Relation: User hasMany RemoteBackupPeer, RemoteBackupPeer hasMany RemoteBackup
   - Migration adds indexes on [userId, status] and [peerId, createdAt]
 
 - [ ] 38.3 Implement remote backup sender service (push side)
+  - [x] Implement the versioned HMAC request payload, SHA-256 body binding, canonical timestamp check, nonce requirement, constant-time verification, and focused tampering tests. Replay persistence and network delivery remain pending.
+  - [x] Implement and test DNS-aware peer URL validation that rejects non-HTTPS, credential-bearing, localhost, private, link-local, carrier-grade, and multicast destinations. Callers must validate again before every outbound connection.
   - `RemoteBackupService.pushBackup(userId, peerId)`: creates encrypted backup (reuse existing createBackup logic), POSTs to peer's /api/remote-backup/push endpoint
   - Retry with exponential backoff (3 attempts, 5s/30s/120s delays)
   - Verify peer responds with matching checksum (SHA-256 of received blob)

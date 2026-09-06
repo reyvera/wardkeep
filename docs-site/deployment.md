@@ -102,20 +102,20 @@ cd wardkeep && git pull && docker compose up -d --build
 
 ## Environment variables
 
-| Variable            | Default             | Description                                                                                |
-| :------------------ | :------------------ | :----------------------------------------------------------------------------------------- |
-| `ENCRYPTION_KEY`    | _(required)_        | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`. |
-| `POSTGRES_PASSWORD` | postgres            | PostgreSQL password. Set a unique value in production.                                     |
-| `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                               |
-| `REDIS_HOST`        | redis               | Redis hostname                                                                             |
-| `REDIS_PORT`        | 6379                | Redis port                                                                                 |
+| Variable            | Default             | Description                                                                                 |
+| :------------------ | :------------------ | :------------------------------------------------------------------------------------------ |
+| `ENCRYPTION_KEY`    | _(required)_        | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`.  |
+| `POSTGRES_PASSWORD` | postgres            | PostgreSQL password. Set a unique value in production.                                      |
+| `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                                |
+| `REDIS_HOST`        | redis               | Redis hostname                                                                              |
+| `REDIS_PORT`        | 6379                | Redis port                                                                                  |
 | `CORS_ORIGINS`      | local port 3000     | Comma-separated browser origins allowed to call the API; set this to the public web domain. |
-| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.     |
-| `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                               |
-| `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                      |
-| `PORT`              | 4000                | API server port                                                                            |
-| `WEB_PORT`          | 3000                | Host port for web UI                                                                       |
-| `DEMO_MODE`         | false               | Set to `true` to bypass ENCRYPTION_KEY safety check                                        |
+| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.      |
+| `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                                |
+| `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                       |
+| `PORT`              | 4000                | API server port                                                                             |
+| `WEB_PORT`          | 3000                | Host port for web UI                                                                        |
+| `DEMO_MODE`         | false               | Set to `true` to bypass ENCRYPTION_KEY safety check                                         |
 
 {: .warning }
 The app refuses to start if `ENCRYPTION_KEY` is left as the placeholder value `change-me-in-production` (unless `DEMO_MODE=true`).
@@ -188,7 +188,9 @@ Three container images built from the repo:
 
 ## Household backup and recovery
 
-Wardkeep keeps encrypted household backups in the durable `backups` Compose volume, mounted to `/data/backups` in the API container. In **Settings**, a household can create a manual backup protected by its own passphrase and restore it from the available-backups list. Restoring permanently replaces that household's current Wardkeep records, so review the selected backup and confirmation carefully.
+Wardkeep keeps encrypted household backups in the durable `backups` Compose volume, mounted to `/data/backups` in the API container. In **Settings**, a household can create a manual backup protected by its own passphrase and restore it from the available-backups list. Restoring permanently replaces that household's current Wardkeep records, so review the selected backup and confirmation carefully. Backups include recorded household financial, protection, provision, preparedness, vehicle, home, investment, readiness-history, recommendation, and capability-preference records.
+
+Authentication sessions, connected-bank credentials, AI-provider credentials, and shared-access grants are deliberately deployment-local. They are not restored from a household backup: sign in again, reconnect providers, and re-establish trusted access after recovery when needed.
 
 Optional daily, weekly, or monthly scheduled backups are encrypted with a per-household key protected by the deployment's required `ENCRYPTION_KEY`. They remain recoverable through the same Settings workflow while that deployment and encryption key are retained. Keep a separate database-level backup before infrastructure upgrades or a Postgres major-version migration.
 

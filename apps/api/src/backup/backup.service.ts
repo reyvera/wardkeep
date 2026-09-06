@@ -19,8 +19,13 @@ export class BackupService {
 
   /** Creates a scheduled backup using a random per-user key protected by the deployment key. */
   async createScheduledBackup(userId: string) {
-    const settings = await this.prisma.userSettings.findUnique({ where: { userId }, select: { scheduledBackupKey: true } });
-    let key = settings?.scheduledBackupKey ? this.encryption.decrypt(settings.scheduledBackupKey) : null;
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+      select: { scheduledBackupKey: true },
+    });
+    let key = settings?.scheduledBackupKey
+      ? this.encryption.decrypt(settings.scheduledBackupKey)
+      : null;
     if (!key) {
       key = randomBytes(32).toString('base64');
       await this.prisma.userSettings.upsert({
@@ -30,12 +35,18 @@ export class BackupService {
       });
     }
     const backup = await this.createBackup(userId, key, { isAutomated: true });
-    await this.prisma.userSettings.update({ where: { userId }, data: { scheduledBackupLastRunAt: new Date() } });
+    await this.prisma.userSettings.update({
+      where: { userId },
+      data: { scheduledBackupLastRunAt: new Date() },
+    });
     return backup;
   }
 
   async runDueScheduledBackups(now = new Date()) {
-    const settings = await this.prisma.userSettings.findMany({ where: { backupSchedule: { not: null } }, select: { userId: true, backupSchedule: true, scheduledBackupLastRunAt: true } });
+    const settings = await this.prisma.userSettings.findMany({
+      where: { backupSchedule: { not: null } },
+      select: { userId: true, backupSchedule: true, scheduledBackupLastRunAt: true },
+    });
     let created = 0;
     for (const setting of settings) {
       if (this.isScheduleDue(setting.backupSchedule, setting.scheduledBackupLastRunAt, now)) {
@@ -48,18 +59,15 @@ export class BackupService {
 
   /**
    * Creates an encrypted backup of all user data.
-   * Exports accounts, transactions, tags, categories, budgets, allocations,
-   * rules, conditions, actions, recurring transactions, and settings.
+   * Exports household records, readiness history, and user settings. Authentication
+   * sessions, provider credentials, and shared-access grants intentionally remain
+   * deployment-local and are not restored by this per-user recovery workflow.
    * Enforces retention limit by deleting oldest backups when exceeded.
    * @param userId - The authenticated user's ID
    * @param passphrase - User-provided passphrase for AES-256-GCM encryption
    * @returns The created backup metadata
    */
-  async createBackup(
-    userId: string,
-    passphrase: string,
-    options: { isAutomated?: boolean } = {},
-  ) {
+  async createBackup(userId: string, passphrase: string, options: { isAutomated?: boolean } = {}) {
     const [
       accounts,
       transactions,
@@ -78,7 +86,28 @@ export class BackupService {
       homeMaintenanceTasks,
       emergencyPreparednessItems,
       householdTransitionPlans,
+      householdTransitionContacts,
       cashflowEvents,
+      investmentHoldings,
+      investmentQuoteSnapshots,
+      realEstateProfiles,
+      debtProfiles,
+      insurancePolicies,
+      estateDocuments,
+      incomeSources,
+      dependents,
+      householdObligations,
+      plannedExpenses,
+      capabilitySettings,
+      recommendations,
+      advisorInsights,
+      savedPayoffPlans,
+      aiCorrections,
+      handoffSummaries,
+      readinessSnapshots,
+      readinessObservations,
+      readinessSignals,
+      readinessScoreChanges,
       settings,
     ] = await Promise.all([
       this.prisma.account.findMany({ where: { userId } }),
@@ -102,7 +131,30 @@ export class BackupService {
       this.prisma.homeMaintenanceTask.findMany({ where: { userId } }),
       this.prisma.emergencyPreparednessItem.findMany({ where: { userId } }),
       this.prisma.householdTransitionPlan.findMany({ where: { userId } }),
+      this.prisma.householdTransitionContact.findMany({ where: { userId } }),
       this.prisma.cashflowEvent.findMany({ where: { userId } }),
+      this.prisma.investmentHolding.findMany({ where: { account: { userId } } }),
+      this.prisma.investmentQuoteSnapshot.findMany({
+        where: { holding: { account: { userId } } },
+      }),
+      this.prisma.realEstateProfile.findMany({ where: { account: { userId } } }),
+      this.prisma.debtProfile.findMany({ where: { userId } }),
+      this.prisma.insurancePolicy.findMany({ where: { userId } }),
+      this.prisma.estateDocument.findMany({ where: { userId } }),
+      this.prisma.incomeSource.findMany({ where: { userId } }),
+      this.prisma.dependent.findMany({ where: { userId } }),
+      this.prisma.householdObligation.findMany({ where: { userId } }),
+      this.prisma.plannedExpense.findMany({ where: { userId } }),
+      this.prisma.capabilitySetting.findMany({ where: { userId } }),
+      this.prisma.recommendation.findMany({ where: { userId } }),
+      this.prisma.advisorInsight.findMany({ where: { userId } }),
+      this.prisma.savedPayoffPlan.findMany({ where: { userId } }),
+      this.prisma.aICorrection.findMany({ where: { userId } }),
+      this.prisma.handoffSummary.findMany({ where: { userId } }),
+      this.prisma.readinessSnapshot.findMany({ where: { userId } }),
+      this.prisma.readinessObservation.findMany({ where: { userId } }),
+      this.prisma.readinessSignal.findMany({ where: { userId } }),
+      this.prisma.readinessScoreChange.findMany({ where: { snapshot: { userId } } }),
       this.prisma.userSettings.findUnique({ where: { userId } }),
     ]);
 
@@ -124,7 +176,28 @@ export class BackupService {
       homeMaintenanceTasks,
       emergencyPreparednessItems,
       householdTransitionPlans,
+      householdTransitionContacts,
       cashflowEvents,
+      investmentHoldings,
+      investmentQuoteSnapshots,
+      realEstateProfiles,
+      debtProfiles,
+      insurancePolicies,
+      estateDocuments,
+      incomeSources,
+      dependents,
+      householdObligations,
+      plannedExpenses,
+      capabilitySettings,
+      recommendations,
+      advisorInsights,
+      savedPayoffPlans,
+      aiCorrections,
+      handoffSummaries,
+      readinessSnapshots,
+      readinessObservations,
+      readinessSignals,
+      readinessScoreChanges,
       settings,
     });
 
@@ -213,6 +286,10 @@ export class BackupService {
       await tx.transactionTag.deleteMany({ where: { transaction: { userId } } });
       await tx.transaction.deleteMany({ where: { userId } });
       await tx.cashflowEvent.deleteMany({ where: { userId } });
+      await tx.investmentQuoteSnapshot.deleteMany({ where: { holding: { account: { userId } } } });
+      await tx.investmentHolding.deleteMany({ where: { account: { userId } } });
+      await tx.realEstateProfile.deleteMany({ where: { account: { userId } } });
+      await tx.debtProfile.deleteMany({ where: { userId } });
       await tx.budgetAllocation.deleteMany({ where: { budget: { userId } } });
       await tx.budget.deleteMany({ where: { userId } });
       await tx.ruleCondition.deleteMany({ where: { rule: { userId } } });
@@ -226,7 +303,28 @@ export class BackupService {
       await tx.homeAsset.deleteMany({ where: { userId } });
       await tx.emergencyPreparednessItem.deleteMany({ where: { userId } });
       await tx.householdTransitionPlan.deleteMany({ where: { userId } });
+      await tx.householdTransitionContact.deleteMany({ where: { userId } });
+      await tx.insurancePolicy.deleteMany({ where: { userId } });
+      await tx.estateDocument.deleteMany({ where: { userId } });
+      await tx.incomeSource.deleteMany({ where: { userId } });
+      await tx.dependent.deleteMany({ where: { userId } });
+      await tx.householdObligation.deleteMany({ where: { userId } });
+      await tx.plannedExpense.deleteMany({ where: { userId } });
+      await tx.capabilitySetting.deleteMany({ where: { userId } });
+      await tx.recommendation.deleteMany({ where: { userId } });
+      await tx.advisorInsight.deleteMany({ where: { userId } });
+      await tx.savedPayoffPlan.deleteMany({ where: { userId } });
+      await tx.aICorrection.deleteMany({ where: { userId } });
+      await tx.handoffSummary.deleteMany({ where: { userId } });
+      await tx.readinessScoreChange.deleteMany({ where: { snapshot: { userId } } });
+      await tx.readinessSignal.deleteMany({ where: { userId } });
+      await tx.readinessObservation.deleteMany({ where: { userId } });
+      await tx.readinessSnapshot.deleteMany({ where: { userId } });
       await tx.category.deleteMany({ where: { userId } });
+      // Connections hold deployment-encrypted credentials and are intentionally
+      // not part of a per-user backup. Clear their links before replacing accounts.
+      await tx.linkedBankAccount.deleteMany({ where: { connection: { userId } } });
+      await tx.bankConnection.deleteMany({ where: { userId } });
       await tx.account.deleteMany({ where: { userId } });
       await tx.userSettings.deleteMany({ where: { userId } });
 
@@ -284,6 +382,71 @@ export class BackupService {
       }
       if (payload.householdTransitionPlans?.length) {
         await tx.householdTransitionPlan.createMany({ data: payload.householdTransitionPlans });
+      }
+      if (payload.householdTransitionContacts?.length) {
+        await tx.householdTransitionContact.createMany({
+          data: payload.householdTransitionContacts,
+        });
+      }
+      if (payload.investmentHoldings?.length) {
+        await tx.investmentHolding.createMany({ data: payload.investmentHoldings });
+      }
+      if (payload.investmentQuoteSnapshots?.length) {
+        await tx.investmentQuoteSnapshot.createMany({ data: payload.investmentQuoteSnapshots });
+      }
+      if (payload.realEstateProfiles?.length) {
+        await tx.realEstateProfile.createMany({ data: payload.realEstateProfiles });
+      }
+      if (payload.debtProfiles?.length) {
+        await tx.debtProfile.createMany({ data: payload.debtProfiles });
+      }
+      if (payload.insurancePolicies?.length) {
+        await tx.insurancePolicy.createMany({ data: payload.insurancePolicies });
+      }
+      if (payload.estateDocuments?.length) {
+        await tx.estateDocument.createMany({ data: payload.estateDocuments });
+      }
+      if (payload.incomeSources?.length) {
+        await tx.incomeSource.createMany({ data: payload.incomeSources });
+      }
+      if (payload.dependents?.length) {
+        await tx.dependent.createMany({ data: payload.dependents });
+      }
+      if (payload.householdObligations?.length) {
+        await tx.householdObligation.createMany({ data: payload.householdObligations });
+      }
+      if (payload.plannedExpenses?.length) {
+        await tx.plannedExpense.createMany({ data: payload.plannedExpenses });
+      }
+      if (payload.capabilitySettings?.length) {
+        await tx.capabilitySetting.createMany({ data: payload.capabilitySettings });
+      }
+      if (payload.recommendations?.length) {
+        await tx.recommendation.createMany({ data: payload.recommendations });
+      }
+      if (payload.advisorInsights?.length) {
+        await tx.advisorInsight.createMany({ data: payload.advisorInsights });
+      }
+      if (payload.savedPayoffPlans?.length) {
+        await tx.savedPayoffPlan.createMany({ data: payload.savedPayoffPlans });
+      }
+      if (payload.aiCorrections?.length) {
+        await tx.aICorrection.createMany({ data: payload.aiCorrections });
+      }
+      if (payload.handoffSummaries?.length) {
+        await tx.handoffSummary.createMany({ data: payload.handoffSummaries });
+      }
+      if (payload.readinessSnapshots?.length) {
+        await tx.readinessSnapshot.createMany({ data: payload.readinessSnapshots });
+      }
+      if (payload.readinessObservations?.length) {
+        await tx.readinessObservation.createMany({ data: payload.readinessObservations });
+      }
+      if (payload.readinessSignals?.length) {
+        await tx.readinessSignal.createMany({ data: payload.readinessSignals });
+      }
+      if (payload.readinessScoreChanges?.length) {
+        await tx.readinessScoreChange.createMany({ data: payload.readinessScoreChanges });
       }
       if (payload.settings) {
         await tx.userSettings.create({ data: payload.settings });
