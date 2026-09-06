@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { ScopedRequest, UserScopeInterceptor } from '../common/interceptors/user-scope.interceptor';
 import { RemoteBackupPairingService } from './remote-backup-pairing.service';
+import { RemoteBackupOutboundPairingService } from './remote-backup-outbound-pairing.service';
 import {
   resolveRemoteBackupPeerAddresses,
   validateRemoteBackupPeerUrl,
@@ -31,10 +32,21 @@ const redeemOfferSchema = z.object({
   peerName: z.string().trim().min(1).max(120),
   direction: z.nativeEnum(RemoteBackupPeerDirection),
 });
+const connectSchema = z.object({
+  offerId: z.string().uuid(),
+  secret: z.string().min(43).max(200),
+  peerUrl: z.string().trim().min(1).max(2048),
+  peerName: z.string().trim().min(1).max(120),
+  localPeerName: z.string().trim().min(1).max(120),
+  direction: z.nativeEnum(RemoteBackupPeerDirection),
+});
 
 @Controller('remote-backup/pair')
 export class RemoteBackupPairingController {
-  constructor(private readonly pairingService: RemoteBackupPairingService) {}
+  constructor(
+    private readonly pairingService: RemoteBackupPairingService,
+    private readonly outboundPairingService: RemoteBackupOutboundPairingService,
+  ) {}
 
   @Post('offers')
   @UseGuards(AuthGuard)
@@ -53,6 +65,16 @@ export class RemoteBackupPairingController {
       throw new BadRequestException('offerId must be a valid UUID');
     }
     return this.pairingService.revokeOffer(req.userId!, offerId);
+  }
+
+  /** Authenticated sender workflow; the receiver remains secret-gated below. */
+  @Post('connect')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(UserScopeInterceptor)
+  connect(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = connectSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.outboundPairingService.connect(req.userId!, parsed.data);
   }
 
   /** Secret-gated receiver endpoint. It intentionally has no browser session guard. */

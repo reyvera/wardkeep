@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { RemoteBackupPeerDirection } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -45,12 +45,15 @@ describe('RemoteBackupPairingService', () => {
       id: 'offer-1',
       userId: 'household-1',
       secretHash: hashRemoteBackupPairingSecret(secret),
+      direction: RemoteBackupPeerDirection.BOTH,
       expiresAt: new Date('2026-09-05T00:15:00.000Z'),
       redeemedAt: null,
       revokedAt: null,
     };
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
-    const create = vi.fn().mockResolvedValue({ id: 'peer-1', status: 'PAIRED' });
+    const create = vi
+      .fn()
+      .mockResolvedValue({ id: 'peer-1', remotePeerId: null, status: 'PAIRED' });
     const tx = {
       remoteBackupPairingOffer: { findUnique: vi.fn().mockResolvedValue(offer), updateMany },
       remoteBackupPeer: { create },
@@ -71,7 +74,7 @@ describe('RemoteBackupPairingService', () => {
       new Date('2026-09-05T00:01:00.000Z'),
     );
 
-    expect(result).toEqual({ id: 'peer-1', status: 'PAIRED' });
+    expect(result).toEqual({ peerId: 'peer-1', remotePeerId: null, status: 'PAIRED' });
     expect(updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: { redeemedAt: expect.any(Date) } }),
     );
@@ -90,6 +93,7 @@ describe('RemoteBackupPairingService', () => {
       id: 'offer-1',
       userId: 'household-1',
       secretHash: hashRemoteBackupPairingSecret('correct-secret'),
+      direction: RemoteBackupPeerDirection.PUSH,
       expiresAt: new Date('2026-09-05T00:00:00.000Z'),
       redeemedAt: null,
       revokedAt: null,
@@ -114,5 +118,86 @@ describe('RemoteBackupPairingService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.remoteBackupPairingOffer.updateMany).not.toHaveBeenCalled();
     expect(tx.remoteBackupPeer.create).not.toHaveBeenCalled();
+  });
+
+  it('returns the original peer for an identical retry after a response is lost', async () => {
+    const secret = 'a-valid-pairing-secret';
+    const existingPeer = {
+      id: 'peer-1',
+      remotePeerId: 'sender-peer-1',
+      peerUrl: 'https://sender.example',
+      peerName: 'Sender Wardkeep',
+      direction: RemoteBackupPeerDirection.BOTH,
+      status: 'PAIRED',
+      sharedSecret: new EncryptionService().encrypt(secret),
+    };
+    const findFirst = vi.fn().mockResolvedValue(existingPeer);
+    const pairing = service({
+      $transaction: (callback: (value: unknown) => unknown) =>
+        callback({
+          remoteBackupPairingOffer: {
+            findUnique: vi.fn().mockResolvedValue({
+              id: 'offer-1',
+              userId: 'household-1',
+              secretHash: hashRemoteBackupPairingSecret(secret),
+              direction: RemoteBackupPeerDirection.BOTH,
+              redeemedAt: new Date('2026-09-05T00:01:00.000Z'),
+            }),
+          },
+          remoteBackupPeer: { findFirst },
+        }),
+    });
+
+    await expect(
+      pairing.redeemOffer({
+        offerId: 'offer-1',
+        secret,
+        remotePeerId: 'sender-peer-1',
+        peerUrl: 'https://sender.example',
+        peerName: 'Sender Wardkeep',
+        direction: RemoteBackupPeerDirection.BOTH,
+      }),
+    ).resolves.toEqual({ peerId: 'peer-1', remotePeerId: 'sender-peer-1', status: 'PAIRED' });
+    expect(findFirst).toHaveBeenCalledOnce();
+  });
+
+  it('rejects a retried offer when its peer details do not match', async () => {
+    const secret = 'a-valid-pairing-secret';
+    const pairing = service({
+      $transaction: (callback: (value: unknown) => unknown) =>
+        callback({
+          remoteBackupPairingOffer: {
+            findUnique: vi.fn().mockResolvedValue({
+              id: 'offer-1',
+              userId: 'household-1',
+              secretHash: hashRemoteBackupPairingSecret(secret),
+              direction: RemoteBackupPeerDirection.BOTH,
+              redeemedAt: new Date('2026-09-05T00:01:00.000Z'),
+            }),
+          },
+          remoteBackupPeer: {
+            findFirst: vi.fn().mockResolvedValue({
+              id: 'peer-1',
+              remotePeerId: 'sender-peer-1',
+              peerUrl: 'https://different.example',
+              peerName: 'Sender Wardkeep',
+              direction: RemoteBackupPeerDirection.BOTH,
+              status: 'PAIRED',
+              sharedSecret: new EncryptionService().encrypt(secret),
+            }),
+          },
+        }),
+    });
+
+    await expect(
+      pairing.redeemOffer({
+        offerId: 'offer-1',
+        secret,
+        remotePeerId: 'sender-peer-1',
+        peerUrl: 'https://sender.example',
+        peerName: 'Sender Wardkeep',
+        direction: RemoteBackupPeerDirection.BOTH,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 });

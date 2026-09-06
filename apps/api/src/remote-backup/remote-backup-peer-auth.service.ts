@@ -35,7 +35,7 @@ export class RemoteBackupPeerAuthService {
   ) {
     const peer = await this.prisma.remoteBackupPeer.findFirst({
       where: { remotePeerId: request.peerId, status: 'PAIRED' },
-      select: { id: true, userId: true, sharedSecret: true },
+      select: { id: true, userId: true, sharedSecret: true, direction: true },
     });
     if (!peer?.sharedSecret) throw new UnauthorizedException('Remote backup authentication failed');
 
@@ -59,6 +59,6 @@ export class RemoteBackupPeerAuthService {
     );
     if (!claimed) throw new UnauthorizedException('Remote backup authentication failed');
 
-    return { peerId: peer.id, userId: peer.userId };
+    return { peerId: peer.id, userId: peer.userId, direction: peer.direction };
   }
 }

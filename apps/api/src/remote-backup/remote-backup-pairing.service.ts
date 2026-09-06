@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { RemoteBackupPeerDirection } from '@prisma/client';
+import { Prisma, RemoteBackupPeerDirection } from '@prisma/client';
 
 import { EncryptionService } from '../common/services/encryption.service';
 import { AuditService } from '../common/services/audit.service';
@@ -75,9 +75,17 @@ export class RemoteBackupPairingService {
       const offer = await tx.remoteBackupPairingOffer.findUnique({ where: { id: input.offerId } });
       if (
         !offer ||
-        !isRemoteBackupPairingOfferRedeemable(offer, now) ||
+        offer.direction !== input.direction ||
         !verifyRemoteBackupPairingSecret(input.secret, offer.secretHash)
       ) {
+        throw new BadRequestException('Pairing offer is unavailable');
+      }
+
+      if (offer.redeemedAt) {
+        return this.findIdempotentRedemption(tx, offer.userId, input);
+      }
+
+      if (!isRemoteBackupPairingOfferRedeemable(offer, now)) {
         throw new BadRequestException('Pairing offer is unavailable');
       }
 
@@ -90,7 +98,9 @@ export class RemoteBackupPairingService {
         },
         data: { redeemedAt: now },
       });
-      if (redeemed.count !== 1) throw new ConflictException('Pairing offer was already used');
+      if (redeemed.count !== 1) {
+        return this.findIdempotentRedemption(tx, offer.userId, input);
+      }
 
       const peer = await tx.remoteBackupPeer.create({
         data: {
@@ -108,7 +118,64 @@ export class RemoteBackupPairingService {
         remotePeerId: input.remotePeerId,
         direction: input.direction,
       });
-      return peer;
+      return this.pairedPeerResponse(peer);
     });
+  }
+
+  /**
+   * Safely handles a sender retry after the receiver committed pairing but the
+   * response was lost. Only an identical request with the original secret is
+   * accepted; a reused offer cannot alter an established peer.
+   */
+  private async findIdempotentRedemption(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    input: {
+      secret: string;
+      remotePeerId: string;
+      peerUrl: string;
+      peerName: string;
+      direction: RemoteBackupPeerDirection;
+    },
+  ) {
+    const peer = await tx.remoteBackupPeer.findFirst({
+      where: { userId, remotePeerId: input.remotePeerId, status: 'PAIRED' },
+      select: {
+        id: true,
+        remotePeerId: true,
+        peerUrl: true,
+        peerName: true,
+        direction: true,
+        status: true,
+        sharedSecret: true,
+      },
+    });
+    if (
+      !peer ||
+      peer.peerUrl !== input.peerUrl ||
+      peer.peerName !== input.peerName ||
+      peer.direction !== input.direction ||
+      !peer.sharedSecret
+    ) {
+      throw new ConflictException('Pairing offer was already used');
+    }
+
+    let matchesSecret = false;
+    try {
+      matchesSecret = verifyRemoteBackupPairingSecret(
+        input.secret,
+        hashRemoteBackupPairingSecret(this.encryption.decrypt(peer.sharedSecret)),
+      );
+    } catch {
+      // Treat an unreadable existing secret exactly like a conflicting request.
+    }
+    if (!matchesSecret) throw new ConflictException('Pairing offer was already used');
+
+    return this.pairedPeerResponse(peer);
+  }
+
+  /** Never expose even encrypted shared-secret material over the peer API. */
+  private pairedPeerResponse(peer: { id: string; remotePeerId: string | null; status: string }) {
+    return { peerId: peer.id, remotePeerId: peer.remotePeerId, status: peer.status };
   }
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -481,6 +481,25 @@ export class BackupService {
       isAutomated: b.isAutomated,
       createdAt: b.createdAt,
     }));
+  }
+
+  /** Returns only a user-scoped encrypted archive reference; it never decrypts it. */
+  async encryptedArchiveForRemote(userId: string, backupId: string) {
+    const backup = await this.prisma.backup.findFirst({ where: { id: backupId, userId } });
+    if (!backup) throw new NotFoundException('Backup not found');
+    const path = this.backupPath(backup.id);
+    try {
+      const file = await stat(path);
+      if (!file.isFile() || file.size !== Number(backup.size)) throw new Error('size mismatch');
+    } catch {
+      throw new NotFoundException('Backup data not found');
+    }
+    return {
+      id: backup.id,
+      path,
+      createdAt: backup.createdAt,
+      recoveryClass: backup.isAutomated ? 'SOURCE_TIED_AUTOMATED' : 'PORTABLE_MANUAL',
+    } as const;
   }
 
   /**

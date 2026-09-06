@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { RemoteBackupRecoveryClass } from '@prisma/client';
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import { mkdir, open, rename, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -114,6 +115,37 @@ export class RemoteBackupStorageService {
       await unlink(temporaryPath).catch(() => undefined);
       throw error;
     }
+  }
+
+  /** Returns peer-scoped metadata only; filenames and filesystem paths remain private. */
+  async list(peerId: string) {
+    const backups = await this.prisma.remoteBackup.findMany({
+      where: { peerId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        sourceBackupId: true,
+        recoveryClass: true,
+        size: true,
+        checksum: true,
+        createdAt: true,
+        receivedAt: true,
+      },
+    });
+    return backups.map((backup) => ({ ...backup, size: Number(backup.size) }));
+  }
+
+  async open(peerId: string, backupId: string) {
+    const backup = await this.prisma.remoteBackup.findFirst({
+      where: { id: backupId, peerId },
+      select: { filename: true, size: true, checksum: true },
+    });
+    if (!backup) return null;
+    return {
+      stream: createReadStream(join(remoteBackupDirectory(), peerId, backup.filename)),
+      size: Number(backup.size),
+      checksum: backup.checksum,
+    };
   }
 
   private async enforceRetention(peerId: string): Promise<void> {

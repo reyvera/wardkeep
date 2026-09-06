@@ -1,10 +1,10 @@
 # Remote Backup Protocol (Design)
 
 Status: protocol design, peer/blob metadata, pairing-offer, replay-nonce,
-pairing-route, authenticated blob-upload route, and verified opaque-storage
-foundations are complete. Outbound pairing also requires a validated
-`WARDKEEP_PUBLIC_URL` deployment setting. There is no pairing UI, blob
-download/restore route, or background job yet.
+idempotent outbound pairing route, authenticated blob-upload route, and
+verified opaque-storage foundations are complete. Outbound pairing also
+requires a validated `WARDKEEP_PUBLIC_URL` deployment setting. There is no
+pairing UI, blob download/restore route, or background job yet.
 
 ## Purpose and boundary
 
@@ -46,6 +46,11 @@ Pairing is explicit and one time:
    at rest, endpoint URL, direction, status, and timestamps.
 4. The receiver consumes the offer atomically. Reuse, expiration, revocation,
    and an endpoint mismatch fail closed and are audited.
+
+If a receiver commits pairing but its response is lost, the sender may retry
+the same redemption. The receiver returns the original pairing only when the
+peer ID, endpoint, name, direction, and secret all match; a retry cannot alter
+an established peer or reveal its encrypted secret material.
 
 Pairing does not copy any backup and does not create a household membership,
 trusted-access grant, or user account on the peer.
@@ -96,15 +101,18 @@ over the configured maximum. It must never decrypt an incoming blob.
 
 The eventual endpoints are private peer APIs, not browser workflows:
 
-| Endpoint                                   | Purpose                                                                           |
-| ------------------------------------------ | --------------------------------------------------------------------------------- |
-| `POST /api/remote-backup/pair/offers`      | Create a short-lived pairing offer on the receiver                                |
-| `POST /api/remote-backup/pair/redeem`      | Redeem an offer once from the sender                                              |
-| `POST /api/remote-backup/blobs`            | Stream one encrypted blob to the receiver                                         |
-| `GET /api/remote-backup/blobs`             | List authenticated peer-scoped metadata only                                      |
-| `GET /api/remote-backup/blobs/:id`         | Stream the unchanged encrypted blob to its authenticated peer                     |
-| `POST /api/remote-backup/peers/:id/revoke` | Disable a peer; optional blob deletion requires an explicit separate confirmation |
-| `GET /api/remote-backup/health`            | Authenticated liveness check with no household data                               |
+| Endpoint                                                   | Purpose                                                                    |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `POST /api/remote-backup/pair/offers`                      | Create a short-lived pairing offer on the receiver                         |
+| `POST /api/remote-backup/pair/connect`                     | Authenticated sender workflow; persists/retries one pending pairing safely |
+| `POST /api/remote-backup/pair/redeem`                      | Redeem an offer once from the sender                                       |
+| `GET /api/remote-backup/peers`                             | List the authenticated household's non-secret peer status                  |
+| `POST /api/remote-backup/peers/:id/revoke`                 | Disable a peer while retaining its opaque blobs                            |
+| `POST /api/remote-backup/peers/:id/backups/:backupId/push` | Stream one selected local encrypted archive to a paired peer               |
+| `POST /api/remote-backup/blobs`                            | Stream one encrypted blob to the receiver                                  |
+| `GET /api/remote-backup/blobs`                             | List authenticated peer-scoped metadata only                               |
+| `GET /api/remote-backup/blobs/:id`                         | Stream the unchanged encrypted blob to its authenticated peer              |
+| `GET /api/remote-backup/health`                            | Authenticated liveness check with no household data                        |
 
 Pairing uses a separately authenticated offer exchange; all later endpoints
 require the HMAC envelope. Browser authentication must never substitute for
@@ -121,7 +129,8 @@ peer authentication.
   unspecified addresses are rejected to reduce server-side request forgery.
   A documented deployment-only override may allow a verified private LAN peer.
 - DNS is resolved and checked immediately before each outbound connection; the
-  HTTP client must not follow redirects.
+  HTTP client connects to the validated address rather than resolving the host
+  again, and it must not follow redirects.
 - Pairing, push, pull, revoke, and health actions are rate limited, audited,
   and use strict request/body timeouts.
 - Peer secrets are encrypted using the deployment `ENCRYPTION_KEY`, excluded

@@ -3,6 +3,11 @@ import { lookup } from 'node:dns/promises';
 
 export type RemotePeerAddressResolver = (hostname: string) => Promise<string[]>;
 
+export interface ResolvedRemoteBackupPeerUrl {
+  url: URL;
+  address: string;
+}
+
 export async function resolveRemoteBackupPeerAddresses(hostname: string): Promise<string[]> {
   const results = await lookup(hostname, { all: true, verbatim: true });
   return results.map((result) => result.address);
@@ -17,6 +22,14 @@ export async function validateRemoteBackupPeerUrl(
   value: string,
   resolveAddresses: RemotePeerAddressResolver,
 ): Promise<URL> {
+  return (await resolveRemoteBackupPeerUrl(value, resolveAddresses)).url;
+}
+
+/** Resolves a validated public peer to the exact address an HTTP client should use. */
+export async function resolveRemoteBackupPeerUrl(
+  value: string,
+  resolveAddresses: RemotePeerAddressResolver,
+): Promise<ResolvedRemoteBackupPeerUrl> {
   let url: URL;
   try {
     url = new URL(value);
@@ -45,7 +58,7 @@ export async function validateRemoteBackupPeerUrl(
     throw new Error('Remote backup peer URL resolves to a non-public address');
   }
 
-  return url;
+  return { url, address: addresses[0] };
 }
 
 export function isPublicRemotePeerAddress(address: string): boolean {

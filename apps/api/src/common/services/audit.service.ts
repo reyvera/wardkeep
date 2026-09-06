@@ -13,7 +13,10 @@ export type AuditAction =
   | 'auth.account_locked'
   | 'remote_backup.offer_created'
   | 'remote_backup.offer_revoked'
-  | 'remote_backup.offer_redeemed';
+  | 'remote_backup.offer_redeemed'
+  | 'remote_backup.pairing_started'
+  | 'remote_backup.pairing_completed'
+  | 'remote_backup.peer_revoked';
 
 @Injectable()
 export class AuditService {

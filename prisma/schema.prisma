@@ -1115,6 +1115,7 @@ model RemoteBackupPeer {
   peerUrl        String                     @db.VarChar(2048)
   peerName       String                     @db.VarChar(120)
   sharedSecret   String?                    @db.Text
+  pairingOfferId String?                    @db.Uuid
   direction      RemoteBackupPeerDirection  @default(BOTH)
   status         RemoteBackupPeerStatus     @default(PENDING)
   lastSyncAt     DateTime?
