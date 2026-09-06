@@ -52,6 +52,16 @@ set `CORS_ORIGINS=https://your-wardkeep-domain.example` in `.env` before
 starting the stack. The browser continues to use the same `/api` path, so no
 separate public API hostname or port is required.
 
+Wardkeep's web server sends clickjacking, MIME-sniffing, referrer, and unused
+browser-permission protections by default. Keep those response headers intact
+when configuring a reverse proxy.
+
+Household API responses are also marked `Cache-Control: no-store`; do not
+override that header with caching at the reverse proxy.
+
+The web container's health check uses `/api/health` through this same proxy, so
+it becomes unhealthy if the public web path cannot reach PostgreSQL.
+
 ---
 
 ## Build from source

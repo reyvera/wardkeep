@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 config({ path: resolve(__dirname, '../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
+import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
@@ -19,6 +20,10 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());
+  app.use((_request: Request, response: Response, next: NextFunction) => {
+    response.setHeader('Cache-Control', 'no-store, max-age=0');
+    next();
+  });
   app.enableCors(createCorsOptions());
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new HttpExceptionFilter());
