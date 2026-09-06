@@ -31,6 +31,10 @@ This downloads the compose file, generates secure credentials, pulls pre-built i
 mkdir ~/wardkeep && cd ~/wardkeep
 curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/docker-compose.prod.yml \
   -o docker-compose.yml
+mkdir -p scripts
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/scripts/verify-postgres-recovery.sh \
+  -o scripts/verify-postgres-recovery.sh
+chmod 700 scripts/verify-postgres-recovery.sh
 
 # Create .env with secure credentials
 echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env
@@ -54,6 +58,9 @@ cp .env.example .env
 
 docker compose up -d --build
 ```
+
+The standard stack does not download or start Ollama. Local AI is an optional
+profile; enable it only if the household needs private, on-device AI.
 
 ---
 
@@ -87,7 +94,7 @@ cd wardkeep && git pull && docker compose up -d --build
 | `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                               |
 | `REDIS_HOST`        | redis               | Redis hostname                                                                             |
 | `REDIS_PORT`        | 6379                | Redis port                                                                                 |
-| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD                                                        |
+| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.     |
 | `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                               |
 | `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                      |
 | `PORT`              | 4000                | API server port                                                                            |
@@ -103,7 +110,7 @@ The app refuses to start if `ENCRYPTION_KEY` is left as the placeholder value `c
 ## Local AI setup (optional)
 
 ```bash
-# Start Ollama alongside other services
+# Start Ollama alongside the standard services
 docker compose --profile ai up -d
 
 # Pull a model (requires 8GB+ RAM)
@@ -209,10 +216,20 @@ forward, checked-in migrations and stops if one fails; it will not make an
 unreviewed schema change to get itself running.
 
 ```bash
-docker compose exec -T postgres pg_dump -U postgres wardkeep > wardkeep-backup.sql
+# This creates a custom-format archive, verifies it, restores it into a
+# disposable timestamped database, verifies the restored schema, and removes
+# only that disposable database. The archive is retained in ./backups.
+./scripts/verify-postgres-recovery.sh
+
 docker compose pull
 docker compose up -d
 ```
+
+The drill requires the Wardkeep stack to be running and needs enough local disk
+space for one database archive. Its backup files contain household data in
+portable PostgreSQL format, so store or delete them according to the household's
+backup-retention policy. To use another Compose file or archive directory, set
+`WARDKEEP_COMPOSE_FILE` or `WARDKEEP_BACKUP_DIR` before running the command.
 
 Switching back to an older Wardkeep image does not remove newer columns or
 household data. Test `:develop` images against a separate, restored copy of the

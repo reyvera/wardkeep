@@ -99,6 +99,10 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    # Local AI is optional. Keep the standard household stack fast to start and
+    # opt in with: docker compose --profile ai up -d
+    profiles:
+      - ai
     volumes:
       - ollama_models:/root/.ollama
     ports:

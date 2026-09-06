@@ -160,8 +160,8 @@ Login credentials: `demo@wardkeep.app` / `DemoPassword123`
 ### Local mode (private — requires 8GB+ RAM)
 
 ```bash
-docker compose up -d ollama
-docker exec -it wardkeep-ollama-1 ollama pull llama3:8b
+docker compose --profile ai up -d ollama
+docker compose exec ollama ollama pull llama3:8b
 ```
 
 Then set AI Privacy Mode to **LOCAL** in Settings.

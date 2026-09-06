@@ -223,6 +223,10 @@ This downloads the compose file, generates secure credentials, pulls pre-built i
 # Create a directory and download the compose file
 mkdir ~/wardkeep && cd ~/wardkeep
 curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/docker-compose.prod.yml -o docker-compose.yml
+mkdir -p scripts
+curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/scripts/verify-postgres-recovery.sh \
+  -o scripts/verify-postgres-recovery.sh
+chmod 700 scripts/verify-postgres-recovery.sh
 
 # Create .env with your encryption key
 echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env
@@ -241,7 +245,7 @@ git clone https://github.com/reyvera/wardkeep.git && cd wardkeep
 cp .env.example .env
 # Edit .env — set ENCRYPTION_KEY to a secure random value (openssl rand -hex 32)
 
-# Build and start everything
+# Build and start the core household stack
 docker compose up -d --build
 
 # App available at http://localhost:3000
@@ -261,9 +265,8 @@ cd wardkeep && git pull && docker compose up -d --build
 ### Local AI setup (optional, requires 8GB+ RAM)
 
 ```bash
-# Start with the AI profile (prod compose) or just start ollama (dev compose)
-docker compose --profile ai up -d    # prod
-docker compose up -d ollama           # dev
+# Start the optional local AI service (works for source and production Compose)
+docker compose --profile ai up -d
 
 # Pull a model
 docker compose exec ollama ollama pull llama3:8b
@@ -285,7 +288,7 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 | `DATABASE_URL`      | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker)                                                                               |
 | `REDIS_HOST`        | localhost (redis in Docker)                            | Redis hostname                                                                                                                          |
 | `REDIS_PORT`        | 6379                                                   | Redis port                                                                                                                              |
-| `AI_PRIVACY_MODE`   | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD                                                                                                     |
+| `AI_PRIVACY_MODE`   | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL in Docker requires the optional `ai` profile.                                               |
 | `OLLAMA_URL`        | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
 | `WARDKEEP_BACKUP_DIR` | /data/backups                                         | Durable directory for AES-256-GCM encrypted household backups. Docker Compose mounts the persistent `backups` volume here.           |
 | `SESSION_TIMEOUT`   | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
@@ -328,6 +331,18 @@ Every released and development image uses the same forward-only Prisma migration
 1. Back up the database before changing an image tag.
 2. Start the new API image. It runs `prisma migrate deploy`, which only applies checked-in forward migrations.
 3. If you later return to an older image, it does **not** delete newer columns or data. The older application simply runs against the compatible superset schema. Upgrade again to return to the newer version.
+
+Before an upgrade, run a recovery drill against the running Compose database:
+
+```bash
+# Creates a portable archive under ./backups, verifies it, restores it only to
+# a disposable timestamped database, checks its schema, then removes that DB.
+pnpm recovery:drill
+```
+
+The archive is unencrypted PostgreSQL data; protect it as household data and
+retain or delete it under your backup policy. Set `WARDKEEP_COMPOSE_FILE` when
+using a non-default Compose file, such as `docker-compose.prod.yml`.
 
 Wardkeep will never automatically synchronize a non-empty database with `db push` or seed demo data. This protects real households, but databases created by older development builds may not have Prisma migration history. For that one-time case:
 

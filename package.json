@@ -24,6 +24,7 @@
     "db:baseline:local": "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/wardkeep?schema=public node scripts/baseline-prisma-migrations.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "recovery:drill": "./scripts/verify-postgres-recovery.sh",
     "screenshots": "npx tsx scripts/capture-screenshots.ts",
     "release:check": "node scripts/check-release-version.mjs"
   },

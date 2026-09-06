@@ -3,7 +3,7 @@
 # Wardkeep — Self-Hosted Installation Script
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/reyvera/budgetapp/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/reyvera/wardkeep/main/install.sh | bash
 #
 # Or manually:
 #   bash install.sh
@@ -12,7 +12,7 @@
 set -e
 
 INSTALL_DIR="${WARDKEEP_DIR:-$HOME/wardkeep}"
-REPO_URL="https://raw.githubusercontent.com/reyvera/budgetapp/main"
+REPO_URL="https://raw.githubusercontent.com/reyvera/wardkeep/main"
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
@@ -35,6 +35,14 @@ echo ""
 # Download compose file
 echo "→ Downloading docker-compose.prod.yml..."
 curl -fsSL "$REPO_URL/docker-compose.prod.yml" -o docker-compose.yml
+
+# Download the local recovery drill used before image upgrades. It is kept
+# alongside the Compose file so image-only installs have the same safeguard as
+# a source checkout.
+echo "→ Downloading recovery drill..."
+mkdir -p scripts
+curl -fsSL "$REPO_URL/scripts/verify-postgres-recovery.sh" -o scripts/verify-postgres-recovery.sh
+chmod 700 scripts/verify-postgres-recovery.sh
 
 # Generate .env if it doesn't exist
 if [ ! -f .env ]; then
@@ -96,7 +104,7 @@ echo "    Stop:     cd $INSTALL_DIR && docker compose down"
 echo "    Start:    cd $INSTALL_DIR && docker compose up -d"
 echo "    Update:   cd $INSTALL_DIR && docker compose pull && docker compose up -d"
 echo "    Logs:     cd $INSTALL_DIR && docker compose logs -f"
-echo "    Backup:   cd $INSTALL_DIR && docker compose exec postgres pg_dump -U postgres wardkeep > backup.sql"
+echo "    Recovery drill: cd $INSTALL_DIR && ./scripts/verify-postgres-recovery.sh"
 echo ""
 echo "  For local AI (requires 8GB+ RAM):"
 echo "    docker compose --profile ai up -d"

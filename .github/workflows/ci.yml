@@ -138,5 +138,21 @@ jobs:
           ENCRYPTION_KEY: ci-validation-placeholder
         run: |
           docker compose config --quiet
+          docker compose --profile ai config --quiet
           docker compose -f docker-compose.demo.yml config --quiet
           docker compose -f docker-compose.prod.yml config --quiet
+          docker compose -f docker-compose.prod.yml --profile ai config --quiet
+          docker compose -f docker-compose.recovery-test.yml config --quiet
+
+      - name: Validate operator scripts
+        run: bash -n install.sh scripts/dev.sh scripts/verify-postgres-recovery.sh
+
+      - name: Verify PostgreSQL recovery drill
+        run: |
+          docker compose -f docker-compose.recovery-test.yml up -d
+          docker compose -f docker-compose.recovery-test.yml exec -T postgres sh -c 'until pg_isready -U "$POSTGRES_USER" >/dev/null 2>&1; do sleep 1; done; psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "CREATE TABLE recovery_drill_probe (id integer PRIMARY KEY); INSERT INTO recovery_drill_probe VALUES (1);"'
+          WARDKEEP_COMPOSE_FILE=docker-compose.recovery-test.yml WARDKEEP_BACKUP_DIR=/tmp/wardkeep-recovery-drill-backups ./scripts/verify-postgres-recovery.sh
+
+      - name: Clean up recovery drill
+        if: always()
+        run: docker compose -f docker-compose.recovery-test.yml down -v

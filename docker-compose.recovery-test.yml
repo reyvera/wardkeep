@@ -1,0 +1,16 @@
+# Isolated PostgreSQL service for the recovery-drill CI check. It intentionally
+# has no host ports or persistent volume, so it cannot overlap a Wardkeep stack.
+name: wardkeep-recovery-ci
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: wardkeep
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

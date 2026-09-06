@@ -31,3 +31,6 @@ coverage/
 
 # Logs
 *.log
+
+# Local PostgreSQL recovery-drill archives (contain unencrypted household data)
+backups/
