@@ -102,20 +102,22 @@ cd wardkeep && git pull && docker compose up -d --build
 
 ## Environment variables
 
-| Variable            | Default             | Description                                                                                 |
-| :------------------ | :------------------ | :------------------------------------------------------------------------------------------ |
-| `ENCRYPTION_KEY`    | _(required)_        | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`.  |
-| `POSTGRES_PASSWORD` | postgres            | PostgreSQL password. Set a unique value in production.                                      |
-| `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                                |
-| `REDIS_HOST`        | redis               | Redis hostname                                                                              |
-| `REDIS_PORT`        | 6379                | Redis port                                                                                  |
-| `CORS_ORIGINS`      | local port 3000     | Comma-separated browser origins allowed to call the API; set this to the public web domain. |
-| `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.      |
-| `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                                |
-| `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                       |
-| `PORT`              | 4000                | API server port                                                                             |
-| `WEB_PORT`          | 3000                | Host port for web UI                                                                        |
-| `DEMO_MODE`         | false               | Set to `true` to bypass ENCRYPTION_KEY safety check                                         |
+| Variable                     | Default                    | Description                                                                                                                         |
+| :--------------------------- | :------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `ENCRYPTION_KEY`             | _(required)_               | AES-256 key for encrypting API keys and bank tokens. Generate with `openssl rand -hex 32`.                                          |
+| `POSTGRES_PASSWORD`          | postgres                   | PostgreSQL password. Set a unique value in production.                                                                              |
+| `DATABASE_URL`               | auto-constructed           | PostgreSQL connection string                                                                                                        |
+| `REDIS_HOST`                 | redis                      | Redis hostname                                                                                                                      |
+| `REDIS_PORT`                 | 6379                       | Redis port                                                                                                                          |
+| `CORS_ORIGINS`               | local port 3000            | Comma-separated browser origins allowed to call the API; set this to the public web domain.                                         |
+| `WARDKEEP_PUBLIC_URL`        | _(unset)_                  | Required only to initiate remote-backup pairing. Public HTTPS origin for this deployment; no path, credentials, query, or fragment. |
+| `WARDKEEP_REMOTE_BACKUP_DIR` | /data/remote-backups         | Durable directory for opaque remote-backup blobs. Compose overrides it to a path inside the persistent backups volume.             |
+| `AI_PRIVACY_MODE`            | LOCAL                      | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.                                              |
+| `OLLAMA_URL`                 | http://ollama:11434        | Ollama endpoint for local AI                                                                                                        |
+| `SESSION_TIMEOUT`            | 30                         | Session inactivity timeout in minutes                                                                                               |
+| `PORT`                       | 4000                       | API server port                                                                                                                     |
+| `WEB_PORT`                   | 3000                       | Host port for web UI                                                                                                                |
+| `DEMO_MODE`                  | false                      | Set to `true` to bypass ENCRYPTION_KEY safety check                                                                                 |
 
 {: .warning }
 The app refuses to start if `ENCRYPTION_KEY` is left as the placeholder value `change-me-in-production` (unless `DEMO_MODE=true`).

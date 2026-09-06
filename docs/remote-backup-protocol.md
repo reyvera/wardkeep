@@ -2,8 +2,9 @@
 
 Status: protocol design, peer/blob metadata, pairing-offer, replay-nonce,
 pairing-route, authenticated blob-upload route, and verified opaque-storage
-foundations are complete. There is no pairing UI, blob download/restore route,
-or background job yet.
+foundations are complete. Outbound pairing also requires a validated
+`WARDKEEP_PUBLIC_URL` deployment setting. There is no pairing UI, blob
+download/restore route, or background job yet.
 
 ## Purpose and boundary
 
@@ -38,7 +39,8 @@ Pairing is explicit and one time:
    optional human-readable peer name.
 2. The operator transfers the offer to the sending deployment through a trusted
    channel and confirms the receiving HTTPS URL and displayed certificate
-   identity.
+   identity. The sending deployment must have `WARDKEEP_PUBLIC_URL` set to its
+   own externally reachable HTTPS origin before it can begin pairing.
 3. The sending deployment redeems the offer once. Both deployments create a
    peer record containing a distinct peer ID, the negotiated secret encrypted
    at rest, endpoint URL, direction, status, and timestamps.
@@ -112,6 +114,9 @@ peer authentication.
 
 - Peer URLs must be absolute HTTPS URLs, with no userinfo, fragment, or
   redirect following.
+- `WARDKEEP_PUBLIC_URL` is optional unless a deployment initiates pairing. When
+  set, it must meet the same public-HTTPS-origin and DNS safety checks as a
+  peer URL; local and private-network addresses are not supported initially.
 - By default, URLs resolving to loopback, link-local, private, multicast, or
   unspecified addresses are rejected to reduce server-side request forgery.
   A documented deployment-only override may allow a verified private LAN peer.

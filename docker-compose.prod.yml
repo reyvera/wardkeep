@@ -41,6 +41,8 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - SESSION_TIMEOUT=${SESSION_TIMEOUT:-30}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env}
+      - WARDKEEP_PUBLIC_URL=${WARDKEEP_PUBLIC_URL:-}
+      - WARDKEEP_REMOTE_BACKUP_DIR=/data/backups/remote-peers
       - PORT=4000
     depends_on:
       postgres:
