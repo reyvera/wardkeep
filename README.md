@@ -196,6 +196,17 @@ The demo includes three insurance policies, including an auto policy renewing so
 6. Use **Chat** to ask questions about your finances
 7. Go to **Budget** to set monthly category allocations
 
+### Pairing an Off-Site Backup Destination
+
+Paired destinations store opaque encrypted backup archives; they cannot read household data or a manual backup's recovery passphrase. Each deployment must be reachable over public HTTPS, and the deployment that sends copies needs `WARDKEEP_PUBLIC_URL` configured.
+
+1. On the destination deployment, open **Settings** → **Backup & Recovery** → **Off-site destinations** and create a pairing offer.
+2. Transfer the offer ID and pairing secret to the source deployment through a secure channel.
+3. On the source deployment, open the same Settings section, enter the destination's public URL and the offer details, then choose **Pair destination**.
+4. Create a manual backup and choose **Send latest** for the paired destination.
+
+Stopping a destination prevents future transfers but deliberately leaves any previously stored encrypted copies in place.
+
 ### Running Tests
 
 ```bash
