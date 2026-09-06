@@ -32,8 +32,6 @@ services:
 
   api:
     image: ghcr.io/reyvera/wardkeep-api:latest
-    ports:
-      - "${API_PORT:-4000}:4000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wardkeep}?schema=public
       - REDIS_HOST=redis
@@ -83,8 +81,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-wardkeep}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]

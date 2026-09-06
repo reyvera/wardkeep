@@ -249,7 +249,7 @@ cp .env.example .env
 docker compose up -d --build
 
 # App available at http://localhost:3000
-# API health check at http://localhost:4000/api/health
+# API health check at http://localhost:3000/api/health
 ```
 
 ### Updating
@@ -288,14 +288,13 @@ If you use a Docker management UI like Dockge, create a stack with the contents 
 | `DATABASE_URL`        | postgresql://postgres:postgres@localhost:5432/wardkeep | PostgreSQL connection string (auto-constructed in Docker)                                                                               |
 | `REDIS_HOST`          | localhost (redis in Docker)                            | Redis hostname                                                                                                                          |
 | `REDIS_PORT`          | 6379                                                   | Redis port                                                                                                                              |
-| `CORS_ORIGINS`        | localhost and 127.0.0.1 port 3000                      | Comma-separated browser origins allowed to call the API; set this for a hosted domain.                                                  |
+| `CORS_ORIGINS`        | localhost and 127.0.0.1 port 3000                      | Comma-separated browser origins allowed to call the API; set this to the public web domain.                                             |
 | `AI_PRIVACY_MODE`     | LOCAL                                                  | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL in Docker requires the optional `ai` profile.                                                |
 | `OLLAMA_URL`          | http://localhost:11434                                 | Ollama endpoint for local AI                                                                                                            |
 | `WARDKEEP_BACKUP_DIR` | /data/backups                                          | Durable directory for AES-256-GCM encrypted household backups. Docker Compose mounts the persistent `backups` volume here.              |
 | `SESSION_TIMEOUT`     | 30                                                     | Session inactivity timeout in minutes                                                                                                   |
 | `PORT`                | 4000                                                   | API server port                                                                                                                         |
 | `WEB_PORT`            | 3000                                                   | Host port for web UI (prod compose)                                                                                                     |
-| `API_PORT`            | 4000                                                   | Host port for API (prod compose)                                                                                                        |
 | `DEMO_MODE`           | false                                                  | Set to `true` to bypass ENCRYPTION_KEY safety check                                                                                     |
 
 ### Minimum Hardware Requirements

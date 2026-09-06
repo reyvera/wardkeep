@@ -64,8 +64,6 @@ POSTGRES_DB=wardkeep
 
 # Ports (change if conflicts)
 WEB_PORT=3000
-API_PORT=4000
-POSTGRES_PORT=5432
 
 # AI Mode: LOCAL (requires Ollama), HYBRID, or CLOUD (requires API key)
 AI_PRIVACY_MODE=CLOUD
@@ -92,7 +90,7 @@ echo ""
 echo "  ✓ Wardkeep is running!"
 echo ""
 echo "  Web UI:      http://localhost:${WEB_PORT:-3000}"
-echo "  API Health:  http://localhost:${API_PORT:-4000}/api/health"
+echo "  API Health:  http://localhost:${WEB_PORT:-3000}/api/health"
 echo ""
 echo "  Next steps:"
 echo "    1. Open the Web UI and create your account"

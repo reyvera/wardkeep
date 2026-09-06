@@ -6,14 +6,15 @@
 # - In a pnpm monorepo, standalone outputs server.js at apps/web/server.js
 #   (not the root), with the full monorepo structure embedded.
 # - Static files and public assets must be copied to paths relative to server.js.
-# - NEXT_PUBLIC_API_URL is baked in at build time (ARG) since Next.js inlines
-#   env vars prefixed with NEXT_PUBLIC_ during the build.
+# - The web server proxies browser /api requests to the internal API service,
+#   keeping the public deployment to a single web origin.
 # =============================================================================
 
 FROM node:22-alpine AS builder
 WORKDIR /app
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000/api
+ARG INTERNAL_API_URL=http://api:4000/api
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages/ packages/
@@ -21,6 +22,7 @@ COPY apps/web/ apps/web/
 RUN corepack enable && pnpm install --frozen-lockfile
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
 RUN pnpm turbo build --filter=@wardkeep/web
 
 FROM node:22-alpine AS runner

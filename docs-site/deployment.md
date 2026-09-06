@@ -45,7 +45,12 @@ docker compose pull
 docker compose up -d
 ```
 
-The app is available at [http://localhost:3000](http://localhost:3000). API health check at [http://localhost:4000/api/health](http://localhost:4000/api/health). It returns a non-2xx response when the API cannot reach PostgreSQL, so a container marked unhealthy is not serving usable household data.
+The app and API health check are available through the web origin: [http://localhost:3000](http://localhost:3000) and [http://localhost:3000/api/health](http://localhost:3000/api/health). The production Compose file intentionally exposes only the web port; it proxies `/api` internally and does not publish database or API ports.
+
+For a public HTTPS deployment, point the reverse proxy at the web port only and
+set `CORS_ORIGINS=https://your-wardkeep-domain.example` in `.env` before
+starting the stack. The browser continues to use the same `/api` path, so no
+separate public API hostname or port is required.
 
 ---
 
@@ -94,13 +99,12 @@ cd wardkeep && git pull && docker compose up -d --build
 | `DATABASE_URL`      | auto-constructed    | PostgreSQL connection string                                                               |
 | `REDIS_HOST`        | redis               | Redis hostname                                                                             |
 | `REDIS_PORT`        | 6379                | Redis port                                                                                 |
-| `CORS_ORIGINS`      | local port 3000     | Comma-separated browser origins allowed to call the API; set this for a hosted domain.     |
+| `CORS_ORIGINS`      | local port 3000     | Comma-separated browser origins allowed to call the API; set this to the public web domain. |
 | `AI_PRIVACY_MODE`   | LOCAL               | AI routing: LOCAL, HYBRID, or CLOUD. LOCAL requires the optional `ai` Compose profile.     |
 | `OLLAMA_URL`        | http://ollama:11434 | Ollama endpoint for local AI                                                               |
 | `SESSION_TIMEOUT`   | 30                  | Session inactivity timeout in minutes                                                      |
 | `PORT`              | 4000                | API server port                                                                            |
 | `WEB_PORT`          | 3000                | Host port for web UI                                                                       |
-| `API_PORT`          | 4000                | Host port for API                                                                          |
 | `DEMO_MODE`         | false               | Set to `true` to bypass ENCRYPTION_KEY safety check                                        |
 
 {: .warning }
