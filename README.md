@@ -52,7 +52,7 @@ packages/
 - **Cash-flow forecast** — 90-day projections based on recurring transactions and saved one-time future bills or deposits
 - **Readiness foundations** — Deterministic Protection, Provision, Prosperity, and Peace signals with score history and explicit data coverage
 - **Readiness comparisons** — Temporarily vary or remove an already-evaluated factor to see a deterministic before/after comparison, without saving a scenario or forecasting an outcome
-- **Encrypted backups and recovery** — Manual AES-256-GCM backups with a user passphrase, plus optional scheduled deployment-local backups and in-app restore controls
+- **Encrypted backups and recovery** — Manual AES-256-GCM backups with a user passphrase, optional scheduled deployment-local backups, paired off-site encrypted copies, and in-app restore controls
 - **Progressive Web App** — Offline support, installable on any device
 - **Docker Compose** — Single-command self-hosted deployment with pre-built images
 
