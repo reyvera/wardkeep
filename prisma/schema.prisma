@@ -1181,6 +1181,7 @@ model RemoteBackupPeer {
 
   @@unique([userId, peerUrl])
   @@index([userId, status])
+  @@index([userId, pairingOfferId])
   @@index([status, syncSchedule])
 }
 
