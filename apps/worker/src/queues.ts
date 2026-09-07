@@ -11,6 +11,7 @@ export const QUEUE_NAMES = {
   RULES_APPLY: 'rules-apply',
   NOTIFICATIONS: 'notifications',
   READINESS_SNAPSHOTS: 'readiness-snapshots',
+  DAILY_BRIEFS: 'daily-briefs',
 } as const;
 
 export const QUEUE_CONCURRENCY = {
@@ -22,4 +23,5 @@ export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.RULES_APPLY]: 2,
   [QUEUE_NAMES.NOTIFICATIONS]: 5,
   [QUEUE_NAMES.READINESS_SNAPSHOTS]: 1,
+  [QUEUE_NAMES.DAILY_BRIEFS]: 1,
 } as const;

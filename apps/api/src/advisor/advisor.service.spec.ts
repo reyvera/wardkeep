@@ -6,6 +6,24 @@ import { TimelineService } from '../timeline/timeline.service';
 import { AdvisorService, crossCapabilityInsightCandidates } from './advisor.service';
 
 describe('AdvisorService', () => {
+  it('returns today’s stored deterministic brief without recalculating it', async () => {
+    const stored = {
+      greeting: 'Good morning',
+      readiness: { score: 70, state: 'known', coverage: 80 },
+      priority: null,
+      currentRisk: null,
+      upcoming: [],
+    };
+    const advisor = new AdvisorService(
+      { getReadiness: vi.fn() } as never,
+      {} as never,
+      {} as never,
+      { dailyBrief: { findUnique: vi.fn().mockResolvedValue({ content: stored }) } } as never,
+    );
+
+    await expect(advisor.getDailyMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toEqual(stored);
+  });
+
   it('builds a deterministic brief from readiness, actions, and recorded events', async () => {
     const readiness = {
       getReadiness: vi.fn().mockResolvedValue({

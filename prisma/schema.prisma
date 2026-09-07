@@ -58,6 +58,7 @@ model User {
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
   advisorMemories       AdvisorMemory[]
+  dailyBriefs           DailyBrief[]
   cashflowEvents        CashflowEvent[]
   remoteBackupPeers     RemoteBackupPeer[]
   remoteBackups         RemoteBackup[]
@@ -303,6 +304,21 @@ model AdvisorMemory {
 
   @@index([userId, kind, observedAt])
   @@index([userId, expiresAt])
+}
+
+/// A deterministic daily briefing snapshot generated locally for one household.
+model DailyBrief {
+  id           String   @id @default(uuid())
+  userId       String
+  briefingDate DateTime @db.Date
+  content      Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, briefingDate])
+  @@index([userId, briefingDate])
 }
 
 model Session {

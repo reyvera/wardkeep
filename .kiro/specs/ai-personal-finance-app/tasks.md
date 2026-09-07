@@ -826,7 +826,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 41. Proactive Intelligence
 
-- [ ] 41.1 Implement proactive daily briefing generation
+- [~] 41.1 Implement proactive daily briefing generation
+  - [x] Local worker generates and persists one deterministic daily brief per household after readiness snapshots, authenticated with a deployment-derived HMAC token.
   - Worker job (configurable time) generates personalized briefing
   - Detects: unusual charges, budgets running hot, spending shifts
   - Suggests: recategorizations, savings opportunities, risk mitigations

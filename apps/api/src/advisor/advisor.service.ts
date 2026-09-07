@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { Prisma } from '@prisma/client';
 
 import { Signal } from '@wardkeep/readiness';
 
@@ -155,6 +156,38 @@ export class AdvisorService {
       currentRisk,
       upcoming,
     };
+  }
+
+  /** Returns today's scheduled local briefing when available, otherwise computes the same deterministic view. */
+  async getDailyMorningBrief(userId: string, now = new Date()): Promise<MorningBrief> {
+    const briefingDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const stored = await this.prisma.dailyBrief.findUnique({
+      where: { userId_briefingDate: { userId, briefingDate } },
+      select: { content: true },
+    });
+    return stored ? (stored.content as unknown as MorningBrief) : this.getMorningBrief(userId);
+  }
+
+  /** Generates one local, deterministic briefing snapshot per household for the UTC day. */
+  async generateDailyBriefs(now = new Date()) {
+    const briefingDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const users = await this.prisma.user.findMany({ select: { id: true } });
+    let generated = 0;
+    let failed = 0;
+    for (const user of users) {
+      try {
+        const content = await this.getMorningBrief(user.id);
+        await this.prisma.dailyBrief.upsert({
+          where: { userId_briefingDate: { userId: user.id, briefingDate } },
+          update: { content: content as unknown as Prisma.InputJsonValue },
+          create: { userId: user.id, briefingDate, content: content as unknown as Prisma.InputJsonValue },
+        });
+        generated++;
+      } catch {
+        failed++;
+      }
+    }
+    return { generated, failed };
   }
 
   /**

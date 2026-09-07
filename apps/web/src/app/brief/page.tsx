@@ -51,7 +51,7 @@ export default function BriefPage() {
   const [reviewPeriod, setReviewPeriod] = useState<7 | 30>(7);
   const brief = useQuery({
     queryKey: ['advisor', 'morning-brief'],
-    queryFn: () => apiClient.get<MorningBrief>('/advisor/brief/morning'),
+    queryFn: () => apiClient.get<MorningBrief>('/advisor/brief/daily'),
   });
   const insights = useQuery({
     queryKey: ['advisor', 'insights'],

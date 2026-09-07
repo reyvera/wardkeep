@@ -11,6 +11,7 @@ import { processRecurringDetection } from './processors/recurring-detection.proc
 import { processReadinessSnapshot } from './processors/readiness-snapshot.processor';
 import { processScheduledBackups } from './processors/backup.processor';
 import { processScheduledRemoteBackups } from './processors/remote-backup.processor';
+import { processDailyBriefs } from './processors/daily-brief.processor';
 
 const workers: Worker[] = [];
 const queues: Queue[] = [];
@@ -51,6 +52,20 @@ async function bootstrap(): Promise<void> {
     concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.READINESS_SNAPSHOTS],
   });
   workers.push(readinessWorker);
+
+  const briefQueue = new Queue(QUEUE_NAMES.DAILY_BRIEFS, { connection });
+  queues.push(briefQueue);
+  await briefQueue.upsertJobScheduler(
+    'daily-advisor-briefs',
+    { pattern: '15 3 * * *' },
+    { name: 'generate-daily-briefs', data: {} },
+  );
+  log('Scheduled deterministic daily advisor briefs for 03:15 UTC.');
+  const briefWorker = new Worker(QUEUE_NAMES.DAILY_BRIEFS, processDailyBriefs, {
+    connection,
+    concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.DAILY_BRIEFS],
+  });
+  workers.push(briefWorker);
 
   // Backups run after readiness snapshots. The API decides which household
   // schedules are due, making missed runs safe to catch up on the next job.

@@ -33,6 +33,11 @@ export class AdvisorController {
     return this.advisor.getMorningBrief(req.userId!);
   }
 
+  @Get('brief/daily')
+  getDailyMorningBrief(@Req() req: ScopedRequest) {
+    return this.advisor.getDailyMorningBrief(req.userId!);
+  }
+
   @Get('recommendations')
   getRecommendations(@Req() req: ScopedRequest) {
     return this.advisor.getRecommendations(req.userId!);
