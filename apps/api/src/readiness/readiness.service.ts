@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { Decimal } from 'decimal.js';
 
 import {
   computePillarScore,
@@ -30,6 +31,7 @@ import { calculateRecordedNetWorth } from './generators/prosperity.generator';
 import { deriveDurableReadinessChanges } from './readiness-change';
 import { buildPillarTrends, PillarTrend } from './readiness-trends';
 import { evaluateReadinessScenario, ScenarioChange } from './readiness-scenario';
+import { calculateEmergencyFundBurnRate, emergencyFundSignal } from './generators/protection.generator';
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
@@ -129,6 +131,38 @@ export class ReadinessService {
   /** Computes an explicit, non-persistent what-if comparison from current evidence. */
   async getScenario(userId: string, changes: ScenarioChange[]) {
     return evaluateReadinessScenario(await this.getReadiness(userId), changes);
+  }
+
+  /**
+   * Compares one explicit liquid-reserve amount using the same recorded
+   * 90-day burn-rate evidence as the live emergency-fund signal. The entered
+   * amount is never written to an account or used outside this response.
+   */
+  async getCashReserveScenario(userId: string, proposedReserves: string) {
+    const current = await this.getReadiness(userId);
+    if (!current.signals.some((signal) => signal.capabilityId === 'emergency-fund')) {
+      throw new Error('Liquid-reserve coverage is not currently evaluated');
+    }
+    const reserves = new Decimal(proposedReserves);
+    const replacement = emergencyFundSignal(
+      reserves,
+      await calculateEmergencyFundBurnRate(this.prisma, userId),
+    )[0];
+    if (!replacement) throw new Error('Liquid-reserve comparison is unavailable');
+    return {
+      ...evaluateReadinessScenario(current, [
+        { operation: 'replace', capabilityId: 'emergency-fund', signal: replacement },
+      ]),
+      builder: {
+        kind: 'cash_reserves',
+        proposedReserves: reserves.toFixed(2),
+        sourceRecords: ['Current checking, savings, and cash account balances', 'Recorded 90-day expenses'],
+        assumptions: [
+          'The entered reserve amount temporarily replaces the recorded liquid-reserve total only.',
+          'The recorded expense window and its transfer, refund, and one-time exclusions are unchanged.',
+        ],
+      },
+    };
   }
 
   async recordDashboardView(userId: string): Promise<void> {

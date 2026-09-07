@@ -386,7 +386,7 @@ export function insuranceRenewalSignal(
   return null;
 }
 
-async function calculateLiquidReserves(prisma: PrismaClient, userId: string): Promise<Decimal> {
+export async function calculateLiquidReserves(prisma: PrismaClient, userId: string): Promise<Decimal> {
   const liquidTypes: AccountType[] = [AccountType.CHECKING, AccountType.SAVINGS, AccountType.CASH];
   const accounts = await prisma.account.findMany({
     where: { userId, isArchived: false, type: { in: liquidTypes } },
@@ -434,6 +434,14 @@ async function generateEmergencyFundSignals(
   userId: string,
 ): Promise<Signal[]> {
   const totalLiquid = await calculateLiquidReserves(prisma, userId);
+  return emergencyFundSignal(totalLiquid, await calculateEmergencyFundBurnRate(prisma, userId));
+}
+
+/** Computes the recorded 90-day expense evidence used by the emergency-fund signal. */
+export async function calculateEmergencyFundBurnRate(
+  prisma: PrismaClient,
+  userId: string,
+): Promise<HouseholdBurnRate> {
 
   // TransactionType.TRANSFER records are excluded structurally. The burn-rate
   // helper additionally removes common imported transfers mislabeled as debits.
@@ -492,7 +500,7 @@ async function generateEmergencyFundSignals(
       tags: transaction.tags.map((tag) => tag.tag),
     })),
   );
-  return emergencyFundSignal(totalLiquid, burnRate);
+  return burnRate;
 }
 
 /**

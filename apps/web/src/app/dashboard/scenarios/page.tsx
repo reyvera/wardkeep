@@ -35,6 +35,14 @@ interface ScenarioResponse {
   limitations: string[];
 }
 
+interface CashReserveScenarioResponse extends ScenarioResponse {
+  builder: {
+    proposedReserves: string;
+    sourceRecords: string[];
+    assumptions: string[];
+  };
+}
+
 function score(value: number | null) {
   return value === null ? '—' : `${value}%`;
 }
@@ -54,6 +62,10 @@ function factorEffect(magnitude: number) {
 export default function ReadinessScenariosPage() {
   const [selectedCapabilityId, setSelectedCapabilityId] = useState<string | null>(null);
   const [magnitude, setMagnitude] = useState(0);
+  const [proposedReserves, setProposedReserves] = useState('');
+  const [cashReserveScenario, setCashReserveScenario] = useState<CashReserveScenarioResponse | null>(
+    null,
+  );
   const readinessQuery = useQuery({
     queryKey: ['readiness'],
     queryFn: () => apiClient.get<ReadinessResponse>('/readiness'),
@@ -67,16 +79,26 @@ export default function ReadinessScenariosPage() {
   const scenarioMutation = useMutation({
     mutationFn: (body: unknown) => apiClient.post<ScenarioResponse>('/readiness/scenario', body),
   });
+  const cashReserveMutation = useMutation({
+    mutationFn: (value: string) =>
+      apiClient.post<CashReserveScenarioResponse>('/readiness/scenario/cash-reserves', {
+        proposedReserves: value,
+      }),
+    onSuccess: setCashReserveScenario,
+  });
+  const comparison = cashReserveScenario ?? scenarioMutation.data;
 
   const selectFactor = (capabilityId: string) => {
     const factor = factors.find((candidate) => candidate.capabilityId === capabilityId);
     setSelectedCapabilityId(capabilityId);
     setMagnitude(factor?.magnitude ?? 0);
     scenarioMutation.reset();
+    setCashReserveScenario(null);
   };
 
   const compareWithMagnitude = () => {
     if (!selectedFactor) return;
+    setCashReserveScenario(null);
     scenarioMutation.mutate({
       changes: [
         {
@@ -90,6 +112,7 @@ export default function ReadinessScenariosPage() {
 
   const compareWithoutFactor = () => {
     if (!selectedFactor) return;
+    setCashReserveScenario(null);
     scenarioMutation.mutate({
       changes: [{ operation: 'remove', capabilityId: selectedFactor.capabilityId }],
     });
@@ -161,6 +184,46 @@ export default function ReadinessScenariosPage() {
               {selectedFactor.magnitude})
             </p>
 
+            {selectedFactor.capabilityId === 'emergency-fund' && (
+              <div className="mt-5 max-w-2xl rounded-lg border border-accent-blue/20 bg-accent-blue/5 p-4">
+                <p className="text-sm font-medium text-content-primary">Compare a cash-reserves amount</p>
+                <p className="mt-1 text-xs text-content-secondary">
+                  This temporarily replaces the liquid-reserve total and keeps the recorded expense
+                  evidence unchanged. It does not edit any account.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <input
+                    aria-label="Temporary liquid reserves"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={proposedReserves}
+                    onChange={(event) => setProposedReserves(event.target.value)}
+                    placeholder="Liquid reserves, e.g. 12000"
+                    className="input min-w-52 flex-1"
+                  />
+                  <button
+                    type="button"
+                    className="btn-secondary text-sm"
+                    disabled={
+                      cashReserveMutation.isPending ||
+                      proposedReserves === '' ||
+                      Number(proposedReserves) < 0
+                    }
+                    onClick={() => {
+                      scenarioMutation.reset();
+                      cashReserveMutation.mutate(proposedReserves);
+                    }}
+                  >
+                    {cashReserveMutation.isPending ? 'Comparing…' : 'Compare reserves'}
+                  </button>
+                </div>
+                {cashReserveMutation.isError && (
+                  <p className="mt-2 text-xs text-accent-red">Reserve comparison is unavailable.</p>
+                )}
+              </div>
+            )}
+
             <div className="mt-6 max-w-2xl">
               <div className="flex items-end justify-between gap-4">
                 <label
@@ -208,8 +271,14 @@ export default function ReadinessScenariosPage() {
               >
                 Compare without factor
               </button>
-              {scenarioMutation.data && (
-                <button className="btn-ghost text-sm" onClick={() => scenarioMutation.reset()}>
+              {comparison && (
+                <button
+                  className="btn-ghost text-sm"
+                  onClick={() => {
+                    scenarioMutation.reset();
+                    setCashReserveScenario(null);
+                  }}
+                >
                   <RotateCcw size={14} /> Clear comparison
                 </button>
               )}
@@ -223,13 +292,13 @@ export default function ReadinessScenariosPage() {
             )}
           </section>
 
-          {scenarioMutation.data && (
+          {comparison && (
             <>
               <section className="mt-6 grid gap-4 md:grid-cols-2" aria-live="polite">
                 {(
                   [
-                    ['Current recorded picture', scenarioMutation.data.current],
-                    ['Comparison', scenarioMutation.data.scenario],
+                    ['Current recorded picture', comparison.current],
+                    ['Comparison', comparison.scenario],
                   ] as const
                 ).map(([label, assessment]) => (
                   <article key={label} className="card">
@@ -258,10 +327,15 @@ export default function ReadinessScenariosPage() {
               <section className="card mt-6 border-accent-blue/20 bg-accent-blue/5">
                 <p className="card-title text-accent-blue">What this means</p>
                 <ul className="mt-2 space-y-1 text-sm text-content-secondary">
-                  {scenarioMutation.data.limitations.map((limitation) => (
+                  {comparison.limitations.map((limitation) => (
                     <li key={limitation}>• {limitation}</li>
                   ))}
                 </ul>
+                {cashReserveScenario && (
+                  <p className="mt-3 text-xs text-content-secondary">
+                    Sources: {cashReserveScenario.builder.sourceRecords.join(' · ')}
+                  </p>
+                )}
               </section>
             </>
           )}

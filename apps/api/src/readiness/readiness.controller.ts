@@ -45,6 +45,9 @@ const scenarioSchema = z.object({
     .min(1)
     .max(10),
 });
+const cashReserveScenarioSchema = z.object({
+  proposedReserves: z.coerce.number().finite().min(0).max(100_000_000),
+});
 
 @Controller('readiness')
 @UseGuards(AuthGuard)
@@ -100,6 +103,17 @@ export class ReadinessController {
     const parsed = scenarioSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
     return this.readinessService.getScenario(req.userId!, parsed.data.changes as ScenarioChange[]);
+  }
+
+  /** Builds a temporary cash-reserves comparison from current recorded evidence. */
+  @Post('scenario/cash-reserves')
+  getCashReserveScenario(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = cashReserveScenarioSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.readinessService.getCashReserveScenario(
+      req.userId!,
+      parsed.data.proposedReserves.toFixed(2),
+    );
   }
 
   /**

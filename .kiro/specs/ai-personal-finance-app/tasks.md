@@ -794,7 +794,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 39.1 Implement scenario readiness computation
   - [x] `POST /api/readiness/scenario` accepts temporary removal or replacement of an already-evaluated capability factor, recomputes the direct pillars and derived Peace, and returns current and comparison assessments with explicit limitations.
   - [x] Keep comparisons in memory only: no household record, recommendation, readiness-history snapshot, or offline action is created.
-  - [ ] Add structured builders for bounded record changes such as cash reserves, recurring obligations, and debt minimums; every builder must disclose its source records and assumptions.
+  - [~] Add structured builders for bounded record changes such as cash reserves, recurring obligations, and debt minimums; every builder must disclose its source records and assumptions.
+    - [x] Cash-reserves builder temporarily replaces the liquid-reserve total, reuses the recorded 90-day emergency-fund evidence, and discloses its sources and assumptions.
   - [ ] Do not model job loss, property purchase, market movement, insurance outcomes, or score trajectories until Wardkeep can express the exact recorded inputs and limitations without forecasting.
 
 - [~] 39.2 Implement scenario UI
