@@ -102,6 +102,7 @@ export class BackupService {
       capabilitySettings,
       recommendations,
       advisorInsights,
+      advisorMemories,
       savedPayoffPlans,
       aiCorrections,
       handoffSummaries,
@@ -149,6 +150,7 @@ export class BackupService {
       this.prisma.capabilitySetting.findMany({ where: { userId } }),
       this.prisma.recommendation.findMany({ where: { userId } }),
       this.prisma.advisorInsight.findMany({ where: { userId } }),
+      this.prisma.advisorMemory.findMany({ where: { userId } }),
       this.prisma.savedPayoffPlan.findMany({ where: { userId } }),
       this.prisma.aICorrection.findMany({ where: { userId } }),
       this.prisma.handoffSummary.findMany({ where: { userId } }),
@@ -192,6 +194,7 @@ export class BackupService {
       capabilitySettings,
       recommendations,
       advisorInsights,
+      advisorMemories,
       savedPayoffPlans,
       aiCorrections,
       handoffSummaries,
@@ -314,6 +317,7 @@ export class BackupService {
       await tx.capabilitySetting.deleteMany({ where: { userId } });
       await tx.recommendation.deleteMany({ where: { userId } });
       await tx.advisorInsight.deleteMany({ where: { userId } });
+      await tx.advisorMemory.deleteMany({ where: { userId } });
       await tx.savedPayoffPlan.deleteMany({ where: { userId } });
       await tx.aICorrection.deleteMany({ where: { userId } });
       await tx.handoffSummary.deleteMany({ where: { userId } });
@@ -427,6 +431,9 @@ export class BackupService {
       }
       if (payload.advisorInsights?.length) {
         await tx.advisorInsight.createMany({ data: payload.advisorInsights });
+      }
+      if (payload.advisorMemories?.length) {
+        await tx.advisorMemory.createMany({ data: payload.advisorMemories });
       }
       if (payload.savedPayoffPlans?.length) {
         await tx.savedPayoffPlan.createMany({ data: payload.savedPayoffPlans });

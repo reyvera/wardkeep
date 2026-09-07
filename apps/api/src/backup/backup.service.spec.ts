@@ -74,11 +74,13 @@ describe('BackupService local storage', () => {
     const insurancePolicies = [{ id: 'policy-1', userId, provider: 'Wardkeep Mutual' }];
     const investmentHoldings = [{ id: 'holding-1', accountId: 'account-1', symbol: 'WK' }];
     const readinessSnapshots = [{ id: 'snapshot-1', userId, overall: 72 }];
+    const advisorMemories = [{ id: 'memory-1', userId, kind: 'USER_PREFERENCE', summary: 'Monthly review' }];
     const capabilitySettings = [{ id: 'capability-1', userId, capabilityId: 'insurance' }];
     const collections: Record<string, unknown[]> = {
       insurancePolicy: insurancePolicies,
       investmentHolding: investmentHoldings,
       readinessSnapshot: readinessSnapshots,
+      advisorMemory: advisorMemories,
       capabilitySetting: capabilitySettings,
     };
     const prisma = new Proxy(
@@ -118,6 +120,7 @@ describe('BackupService local storage', () => {
     expect(payload.insurancePolicies).toEqual(insurancePolicies);
     expect(payload.investmentHoldings).toEqual(investmentHoldings);
     expect(payload.readinessSnapshots).toEqual(readinessSnapshots);
+    expect(payload.advisorMemories).toEqual(advisorMemories);
     expect(payload.capabilitySettings).toEqual(capabilitySettings);
   });
 
