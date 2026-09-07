@@ -1,10 +1,14 @@
 # Remote Backup Protocol (Design)
 
 Status: protocol design, peer/blob metadata, pairing-offer, replay-nonce,
-idempotent outbound pairing route, authenticated blob-upload route, and
-verified opaque-storage foundations are complete. Outbound pairing also
-requires a validated `WARDKEEP_PUBLIC_URL` deployment setting. There is no
-pairing UI, blob download/restore route, or background job yet.
+idempotent outbound pairing route, authenticated push/list/download routes,
+and verified opaque-storage foundations are complete. Settings provides pairing,
+manual transfer, remote-copy browsing, and explicit restore after a checksum
+verification. Outbound pairing also requires a validated `WARDKEEP_PUBLIC_URL`
+deployment setting. Per-destination automatic encrypted copies can run hourly,
+every six hours, daily, or weekly. An authenticated hourly health check marks a
+peer unreachable after three failures and restores it automatically when it
+responds. Fresh-instance bootstrap remains pending.
 
 ## Purpose and boundary
 
@@ -15,8 +19,8 @@ data it receives.
 
 This protocol is not a general cross-deployment import/export feature. It does
 not rebind user IDs, merge households, move bank connections, or grant trusted
-access. Local encrypted backup and PostgreSQL recovery remain the supported
-recovery paths until this protocol is implemented and tested end to end.
+access. Remote restore is an explicit local replacement after archive validation;
+it is not an in-place remote import.
 
 ## Recovery classes
 

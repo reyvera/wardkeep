@@ -21,4 +21,32 @@ describe('RemoteBackupPeerController', () => {
     );
     expect(revoke).not.toHaveBeenCalled();
   });
+
+  it('lists remote copies only through the authenticated household', async () => {
+    const listRemoteBackups = vi.fn().mockResolvedValue([]);
+    const controller = new RemoteBackupPeerController({} as never, { listRemoteBackups } as never);
+    const peerId = '11111111-1111-4111-8111-111111111111';
+
+    await expect(
+      controller.listBackups({ userId: 'household-1' } as never, peerId),
+    ).resolves.toEqual([]);
+    expect(listRemoteBackups).toHaveBeenCalledWith('household-1', peerId);
+  });
+
+  it('rejects malformed remote restore identifiers before downloading an archive', () => {
+    const restoreRemoteBackup = vi.fn();
+    const controller = new RemoteBackupPeerController(
+      {} as never,
+      { restoreRemoteBackup } as never,
+    );
+
+    expect(() =>
+      controller.restoreBackup(
+        { userId: 'household-1', body: {} } as never,
+        'not-a-uuid',
+        'also-not-a-uuid',
+      ),
+    ).toThrow(BadRequestException);
+    expect(restoreRemoteBackup).not.toHaveBeenCalled();
+  });
 });

@@ -50,7 +50,8 @@ interface RemoteBackupPeer {
   peerName: string;
   peerUrl: string;
   direction: 'PUSH' | 'PULL' | 'BOTH';
-  status: 'PENDING' | 'PAIRED' | 'REVOKED';
+  status: 'PENDING' | 'PAIRED' | 'UNREACHABLE' | 'REVOKED';
+  syncSchedule?: 'HOURLY' | 'EVERY_6H' | 'DAILY' | 'WEEKLY' | null;
   lastSyncAt?: string | null;
   lastError?: string | null;
 }
@@ -60,6 +61,15 @@ interface RemoteBackupOffer {
   secret: string;
   direction: 'PUSH' | 'PULL' | 'BOTH';
   expiresAt: string;
+}
+
+interface RemoteBackupRecord {
+  id: string;
+  recoveryClass: 'SOURCE_TIED_AUTOMATED' | 'PORTABLE_MANUAL';
+  size: number;
+  checksum: string;
+  createdAt: string;
+  receivedAt: string;
 }
 
 export default function SettingsPage() {
@@ -140,6 +150,9 @@ export default function SettingsPage() {
   const [backupPassphraseConfirmation, setBackupPassphraseConfirmation] = useState('');
   const [restoreTarget, setRestoreTarget] = useState<BackupRecord | null>(null);
   const [restorePassphrase, setRestorePassphrase] = useState('');
+  const [remoteBackupPeerId, setRemoteBackupPeerId] = useState<string | null>(null);
+  const [remoteRestoreTarget, setRemoteRestoreTarget] = useState<RemoteBackupRecord | null>(null);
+  const [remoteRestorePassphrase, setRemoteRestorePassphrase] = useState('');
   const [pairingOffer, setPairingOffer] = useState<RemoteBackupOffer | null>(null);
   const [offerPeerName, setOfferPeerName] = useState('Wardkeep off-site destination');
   const [connectForm, setConnectForm] = useState({
@@ -166,6 +179,12 @@ export default function SettingsPage() {
   const remotePeersQuery = useQuery({
     queryKey: ['remote-backup-peers'],
     queryFn: () => apiClient.get<RemoteBackupPeer[]>('/remote-backup/peers'),
+  });
+  const remoteBackupsQuery = useQuery({
+    queryKey: ['remote-backups', remoteBackupPeerId],
+    queryFn: () =>
+      apiClient.get<RemoteBackupRecord[]>(`/remote-backup/peers/${remoteBackupPeerId}/backups`),
+    enabled: Boolean(remoteBackupPeerId),
   });
 
   useEffect(() => {
@@ -216,6 +235,35 @@ export default function SettingsPage() {
     mutationFn: (peerId: string) => apiClient.post(`/remote-backup/peers/${peerId}/revoke`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['remote-backup-peers'] }),
   });
+  const setRemoteSyncScheduleMutation = useMutation({
+    mutationFn: ({
+      peerId,
+      schedule,
+    }: {
+      peerId: string;
+      schedule: RemoteBackupPeer['syncSchedule'];
+    }) => apiClient.patch(`/remote-backup/peers/${peerId}/sync-schedule`, { schedule }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['remote-backup-peers'] }),
+  });
+  const restoreRemoteBackupMutation = useMutation({
+    mutationFn: ({
+      peerId,
+      backup,
+      passphrase,
+    }: {
+      peerId: string;
+      backup: RemoteBackupRecord;
+      passphrase?: string;
+    }) =>
+      apiClient.post(`/remote-backup/peers/${peerId}/backups/${backup.id}/restore`, {
+        ...(passphrase ? { passphrase } : {}),
+      }),
+    onSuccess: () => {
+      setRemoteRestoreTarget(null);
+      setRemoteRestorePassphrase('');
+      queryClient.invalidateQueries();
+    },
+  });
   const createPairingOfferMutation = useMutation({
     mutationFn: () =>
       apiClient.post<RemoteBackupOffer>('/remote-backup/pair/offers', {
@@ -261,6 +309,28 @@ export default function SettingsPage() {
     restoreBackupMutation.mutate({
       backup: restoreTarget,
       ...(restoreTarget.isAutomated ? {} : { passphrase: restorePassphrase }),
+    });
+  };
+  const handleRemoteRestoreBackup = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!remoteBackupPeerId || !remoteRestoreTarget) return;
+    if (
+      remoteRestoreTarget.recoveryClass === 'PORTABLE_MANUAL' &&
+      remoteRestorePassphrase.length < 12
+    )
+      return;
+    if (
+      !window.confirm(
+        'Restore this remote backup? This permanently replaces the household data currently in Wardkeep.',
+      )
+    )
+      return;
+    restoreRemoteBackupMutation.mutate({
+      peerId: remoteBackupPeerId,
+      backup: remoteRestoreTarget,
+      ...(remoteRestoreTarget.recoveryClass === 'PORTABLE_MANUAL'
+        ? { passphrase: remoteRestorePassphrase }
+        : {}),
     });
   };
 
@@ -811,6 +881,43 @@ export default function SettingsPage() {
                 {peer.status === 'PAIRED' && peer.direction === 'PULL' && (
                   <span className="text-xs text-content-tertiary">Receive only</span>
                 )}
+                {peer.status === 'PAIRED' && peer.direction !== 'PULL' && (
+                  <label className="text-xs text-content-secondary">
+                    <span className="sr-only">Automatic copy schedule</span>
+                    <select
+                      className="input h-8 py-1 text-xs"
+                      value={peer.syncSchedule ?? ''}
+                      disabled={setRemoteSyncScheduleMutation.isPending}
+                      onChange={(event) =>
+                        setRemoteSyncScheduleMutation.mutate({
+                          peerId: peer.id,
+                          schedule: event.target.value
+                            ? (event.target.value as NonNullable<RemoteBackupPeer['syncSchedule']>)
+                            : null,
+                        })
+                      }
+                    >
+                      <option value="">Manual copies</option>
+                      <option value="HOURLY">Copy hourly</option>
+                      <option value="EVERY_6H">Copy every 6 hours</option>
+                      <option value="DAILY">Copy daily</option>
+                      <option value="WEEKLY">Copy weekly</option>
+                    </select>
+                  </label>
+                )}
+                {peer.status === 'PAIRED' && (
+                  <button
+                    type="button"
+                    className="btn-secondary text-xs"
+                    onClick={() => {
+                      setRemoteBackupPeerId(peer.id);
+                      setRemoteRestoreTarget(null);
+                      setRemoteRestorePassphrase('');
+                    }}
+                  >
+                    Browse copies
+                  </button>
+                )}
                 {peer.status !== 'REVOKED' && (
                   <button
                     type="button"
@@ -831,6 +938,58 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
+          {remoteBackupPeerId && (
+            <div className="space-y-2 border-t border-edge pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-content-primary">Remote backup copies</p>
+                <button
+                  type="button"
+                  className="text-xs text-content-secondary underline"
+                  onClick={() => {
+                    setRemoteBackupPeerId(null);
+                    setRemoteRestoreTarget(null);
+                    setRemoteRestorePassphrase('');
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+              {remoteBackupsQuery.isLoading && <div className="skeleton h-12 w-full" />}
+              {remoteBackupsQuery.isError && (
+                <p className="text-xs text-accent-red">Could not retrieve remote backup copies.</p>
+              )}
+              {remoteBackupsQuery.data?.length === 0 && (
+                <p className="text-xs text-content-secondary">
+                  No encrypted copies are stored there.
+                </p>
+              )}
+              {remoteBackupsQuery.data?.map((backup) => (
+                <div
+                  key={backup.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-edge p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-content-primary">
+                      {backup.recoveryClass === 'PORTABLE_MANUAL'
+                        ? 'Portable manual backup'
+                        : 'Source-tied automatic backup'}
+                    </p>
+                    <p className="mt-1 text-xs text-content-secondary">
+                      {new Date(backup.createdAt).toLocaleString()} ·{' '}
+                      {(backup.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-secondary shrink-0 text-xs"
+                    onClick={() => setRemoteRestoreTarget(backup)}
+                  >
+                    <RotateCcw size={14} /> Restore
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {pushBackupMutation.isError && (
             <p className="text-xs text-accent-red">
               Encrypted copy could not be sent. The local backup is unchanged.
@@ -847,6 +1006,62 @@ export default function SettingsPage() {
             </p>
           )}
         </div>
+
+        {remoteRestoreTarget && (
+          <form
+            onSubmit={handleRemoteRestoreBackup}
+            className="space-y-3 rounded-lg border border-accent-yellow/30 bg-accent-yellow/5 p-3"
+          >
+            <p className="text-sm font-medium text-content-primary">Restore remote backup?</p>
+            <p className="text-xs text-content-secondary">
+              This downloads a verified encrypted copy and replaces the household data currently in
+              Wardkeep.
+            </p>
+            {remoteRestoreTarget.recoveryClass === 'PORTABLE_MANUAL' ? (
+              <input
+                type="password"
+                value={remoteRestorePassphrase}
+                onChange={(event) => setRemoteRestorePassphrase(event.target.value)}
+                minLength={12}
+                required
+                placeholder="Manual backup passphrase"
+                className="input"
+              />
+            ) : (
+              <p className="text-xs text-content-secondary">
+                This source-tied automatic backup requires the original deployment&apos;s
+                scheduled-backup key.
+              </p>
+            )}
+            {restoreRemoteBackupMutation.isError && (
+              <p className="text-xs text-accent-red">{restoreRemoteBackupMutation.error.message}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  restoreRemoteBackupMutation.isPending ||
+                  (remoteRestoreTarget.recoveryClass === 'PORTABLE_MANUAL' &&
+                    remoteRestorePassphrase.length < 12)
+                }
+              >
+                <RotateCcw size={16} />{' '}
+                {restoreRemoteBackupMutation.isPending ? 'Restoring…' : 'Restore remote backup'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setRemoteRestoreTarget(null);
+                  setRemoteRestorePassphrase('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
 
         {restoreTarget && (
           <form

@@ -6,7 +6,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { BackupService } from './backup.service';
 import { EncryptionService } from '../common/services/encryption.service';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { RemoteBackupRecoveryClass } from '@prisma/client';
 
 type BackupServiceInternals = {
   encrypt(
@@ -52,6 +53,16 @@ describe('BackupService local storage', () => {
     const stored = await readFile(join(directory, `${id}.enc`));
 
     expect(stored).toEqual(payload);
+  });
+
+  it('requires a passphrase before accepting a portable remote archive', async () => {
+    await expect(
+      createService({}).restoreRemoteArchive(
+        'household-1',
+        '/does-not-matter-before-passphrase-validation',
+        RemoteBackupRecoveryClass.PORTABLE_MANUAL,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('includes readiness and household-protection records in a new encrypted backup', async () => {

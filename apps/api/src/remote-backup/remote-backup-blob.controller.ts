@@ -119,6 +119,31 @@ export class RemoteBackupBlobController {
     return this.storage.list(auth.peerId);
   }
 
+  /** Authenticated liveness check; it reveals no backup or household data. */
+  @Get('health')
+  async health(@Req() request: Request) {
+    const parsed = peerRequestSchema.safeParse({
+      peerId: header(request, 'x-wardkeep-peer'),
+      timestamp: header(request, 'x-wardkeep-timestamp'),
+      nonce: header(request, 'x-wardkeep-nonce'),
+      contentSha256: header(request, 'x-wardkeep-content-sha256'),
+      signature: header(request, 'x-wardkeep-signature'),
+    });
+    if (!parsed.success) throw new BadRequestException('Remote backup authentication is invalid');
+    await this.peerAuth.authenticateHeaders({
+      peerId: parsed.data.peerId,
+      method: 'GET',
+      path: '/api/remote-backup/health',
+      headers: {
+        'x-wardkeep-timestamp': parsed.data.timestamp,
+        'x-wardkeep-nonce': parsed.data.nonce,
+        'x-wardkeep-content-sha256': parsed.data.contentSha256,
+        'x-wardkeep-signature': parsed.data.signature,
+      },
+    });
+    return { status: 'ok' };
+  }
+
   @Get('blobs/:backupId')
   async download(
     @Req() request: Request,

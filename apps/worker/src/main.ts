@@ -10,6 +10,7 @@ import { processAICategorization } from './processors/ai-categorization.processo
 import { processRecurringDetection } from './processors/recurring-detection.processor';
 import { processReadinessSnapshot } from './processors/readiness-snapshot.processor';
 import { processScheduledBackups } from './processors/backup.processor';
+import { processScheduledRemoteBackups } from './processors/remote-backup.processor';
 
 const workers: Worker[] = [];
 const queues: Queue[] = [];
@@ -66,6 +67,22 @@ async function bootstrap(): Promise<void> {
     concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.BACKUP],
   });
   workers.push(backupWorker);
+
+  // Remote copies have their own cadence. The API decides whether each peer is
+  // due, so a missed worker run safely catches up without duplicate pushes.
+  const remoteBackupQueue = new Queue(QUEUE_NAMES.REMOTE_BACKUP, { connection });
+  queues.push(remoteBackupQueue);
+  await remoteBackupQueue.upsertJobScheduler(
+    'scheduled-remote-backups',
+    { pattern: '0 * * * *' },
+    { name: 'sync-due-remote-backups', data: {} },
+  );
+  log('Scheduled due remote backup copies hourly.');
+  const remoteBackupWorker = new Worker(QUEUE_NAMES.REMOTE_BACKUP, processScheduledRemoteBackups, {
+    connection,
+    concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.REMOTE_BACKUP],
+  });
+  workers.push(remoteBackupWorker);
 
   log('Started. Listening for jobs...');
 }

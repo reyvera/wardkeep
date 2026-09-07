@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { RemoteBackupPeerStatus } from '@prisma/client';
+import { RemoteBackupPeerStatus, RemoteBackupSyncSchedule } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RemoteBackupPeerService } from './remote-backup-peer.service';
@@ -53,5 +53,28 @@ describe('RemoteBackupPeerService', () => {
     );
 
     await expect(service.revoke('household-1', 'peer-2')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('sets a schedule only on a paired peer owned by the household', async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const service = new RemoteBackupPeerService(
+      { remoteBackupPeer: { updateMany } } as never,
+      { log: vi.fn() } as never,
+    );
+
+    await expect(
+      service.setSyncSchedule('household-1', 'peer-1', RemoteBackupSyncSchedule.DAILY),
+    ).resolves.toEqual({ syncSchedule: RemoteBackupSyncSchedule.DAILY });
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'peer-1',
+          userId: 'household-1',
+          status: RemoteBackupPeerStatus.PAIRED,
+          direction: { not: 'PULL' },
+        },
+        data: { syncSchedule: RemoteBackupSyncSchedule.DAILY, lastError: null },
+      }),
+    );
   });
 });

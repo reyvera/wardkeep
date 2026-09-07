@@ -1080,7 +1080,15 @@ enum RemoteBackupPeerDirection {
 enum RemoteBackupPeerStatus {
   PENDING
   PAIRED
+  UNREACHABLE
   REVOKED
+}
+
+enum RemoteBackupSyncSchedule {
+  HOURLY
+  EVERY_6H
+  DAILY
+  WEEKLY
 }
 
 enum RemoteBackupRecoveryClass {
@@ -1118,7 +1126,9 @@ model RemoteBackupPeer {
   pairingOfferId String?                    @db.Uuid
   direction      RemoteBackupPeerDirection  @default(BOTH)
   status         RemoteBackupPeerStatus     @default(PENDING)
+  syncSchedule   RemoteBackupSyncSchedule?
   lastSyncAt     DateTime?
+  consecutiveFailures Int                 @default(0)
   lastError      String?                    @db.VarChar(1000)
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
@@ -1129,6 +1139,7 @@ model RemoteBackupPeer {
 
   @@unique([userId, peerUrl])
   @@index([userId, status])
+  @@index([status, syncSchedule])
 }
 
 /// A short-lived HMAC nonce already accepted from a peer. It prevents an

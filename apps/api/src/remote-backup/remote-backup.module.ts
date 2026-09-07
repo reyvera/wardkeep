@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { RemoteBackupPairingController } from './remote-backup-pairing.controller';
+import { RemoteBackupInternalController } from './remote-backup-internal.controller';
 import { RemoteBackupBlobController } from './remote-backup-blob.controller';
 import { RemoteBackupPeerController } from './remote-backup-peer.controller';
 import { RemoteBackupNonceService } from './remote-backup-nonce.service';
@@ -16,6 +17,7 @@ import { BackupModule } from '../backup/backup.module';
   imports: [BackupModule],
   controllers: [
     RemoteBackupBlobController,
+    RemoteBackupInternalController,
     RemoteBackupPairingController,
     RemoteBackupPeerController,
   ],

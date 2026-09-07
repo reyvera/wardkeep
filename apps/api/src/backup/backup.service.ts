@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
-import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { RemoteBackupRecoveryClass } from '@prisma/client';
+import { copyFile, mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -503,6 +504,41 @@ export class BackupService {
   }
 
   /**
+   * Restores an already-verified remote archive without retaining a second
+   * local backup copy. Portable archives require their recovery passphrase;
+   * source-tied archives can only use this deployment's scheduled-backup key.
+   */
+  async restoreRemoteArchive(
+    userId: string,
+    archivePath: string,
+    recoveryClass: RemoteBackupRecoveryClass,
+    passphrase?: string,
+  ) {
+    if (recoveryClass === RemoteBackupRecoveryClass.PORTABLE_MANUAL && !passphrase) {
+      throw new BadRequestException('A recovery passphrase is required for this remote backup');
+    }
+    const archive = await stat(archivePath);
+    if (!archive.isFile() || archive.size < 64) {
+      throw new BadRequestException('Remote backup data is invalid');
+    }
+    const backup = await this.prisma.backup.create({
+      data: {
+        userId,
+        filename: `remote-recovery-${Date.now()}.enc`,
+        size: BigInt(archive.size),
+        isAutomated: recoveryClass === RemoteBackupRecoveryClass.SOURCE_TIED_AUTOMATED,
+      },
+    });
+    try {
+      await this.writeBackupFromFile(backup.id, archivePath);
+      return await this.restoreBackup(userId, backup.id, passphrase);
+    } finally {
+      await this.prisma.backup.delete({ where: { id: backup.id } }).catch(() => undefined);
+      await unlink(this.backupPath(backup.id)).catch(() => undefined);
+    }
+  }
+
+  /**
    * Sets or clears the automatic backup schedule for a user.
    * @param userId - The authenticated user's ID
    * @param schedule - The schedule frequency or null to disable
@@ -603,6 +639,11 @@ export class BackupService {
   private async writeBackup(backupId: string, packed: Buffer): Promise<void> {
     await mkdir(backupDirectory(), { recursive: true });
     await writeFile(this.backupPath(backupId), packed, { mode: 0o600 });
+  }
+
+  private async writeBackupFromFile(backupId: string, sourcePath: string): Promise<void> {
+    await mkdir(backupDirectory(), { recursive: true });
+    await copyFile(sourcePath, this.backupPath(backupId), 0);
   }
 
   private isScheduleDue(

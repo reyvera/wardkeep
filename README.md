@@ -204,6 +204,12 @@ Paired destinations store opaque encrypted backup archives; they cannot read hou
 2. Transfer the offer ID and pairing secret to the source deployment through a secure channel.
 3. On the source deployment, open the same Settings section, enter the destination's public URL and the offer details, then choose **Pair destination**.
 4. Create a manual backup and choose **Send latest** for the paired destination.
+5. To recover a copy, choose **Browse copies** for that destination, select a
+   backup, and enter the manual backup passphrase. Automatic backups can be
+   restored only by their original deployment.
+6. For ongoing off-site protection, select an automatic-copy cadence on the
+   paired destination. Wardkeep creates a source-tied encrypted backup for
+   each scheduled copy.
 
 Stopping a destination prevents future transfers but deliberately leaves any previously stored encrypted copies in place.
 

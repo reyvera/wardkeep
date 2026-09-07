@@ -758,25 +758,25 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - POST /api/remote-backup/peer/:id/revoke: terminates pairing, deletes stored backups from peer
   - Show pairing status in UI: paired peers list with last sync time, connection health
 
-- [ ] 38.6 Implement automatic sync scheduling
+- [~] 38.6 Implement automatic sync scheduling
   - Per-peer sync schedule: HOURLY, EVERY_6H, DAILY, WEEKLY (stored in RemoteBackupPeer)
-  - BullMQ repeatable job checks for peers due for sync
-  - Health check: periodic ping to peer URL (HEAD /api/remote-backup/health)
-  - Mark peer as UNREACHABLE after 3 consecutive failures, notify user
-  - Auto-resume when peer comes back online
+  - [x] BullMQ repeatable job checks for peers due for sync hourly, creates a source-tied encrypted backup, and sends it through the existing authenticated transfer flow.
+  - [x] Settings lets a paired push-capable destination choose or clear its schedule.
+  - [x] Authenticated hourly health check verifies the paired peer and exposes its state in Settings.
+  - [x] Mark peer as UNREACHABLE after 3 consecutive failures and auto-resume when the peer responds again.
 
-- [ ] 38.7 Implement remote restore flow
+- [~] 38.7 Implement remote restore flow
   - User initiates restore from remote peer: GET peer's /api/remote-backup/list, select backup, GET /api/remote-backup/pull/:id
-  - Download encrypted blob, decrypt locally with user's passphrase (same as local restore)
-  - Reuse existing restoreBackup logic after decryption
+  - [x] Download an authenticated opaque blob over the peer API, verify its declared size and SHA-256, and stage it in a 0600 temporary location.
+  - [x] Reuse the local restore workflow only after checksum validation; portable manual copies require their passphrase and source-tied automatic copies require the original deployment's scheduled-backup key.
   - Support "fresh instance" restore: new Wardkeep install can pair with friend's server and pull latest backup to bootstrap all data
 
-- [ ] 38.8 Implement remote backup management UI
+- [~] 38.8 Implement remote backup management UI
   - Settings → Remote Backups page
   - Add peer: enter peer URL, initiate pairing (show token or accept token)
   - Peer list: name, URL, status, last sync, storage used
   - Per-peer actions: sync now, view history, change schedule, revoke
-  - Restore from remote: browse peer's stored backups, select, enter passphrase, restore
+  - [x] Restore from remote: browse peer's stored backups, select, enter passphrase, restore
   - Connection health indicator (green/yellow/red)
 
 - [ ] 38.9 Write tests for remote backup system

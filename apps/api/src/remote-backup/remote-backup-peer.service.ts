@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { RemoteBackupPeerStatus } from '@prisma/client';
+import { RemoteBackupPeerStatus, RemoteBackupSyncSchedule } from '@prisma/client';
 
 import { AuditService } from '../common/services/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,6 +10,7 @@ const peerSelect = {
   peerName: true,
   direction: true,
   status: true,
+  syncSchedule: true,
   lastSyncAt: true,
   lastError: true,
   createdAt: true,
@@ -42,5 +43,20 @@ export class RemoteBackupPeerService {
 
     await this.audit.log(userId, 'remote_backup.peer_revoked', { peerId });
     return { revokedAt: new Date() };
+  }
+
+  /** Sets or clears the automatic encrypted-copy schedule for one paired destination. */
+  async setSyncSchedule(userId: string, peerId: string, schedule: RemoteBackupSyncSchedule | null) {
+    const result = await this.prisma.remoteBackupPeer.updateMany({
+      where: {
+        id: peerId,
+        userId,
+        status: RemoteBackupPeerStatus.PAIRED,
+        direction: { not: 'PULL' },
+      },
+      data: { syncSchedule: schedule, lastError: null },
+    });
+    if (result.count !== 1) throw new NotFoundException('Remote backup peer is unavailable');
+    return { syncSchedule: schedule };
   }
 }
