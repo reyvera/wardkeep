@@ -12,6 +12,7 @@ describe('AdvisorService', () => {
       readiness: { score: 70, state: 'known', coverage: 80 },
       priority: null,
       currentRisk: null,
+      observations: [],
       upcoming: [],
     };
     const advisor = new AdvisorService(
@@ -65,7 +66,11 @@ describe('AdvisorService', () => {
         },
       ]),
     } as unknown as TimelineService;
-    const advisor = new AdvisorService(readiness, recommendations, timeline, {} as never);
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+    const advisor = new AdvisorService(readiness, recommendations, timeline, prisma as never);
 
     const brief = await advisor.getMorningBrief('user-1');
 
@@ -76,8 +81,120 @@ describe('AdvisorService', () => {
       currentRisk: 'Liquid reserves need attention.',
     });
     expect(brief.upcoming).toHaveLength(1);
+    expect(brief.observations).toEqual([]);
     expect(vi.mocked(recommendations.synchronize)).toHaveBeenCalledWith('user-1', []);
     expect(vi.mocked(timeline.listUpcoming)).toHaveBeenCalledWith('user-1', 7);
+  });
+
+  it('includes recorded budget warnings without predicting future spending', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [],
+        overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 },
+        topRisks: [],
+      }),
+    } as never;
+    const recommendations = { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never;
+    const timeline = { listUpcoming: vi.fn().mockResolvedValue([]) } as never;
+    const prisma = {
+      budgetAllocation: {
+        findMany: vi.fn().mockResolvedValue([
+          { categoryId: 'groceries', amount: '400', category: { name: 'Groceries' } },
+          { categoryId: 'fuel', amount: '100', category: { name: 'Fuel' } },
+        ]),
+      },
+      transaction: {
+        groupBy: vi.fn().mockResolvedValue([
+          { categoryId: 'groceries', _sum: { amount: '440' } },
+          { categoryId: 'fuel', _sum: { amount: '95' } },
+        ]),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const advisor = new AdvisorService(readiness, recommendations, timeline, prisma as never);
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      observations: [
+        { kind: 'budget_overspent', summary: 'Groceries has used 110% of its recorded monthly allocation (440.00 of 400.00).' },
+        { kind: 'budget_warning', summary: 'Fuel has used 95% of its recorded monthly allocation (95.00 of 100.00).' },
+      ],
+    });
+  });
+
+  it('flags only materially higher recent charges with enough recorded merchant history', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [],
+        overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 },
+        topRisks: [],
+      }),
+    } as never;
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 'recent', date: new Date('2026-09-06T00:00:00Z'), amount: '120', merchant: 'Example Store' },
+          { id: 'old-1', date: new Date('2026-08-20T00:00:00Z'), amount: '60', merchant: 'Example Store' },
+          { id: 'old-2', date: new Date('2026-08-01T00:00:00Z'), amount: '70', merchant: 'example store' },
+          { id: 'old-3', date: new Date('2026-07-10T00:00:00Z'), amount: '80', merchant: 'Example Store' },
+          { id: 'small', date: new Date('2026-09-05T00:00:00Z'), amount: '25', merchant: 'Small purchase' },
+        ]),
+      },
+    };
+    const advisor = new AdvisorService(
+      readiness,
+      { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never,
+      { listUpcoming: vi.fn().mockResolvedValue([]) } as never,
+      prisma as never,
+    );
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      observations: [
+        {
+          kind: 'unusual_charge',
+          summary: 'A recorded debit at Example Store (120.00) is 71% above the median of 3 earlier recorded charges (70.00).',
+        },
+      ],
+    });
+  });
+
+  it('compares category spending only to the same recorded point last month', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [],
+        overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 },
+        topRisks: [],
+      }),
+    } as never;
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: {
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([
+            { categoryId: 'dining', date: new Date('2026-09-06T00:00:00Z'), amount: '180', category: { name: 'Dining' } },
+            { categoryId: 'dining', date: new Date('2026-08-05T00:00:00Z'), amount: '90', category: { name: 'Dining' } },
+            { categoryId: 'fuel', date: new Date('2026-09-05T00:00:00Z'), amount: '30', category: { name: 'Fuel' } },
+            { categoryId: 'fuel', date: new Date('2026-08-05T00:00:00Z'), amount: '25', category: { name: 'Fuel' } },
+          ]),
+      },
+    };
+    const advisor = new AdvisorService(
+      readiness,
+      { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never,
+      { listUpcoming: vi.fn().mockResolvedValue([]) } as never,
+      prisma as never,
+    );
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      observations: [
+        {
+          kind: 'spending_shift',
+          summary: 'Dining spending is 100% higher so far this month (180.00 versus 90.00 at the same point last month).',
+        },
+      ],
+    });
   });
 
   it('reports recorded trend data and recently completed recommendations for periodic briefs', async () => {

@@ -828,6 +828,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 41.1 Implement proactive daily briefing generation
   - [x] Local worker generates and persists one deterministic daily brief per household after readiness snapshots, authenticated with a deployment-derived HMAC token.
+  - [x] Daily brief reports recorded month-to-date budget allocations at 90%+ usage; it does not forecast spending or prescribe cuts.
+  - [x] Daily brief identifies a recent debit only when a named merchant has at least three earlier recorded charges and the amount materially exceeds their median; it does not infer fraud or intent.
+  - [x] Daily brief compares category spending only with the same recorded point in the preceding calendar month; it does not project a month-end result.
   - Worker job (configurable time) generates personalized briefing
   - Detects: unusual charges, budgets running hot, spending shifts
   - Suggests: recategorizations, savings opportunities, risk mitigations

@@ -14,6 +14,12 @@ export interface MorningBrief {
   readiness: { score: number | null; state: 'known' | 'partial' | 'not_evaluated'; coverage: number };
   priority: { summary: string; action: string; href: string } | null;
   currentRisk: string | null;
+  observations: Array<{
+    kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift';
+    summary: string;
+    action: string;
+    href: string;
+  }>;
   upcoming: TimelineEvent[];
 }
 
@@ -129,12 +135,15 @@ export class AdvisorService {
   ) {}
 
   /** Builds a deterministic morning brief from recorded readiness and timeline data. */
-  async getMorningBrief(userId: string): Promise<MorningBrief> {
+  async getMorningBrief(userId: string, now = new Date()): Promise<MorningBrief> {
     const readiness = await this.readiness.getReadiness(userId);
     await this.recommendations.synchronize(userId, readiness.signals);
-    const [recommendations, upcoming] = await Promise.all([
+    const [recommendations, upcoming, budgetObservations, unusualChargeObservations, spendingShiftObservations] = await Promise.all([
       this.recommendations.list(userId),
       this.timeline.listUpcoming(userId, 7),
+      this.getBudgetObservations(userId, now),
+      this.getUnusualChargeObservations(userId, now),
+      this.getSpendingShiftObservations(userId, now),
     ]);
     const recommendation = recommendations.find((candidate) => candidate.status === 'ACTIVE') ?? null;
     const currentRisk = readiness.topRisks[0]?.summary ?? null;
@@ -154,6 +163,7 @@ export class AdvisorService {
           }
         : null,
       currentRisk,
+      observations: [...budgetObservations, ...unusualChargeObservations, ...spendingShiftObservations],
       upcoming,
     };
   }
@@ -165,7 +175,7 @@ export class AdvisorService {
       where: { userId_briefingDate: { userId, briefingDate } },
       select: { content: true },
     });
-    return stored ? (stored.content as unknown as MorningBrief) : this.getMorningBrief(userId);
+    return stored ? (stored.content as unknown as MorningBrief) : this.getMorningBrief(userId, now);
   }
 
   /** Generates one local, deterministic briefing snapshot per household for the UTC day. */
@@ -176,7 +186,7 @@ export class AdvisorService {
     let failed = 0;
     for (const user of users) {
       try {
-        const content = await this.getMorningBrief(user.id);
+        const content = await this.getMorningBrief(user.id, now);
         await this.prisma.dailyBrief.upsert({
           where: { userId_briefingDate: { userId: user.id, briefingDate } },
           update: { content: content as unknown as Prisma.InputJsonValue },
@@ -188,6 +198,167 @@ export class AdvisorService {
       }
     }
     return { generated, failed };
+  }
+
+  /** Reports recorded month-to-date budget usage; it does not forecast spending. */
+  private async getBudgetObservations(userId: string, now: Date): Promise<MorningBrief['observations']> {
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+    const allocations = await this.prisma.budgetAllocation.findMany({
+      where: { budget: { userId, month: monthStart } },
+      include: { category: { select: { name: true } } },
+    });
+    if (allocations.length === 0) return [];
+
+    const spending = await this.prisma.transaction.groupBy({
+      by: ['categoryId'],
+      where: {
+        userId,
+        type: 'DEBIT',
+        categoryId: { in: allocations.map((allocation) => allocation.categoryId) },
+        date: { gte: monthStart, lt: nextMonthStart },
+      },
+      _sum: { amount: true },
+    });
+    const spentByCategory = new Map(
+      spending.map((row) => [row.categoryId, new Prisma.Decimal(row._sum.amount ?? 0)]),
+    );
+
+    return allocations
+      .map((allocation) => {
+        const allocated = new Prisma.Decimal(allocation.amount);
+        if (allocated.lte(0)) return null;
+        const spent = spentByCategory.get(allocation.categoryId) ?? new Prisma.Decimal(0);
+        const percentUsed = spent.dividedBy(allocated).times(100).toDecimalPlaces(0).toNumber();
+        if (percentUsed < 90) return null;
+        const overspent = percentUsed >= 100;
+        const kind: 'budget_warning' | 'budget_overspent' = overspent
+          ? 'budget_overspent'
+          : 'budget_warning';
+        return {
+          kind,
+          summary: `${allocation.category.name} has used ${percentUsed}% of its recorded monthly allocation (${spent.toFixed(2)} of ${allocated.toFixed(2)}).`,
+          action: 'Review budget',
+          href: '/budgets',
+        };
+      })
+      .filter(
+        (observation): observation is { kind: 'budget_warning' | 'budget_overspent'; summary: string; action: string; href: string } =>
+          observation !== null,
+      )
+      .sort((a, b) => (a.kind === b.kind ? a.summary.localeCompare(b.summary) : a.kind === 'budget_overspent' ? -1 : 1));
+  }
+
+  /**
+   * Identifies only recent, merchant-matched debits that exceed the recorded
+   * median materially. It does not infer fraud, recurrence, or intent.
+   */
+  private async getUnusualChargeObservations(userId: string, now: Date): Promise<MorningBrief['observations']> {
+    const recentStart = new Date(now);
+    recentStart.setUTCDate(recentStart.getUTCDate() - 7);
+    const historyStart = new Date(recentStart);
+    historyStart.setUTCDate(historyStart.getUTCDate() - 90);
+    const transactions = await this.prisma.transaction.findMany({
+      where: { userId, type: 'DEBIT', date: { gte: historyStart, lte: now }, merchant: { not: null } },
+      select: { id: true, date: true, amount: true, merchant: true },
+      orderBy: { date: 'desc' },
+    });
+    const historyByMerchant = new Map<string, Prisma.Decimal[]>();
+    for (const transaction of transactions) {
+      if (!transaction.merchant || transaction.date >= recentStart) continue;
+      const merchant = transaction.merchant.trim();
+      if (!merchant) continue;
+      const values = historyByMerchant.get(merchant.toLocaleLowerCase()) ?? [];
+      values.push(new Prisma.Decimal(transaction.amount));
+      historyByMerchant.set(merchant.toLocaleLowerCase(), values);
+    }
+
+    return transactions
+      .filter((transaction) => transaction.merchant && transaction.date >= recentStart)
+      .map((transaction) => {
+        const merchant = transaction.merchant!.trim();
+        const earlierCharges = historyByMerchant.get(merchant.toLocaleLowerCase()) ?? [];
+        if (earlierCharges.length < 3) return null;
+        const ordered = earlierCharges.slice().sort((a, b) => a.comparedTo(b));
+        const midpoint = Math.floor(ordered.length / 2);
+        const median = ordered.length % 2 === 0
+          ? ordered[midpoint - 1].plus(ordered[midpoint]).dividedBy(2)
+          : ordered[midpoint];
+        const amount = new Prisma.Decimal(transaction.amount);
+        const difference = amount.minus(median);
+        if (median.lte(0) || difference.lt(20) || amount.lt(median.times(1.5))) return null;
+        const percentAbove = difference.dividedBy(median).times(100).toDecimalPlaces(0).toNumber();
+        return {
+          kind: 'unusual_charge' as const,
+          summary: `A recorded debit at ${merchant} (${amount.toFixed(2)}) is ${percentAbove}% above the median of ${earlierCharges.length} earlier recorded charges (${median.toFixed(2)}).`,
+          action: 'Review transaction',
+          href: '/transactions',
+        };
+      })
+      .filter(
+        (observation): observation is { kind: 'unusual_charge'; summary: string; action: string; href: string } =>
+          observation !== null,
+      )
+      .slice(0, 3);
+  }
+
+  /** Compares only equivalent recorded calendar-to-date category spending. */
+  private async getSpendingShiftObservations(userId: string, now: Date): Promise<MorningBrief['observations']> {
+    const currentStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const currentEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const previousStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    const previousEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, now.getUTCDate() + 1));
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'DEBIT',
+        categoryId: { not: null },
+        OR: [
+          { date: { gte: currentStart, lt: currentEnd } },
+          { date: { gte: previousStart, lt: previousEnd } },
+        ],
+      },
+      select: { amount: true, categoryId: true, date: true, category: { select: { name: true } } },
+    });
+    const currentByCategory = new Map<string, { name: string; amount: Prisma.Decimal }>();
+    const previousByCategory = new Map<string, Prisma.Decimal>();
+    for (const transaction of transactions) {
+      if (!transaction.categoryId || !transaction.category) continue;
+      const amount = new Prisma.Decimal(transaction.amount);
+      if (transaction.date >= currentStart) {
+        const existing = currentByCategory.get(transaction.categoryId);
+        currentByCategory.set(transaction.categoryId, {
+          name: transaction.category.name,
+          amount: (existing?.amount ?? new Prisma.Decimal(0)).plus(amount),
+        });
+      } else {
+        previousByCategory.set(
+          transaction.categoryId,
+          (previousByCategory.get(transaction.categoryId) ?? new Prisma.Decimal(0)).plus(amount),
+        );
+      }
+    }
+
+    return [...currentByCategory.entries()]
+      .map(([categoryId, current]) => {
+        const previous = previousByCategory.get(categoryId);
+        if (!previous || previous.lte(0)) return null;
+        const difference = current.amount.minus(previous);
+        if (difference.lt(20) || current.amount.lt(previous.times(1.5))) return null;
+        const percentAbove = difference.dividedBy(previous).times(100).toDecimalPlaces(0).toNumber();
+        return {
+          kind: 'spending_shift' as const,
+          summary: `${current.name} spending is ${percentAbove}% higher so far this month (${current.amount.toFixed(2)} versus ${previous.toFixed(2)} at the same point last month).`,
+          action: 'Review transactions',
+          href: '/transactions',
+        };
+      })
+      .filter(
+        (observation): observation is { kind: 'spending_shift'; summary: string; action: string; href: string } =>
+          observation !== null,
+      )
+      .sort((a, b) => b.summary.localeCompare(a.summary))
+      .slice(0, 3);
   }
 
   /**

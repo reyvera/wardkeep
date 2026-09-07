@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CalendarDays, Lightbulb, Sun } from 'lucide-react';
+import { AlertTriangle, CalendarDays, Lightbulb, Sun, WalletCards } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
 
@@ -12,6 +12,7 @@ interface MorningBrief {
   readiness: { score: number | null; state: 'known' | 'partial' | 'not_evaluated'; coverage: number };
   priority: { summary: string; action: string; href: string } | null;
   currentRisk: string | null;
+  observations: Array<{ kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift'; summary: string; action: string; href: string }>;
   upcoming: Array<{ id: string; date: string; title: string; detail: string; href: string }>;
 }
 
@@ -111,6 +112,26 @@ export default function BriefPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle size={20} className="mt-0.5 text-accent-yellow" />
             <div><h2 className="card-title">CURRENT RISK</h2><p className="mt-2 text-sm text-content-secondary">{data.currentRisk}</p></div>
+          </div>
+        </section>
+      )}
+
+      {data.observations.length > 0 && (
+        <section className="card">
+          <div className="flex items-start gap-3">
+            <WalletCards size={20} className="mt-0.5 text-accent-yellow" />
+            <div className="min-w-0 flex-1">
+              <h2 className="card-title">RECORDED SPENDING STATUS</h2>
+              <p className="mt-1 text-sm text-content-secondary">Month-to-date budget usage and recent merchant comparisons from recorded transactions.</p>
+              <ul className="mt-4 space-y-4">
+                {data.observations.map((observation) => (
+                  <li key={observation.summary} className="border-t border-edge pt-4 first:border-t-0 first:pt-0">
+                    <p className="text-sm text-content-primary">{observation.summary}</p>
+                    <Link href={observation.href} className="btn-secondary mt-3 text-xs">{observation.action}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </section>
       )}
