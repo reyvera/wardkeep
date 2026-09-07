@@ -10,6 +10,7 @@ describe('AdvisorMemoryService', () => {
     const service = new AdvisorMemoryService({
       advisorMemory: { findMany, deleteMany },
       recurringTransaction: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]) },
     } as never);
     const now = new Date('2026-09-07T00:00:00.000Z');
     await service.list('household-1', now);
@@ -42,11 +43,40 @@ describe('AdvisorMemoryService', () => {
           { id: 'bill-1', merchant: 'Annual policy', nextExpected: new Date('2027-01-01') },
         ]),
       },
+      transaction: { findMany: vi.fn().mockResolvedValue([]) },
     } as never);
 
     await service.list('household-1');
     expect(create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ kind: 'ANNUAL_EVENT', sourceRefs: ['recurring:bill-1'] }),
+    }));
+  });
+
+  it('records a measured seasonal pattern only when both prior years have category data', async () => {
+    const create = vi.fn().mockResolvedValue({ id: 'seasonal-1' });
+    const service = new AdvisorMemoryService({
+      advisorMemory: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findMany: vi.fn().mockResolvedValue([]),
+        create,
+      },
+      recurringTransaction: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: {
+        findMany: vi.fn().mockResolvedValue([
+          { categoryId: 'travel', amount: '800', date: new Date('2025-09-10'), category: { name: 'Travel' } },
+          { categoryId: 'travel', amount: '650', date: new Date('2024-09-10'), category: { name: 'Travel' } },
+          { categoryId: 'dining', amount: '100', date: new Date('2025-09-10'), category: { name: 'Dining' } },
+        ]),
+      },
+    } as never);
+
+    await service.list('household-1', new Date('2026-09-07T00:00:00.000Z'));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        kind: 'SEASONAL_PATTERN',
+        sourceRefs: ['seasonal:8:travel'],
+        summary: expect.stringContaining('September Travel spending was 800.00 in 2025 and 650.00 in 2024'),
+      }),
     }));
   });
 
@@ -65,6 +95,7 @@ describe('AdvisorMemoryService', () => {
           { id: 'bill-1', merchant: 'Annual policy', nextExpected },
         ]),
       },
+      transaction: { findMany: vi.fn().mockResolvedValue([]) },
     } as never);
 
     await service.list('household-1');
@@ -79,10 +110,11 @@ describe('AdvisorMemoryService', () => {
     const findMany = vi
       .fn()
       .mockResolvedValueOnce([{ id: 'memory-1', sourceRefs: ['recurring:inactive-bill'] }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValue([]);
     const service = new AdvisorMemoryService({
       advisorMemory: { deleteMany, findMany },
       recurringTransaction: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]) },
     } as never);
 
     await service.list('household-1');

@@ -247,7 +247,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Return available 7-, 30-, and 90-day score comparisons with their actual elapsed period.
   - [x] Store the observed overall score used by the Dashboard, never a synthetic score for an unevaluated household.
   - [x] Add durable causal explanations for score changes, not only changed factors.
-  - [ ] Detect seasonal patterns (optional, AI-enhanced later)
+  - [x] Detect measured seasonal patterns from matching category records in both prior calendar years; expose them as local historical context, never a readiness forecast or score input.
 
 - [x] 19.5 Write property tests for Readiness Engine
   - [x] **Property 34:** Pillar score is deterministic given same signals
@@ -819,6 +819,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 40.1 Implement Advisor memory system
   - [x] Local, household-scoped typed memory entries support explicit preferences, annual events, measured seasonal patterns, and recommendation outcomes with source references and expiry.
   - [x] Manual memory creation is limited to preferences and annual events; measured seasonal patterns and recommendation outcomes remain system-recorded facts.
+  - [x] Advisor Memory stores a measured seasonal pattern only when the same category has recorded spending in both prior calendar years; it is labeled historical context, never a forecast.
   - [x] Confirmed annual recurring bills create idempotent, source-linked local annual-event memories; no spend forecast is implied.
   - [x] Automatic annual-event memories refresh their recorded next-expected date when the confirmed recurring source changes.
   - [x] Advisor Memory page makes local entries inspectable and deletable; no hidden model-memory state is introduced.

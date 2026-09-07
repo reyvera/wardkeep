@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AdvisorMemoryKind } from '@prisma/client';
+import { Decimal } from 'decimal.js';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -11,6 +12,7 @@ export class AdvisorMemoryService {
   async list(userId: string, now = new Date()) {
     await this.prisma.advisorMemory.deleteMany({ where: { userId, expiresAt: { lte: now } } });
     await this.syncAnnualRecurringEvents(userId);
+    await this.syncMeasuredSeasonalPatterns(userId, now);
     return this.prisma.advisorMemory.findMany({
       where: { userId, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       orderBy: [{ observedAt: 'desc' }, { createdAt: 'desc' }],
@@ -59,6 +61,71 @@ export class AdvisorMemoryService {
           });
         }
       }),
+    );
+  }
+
+  /**
+   * Records a seasonal observation only when the same category has entries in
+   * both prior calendar years. It is historical context, not a forecast.
+   */
+  private async syncMeasuredSeasonalPatterns(userId: string, now: Date) {
+    const month = now.getUTCMonth();
+    const recentYear = now.getUTCFullYear() - 1;
+    const olderYear = recentYear - 1;
+    const range = (year: number) => ({
+      gte: new Date(Date.UTC(year, month, 1)),
+      lt: new Date(Date.UTC(year, month + 1, 1)),
+    });
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'DEBIT',
+        categoryId: { not: null },
+        OR: [{ date: range(recentYear) }, { date: range(olderYear) }],
+      },
+      select: { categoryId: true, amount: true, date: true, category: { select: { name: true } } },
+    });
+    const totals = new Map<string, { name: string; recent: Decimal; older: Decimal }>();
+    for (const transaction of transactions) {
+      if (!transaction.categoryId || !transaction.category) continue;
+      const current = totals.get(transaction.categoryId) ?? {
+        name: transaction.category.name,
+        recent: new Decimal(0),
+        older: new Decimal(0),
+      };
+      const amount = new Decimal(transaction.amount);
+      if (transaction.date.getUTCFullYear() === recentYear) current.recent = current.recent.plus(amount);
+      if (transaction.date.getUTCFullYear() === olderYear) current.older = current.older.plus(amount);
+      totals.set(transaction.categoryId, current);
+    }
+    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(now);
+    const existing = await this.prisma.advisorMemory.findMany({
+      where: { userId, kind: 'SEASONAL_PATTERN' },
+      select: { id: true, sourceRefs: true },
+    });
+    const existingBySource = new Map(
+      existing.flatMap((memory) =>
+        memory.sourceRefs
+          .filter((source) => source.startsWith(`seasonal:${month}:`))
+          .map((source) => [source, memory.id]),
+      ),
+    );
+    await Promise.all(
+      [...totals.entries()]
+        .filter(([, total]) => total.recent.gt(0) && total.older.gt(0))
+        .map(async ([categoryId, total]) => {
+          const sourceRef = `seasonal:${month}:${categoryId}`;
+          const data = {
+            summary: `Recorded ${monthName} ${total.name} spending was ${total.recent.toFixed(2)} in ${recentYear} and ${total.older.toFixed(2)} in ${olderYear}. This is historical context, not a forecast.`,
+            observedAt: new Date(Date.UTC(now.getUTCFullYear(), month, 1)),
+            sourceRefs: [sourceRef],
+          };
+          const id = existingBySource.get(sourceRef);
+          if (id) return this.prisma.advisorMemory.update({ where: { id }, data });
+          return this.prisma.advisorMemory.create({
+            data: { userId, kind: 'SEASONAL_PATTERN', ...data },
+          });
+        }),
     );
   }
 
