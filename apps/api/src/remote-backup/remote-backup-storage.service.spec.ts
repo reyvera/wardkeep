@@ -34,6 +34,7 @@ describe('RemoteBackupStorageService', () => {
       remoteBackup: {
         create,
         aggregate: vi.fn().mockResolvedValue({ _sum: { size: 0n } }),
+        findFirst: vi.fn().mockResolvedValue(null),
         findMany: vi.fn().mockResolvedValue([]),
         deleteMany: vi.fn(),
         delete: vi.fn(),
@@ -69,6 +70,7 @@ describe('RemoteBackupStorageService', () => {
       remoteBackup: {
         create,
         aggregate: vi.fn().mockResolvedValue({ _sum: { size: 0n } }),
+        findFirst: vi.fn().mockResolvedValue(null),
         findMany: vi.fn(),
         deleteMany: vi.fn(),
         delete: vi.fn(),
@@ -99,7 +101,14 @@ describe('RemoteBackupStorageService', () => {
     const create = vi.fn();
     const aggregate = vi.fn().mockResolvedValue({ _sum: { size: 8n } });
     const service = new RemoteBackupStorageService({
-      remoteBackup: { create, aggregate, findMany: vi.fn(), deleteMany: vi.fn(), delete: vi.fn() },
+      remoteBackup: {
+        create,
+        aggregate,
+        findFirst: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn(),
+        deleteMany: vi.fn(),
+        delete: vi.fn(),
+      },
     } as never);
     const data = 'four';
 
@@ -116,5 +125,80 @@ describe('RemoteBackupStorageService', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it("does not expose another peer's metadata or archive stream", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const findFirst = vi.fn().mockResolvedValue(null);
+    const service = new RemoteBackupStorageService({
+      remoteBackup: { findMany, findFirst } as never,
+    } as never);
+
+    await expect(service.list('peer-a')).resolves.toEqual([]);
+    await expect(service.open('peer-a', 'backup-owned-by-peer-b')).resolves.toBeNull();
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { peerId: 'peer-a' } }));
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'backup-owned-by-peer-b', peerId: 'peer-a' } }),
+    );
+  });
+
+  it('rejects a duplicate source backup ID when its digest differs', async () => {
+    const create = vi.fn();
+    const service = new RemoteBackupStorageService({
+      remoteBackup: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'existing',
+          size: 4n,
+          checksum: 'a'.repeat(64),
+          createdAt: new Date(),
+          receivedAt: new Date(),
+        }),
+        create,
+      },
+    } as never);
+    await expect(
+      service.receive({
+        peerId: 'peer-1',
+        userId: 'household-1',
+        sourceBackupId: 'source-backup-1',
+        recoveryClass: RemoteBackupRecoveryClass.PORTABLE_MANUAL,
+        createdAt: new Date(),
+        expectedSize: 4,
+        expectedChecksum: 'b'.repeat(64),
+        chunks: chunks('four'),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('treats an identical source backup replay as idempotent', async () => {
+    const checksum = 'a'.repeat(64);
+    const existing = {
+      id: 'existing',
+      size: 4n,
+      checksum,
+      createdAt: new Date('2026-09-01'),
+      receivedAt: new Date('2026-09-01'),
+    };
+    const service = new RemoteBackupStorageService({
+      remoteBackup: {
+        findFirst: vi.fn().mockResolvedValue(existing),
+        aggregate: vi.fn(),
+        create: vi.fn(),
+      },
+    } as never);
+
+    await expect(
+      service.receive({
+        peerId: 'peer-1',
+        userId: 'household-1',
+        sourceBackupId: 'source-backup-1',
+        recoveryClass: RemoteBackupRecoveryClass.PORTABLE_MANUAL,
+        createdAt: new Date(),
+        expectedSize: 4,
+        expectedChecksum: checksum,
+        chunks: chunks('four'),
+      }),
+    ).resolves.toEqual({ ...existing, size: 4 });
   });
 });

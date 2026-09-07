@@ -58,6 +58,16 @@ export class RemoteBackupStorageService {
     ) {
       throw new BadRequestException('Remote backup metadata is invalid');
     }
+    const existing = await this.prisma.remoteBackup.findFirst({
+      where: { peerId: input.peerId, sourceBackupId: input.sourceBackupId },
+      select: { id: true, size: true, checksum: true, createdAt: true, receivedAt: true },
+    });
+    if (existing) {
+      if (!safeEqual(existing.checksum, input.expectedChecksum.toLowerCase())) {
+        throw new BadRequestException('Remote backup ID already exists with different content');
+      }
+      return { ...existing, size: Number(existing.size) };
+    }
 
     const usage = await this.prisma.remoteBackup.aggregate({
       where: { peerId: input.peerId },

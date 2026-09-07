@@ -745,6 +745,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 38.4 Implement remote backup receiver service (pull side)
   - [x] Authenticated blob upload validates HMAC, nonce, exact size, and digest; it stores only opaque encrypted bytes and records peer-scoped metadata.
   - [x] Enforce a configurable per-peer storage quota (default 500 MB) and a maximum ten archives per peer, with verified-new-archive-first retention.
+  - [x] Reject a repeated source-backup ID when its digest differs; an identical replay is idempotent.
   - [x] Authenticated blob download serves only the requesting peer's stored archive; authenticated listing returns only that peer's metadata.
 
 - [ ] 38.5 Implement pairing flow (trust establishment)
@@ -775,12 +776,10 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Restore from remote: browse peer's stored backups, select, enter passphrase, restore
   - Connection health indicator (green/yellow/red)
 
-- [ ] 38.9 Write tests for remote backup system
-  - Unit tests: HMAC signing/verification, encryption round-trip, quota enforcement, FIFO eviction
-  - Integration tests: full push/pull cycle with mocked HTTP (Supertest for receiver endpoints)
-  - Test pairing flow: generate token → accept → verify mutual trust
+- [~] 38.9 Write tests for remote backup system
+  - [x] Unit tests cover HMAC signing/verification, replay rejection, pairing retry safety, blob integrity, quota enforcement, duplicate-ID protection, peer isolation, schedules, health state, and transfer audit/retry behavior.
+  - Test integration: full push/pull cycle with mocked HTTP (Supertest for receiver endpoints)
   - Test restore from remote: push backup → pull on fresh instance → verify data integrity
-  - Test error scenarios: peer offline, quota exceeded, invalid HMAC, expired pairing token
 
 ---
 
