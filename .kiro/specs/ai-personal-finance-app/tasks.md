@@ -691,7 +691,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Manual, dated quote snapshots and a transparent quoted-value total; coverage explicitly excludes unquoted holdings
   - Market data API integration for live prices
   - [~] Portfolio value and allocation (available from dated recorded quotes only; change is shown only between actual recorded snapshots; live daily change remains pending)
-  - Include in net worth
+  - [x] Include dated quoted holdings in net worth without double-counting their investment account balance; unquoted holdings and unmodeled account cash remain outside the total.
   - Direct broker-sync policy: begin with read-only Alpaca positions and official Robinhood Crypto holdings; do not support general Robinhood securities access without its written authorization. See `/docs/broker-connection-policy.md`.
 
 - [x] 36.2 Real estate tracking

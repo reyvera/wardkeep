@@ -41,8 +41,24 @@ describe('calculateRecordedNetWorth', () => {
         ]),
       },
       vehicle: { findMany: vi.fn().mockResolvedValue([]) },
+      investmentHolding: { findMany: vi.fn().mockResolvedValue([]) },
     } as never;
 
     await expect(calculateRecordedNetWorth(prisma, 'user-1')).resolves.toEqual(new Decimal('100000'));
+  });
+
+  it('uses quoted holdings instead of an investment-account balance to avoid double counting', async () => {
+    const prisma = {
+      account: { findMany: vi.fn().mockResolvedValue([
+        { id: 'brokerage-1', type: 'BROKERAGE', initialBalance: '10000', transactions: [], linkedBankAccounts: [], debtProfile: null, realEstateProfile: null },
+      ]) },
+      vehicle: { findMany: vi.fn().mockResolvedValue([]) },
+      investmentHolding: { findMany: vi.fn().mockResolvedValue([
+        { accountId: 'brokerage-1', quantity: '2', quotePrice: '6000' },
+        { accountId: 'brokerage-1', quantity: '5', quotePrice: null },
+      ]) },
+    } as never;
+
+    await expect(calculateRecordedNetWorth(prisma, 'user-1')).resolves.toEqual(new Decimal('12000'));
   });
 });

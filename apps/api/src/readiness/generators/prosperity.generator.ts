@@ -1,5 +1,5 @@
 import { Decimal } from 'decimal.js';
-import { PrismaClient } from '@prisma/client';
+import { AccountType, PrismaClient } from '@prisma/client';
 
 import { calculateBalance } from '@wardkeep/finance-engine';
 import { TransactionType, DEBT_ACCOUNT_TYPES } from '@wardkeep/shared';
@@ -7,6 +7,11 @@ import { Signal } from '@wardkeep/readiness';
 
 /** Liability account types used to compute total debt. */
 const LIABILITY_TYPES = DEBT_ACCOUNT_TYPES.map((t) => t as string);
+const INVESTMENT_ACCOUNT_TYPES = new Set<AccountType>([
+  AccountType.BROKERAGE,
+  AccountType.RETIREMENT,
+  AccountType.CRYPTO,
+]);
 
 /**
  * Generates readiness signals for the Prosperity pillar.
@@ -64,7 +69,7 @@ export async function calculateRecordedNetWorth(
   prisma: PrismaClient,
   userId: string,
 ): Promise<Decimal> {
-  const [accounts, vehicles] = await Promise.all([prisma.account.findMany({
+  const [accounts, vehicles, holdings] = await Promise.all([prisma.account.findMany({
     where: { userId, isArchived: false },
     include: {
       transactions: true,
@@ -72,7 +77,21 @@ export async function calculateRecordedNetWorth(
       debtProfile: { select: { assetValue: true } },
       realEstateProfile: { select: { recordedValue: true } },
     },
-  }), prisma.vehicle.findMany({ where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } }, select: { estimatedValue: true, loanBalance: true } })]);
+  }), prisma.vehicle.findMany({ where: { userId, isActive: true, ownership: { in: ['OWNED', 'FINANCED', 'OTHER'] }, estimatedValue: { not: null } }, select: { estimatedValue: true, loanBalance: true } }), prisma.investmentHolding.findMany({
+    where: { account: { userId, isArchived: false, type: { in: [...INVESTMENT_ACCOUNT_TYPES] } } },
+    select: { accountId: true, quantity: true, quotePrice: true },
+  })]);
+
+  const quotedHoldingsByAccount = new Map<string, Decimal>();
+  for (const holding of holdings) {
+    if (holding.quotePrice === null) continue;
+    quotedHoldingsByAccount.set(
+      holding.accountId,
+      (quotedHoldingsByAccount.get(holding.accountId) ?? new Decimal(0)).add(
+        new Decimal(holding.quantity.toString()).mul(holding.quotePrice.toString()),
+      ),
+    );
+  }
 
   let assets = new Decimal(0);
   let liabilities = new Decimal(0);
@@ -91,6 +110,11 @@ export async function calculateRecordedNetWorth(
       // Use the property profile's dated recorded value once; its linked mortgage
       // remains a separately recorded liability account.
       assets = assets.add(new Decimal(account.realEstateProfile.recordedValue.toString()));
+    } else if (INVESTMENT_ACCOUNT_TYPES.has(account.type) && quotedHoldingsByAccount.has(account.id)) {
+      // A broker balance may already include positions. Use quoted holdings in
+      // its place rather than adding both, and leave unquoted positions/cash
+      // outside the total until a dedicated cash-balance model exists.
+      assets = assets.add(quotedHoldingsByAccount.get(account.id)!);
     } else {
       assets = assets.add(balance);
     }
