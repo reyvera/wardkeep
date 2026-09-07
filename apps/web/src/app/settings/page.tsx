@@ -843,13 +843,29 @@ export default function SettingsPage() {
               className="flex items-center justify-between gap-3 border-t border-edge pt-2 first:border-0 first:pt-0"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm text-content-primary">{peer.peerName}</p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={
+                      peer.status === 'PAIRED'
+                        ? 'h-2 w-2 rounded-full bg-accent-green'
+                        : peer.status === 'UNREACHABLE'
+                          ? 'h-2 w-2 rounded-full bg-accent-red'
+                          : 'h-2 w-2 rounded-full bg-accent-yellow'
+                    }
+                    aria-hidden="true"
+                  />
+                  <p className="truncate text-sm text-content-primary">{peer.peerName}</p>
+                </div>
                 <p className="truncate text-xs text-content-secondary">
                   {peer.status === 'PAIRED'
                     ? peer.lastSyncAt
                       ? `Last copy ${new Date(peer.lastSyncAt).toLocaleString()}`
                       : 'Ready for an encrypted copy'
-                    : peer.status}
+                    : peer.status === 'UNREACHABLE'
+                      ? 'Destination is unreachable; Wardkeep will retry automatically'
+                      : peer.status === 'PENDING'
+                        ? 'Pairing is pending'
+                        : 'Stopped'}
                 </p>
                 {peer.lastError && <p className="mt-1 text-xs text-accent-red">{peer.lastError}</p>}
               </div>

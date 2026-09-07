@@ -774,7 +774,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Peer list: name, URL, status, last sync, storage used
   - Per-peer actions: sync now, view history, change schedule, revoke
   - [x] Restore from remote: browse peer's stored backups, select, enter passphrase, restore
-  - Connection health indicator (green/yellow/red)
+  - [x] Connection health indicator (green/yellow/red)
 
 - [~] 38.9 Write tests for remote backup system
   - [x] Unit tests cover HMAC signing/verification, replay rejection, pairing retry safety, blob integrity, quota enforcement, duplicate-ID protection, peer isolation, schedules, health state, and transfer audit/retry behavior.
