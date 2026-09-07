@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
@@ -44,7 +45,9 @@ function header(request: Request, name: string): string | undefined {
 @Controller('remote-backup')
 export class RemoteBackupBlobController {
   constructor(
+    @Inject(RemoteBackupPeerAuthService)
     private readonly peerAuth: RemoteBackupPeerAuthService,
+    @Inject(RemoteBackupStorageService)
     private readonly storage: RemoteBackupStorageService,
   ) {}
 

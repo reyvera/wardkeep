@@ -780,7 +780,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 - [~] 38.9 Write tests for remote backup system
   - [x] Unit tests cover HMAC signing/verification, replay rejection, pairing retry safety, blob integrity, quota enforcement, duplicate-ID protection, peer isolation, schedules, health state, and transfer audit/retry behavior.
   - [x] In-process peer-storage integration covers opaque upload, peer-scoped list, and pull with exact content/digest preservation.
-  - Test integration: full push/pull cycle with signed HTTP (Supertest for receiver endpoints)
+  - [x] In-process HTTP contract test covers authenticated opaque upload, peer-scoped list, and streamed pull with exact bytes and digest preservation.
   - Test restore from remote: push backup → pull on fresh instance → verify data integrity
 
 ---
