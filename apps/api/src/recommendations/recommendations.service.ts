@@ -229,7 +229,7 @@ export class RecommendationsService {
             select: { overall: true, recordedAt: true },
           })
         : null;
-    return this.prisma.recommendation.update({
+    const updated = await this.prisma.recommendation.update({
       where: { id },
       data: {
         status,
@@ -240,5 +240,20 @@ export class RecommendationsService {
         resolvedAt: null,
       },
     });
+    if (
+      (status === 'COMPLETED' || status === 'DISMISSED') &&
+      recommendation.status !== status
+    ) {
+      await this.prisma.advisorMemory.create({
+        data: {
+          userId,
+          kind: 'RECOMMENDATION_OUTCOME',
+          summary: `Recommendation “${recommendation.action}” was marked ${status.toLowerCase()}. Wardkeep has not inferred an outcome beyond that recorded status.`,
+          sourceRefs: [`recommendation:${recommendation.id}`],
+          observedAt: now,
+        },
+      });
+    }
+    return updated;
   }
 }

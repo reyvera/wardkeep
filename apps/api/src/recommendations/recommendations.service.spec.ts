@@ -187,6 +187,7 @@ describe('RecommendationsService completion observations', () => {
       readinessSnapshot: {
         findFirst: vi.fn().mockResolvedValue({ overall: 64, recordedAt: new Date('2026-08-26') }),
       },
+      advisorMemory: { create: vi.fn().mockResolvedValue({ id: 'memory-1' }) },
     };
     const service = new RecommendationsService(prisma as never);
 
@@ -196,6 +197,9 @@ describe('RecommendationsService completion observations', () => {
       expect.objectContaining({
         data: expect.objectContaining({ scoreAtCompletion: 64 }),
       }),
+    );
+    expect(prisma.advisorMemory.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ kind: 'RECOMMENDATION_OUTCOME' }) }),
     );
   });
 
