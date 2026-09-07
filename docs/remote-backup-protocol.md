@@ -8,7 +8,9 @@ verification. Outbound pairing also requires a validated `WARDKEEP_PUBLIC_URL`
 deployment setting. Per-destination automatic encrypted copies can run hourly,
 every six hours, daily, or weekly. An authenticated hourly health check marks a
 peer unreachable after three failures and restores it automatically when it
-responds. Fresh-instance bootstrap remains pending.
+responds. Receiver-side fresh-instance recovery offers, redemption, one-time
+download, and audit events are complete; the replacement-instance import UI
+remains pending.
 
 ## Purpose and boundary
 
@@ -117,6 +119,9 @@ The eventual endpoints are private peer APIs, not browser workflows:
 | `GET /api/remote-backup/blobs`                             | List authenticated peer-scoped metadata only                               |
 | `GET /api/remote-backup/blobs/:id`                         | Stream the unchanged encrypted blob to its authenticated peer              |
 | `GET /api/remote-backup/health`                            | Authenticated liveness check with no household data                        |
+| `POST /api/remote-backup/recovery-offers/:id`               | Create a receiver-owner, portable-archive recovery offer                  |
+| `POST /api/remote-backup/recovery/redeem`                   | Secret-gated recovery-offer redemption                                    |
+| `POST /api/remote-backup/recovery/download`                 | One-time opaque portable-archive download                                 |
 
 Pairing uses a separately authenticated offer exchange; all later endpoints
 require the HMAC envelope. Browser authentication must never substitute for

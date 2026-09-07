@@ -748,12 +748,11 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Reject a repeated source-backup ID when its digest differs; an identical replay is idempotent.
   - [x] Authenticated blob download serves only the requesting peer's stored archive; authenticated listing returns only that peer's metadata.
 
-- [ ] 38.5 Implement pairing flow (trust establishment)
-  - POST /api/remote-backup/pair/generate: creates one-time token (UUID + shared secret), valid 15 minutes
-  - POST /api/remote-backup/pair/accept: remote server calls this with token to complete pairing
-  - Exchange: both sides store each other's URL + shared secret
-  - POST /api/remote-backup/peer/:id/revoke: terminates pairing, deletes stored backups from peer
-  - Show pairing status in UI: paired peers list with last sync time, connection health
+- [x] 38.5 Implement pairing flow (trust establishment)
+  - [x] Receiver-created, 15-minute pairing offers and secret-gated redemption establish each side's peer ID, validated URL, and encrypted shared secret.
+  - [x] Sender connection persists a retry-safe pending peer before redeeming the remote offer, then promotes it to paired only after the response validates.
+  - [x] Peer revocation stops future authenticated requests while retaining opaque blobs for recovery; deleting retained backup material is intentionally not implicit.
+  - [x] Settings creates and accepts pairing offers and shows paired peers, last copy time, and connection health.
 
 - [~] 38.6 Implement automatic sync scheduling
   - Per-peer sync schedule: HOURLY, EVERY_6H, DAILY, WEEKLY (stored in RemoteBackupPeer)
