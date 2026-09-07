@@ -65,6 +65,7 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-change-me-in-production}
       - INTERNAL_API_URL=http://api:4000/api
+      - "WARDKEEP_DAILY_BRIEF_CRON=${WARDKEEP_DAILY_BRIEF_CRON:-15 3 * * *}"
     depends_on:
       api:
         condition: service_healthy

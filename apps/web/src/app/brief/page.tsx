@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CalendarDays, Lightbulb, Sun, WalletCards } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertTriangle, CalendarDays, Check, Lightbulb, Sun, WalletCards, X } from 'lucide-react';
 
 import { apiClient } from '@/lib/api-client';
 
 interface MorningBrief {
   greeting: string;
   readiness: { score: number | null; state: 'known' | 'partial' | 'not_evaluated'; coverage: number };
-  priority: { summary: string; action: string; href: string } | null;
+  priority: { id?: string; summary: string; action: string; href: string } | null;
   currentRisk: string | null;
-  observations: Array<{ kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift'; summary: string; action: string; href: string }>;
+  observations?: Array<{ kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift' | 'categorization_review'; summary: string; action: string; href: string }>;
+  annualContext?: Array<{ summary: string; date: string }>;
+  seasonalContext?: string[];
   upcoming: Array<{ id: string; date: string; title: string; detail: string; href: string }>;
 }
 
@@ -22,6 +24,11 @@ interface AdvisorInsight {
   action: string;
   actionHref: string;
   sourceCapabilities: string[];
+}
+
+interface RecommendationStatus {
+  id: string;
+  status: 'ACTIVE' | 'DISMISSED' | 'COMPLETED' | 'RESOLVED';
 }
 
 interface PeriodicBrief {
@@ -50,6 +57,8 @@ function coverageSummary(brief: MorningBrief) {
 
 export default function BriefPage() {
   const [reviewPeriod, setReviewPeriod] = useState<7 | 30>(7);
+  const [handledRecommendationId, setHandledRecommendationId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const brief = useQuery({
     queryKey: ['advisor', 'morning-brief'],
     queryFn: () => apiClient.get<MorningBrief>('/advisor/brief/daily'),
@@ -58,12 +67,25 @@ export default function BriefPage() {
     queryKey: ['advisor', 'insights'],
     queryFn: () => apiClient.get<AdvisorInsight[]>('/advisor/insights'),
   });
+  const recommendationStatuses = useQuery({
+    queryKey: ['recommendations'],
+    queryFn: () => apiClient.get<RecommendationStatus[]>('/recommendations'),
+    enabled: Boolean(brief.data?.priority?.id),
+  });
   const periodicBrief = useQuery({
     queryKey: ['advisor', 'periodic-brief', reviewPeriod],
     queryFn: () =>
       apiClient.get<PeriodicBrief>(
         `/advisor/brief/${reviewPeriod === 7 ? 'weekly' : 'monthly'}`,
       ),
+  });
+  const updateRecommendation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'COMPLETED' | 'DISMISSED' }) =>
+      apiClient.patch(`/recommendations/${id}`, { status }),
+    onSuccess: (_result, variables) => {
+      setHandledRecommendationId(variables.id);
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+    },
   });
 
   if (brief.isLoading) {
@@ -74,6 +96,13 @@ export default function BriefPage() {
   }
 
   const data = brief.data;
+  const observations = data.observations ?? [];
+  const annualContext = data.annualContext ?? [];
+  const seasonalContext = data.seasonalContext ?? [];
+  const priorityStatus = data.priority?.id
+    ? recommendationStatuses.data?.find((recommendation) => recommendation.id === data.priority?.id)?.status
+    : undefined;
+  const canUpdatePriority = data.priority?.id && priorityStatus !== undefined && priorityStatus === 'ACTIVE';
   return (
     <div className="space-y-6">
       <div>
@@ -101,6 +130,28 @@ export default function BriefPage() {
               <>
                 <p className="mt-2 text-sm text-content-primary">{data.priority.summary}</p>
                 <Link href={data.priority.href} className="btn-secondary mt-3 text-xs">{data.priority.action}</Link>
+                {canUpdatePriority && handledRecommendationId !== data.priority.id && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => updateRecommendation.mutate({ id: data.priority!.id!, status: 'COMPLETED' })}
+                      disabled={updateRecommendation.isPending}
+                      className="btn-ghost text-xs"
+                    ><Check size={14} /> Complete</button>
+                    <button
+                      onClick={() => updateRecommendation.mutate({ id: data.priority!.id!, status: 'DISMISSED' })}
+                      disabled={updateRecommendation.isPending}
+                      className="btn-ghost text-xs"
+                    ><X size={14} /> Dismiss</button>
+                  </div>
+                )}
+                {canUpdatePriority && handledRecommendationId === data.priority.id && (
+                  <p className="mt-3 text-xs text-content-secondary">Recommendation status updated.</p>
+                )}
+                {priorityStatus && priorityStatus !== 'ACTIVE' && (
+                  <p className="mt-3 text-xs text-content-secondary">
+                    This recommendation is {priorityStatus.toLowerCase()}.
+                  </p>
+                )}
               </>
             ) : <p className="mt-2 text-sm text-content-secondary">Nothing stands out from the information Wardkeep has right now.</p>}
           </div>
@@ -116,7 +167,7 @@ export default function BriefPage() {
         </section>
       )}
 
-      {data.observations.length > 0 && (
+      {observations.length > 0 && (
         <section className="card">
           <div className="flex items-start gap-3">
             <WalletCards size={20} className="mt-0.5 text-accent-yellow" />
@@ -124,7 +175,7 @@ export default function BriefPage() {
               <h2 className="card-title">RECORDED SPENDING STATUS</h2>
               <p className="mt-1 text-sm text-content-secondary">Month-to-date budget usage and recent merchant comparisons from recorded transactions.</p>
               <ul className="mt-4 space-y-4">
-                {data.observations.map((observation) => (
+                {observations.map((observation) => (
                   <li key={observation.summary} className="border-t border-edge pt-4 first:border-t-0 first:pt-0">
                     <p className="text-sm text-content-primary">{observation.summary}</p>
                     <Link href={observation.href} className="btn-secondary mt-3 text-xs">{observation.action}</Link>
@@ -216,6 +267,42 @@ export default function BriefPage() {
                     </Link>
                   </li>
                 ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {annualContext.length > 0 && (
+        <section className="card">
+          <div className="flex items-start gap-3">
+            <CalendarDays size={20} className="mt-0.5 text-accent-blue" />
+            <div className="min-w-0 flex-1">
+              <h2 className="card-title">ANNUAL CONTEXT</h2>
+              <p className="mt-1 text-sm text-content-secondary">Your locally recorded annual reminders. Wardkeep does not predict an expense or outcome from these entries.</p>
+              <ul className="mt-4 space-y-3">
+                {annualContext.map((memory) => (
+                  <li key={`${memory.summary}-${memory.date}`} className="border-t border-edge pt-3 first:border-t-0 first:pt-0">
+                    <p className="text-sm text-content-primary">{memory.summary}</p>
+                    <p className="mt-1 text-xs text-content-secondary">{new Date(memory.date).toLocaleDateString()}</p>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/advisor-memory" className="btn-secondary mt-4 text-xs">Review local memory</Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {seasonalContext.length > 0 && (
+        <section className="card">
+          <div className="flex items-start gap-3">
+            <CalendarDays size={20} className="mt-0.5 text-accent-purple" />
+            <div className="min-w-0 flex-1">
+              <h2 className="card-title">RECORDED SEASONAL CONTEXT</h2>
+              <p className="mt-1 text-sm text-content-secondary">Prior-year records for this calendar month. These are not a prediction or a spending target.</p>
+              <ul className="mt-4 space-y-2 text-sm text-content-primary">
+                {seasonalContext.map((summary) => <li key={summary}>{summary}</li>)}
               </ul>
             </div>
           </div>

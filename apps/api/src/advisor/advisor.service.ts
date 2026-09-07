@@ -12,14 +12,16 @@ import { TimelineEvent, TimelineService } from '../timeline/timeline.service';
 export interface MorningBrief {
   greeting: string;
   readiness: { score: number | null; state: 'known' | 'partial' | 'not_evaluated'; coverage: number };
-  priority: { summary: string; action: string; href: string } | null;
+  priority: { id: string; summary: string; action: string; href: string } | null;
   currentRisk: string | null;
   observations: Array<{
-    kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift';
+    kind: 'budget_warning' | 'budget_overspent' | 'unusual_charge' | 'spending_shift' | 'categorization_review';
     summary: string;
     action: string;
     href: string;
   }>;
+  annualContext: Array<{ summary: string; date: Date }>;
+  seasonalContext: string[];
   upcoming: TimelineEvent[];
 }
 
@@ -138,12 +140,15 @@ export class AdvisorService {
   async getMorningBrief(userId: string, now = new Date()): Promise<MorningBrief> {
     const readiness = await this.readiness.getReadiness(userId);
     await this.recommendations.synchronize(userId, readiness.signals);
-    const [recommendations, upcoming, budgetObservations, unusualChargeObservations, spendingShiftObservations] = await Promise.all([
+    const [recommendations, upcoming, budgetObservations, unusualChargeObservations, spendingShiftObservations, categorizationObservations, annualContext, seasonalContext] = await Promise.all([
       this.recommendations.list(userId),
       this.timeline.listUpcoming(userId, 7),
       this.getBudgetObservations(userId, now),
       this.getUnusualChargeObservations(userId, now),
       this.getSpendingShiftObservations(userId, now),
+      this.getCategorizationObservations(userId, now),
+      this.getUpcomingAnnualContext(userId, now),
+      this.getSeasonalContext(userId, now),
     ]);
     const recommendation = recommendations.find((candidate) => candidate.status === 'ACTIVE') ?? null;
     const currentRisk = readiness.topRisks[0]?.summary ?? null;
@@ -157,13 +162,16 @@ export class AdvisorService {
       },
       priority: recommendation
         ? {
+            id: recommendation.id,
             summary: recommendation.signalSummary,
             action: recommendation.action,
             href: recommendation.actionHref,
           }
         : null,
       currentRisk,
-      observations: [...budgetObservations, ...unusualChargeObservations, ...spendingShiftObservations],
+      observations: [...budgetObservations, ...unusualChargeObservations, ...spendingShiftObservations, ...categorizationObservations],
+      annualContext,
+      seasonalContext,
       upcoming,
     };
   }
@@ -189,7 +197,9 @@ export class AdvisorService {
         const content = await this.getMorningBrief(user.id, now);
         await this.prisma.dailyBrief.upsert({
           where: { userId_briefingDate: { userId: user.id, briefingDate } },
-          update: { content: content as unknown as Prisma.InputJsonValue },
+          // A daily brief is a recorded point-in-time view. A retry must not
+          // overwrite it with later household changes from the same day.
+          update: {},
           create: { userId: user.id, briefingDate, content: content as unknown as Prisma.InputJsonValue },
         });
         generated++;
@@ -359,6 +369,95 @@ export class AdvisorService {
       )
       .sort((a, b) => b.summary.localeCompare(a.summary))
       .slice(0, 3);
+  }
+
+  /** Surfaces recent uncategorized debits for review without assigning a category. */
+  private async getCategorizationObservations(userId: string, now: Date): Promise<MorningBrief['observations']> {
+    const recentStart = new Date(now);
+    recentStart.setUTCDate(recentStart.getUTCDate() - 7);
+    const count = await this.prisma.transaction.count({
+      where: { userId, type: 'DEBIT', categoryId: null, isReviewed: false, date: { gte: recentStart, lte: now } },
+    });
+    if (count === 0) return [];
+    return [{
+      kind: 'categorization_review',
+      summary: `${count} recent debit${count === 1 ? '' : 's'} ${count === 1 ? 'is' : 'are'} uncategorized and ready for your review.`,
+      action: 'Review transactions',
+      href: '/transactions?categoryId=NONE&isReviewed=false',
+    }];
+  }
+
+  /**
+   * Shows only manually recorded annual context. Confirmed annual bills already
+   * appear in the finance Timeline, so repeating those memories would duplicate
+   * a recorded reminder. No amount or outcome is predicted from this context.
+   */
+  private async getUpcomingAnnualContext(userId: string, now: Date): Promise<MorningBrief['annualContext']> {
+    const memories = await this.prisma.advisorMemory.findMany({
+      where: {
+        userId,
+        kind: 'ANNUAL_EVENT',
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { summary: true, observedAt: true, sourceRefs: true },
+    });
+    const windowEnd = new Date(now);
+    windowEnd.setUTCDate(windowEnd.getUTCDate() + 30);
+    return memories
+      .filter((memory) => !memory.sourceRefs.some((source) => source.startsWith('recurring:')))
+      .map((memory) => {
+        const date = new Date(Date.UTC(now.getUTCFullYear(), memory.observedAt.getUTCMonth(), memory.observedAt.getUTCDate()));
+        if (date < new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))) {
+          date.setUTCFullYear(date.getUTCFullYear() + 1);
+        }
+        return { summary: memory.summary, date };
+      })
+      .filter((memory) => memory.date <= windowEnd)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  /**
+   * Compares only recorded category totals from this calendar month in the two
+   * prior years. The result is historical context, never a forecast or target.
+   */
+  private async getSeasonalContext(userId: string, now: Date): Promise<string[]> {
+    const month = now.getUTCMonth();
+    const recentYear = now.getUTCFullYear() - 1;
+    const olderYear = recentYear - 1;
+    const monthRange = (year: number) => ({
+      gte: new Date(Date.UTC(year, month, 1)),
+      lt: new Date(Date.UTC(year, month + 1, 1)),
+    });
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'DEBIT',
+        categoryId: { not: null },
+        OR: [{ date: monthRange(recentYear) }, { date: monthRange(olderYear) }],
+      },
+      select: { categoryId: true, amount: true, date: true, category: { select: { name: true } } },
+    });
+    const totals = new Map<string, { name: string; recent: Prisma.Decimal; older: Prisma.Decimal }>();
+    for (const transaction of transactions) {
+      if (!transaction.categoryId || !transaction.category) continue;
+      const current = totals.get(transaction.categoryId) ?? {
+        name: transaction.category.name,
+        recent: new Prisma.Decimal(0),
+        older: new Prisma.Decimal(0),
+      };
+      if (transaction.date.getUTCFullYear() === recentYear) current.recent = current.recent.plus(transaction.amount);
+      if (transaction.date.getUTCFullYear() === olderYear) current.older = current.older.plus(transaction.amount);
+      totals.set(transaction.categoryId, current);
+    }
+    const monthName = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(now);
+    return [...totals.values()]
+      .filter((total) => total.recent.gt(0) && total.older.gt(0))
+      .sort((a, b) => b.recent.comparedTo(a.recent))
+      .slice(0, 3)
+      .map(
+        (total) =>
+          `Recorded ${monthName} ${total.name} spending was ${total.recent.toFixed(2)} in ${recentYear} and ${total.older.toFixed(2)} in ${olderYear}.`,
+      );
   }
 
   /**

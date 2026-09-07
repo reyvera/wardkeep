@@ -781,7 +781,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Unit tests cover HMAC signing/verification, replay rejection, pairing retry safety, blob integrity, quota enforcement, duplicate-ID protection, peer isolation, schedules, health state, and transfer audit/retry behavior.
   - [x] In-process peer-storage integration covers opaque upload, peer-scoped list, and pull with exact content/digest preservation.
   - [x] In-process HTTP contract test covers authenticated opaque upload, peer-scoped list, and streamed pull with exact bytes and digest preservation.
-  - Test restore from remote: push backup → pull on fresh instance → verify data integrity
+  - [x] Test remote restore boundary: download a paired opaque archive to a fresh temporary location, pass its verified bytes to the restore workflow, and remove the staged copy afterward.
 
 ---
 
@@ -818,19 +818,29 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 40.1 Implement Advisor memory system
   - [x] Local, household-scoped typed memory entries support explicit preferences, annual events, measured seasonal patterns, and recommendation outcomes with source references and expiry.
+  - [x] Manual memory creation is limited to preferences and annual events; measured seasonal patterns and recommendation outcomes remain system-recorded facts.
   - [x] Confirmed annual recurring bills create idempotent, source-linked local annual-event memories; no spend forecast is implied.
+  - [x] Automatic annual-event memories refresh their recorded next-expected date when the confirmed recurring source changes.
   - [x] Advisor Memory page makes local entries inspectable and deletable; no hidden model-memory state is introduced.
   - Reference past context: "Last year you spent ~$900 on Christmas"
   - [x] Track recorded recommendation completion or dismissal as a local outcome memory; later score movement remains observed context, not attributed causation.
+  - [x] Daily brief surfaces manually recorded annual-event context within 30 days, while confirmed annual recurring bills remain Timeline-only to avoid duplicate reminders.
+  - [x] Daily brief shows same-calendar-month category totals only when both prior years have recorded data; this seasonal context is explicitly not a forecast or target.
   - Memory is per-household, stored locally, never sent to cloud
 
 ### 41. Proactive Intelligence
 
 - [~] 41.1 Implement proactive daily briefing generation
   - [x] Local worker generates and persists one deterministic daily brief per household after readiness snapshots, authenticated with a deployment-derived HMAC token.
+  - [x] A retry never overwrites the first recorded brief for that household and UTC date.
+  - [x] Persisted daily brief snapshots are included in encrypted local backup and restore.
+  - [x] Deployments can set the worker's UTC daily-brief cron schedule through `WARDKEEP_DAILY_BRIEF_CRON`; the default remains after daily readiness snapshots.
   - [x] Daily brief reports recorded month-to-date budget allocations at 90%+ usage; it does not forecast spending or prescribe cuts.
   - [x] Daily brief identifies a recent debit only when a named merchant has at least three earlier recorded charges and the amount materially exceeds their median; it does not infer fraud or intent.
   - [x] Daily brief compares category spending only with the same recorded point in the preceding calendar month; it does not project a month-end result.
+  - [x] A recently dismissed non-critical recommendation is cooled down for that capability for 30 days; a critical observed risk is never suppressed.
+  - [x] Daily brief links recent uncategorized debits to transaction review without assigning or claiming a category.
+  - [x] The daily Brief's current recommendation can be completed or dismissed directly from the home screen when the persisted snapshot has a recommendation reference.
   - Worker job (configurable time) generates personalized briefing
   - Detects: unusual charges, budgets running hot, spending shifts
   - Suggests: recategorizations, savings opportunities, risk mitigations

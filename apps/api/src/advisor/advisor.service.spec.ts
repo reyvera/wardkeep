@@ -25,6 +25,35 @@ describe('AdvisorService', () => {
     await expect(advisor.getDailyMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toEqual(stored);
   });
 
+  it('keeps the first generated daily brief when the worker retries that date', async () => {
+    const upsert = vi.fn().mockResolvedValue({ id: 'brief-1' });
+    const advisor = new AdvisorService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {
+        user: { findMany: vi.fn().mockResolvedValue([{ id: 'user-1' }]) },
+        dailyBrief: { upsert },
+      } as never,
+    );
+    vi.spyOn(advisor, 'getMorningBrief').mockResolvedValue({
+      greeting: 'Good morning',
+      readiness: { score: 65, state: 'known', coverage: 80 },
+      priority: null,
+      currentRisk: null,
+      observations: [],
+      annualContext: [],
+      seasonalContext: [],
+      upcoming: [],
+    });
+
+    await expect(advisor.generateDailyBriefs(new Date('2026-09-07T12:00:00Z'))).resolves.toEqual({ generated: 1, failed: 0 });
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      update: {},
+      create: expect.objectContaining({ userId: 'user-1' }),
+    }));
+  });
+
   it('builds a deterministic brief from readiness, actions, and recorded events', async () => {
     const readiness = {
       getReadiness: vi.fn().mockResolvedValue({
@@ -41,6 +70,7 @@ describe('AdvisorService', () => {
       synchronize: vi.fn().mockResolvedValue(undefined),
       list: vi.fn().mockResolvedValue([
         {
+          id: 'recommendation-1',
           status: 'ACTIVE',
           signalSummary: 'Build a reserve.',
           action: 'Review liquid accounts',
@@ -68,7 +98,8 @@ describe('AdvisorService', () => {
     } as unknown as TimelineService;
     const prisma = {
       budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
-      transaction: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(0) },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const advisor = new AdvisorService(readiness, recommendations, timeline, prisma as never);
 
@@ -77,7 +108,7 @@ describe('AdvisorService', () => {
     expect(brief).toMatchObject({
       greeting: 'Good morning',
       readiness: { score: 62, state: 'partial', coverage: 55 },
-      priority: { summary: 'Build a reserve.', href: '/accounts' },
+      priority: { id: 'recommendation-1', summary: 'Build a reserve.', href: '/accounts' },
       currentRisk: 'Liquid reserves need attention.',
     });
     expect(brief.upcoming).toHaveLength(1);
@@ -109,7 +140,9 @@ describe('AdvisorService', () => {
           { categoryId: 'fuel', _sum: { amount: '95' } },
         ]),
         findMany: vi.fn().mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(0),
       },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const advisor = new AdvisorService(readiness, recommendations, timeline, prisma as never);
 
@@ -139,7 +172,9 @@ describe('AdvisorService', () => {
           { id: 'old-3', date: new Date('2026-07-10T00:00:00Z'), amount: '80', merchant: 'Example Store' },
           { id: 'small', date: new Date('2026-09-05T00:00:00Z'), amount: '25', merchant: 'Small purchase' },
         ]),
+        count: vi.fn().mockResolvedValue(0),
       },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const advisor = new AdvisorService(
       readiness,
@@ -177,8 +212,11 @@ describe('AdvisorService', () => {
             { categoryId: 'dining', date: new Date('2026-08-05T00:00:00Z'), amount: '90', category: { name: 'Dining' } },
             { categoryId: 'fuel', date: new Date('2026-09-05T00:00:00Z'), amount: '30', category: { name: 'Fuel' } },
             { categoryId: 'fuel', date: new Date('2026-08-05T00:00:00Z'), amount: '25', category: { name: 'Fuel' } },
-          ]),
+          ])
+          .mockResolvedValue([]),
+        count: vi.fn().mockResolvedValue(0),
       },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
     };
     const advisor = new AdvisorService(
       readiness,
@@ -194,6 +232,95 @@ describe('AdvisorService', () => {
           summary: 'Dining spending is 100% higher so far this month (180.00 versus 90.00 at the same point last month).',
         },
       ],
+    });
+  });
+
+  it('links recent uncategorized debits for review without assigning a category', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [], overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 }, topRisks: [],
+      }),
+    } as never;
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(2) },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+    const advisor = new AdvisorService(
+      readiness,
+      { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never,
+      { listUpcoming: vi.fn().mockResolvedValue([]) } as never,
+      prisma as never,
+    );
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      observations: [{
+        kind: 'categorization_review',
+        summary: '2 recent debits are uncategorized and ready for your review.',
+        href: '/transactions?categoryId=NONE&isReviewed=false',
+      }],
+    });
+  });
+
+  it('surfaces an upcoming manually recorded annual event without duplicating a recurring bill', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [], overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 }, topRisks: [],
+      }),
+    } as never;
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: { findMany: vi.fn().mockResolvedValue([]), count: vi.fn().mockResolvedValue(0) },
+      advisorMemory: {
+        findMany: vi.fn().mockResolvedValue([
+          { summary: 'Start planning the family holiday gathering.', observedAt: new Date('2025-09-20T00:00:00Z'), sourceRefs: [] },
+          { summary: 'Annual insurance bill.', observedAt: new Date('2025-09-15T00:00:00Z'), sourceRefs: ['recurring:bill-1'] },
+        ]),
+      },
+    };
+    const advisor = new AdvisorService(
+      readiness,
+      { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never,
+      { listUpcoming: vi.fn().mockResolvedValue([]) } as never,
+      prisma as never,
+    );
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      annualContext: [{ summary: 'Start planning the family holiday gathering.', date: new Date('2026-09-20T00:00:00Z') }],
+    });
+  });
+
+  it('shows seasonal context only when the same category has records in both prior years', async () => {
+    const readiness = {
+      getReadiness: vi.fn().mockResolvedValue({
+        signals: [], overallAssessment: { score: null, state: 'not_evaluated', coverage: 0 }, topRisks: [],
+      }),
+    } as never;
+    const prisma = {
+      budgetAllocation: { findMany: vi.fn().mockResolvedValue([]) },
+      transaction: {
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce([
+            { categoryId: 'travel', amount: '800', date: new Date('2025-09-12T00:00:00Z'), category: { name: 'Travel' } },
+            { categoryId: 'travel', amount: '650', date: new Date('2024-09-17T00:00:00Z'), category: { name: 'Travel' } },
+            { categoryId: 'dining', amount: '100', date: new Date('2025-09-10T00:00:00Z'), category: { name: 'Dining' } },
+          ]),
+        count: vi.fn().mockResolvedValue(0),
+      },
+      advisorMemory: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+    const advisor = new AdvisorService(
+      readiness,
+      { synchronize: vi.fn(), list: vi.fn().mockResolvedValue([]) } as never,
+      { listUpcoming: vi.fn().mockResolvedValue([]) } as never,
+      prisma as never,
+    );
+
+    await expect(advisor.getMorningBrief('user-1', new Date('2026-09-07T12:00:00Z'))).resolves.toMatchObject({
+      seasonalContext: ['Recorded September Travel spending was 800.00 in 2025 and 650.00 in 2024.'],
     });
   });
 

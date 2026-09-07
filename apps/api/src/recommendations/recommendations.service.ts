@@ -17,6 +17,8 @@ type SignalWithProvenance = Signal & {
 };
 type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
+const DISMISSAL_COOLDOWN_DAYS = 30;
+
 const ACTIONS: Record<string, { action: string; href: string }> = {
   'emergency-fund': { action: 'Review liquid accounts', href: '/accounts' },
   insurance: { action: 'Review policies', href: '/insurance' },
@@ -150,7 +152,7 @@ export class RecommendationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async synchronize(userId: string, signals: SignalWithProvenance[]) {
-    const candidates = signals
+    const allCandidates = signals
       .filter((signal) => signal.type === 'risk' || signal.type === 'warning')
       .map((signal) =>
         recommendationCandidate(
@@ -158,6 +160,30 @@ export class RecommendationsService {
           signals.filter((candidate) => candidate.pillar === signal.pillar),
         ),
       );
+    const cooldownStart = new Date();
+    cooldownStart.setUTCDate(cooldownStart.getUTCDate() - DISMISSAL_COOLDOWN_DAYS);
+    const cooldownCapabilities = [...new Set(
+      allCandidates
+        .filter((candidate) => candidate.priority !== 'critical')
+        .map((candidate) => candidate.capabilityId),
+    )];
+    const recentDismissals = cooldownCapabilities.length === 0
+      ? []
+      : await this.prisma.recommendation.findMany({
+          where: {
+            userId,
+            status: 'DISMISSED',
+            dismissedAt: { gte: cooldownStart },
+            capabilityId: { in: cooldownCapabilities },
+          },
+          select: { capabilityId: true },
+        });
+    const dismissedCapabilities = new Set(recentDismissals.map((recommendation) => recommendation.capabilityId));
+    // A dismissal reduces repeat low/medium noise for this capability. A critical
+    // current signal is never suppressed and can still surface immediately.
+    const candidates = allCandidates.filter(
+      (candidate) => candidate.priority === 'critical' || !dismissedCapabilities.has(candidate.capabilityId),
+    );
     const fingerprints = candidates.map((candidate) => candidate.fingerprint);
     const existing =
       fingerprints.length === 0

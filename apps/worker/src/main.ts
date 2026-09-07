@@ -15,6 +15,7 @@ import { processDailyBriefs } from './processors/daily-brief.processor';
 
 const workers: Worker[] = [];
 const queues: Queue[] = [];
+const DAILY_BRIEF_CRON = process.env['WARDKEEP_DAILY_BRIEF_CRON']?.trim() || '15 3 * * *';
 
 function log(message: string): void {
   process.stdout.write(`[wardkeep-worker] ${message}\n`);
@@ -57,10 +58,10 @@ async function bootstrap(): Promise<void> {
   queues.push(briefQueue);
   await briefQueue.upsertJobScheduler(
     'daily-advisor-briefs',
-    { pattern: '15 3 * * *' },
+    { pattern: DAILY_BRIEF_CRON },
     { name: 'generate-daily-briefs', data: {} },
   );
-  log('Scheduled deterministic daily advisor briefs for 03:15 UTC.');
+  log(`Scheduled deterministic daily advisor briefs with cron: ${DAILY_BRIEF_CRON}.`);
   const briefWorker = new Worker(QUEUE_NAMES.DAILY_BRIEFS, processDailyBriefs, {
     connection,
     concurrency: QUEUE_CONCURRENCY[QUEUE_NAMES.DAILY_BRIEFS],

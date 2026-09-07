@@ -178,6 +178,44 @@ describe('recommendationCandidate', () => {
 });
 
 describe('RecommendationsService completion observations', () => {
+  it('suppresses a recently dismissed non-critical capability without hiding a critical current risk', async () => {
+    const create = vi.fn();
+    const updateMany = vi.fn();
+    const prisma = {
+      recommendation: {
+        findMany: vi
+          .fn()
+          .mockResolvedValueOnce([{ capabilityId: 'budgets' }])
+          .mockResolvedValueOnce([]),
+        create,
+        updateMany,
+      },
+    };
+    const service = new RecommendationsService(prisma as never);
+    const signals = [
+      {
+        capabilityId: 'budgets', type: 'warning' as const, magnitude: -2, pillar: 'provision' as const,
+        summary: 'Budget category needs review.',
+        provenance: { limitation: 'Recorded allocations only.', evidenceState: 'manual' as const },
+      },
+      {
+        capabilityId: 'emergency-fund', type: 'risk' as const, magnitude: -8, pillar: 'protection' as const,
+        summary: 'Liquid reserves are materially below the recorded target.',
+        provenance: { limitation: 'Recorded liquid balances only.', evidenceState: 'synchronized' as const },
+      },
+    ];
+
+    await service.synchronize('user-1', signals);
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ capabilityId: 'emergency-fund', priority: 'critical' }),
+    }));
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ fingerprint: expect.objectContaining({ notIn: expect.any(Array) }) }),
+    }));
+  });
+
   it('records the latest observed readiness score when an action is completed', async () => {
     const prisma = {
       recommendation: {

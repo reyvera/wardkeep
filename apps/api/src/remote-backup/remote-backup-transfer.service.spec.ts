@@ -3,6 +3,7 @@ import {
   RemoteBackupPeerStatus,
   RemoteBackupSyncSchedule,
 } from '@prisma/client';
+import { readFile, writeFile } from 'node:fs/promises';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./remote-backup-transfer-client', () => ({
@@ -13,9 +14,68 @@ vi.mock('./remote-backup-transfer-client', () => ({
 }));
 
 import { RemoteBackupTransferService } from './remote-backup-transfer.service';
-import { uploadRemoteBackupBlob } from './remote-backup-transfer-client';
+import {
+  downloadRemoteBackupBlob,
+  listRemoteBackupBlobs,
+  uploadRemoteBackupBlob,
+} from './remote-backup-transfer-client';
 
 describe('RemoteBackupTransferService scheduled syncs', () => {
+  it('downloads a pushed archive to a fresh temporary location and restores its verified bytes', async () => {
+    const body = Buffer.from('opaque portable backup from a paired deployment');
+    const remoteBackupId = 'remote-backup-1';
+    const updateMany = vi.fn();
+    vi.mocked(listRemoteBackupBlobs).mockResolvedValueOnce([
+      {
+        id: remoteBackupId,
+        sourceBackupId: 'source-backup-1',
+        recoveryClass: 'PORTABLE_MANUAL',
+        size: body.length,
+        checksum: 'a'.repeat(64),
+        createdAt: new Date('2026-09-07T00:00:00.000Z'),
+        receivedAt: new Date('2026-09-07T00:01:00.000Z'),
+      },
+    ] as never);
+    vi.mocked(downloadRemoteBackupBlob).mockImplementationOnce(async ({ destinationPath }) => {
+      await writeFile(destinationPath, body, { mode: 0o600 });
+    });
+    let stagedArchivePath = '';
+    const restoreRemoteArchive = vi.fn(async (_userId: string, archivePath: string) => {
+      stagedArchivePath = archivePath;
+      return { restoredBytes: (await readFile(archivePath)).toString('utf8') };
+    });
+    const service = new RemoteBackupTransferService(
+      {
+        remoteBackupPeer: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: 'peer-1', peerUrl: 'https://peer.example', sharedSecret: 'encrypted-secret',
+          }),
+          updateMany,
+        },
+      } as never,
+      { decrypt: vi.fn().mockReturnValue('shared-secret') } as never,
+      { restoreRemoteArchive } as never,
+      { log: vi.fn() } as never,
+    );
+
+    await expect(
+      service.restoreRemoteBackup('household-1', 'peer-1', remoteBackupId, 'passphrase'),
+    ).resolves.toEqual({ restoredBytes: body.toString('utf8') });
+    expect(downloadRemoteBackupBlob).toHaveBeenCalledWith(expect.objectContaining({
+      destinationPath: expect.stringContaining(`${remoteBackupId}.enc`),
+    }));
+    expect(restoreRemoteArchive).toHaveBeenCalledWith(
+      'household-1',
+      expect.stringContaining(`${remoteBackupId}.enc`),
+      'PORTABLE_MANUAL',
+      'passphrase',
+    );
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: { lastSyncAt: expect.any(Date), lastError: null },
+    }));
+    await expect(readFile(stagedArchivePath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('audits a successful manual encrypted copy', async () => {
     const updateMany = vi.fn();
     const audit = { log: vi.fn() };

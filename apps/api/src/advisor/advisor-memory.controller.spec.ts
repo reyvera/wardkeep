@@ -29,4 +29,14 @@ describe('AdvisorMemoryController', () => {
       observedAt: '2026-09-02T00:00:00.000Z', expiresAt: '2026-09-01T00:00:00.000Z',
     })).toThrow(BadRequestException);
   });
+
+  it('does not accept a manually invented recommendation outcome or seasonal pattern', () => {
+    const controller = new AdvisorMemoryController({ create: vi.fn() } as never);
+    expect(() => controller.create({ userId: 'household-1' } as never, {
+      kind: AdvisorMemoryKind.RECOMMENDATION_OUTCOME, summary: 'I dismissed a suggestion.',
+    })).toThrow(BadRequestException);
+    expect(() => controller.create({ userId: 'household-1' } as never, {
+      kind: AdvisorMemoryKind.SEASONAL_PATTERN, summary: 'Summer spending rises.',
+    })).toThrow(BadRequestException);
+  });
 });

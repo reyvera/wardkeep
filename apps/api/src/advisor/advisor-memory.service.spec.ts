@@ -50,6 +50,30 @@ describe('AdvisorMemoryService', () => {
     }));
   });
 
+  it('refreshes an automatic annual event when its confirmed next date changes', async () => {
+    const update = vi.fn().mockResolvedValue({ id: 'memory-1' });
+    const nextExpected = new Date('2027-02-02T00:00:00.000Z');
+    const service = new AdvisorMemoryService({
+      advisorMemory: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findMany: vi.fn().mockResolvedValue([]),
+        findFirst: vi.fn().mockResolvedValue({ id: 'memory-1' }),
+        update,
+      },
+      recurringTransaction: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 'bill-1', merchant: 'Annual policy', nextExpected },
+        ]),
+      },
+    } as never);
+
+    await service.list('household-1');
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'memory-1' },
+      data: expect.objectContaining({ observedAt: nextExpected }),
+    }));
+  });
+
   it('removes an automatic annual event when its recurring source is no longer active', async () => {
     const deleteMany = vi.fn().mockResolvedValue({ count: 1 });
     const findMany = vi

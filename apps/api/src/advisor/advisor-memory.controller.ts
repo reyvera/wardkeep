@@ -7,7 +7,7 @@ import { ScopedRequest, UserScopeInterceptor } from '../common/interceptors/user
 import { AdvisorMemoryService } from './advisor-memory.service';
 
 const memorySchema = z.object({
-  kind: z.nativeEnum(AdvisorMemoryKind),
+  kind: z.enum([AdvisorMemoryKind.USER_PREFERENCE, AdvisorMemoryKind.ANNUAL_EVENT]),
   summary: z.string().trim().min(1).max(1000),
   sourceRefs: z.array(z.string().trim().min(1).max(160)).max(20).optional(),
   observedAt: z.string().datetime({ offset: true }).optional(),

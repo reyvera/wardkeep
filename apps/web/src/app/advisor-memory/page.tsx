@@ -6,6 +6,7 @@ import { Brain, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
 type MemoryKind = 'USER_PREFERENCE' | 'ANNUAL_EVENT' | 'SEASONAL_PATTERN' | 'RECOMMENDATION_OUTCOME';
+type UserMemoryKind = 'USER_PREFERENCE' | 'ANNUAL_EVENT';
 type Memory = { id: string; kind: MemoryKind; summary: string; sourceRefs: string[]; observedAt: string; expiresAt: string | null };
 const labels: Record<MemoryKind, string> = {
   USER_PREFERENCE: 'Preference', ANNUAL_EVENT: 'Annual event', SEASONAL_PATTERN: 'Seasonal pattern', RECOMMENDATION_OUTCOME: 'Recommendation outcome',
@@ -13,7 +14,7 @@ const labels: Record<MemoryKind, string> = {
 
 export default function AdvisorMemoryPage() {
   const queryClient = useQueryClient();
-  const [kind, setKind] = useState<MemoryKind>('USER_PREFERENCE');
+  const [kind, setKind] = useState<UserMemoryKind>('USER_PREFERENCE');
   const [summary, setSummary] = useState('');
   const [sourceRefs, setSourceRefs] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -34,7 +35,7 @@ export default function AdvisorMemoryPage() {
   return <div className="max-w-3xl space-y-6">
     <div><div className="flex items-center gap-2"><Brain className="text-accent-blue" size={22} /><h1 className="text-page-title">Advisor memory</h1></div><p className="mt-2 text-sm text-content-secondary">Local household context only. Entries are visible, reversible, and never sent to a cloud model.</p></div>
     <form className="card space-y-3" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
-      <label className="input-label">Memory type<select className="input mt-1" value={kind} onChange={(event) => setKind(event.target.value as MemoryKind)}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="input-label">Memory type<select className="input mt-1" value={kind} onChange={(event) => setKind(event.target.value as UserMemoryKind)}>{(['USER_PREFERENCE', 'ANNUAL_EVENT'] as const).map((value) => <option key={value} value={value}>{labels[value]}</option>)}</select></label>
       <label className="input-label">Concise factual note<textarea className="input mt-1 min-h-24" value={summary} onChange={(event) => setSummary(event.target.value)} maxLength={1000} required /></label>
       <label className="input-label">Source references <span className="normal-case">(optional, comma separated)</span><input className="input mt-1" value={sourceRefs} onChange={(event) => setSourceRefs(event.target.value)} maxLength={3200} placeholder="e.g. statement:2026-08, event:family-birthday" /></label>
       <label className="input-label">Expires on <span className="normal-case">(optional)</span><input className="input mt-1" type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></label>

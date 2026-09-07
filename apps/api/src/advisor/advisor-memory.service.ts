@@ -42,14 +42,19 @@ export class AdvisorMemoryService {
           where: { userId, kind: 'ANNUAL_EVENT', sourceRefs: { has: sourceRef } },
           select: { id: true },
         });
-        if (!existing) {
+        const data = {
+          summary: `${bill.merchant} is a confirmed annual recurring bill next expected on ${bill.nextExpected.toLocaleDateString()}.`,
+          observedAt: bill.nextExpected,
+        };
+        if (existing) {
+          await this.prisma.advisorMemory.update({ where: { id: existing.id }, data });
+        } else {
           await this.prisma.advisorMemory.create({
             data: {
               userId,
               kind: 'ANNUAL_EVENT',
-              summary: `${bill.merchant} is a confirmed annual recurring bill next expected on ${bill.nextExpected.toLocaleDateString()}.`,
               sourceRefs: [sourceRef],
-              observedAt: bill.nextExpected,
+              ...data,
             },
           });
         }

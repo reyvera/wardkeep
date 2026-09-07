@@ -167,6 +167,10 @@ INTERNAL_API_URL=http://localhost:4000/api \
 pnpm dev
 ```
 
+The worker records one deterministic daily Advisor Brief per household after
+readiness snapshots. It defaults to 03:15 UTC; set `WARDKEEP_DAILY_BRIEF_CRON`
+to a five-field UTC cron expression and restart the worker to change that time.
+
 ### Demo User
 
 To seed a demo user with 6 months of sample data:
