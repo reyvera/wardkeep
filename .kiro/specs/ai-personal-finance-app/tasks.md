@@ -766,6 +766,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - [x] Download an authenticated opaque blob over the peer API, verify its declared size and SHA-256, and stage it in a 0600 temporary location.
   - [x] Reuse the local restore workflow only after checksum validation; portable manual copies require their passphrase and source-tied automatic copies require the original deployment's scheduled-backup key.
   - [x] Implement a receiver-created, single-use recovery offer scoped to one portable-manual archive, with a 15-minute hashed offer and one-time download session. A backup passphrase never serves as peer authentication.
+  - [x] Replacement deployments can redeem a recovery offer, download and verify its archive over pinned HTTPS, then invoke the existing portable local restore without retaining the downloaded archive.
 
 - [~] 38.8 Implement remote backup management UI
   - Settings → Remote Backups page
@@ -773,6 +774,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Peer list: name, URL, status, last sync, storage used
   - Per-peer actions: sync now, view history, change schedule, revoke
   - [x] Restore from remote: browse peer's stored backups, select, enter passphrase, restore
+  - [x] Recovery offer import: enter the receiver URL, one-time offer, and manual backup passphrase to verify and restore a portable archive on a replacement deployment.
   - [x] Connection health indicator (green/yellow/red)
 
 - [~] 38.9 Write tests for remote backup system

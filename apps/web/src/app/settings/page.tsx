@@ -153,6 +153,12 @@ export default function SettingsPage() {
   const [remoteBackupPeerId, setRemoteBackupPeerId] = useState<string | null>(null);
   const [remoteRestoreTarget, setRemoteRestoreTarget] = useState<RemoteBackupRecord | null>(null);
   const [remoteRestorePassphrase, setRemoteRestorePassphrase] = useState('');
+  const [recoveryImport, setRecoveryImport] = useState({
+    peerUrl: '',
+    offerId: '',
+    secret: '',
+    passphrase: '',
+  });
   const [pairingOffer, setPairingOffer] = useState<RemoteBackupOffer | null>(null);
   const [offerPeerName, setOfferPeerName] = useState('Wardkeep off-site destination');
   const [connectForm, setConnectForm] = useState({
@@ -264,6 +270,13 @@ export default function SettingsPage() {
       queryClient.invalidateQueries();
     },
   });
+  const recoveryImportMutation = useMutation({
+    mutationFn: () => apiClient.post('/remote-backup/recovery/import', recoveryImport),
+    onSuccess: () => {
+      setRecoveryImport({ peerUrl: '', offerId: '', secret: '', passphrase: '' });
+      queryClient.invalidateQueries();
+    },
+  });
   const createPairingOfferMutation = useMutation({
     mutationFn: () =>
       apiClient.post<RemoteBackupOffer>('/remote-backup/pair/offers', {
@@ -332,6 +345,17 @@ export default function SettingsPage() {
         ? { passphrase: remoteRestorePassphrase }
         : {}),
     });
+  };
+  const handleRecoveryImport = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (
+      recoveryImport.passphrase.length < 12 ||
+      !window.confirm(
+        'Import and restore this portable recovery archive? This permanently replaces the household data currently in Wardkeep.',
+      )
+    )
+      return;
+    recoveryImportMutation.mutate();
   };
 
   return (
@@ -621,6 +645,74 @@ export default function SettingsPage() {
             {createBackupMutation.isPending ? 'Creating backup…' : 'Create backup'}
           </button>
         </form>
+
+        <details className="rounded-lg border border-edge bg-surface-secondary p-3">
+          <summary className="cursor-pointer text-sm font-medium text-content-primary">
+            Restore from a recovery offer
+          </summary>
+          <p className="mt-2 text-xs text-content-secondary">
+            Use this on a replacement Wardkeep deployment after an off-site receiver gives you a
+            one-time recovery offer. Wardkeep verifies the encrypted archive before restoring it.
+          </p>
+          <form onSubmit={handleRecoveryImport} className="mt-3 space-y-2">
+            <input
+              type="url"
+              required
+              value={recoveryImport.peerUrl}
+              onChange={(event) =>
+                setRecoveryImport((current) => ({ ...current, peerUrl: event.target.value }))
+              }
+              placeholder="Receiver URL (https://receiver.example)"
+              className="input"
+            />
+            <input
+              required
+              value={recoveryImport.offerId}
+              onChange={(event) =>
+                setRecoveryImport((current) => ({ ...current, offerId: event.target.value }))
+              }
+              placeholder="Recovery offer ID"
+              className="input"
+            />
+            <input
+              type="password"
+              required
+              value={recoveryImport.secret}
+              onChange={(event) =>
+                setRecoveryImport((current) => ({ ...current, secret: event.target.value }))
+              }
+              placeholder="Recovery offer secret"
+              className="input"
+            />
+            <input
+              type="password"
+              required
+              minLength={12}
+              value={recoveryImport.passphrase}
+              onChange={(event) =>
+                setRecoveryImport((current) => ({ ...current, passphrase: event.target.value }))
+              }
+              placeholder="Manual backup passphrase"
+              className="input"
+            />
+            {recoveryImportMutation.isError && (
+              <p className="text-xs text-accent-red">
+                The recovery offer could not be imported. Check the receiver URL, offer, and passphrase.
+              </p>
+            )}
+            {recoveryImportMutation.isSuccess && (
+              <p className="text-xs text-accent-green">Recovery archive restored.</p>
+            )}
+            <button
+              type="submit"
+              className="btn-secondary text-xs"
+              disabled={recoveryImportMutation.isPending || recoveryImport.passphrase.length < 12}
+            >
+              <RotateCcw size={14} />
+              {recoveryImportMutation.isPending ? 'Restoring…' : 'Verify and restore recovery archive'}
+            </button>
+          </form>
+        </details>
 
         <div className="space-y-2">
           <p className="input-label">Available backups</p>
