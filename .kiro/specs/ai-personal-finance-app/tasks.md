@@ -766,7 +766,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - User initiates restore from remote peer: GET peer's /api/remote-backup/list, select backup, GET /api/remote-backup/pull/:id
   - [x] Download an authenticated opaque blob over the peer API, verify its declared size and SHA-256, and stage it in a 0600 temporary location.
   - [x] Reuse the local restore workflow only after checksum validation; portable manual copies require their passphrase and source-tied automatic copies require the original deployment's scheduled-backup key.
-  - [ ] Design and implement a receiver-created, single-use recovery offer scoped to one portable-manual archive. A backup passphrase must never serve as peer authentication.
+  - [x] Implement a receiver-created, single-use recovery offer scoped to one portable-manual archive, with a 15-minute hashed offer and one-time download session. A backup passphrase never serves as peer authentication.
 
 - [~] 38.8 Implement remote backup management UI
   - Settings → Remote Backups page

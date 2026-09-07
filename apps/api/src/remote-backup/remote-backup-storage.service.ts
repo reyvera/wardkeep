@@ -175,6 +175,20 @@ export class RemoteBackupStorageService {
     };
   }
 
+  /** Opens one archive only after a separate recovery session has consumed its token. */
+  async openForRecovery(backupId: string) {
+    const backup = await this.prisma.remoteBackup.findUnique({
+      where: { id: backupId },
+      select: { peerId: true, filename: true, size: true, checksum: true },
+    });
+    if (!backup) return null;
+    return {
+      stream: createReadStream(join(remoteBackupDirectory(), backup.peerId, backup.filename)),
+      size: Number(backup.size),
+      checksum: backup.checksum,
+    };
+  }
+
   private async enforceRetention(peerId: string): Promise<void> {
     const backups = await this.prisma.remoteBackup.findMany({
       where: { peerId },

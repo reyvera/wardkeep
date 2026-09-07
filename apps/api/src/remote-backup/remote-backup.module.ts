@@ -11,6 +11,11 @@ import { RemoteBackupPairingService } from './remote-backup-pairing.service';
 import { RemoteBackupOutboundPairingService } from './remote-backup-outbound-pairing.service';
 import { RemoteBackupStorageService } from './remote-backup-storage.service';
 import { RemoteBackupTransferService } from './remote-backup-transfer.service';
+import { RemoteBackupRecoveryOfferService } from './remote-backup-recovery-offer.service';
+import {
+  RemoteBackupRecoveryOfferController,
+  RemoteBackupRecoveryRedemptionController,
+} from './remote-backup-recovery-offer.controller';
 import { BackupModule } from '../backup/backup.module';
 
 @Module({
@@ -20,6 +25,8 @@ import { BackupModule } from '../backup/backup.module';
     RemoteBackupInternalController,
     RemoteBackupPairingController,
     RemoteBackupPeerController,
+    RemoteBackupRecoveryOfferController,
+    RemoteBackupRecoveryRedemptionController,
   ],
   providers: [
     RemoteBackupNonceService,
@@ -29,6 +36,7 @@ import { BackupModule } from '../backup/backup.module';
     RemoteBackupOutboundPairingService,
     RemoteBackupStorageService,
     RemoteBackupTransferService,
+    RemoteBackupRecoveryOfferService,
   ],
   exports: [
     RemoteBackupNonceService,

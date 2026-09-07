@@ -1173,10 +1173,41 @@ model RemoteBackup {
 
   user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   peer RemoteBackupPeer @relation(fields: [peerId], references: [id], onDelete: Cascade)
+  recoveryOffers RemoteBackupRecoveryOffer[]
+  recoverySessions RemoteBackupRecoverySession[]
 
   @@unique([peerId, sourceBackupId])
   @@index([userId, createdAt])
   @@index([peerId, createdAt])
+}
+
+/// A single-use, archive-scoped credential for fresh-instance portable recovery.
+/// Its plaintext secret is shown only to the receiver operator at creation.
+model RemoteBackupRecoveryOffer {
+  id             String   @id @default(uuid())
+  remoteBackupId String
+  secretHash     String   @unique @db.VarChar(64)
+  expiresAt      DateTime
+  redeemedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  remoteBackup RemoteBackup @relation(fields: [remoteBackupId], references: [id], onDelete: Cascade)
+
+  @@index([remoteBackupId, expiresAt])
+}
+
+model RemoteBackupRecoverySession {
+  id             String   @id @default(uuid())
+  remoteBackupId String
+  tokenHash      String   @unique @db.VarChar(64)
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  remoteBackup RemoteBackup @relation(fields: [remoteBackupId], references: [id], onDelete: Cascade)
+
+  @@index([remoteBackupId, expiresAt])
 }
 
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
