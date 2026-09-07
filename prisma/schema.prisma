@@ -57,6 +57,7 @@ model User {
   capabilitySettings    CapabilitySetting[]
   recommendations       Recommendation[]
   advisorInsights       AdvisorInsight[]
+  advisorMemories       AdvisorMemory[]
   cashflowEvents        CashflowEvent[]
   remoteBackupPeers     RemoteBackupPeer[]
   remoteBackups         RemoteBackup[]
@@ -277,6 +278,31 @@ model AdvisorInsight {
 
   @@index([userId, fingerprint, createdAt])
   @@index([userId, createdAt])
+}
+
+enum AdvisorMemoryKind {
+  USER_PREFERENCE
+  ANNUAL_EVENT
+  SEASONAL_PATTERN
+  RECOMMENDATION_OUTCOME
+}
+
+/// Household-local, source-linked advisor context. It is never a model prompt cache.
+model AdvisorMemory {
+  id          String            @id @default(uuid())
+  userId      String
+  kind        AdvisorMemoryKind
+  summary     String            @db.VarChar(1000)
+  sourceRefs  String[]          @default([])
+  observedAt  DateTime          @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, observedAt])
+  @@index([userId, expiresAt])
 }
 
 model Session {

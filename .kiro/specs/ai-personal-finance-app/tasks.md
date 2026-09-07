@@ -816,8 +816,9 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 ### 40. AI Memory
 
-- [ ] 40.1 Implement Advisor memory system
-  - Store learned patterns: seasonal spending, annual events, user preferences
+- [~] 40.1 Implement Advisor memory system
+  - [x] Local, household-scoped typed memory entries support explicit preferences, annual events, measured seasonal patterns, and recommendation outcomes with source references and expiry.
+  - [x] Advisor Memory page makes local entries inspectable and deletable; no hidden model-memory state is introduced.
   - Reference past context: "Last year you spent ~$900 on Christmas"
   - Track recommendation outcomes: which advice was followed, what happened after
   - Memory is per-household, stored locally, never sent to cloud

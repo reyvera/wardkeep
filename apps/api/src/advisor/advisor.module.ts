@@ -5,12 +5,14 @@ import { RecommendationsModule } from '../recommendations/recommendations.module
 import { TimelineModule } from '../timeline/timeline.module';
 import { AiChatModule } from '../ai-chat/ai-chat.module';
 import { AdvisorConversationService } from './advisor-conversation.service';
+import { AdvisorMemoryController } from './advisor-memory.controller';
+import { AdvisorMemoryService } from './advisor-memory.service';
 import { AdvisorController } from './advisor.controller';
 import { AdvisorService } from './advisor.service';
 
 @Module({
   imports: [ReadinessModule, RecommendationsModule, TimelineModule, AiChatModule],
-  controllers: [AdvisorController],
-  providers: [AdvisorService, AdvisorConversationService],
+  controllers: [AdvisorController, AdvisorMemoryController],
+  providers: [AdvisorService, AdvisorConversationService, AdvisorMemoryService],
 })
 export class AdvisorModule {}

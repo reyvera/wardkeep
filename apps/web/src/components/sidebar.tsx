@@ -14,6 +14,7 @@ import {
   TrendingDown,
   RefreshCw,
   MessageSquare,
+  Brain,
   Upload,
   Link2,
   ShieldCheck,
@@ -57,6 +58,7 @@ const navItems = [
   { href: '/recommendations', label: 'Recommendations', icon: ListChecks },
   { href: '/timeline', label: 'Timeline', icon: CalendarDays },
   { href: '/chat', label: 'Advisor', icon: MessageSquare },
+  { href: '/advisor-memory', label: 'Advisor memory', icon: Brain },
   { href: '/import', label: 'Import', icon: Upload },
   { href: '/bank-connections', label: 'Bank Connections', icon: Link2 },
 ];
