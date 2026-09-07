@@ -48,6 +48,12 @@ const scenarioSchema = z.object({
 const cashReserveScenarioSchema = z.object({
   proposedReserves: z.coerce.number().finite().min(0).max(100_000_000),
 });
+const recurringObligationScenarioSchema = z.object({
+  proposedMonthlyRecurringBills: z.coerce.number().finite().min(0).max(10_000_000),
+});
+const debtMinimumScenarioSchema = z.object({
+  proposedMonthlyDebtMinimums: z.coerce.number().finite().min(0).max(10_000_000),
+});
 
 @Controller('readiness')
 @UseGuards(AuthGuard)
@@ -113,6 +119,26 @@ export class ReadinessController {
     return this.readinessService.getCashReserveScenario(
       req.userId!,
       parsed.data.proposedReserves.toFixed(2),
+    );
+  }
+
+  @Post('scenario/recurring-obligations')
+  getRecurringObligationScenario(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = recurringObligationScenarioSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.readinessService.getRecurringObligationScenario(
+      req.userId!,
+      parsed.data.proposedMonthlyRecurringBills.toFixed(2),
+    );
+  }
+
+  @Post('scenario/debt-minimums')
+  getDebtMinimumScenario(@Req() req: ScopedRequest, @Body() body: unknown) {
+    const parsed = debtMinimumScenarioSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten().fieldErrors);
+    return this.readinessService.getDebtMinimumScenario(
+      req.userId!,
+      parsed.data.proposedMonthlyDebtMinimums.toFixed(2),
     );
   }
 

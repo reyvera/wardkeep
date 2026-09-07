@@ -35,9 +35,8 @@ interface ScenarioResponse {
   limitations: string[];
 }
 
-interface CashReserveScenarioResponse extends ScenarioResponse {
+interface StructuredScenarioResponse extends ScenarioResponse {
   builder: {
-    proposedReserves: string;
     sourceRecords: string[];
     assumptions: string[];
   };
@@ -63,7 +62,7 @@ export default function ReadinessScenariosPage() {
   const [selectedCapabilityId, setSelectedCapabilityId] = useState<string | null>(null);
   const [magnitude, setMagnitude] = useState(0);
   const [proposedReserves, setProposedReserves] = useState('');
-  const [cashReserveScenario, setCashReserveScenario] = useState<CashReserveScenarioResponse | null>(
+  const [cashReserveScenario, setCashReserveScenario] = useState<StructuredScenarioResponse | null>(
     null,
   );
   const readinessQuery = useQuery({
@@ -81,8 +80,24 @@ export default function ReadinessScenariosPage() {
   });
   const cashReserveMutation = useMutation({
     mutationFn: (value: string) =>
-      apiClient.post<CashReserveScenarioResponse>('/readiness/scenario/cash-reserves', {
+      apiClient.post<StructuredScenarioResponse>('/readiness/scenario/cash-reserves', {
         proposedReserves: value,
+      }),
+    onSuccess: setCashReserveScenario,
+  });
+  const [proposedRecurringBills, setProposedRecurringBills] = useState('');
+  const recurringBillsMutation = useMutation({
+    mutationFn: (value: string) =>
+      apiClient.post<StructuredScenarioResponse>('/readiness/scenario/recurring-obligations', {
+        proposedMonthlyRecurringBills: value,
+      }),
+    onSuccess: setCashReserveScenario,
+  });
+  const [proposedDebtMinimums, setProposedDebtMinimums] = useState('');
+  const debtMinimumsMutation = useMutation({
+    mutationFn: (value: string) =>
+      apiClient.post<StructuredScenarioResponse>('/readiness/scenario/debt-minimums', {
+        proposedMonthlyDebtMinimums: value,
       }),
     onSuccess: setCashReserveScenario,
   });
@@ -221,6 +236,82 @@ export default function ReadinessScenariosPage() {
                 {cashReserveMutation.isError && (
                   <p className="mt-2 text-xs text-accent-red">Reserve comparison is unavailable.</p>
                 )}
+              </div>
+            )}
+
+            {selectedFactor.capabilityId === 'fixed-obligations' && (
+              <div className="mt-5 max-w-2xl rounded-lg border border-accent-blue/20 bg-accent-blue/5 p-4">
+                <p className="text-sm font-medium text-content-primary">Compare recurring obligations</p>
+                <p className="mt-1 text-xs text-content-secondary">
+                  This temporarily replaces only the confirmed monthly recurring-bill total. Debt
+                  minimums, external commitments, and liquid reserves remain recorded values.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <input
+                    aria-label="Temporary monthly recurring bills"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={proposedRecurringBills}
+                    onChange={(event) => setProposedRecurringBills(event.target.value)}
+                    placeholder="Monthly recurring bills, e.g. 1800"
+                    className="input min-w-52 flex-1"
+                  />
+                  <button
+                    type="button"
+                    className="btn-secondary text-sm"
+                    disabled={
+                      recurringBillsMutation.isPending ||
+                      proposedRecurringBills === '' ||
+                      Number(proposedRecurringBills) < 0
+                    }
+                    onClick={() => {
+                      scenarioMutation.reset();
+                      recurringBillsMutation.mutate(proposedRecurringBills);
+                    }}
+                  >
+                    {recurringBillsMutation.isPending ? 'Comparing…' : 'Compare obligations'}
+                  </button>
+                </div>
+                {recurringBillsMutation.isError && (
+                  <p className="mt-2 text-xs text-accent-red">Obligation comparison is unavailable.</p>
+                )}
+                <div className="mt-4 border-t border-edge pt-4">
+                  <p className="text-sm font-medium text-content-primary">Compare debt minimums</p>
+                  <p className="mt-1 text-xs text-content-secondary">
+                    This temporarily replaces only the total monthly minimum payment across recorded debts.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <input
+                      aria-label="Temporary monthly debt minimums"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={proposedDebtMinimums}
+                      onChange={(event) => setProposedDebtMinimums(event.target.value)}
+                      placeholder="Monthly debt minimums, e.g. 750"
+                      className="input min-w-52 flex-1"
+                    />
+                    <button
+                      type="button"
+                      className="btn-secondary text-sm"
+                      disabled={
+                        debtMinimumsMutation.isPending ||
+                        proposedDebtMinimums === '' ||
+                        Number(proposedDebtMinimums) < 0
+                      }
+                      onClick={() => {
+                        scenarioMutation.reset();
+                        debtMinimumsMutation.mutate(proposedDebtMinimums);
+                      }}
+                    >
+                      {debtMinimumsMutation.isPending ? 'Comparing…' : 'Compare debt minimums'}
+                    </button>
+                  </div>
+                  {debtMinimumsMutation.isError && (
+                    <p className="mt-2 text-xs text-accent-red">Debt comparison is unavailable.</p>
+                  )}
+                </div>
               </div>
             )}
 

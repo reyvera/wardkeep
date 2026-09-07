@@ -24,4 +24,28 @@ describe('ReadinessController cash-reserve scenario', () => {
       ).toThrow(BadRequestException);
     }
   });
+
+  it('passes a bounded temporary recurring-bill total to the authenticated household service', async () => {
+    const readiness = { getRecurringObligationScenario: vi.fn().mockResolvedValue({ scenario: {} }) };
+    const controller = new ReadinessController(readiness as never, {} as never);
+
+    await expect(
+      controller.getRecurringObligationScenario({ userId: 'household-1' } as never, {
+        proposedMonthlyRecurringBills: '2100.25',
+      }),
+    ).resolves.toEqual({ scenario: {} });
+    expect(readiness.getRecurringObligationScenario).toHaveBeenCalledWith('household-1', '2100.25');
+  });
+
+  it('passes a bounded temporary debt-minimum total to the authenticated household service', async () => {
+    const readiness = { getDebtMinimumScenario: vi.fn().mockResolvedValue({ scenario: {} }) };
+    const controller = new ReadinessController(readiness as never, {} as never);
+
+    await expect(
+      controller.getDebtMinimumScenario({ userId: 'household-1' } as never, {
+        proposedMonthlyDebtMinimums: '875',
+      }),
+    ).resolves.toEqual({ scenario: {} });
+    expect(readiness.getDebtMinimumScenario).toHaveBeenCalledWith('household-1', '875.00');
+  });
 });

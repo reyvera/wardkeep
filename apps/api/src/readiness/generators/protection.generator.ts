@@ -56,6 +56,11 @@ export function dependentReviewSignal(dependent: { label: string | null; relatio
 
 /** Checks known debt minimums and recurring bills without estimating omitted obligations. */
 async function generateFixedObligationSignals(prisma: PrismaClient, userId: string): Promise<Signal[]> {
+  return fixedObligationSignal(await calculateFixedObligationEvidence(prisma, userId));
+}
+
+/** Returns the recorded components used by the fixed-obligations warning. */
+export async function calculateFixedObligationEvidence(prisma: PrismaClient, userId: string) {
   const profiles = await prisma.debtProfile.findMany({
     where: { userId },
     select: { minimumPayment: true },
@@ -80,15 +85,14 @@ async function generateFixedObligationSignals(prisma: PrismaClient, userId: stri
     (total, obligation) => total.add(new Decimal(obligation.monthlyAmount.toString())),
     new Decimal(0),
   );
-  if (monthlyDebtMinimums.add(monthlyRecurringBills).add(monthlyManualObligations).lte(0)) return [];
   const reserves = await calculateLiquidReserves(prisma, userId);
-  return fixedObligationSignal({
+  return {
     monthlyDebtMinimums,
     monthlyRecurringBills,
     monthlyManualObligations,
     variableManualObligationCount: manualObligations.filter((obligation) => obligation.isVariable).length,
     reserves,
-  });
+  };
 }
 
 /** Converts a confirmed recurring amount to its monthly equivalent. */

@@ -31,7 +31,12 @@ import { calculateRecordedNetWorth } from './generators/prosperity.generator';
 import { deriveDurableReadinessChanges } from './readiness-change';
 import { buildPillarTrends, PillarTrend } from './readiness-trends';
 import { evaluateReadinessScenario, ScenarioChange } from './readiness-scenario';
-import { calculateEmergencyFundBurnRate, emergencyFundSignal } from './generators/protection.generator';
+import {
+  calculateEmergencyFundBurnRate,
+  calculateFixedObligationEvidence,
+  emergencyFundSignal,
+  fixedObligationSignal,
+} from './generators/protection.generator';
 
 /** Response shape for the readiness endpoint. */
 export interface ReadinessResponse {
@@ -160,6 +165,70 @@ export class ReadinessService {
         assumptions: [
           'The entered reserve amount temporarily replaces the recorded liquid-reserve total only.',
           'The recorded expense window and its transfer, refund, and one-time exclusions are unchanged.',
+        ],
+      },
+    };
+  }
+
+  /** Temporarily replaces only the confirmed recurring-bill monthly total. */
+  async getRecurringObligationScenario(userId: string, proposedMonthlyRecurringBills: string) {
+    const current = await this.getReadiness(userId);
+    if (!current.signals.some((signal) => signal.capabilityId === 'fixed-obligations')) {
+      throw new Error('Recorded fixed obligations are not currently evaluated');
+    }
+    const evidence = await calculateFixedObligationEvidence(this.prisma, userId);
+    const proposed = new Decimal(proposedMonthlyRecurringBills);
+    const replacement = fixedObligationSignal({ ...evidence, monthlyRecurringBills: proposed })[0];
+    return {
+      ...evaluateReadinessScenario(
+        current,
+        replacement
+          ? [{ operation: 'replace' as const, capabilityId: 'fixed-obligations', signal: replacement }]
+          : [{ operation: 'remove' as const, capabilityId: 'fixed-obligations' }],
+      ),
+      builder: {
+        kind: 'recurring_obligations',
+        proposedMonthlyRecurringBills: proposed.toFixed(2),
+        sourceRecords: [
+          'Confirmed recurring bills',
+          'Recorded debt minimums and external commitments',
+          'Current checking, savings, and cash account balances',
+        ],
+        assumptions: [
+          'The entered amount temporarily replaces the monthly total of confirmed recurring bills only.',
+          'Recorded debt minimums, entered external commitments, and liquid reserves are unchanged.',
+        ],
+      },
+    };
+  }
+
+  /** Temporarily replaces only the recorded debt-minimum monthly total. */
+  async getDebtMinimumScenario(userId: string, proposedMonthlyDebtMinimums: string) {
+    const current = await this.getReadiness(userId);
+    if (!current.signals.some((signal) => signal.capabilityId === 'fixed-obligations')) {
+      throw new Error('Recorded fixed obligations are not currently evaluated');
+    }
+    const evidence = await calculateFixedObligationEvidence(this.prisma, userId);
+    const proposed = new Decimal(proposedMonthlyDebtMinimums);
+    const replacement = fixedObligationSignal({ ...evidence, monthlyDebtMinimums: proposed })[0];
+    return {
+      ...evaluateReadinessScenario(
+        current,
+        replacement
+          ? [{ operation: 'replace' as const, capabilityId: 'fixed-obligations', signal: replacement }]
+          : [{ operation: 'remove' as const, capabilityId: 'fixed-obligations' }],
+      ),
+      builder: {
+        kind: 'debt_minimums',
+        proposedMonthlyDebtMinimums: proposed.toFixed(2),
+        sourceRecords: [
+          'Recorded debt profiles',
+          'Confirmed recurring bills and entered external commitments',
+          'Current checking, savings, and cash account balances',
+        ],
+        assumptions: [
+          'The entered amount temporarily replaces the total monthly minimum payment across recorded debts only.',
+          'Confirmed recurring bills, entered external commitments, and liquid reserves are unchanged.',
         ],
       },
     };
