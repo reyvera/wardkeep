@@ -818,6 +818,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 40.1 Implement Advisor memory system
   - [x] Local, household-scoped typed memory entries support explicit preferences, annual events, measured seasonal patterns, and recommendation outcomes with source references and expiry.
+  - [x] Confirmed annual recurring bills create idempotent, source-linked local annual-event memories; no spend forecast is implied.
   - [x] Advisor Memory page makes local entries inspectable and deletable; no hidden model-memory state is introduced.
   - Reference past context: "Last year you spent ~$900 on Christmas"
   - [x] Track recorded recommendation completion or dismissal as a local outcome memory; later score movement remains observed context, not attributed causation.

@@ -8,11 +8,53 @@ export class AdvisorMemoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Returns only current household-local entries; expired memory is never surfaced. */
-  list(userId: string, now = new Date()) {
+  async list(userId: string, now = new Date()) {
+    await this.prisma.advisorMemory.deleteMany({ where: { userId, expiresAt: { lte: now } } });
+    await this.syncAnnualRecurringEvents(userId);
     return this.prisma.advisorMemory.findMany({
       where: { userId, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       orderBy: [{ observedAt: 'desc' }, { createdAt: 'desc' }],
     });
+  }
+
+  /** Derives only confirmed annual bill reminders; it does not infer spending patterns. */
+  private async syncAnnualRecurringEvents(userId: string) {
+    const annualBills = await this.prisma.recurringTransaction.findMany({
+      where: { userId, isActive: true, isConfirmed: true, frequency: 'ANNUAL' },
+      select: { id: true, merchant: true, nextExpected: true },
+    });
+    const activeSourceRefs = new Set(annualBills.map((bill) => `recurring:${bill.id}`));
+    const priorAutomaticEvents = await this.prisma.advisorMemory.findMany({
+      where: { userId, kind: 'ANNUAL_EVENT' },
+      select: { id: true, sourceRefs: true },
+    });
+    const staleIds = priorAutomaticEvents
+      .filter((memory) => memory.sourceRefs.some((source) => source.startsWith('recurring:')))
+      .filter((memory) => !memory.sourceRefs.some((source) => activeSourceRefs.has(source)))
+      .map((memory) => memory.id);
+    if (staleIds.length > 0) {
+      await this.prisma.advisorMemory.deleteMany({ where: { userId, id: { in: staleIds } } });
+    }
+    await Promise.all(
+      annualBills.map(async (bill) => {
+        const sourceRef = `recurring:${bill.id}`;
+        const existing = await this.prisma.advisorMemory.findFirst({
+          where: { userId, kind: 'ANNUAL_EVENT', sourceRefs: { has: sourceRef } },
+          select: { id: true },
+        });
+        if (!existing) {
+          await this.prisma.advisorMemory.create({
+            data: {
+              userId,
+              kind: 'ANNUAL_EVENT',
+              summary: `${bill.merchant} is a confirmed annual recurring bill next expected on ${bill.nextExpected.toLocaleDateString()}.`,
+              sourceRefs: [sourceRef],
+              observedAt: bill.nextExpected,
+            },
+          });
+        }
+      }),
+    );
   }
 
   /** Stores a concise, explicit local observation; callers own its source references and expiry. */

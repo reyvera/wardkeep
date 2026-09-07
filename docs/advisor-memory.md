@@ -9,7 +9,11 @@ preference, an annual event, a measured seasonal pattern, or a completed or
 dismissed recommendation outcome. It must never store credentials, raw chat
 transcripts, account numbers, or inferred sensitive traits.
 
+Confirmed annual recurring bills may create an idempotent annual-event entry
+linked to that bill. This records only its next expected date; it does not
+forecast spending or infer a household seasonal pattern.
+
 Memory remains in Wardkeep's local database. No memory entry may be sent to a
 cloud model merely because cloud AI is enabled; any future use in an AI request
 requires a separate, explicit routing and consent design. Expired entries are
-excluded from read APIs and should be pruned by a local maintenance task.
+pruned locally before read APIs return active memory.
