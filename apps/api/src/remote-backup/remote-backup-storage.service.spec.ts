@@ -20,6 +20,7 @@ describe('RemoteBackupStorageService', () => {
       directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
     );
     delete process.env['WARDKEEP_REMOTE_BACKUP_DIR'];
+    delete process.env['WARDKEEP_REMOTE_BACKUP_STORAGE_BYTES'];
   });
 
   it('writes only a verified opaque blob and records its matching metadata', async () => {
@@ -32,6 +33,7 @@ describe('RemoteBackupStorageService', () => {
     const service = new RemoteBackupStorageService({
       remoteBackup: {
         create,
+        aggregate: vi.fn().mockResolvedValue({ _sum: { size: 0n } }),
         findMany: vi.fn().mockResolvedValue([]),
         deleteMany: vi.fn(),
         delete: vi.fn(),
@@ -64,7 +66,13 @@ describe('RemoteBackupStorageService', () => {
     process.env['WARDKEEP_REMOTE_BACKUP_DIR'] = directory;
     const create = vi.fn();
     const service = new RemoteBackupStorageService({
-      remoteBackup: { create, findMany: vi.fn(), deleteMany: vi.fn(), delete: vi.fn() },
+      remoteBackup: {
+        create,
+        aggregate: vi.fn().mockResolvedValue({ _sum: { size: 0n } }),
+        findMany: vi.fn(),
+        deleteMany: vi.fn(),
+        delete: vi.fn(),
+      },
     } as never);
 
     await expect(
@@ -81,5 +89,32 @@ describe('RemoteBackupStorageService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(create).not.toHaveBeenCalled();
     await expect(readdir(join(directory, 'peer-1'))).resolves.toEqual([]);
+  });
+
+  it('rejects a new archive before writing when the peer quota is exhausted', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'wardkeep-remote-backup-'));
+    directories.push(directory);
+    process.env['WARDKEEP_REMOTE_BACKUP_DIR'] = directory;
+    process.env['WARDKEEP_REMOTE_BACKUP_STORAGE_BYTES'] = '10';
+    const create = vi.fn();
+    const aggregate = vi.fn().mockResolvedValue({ _sum: { size: 8n } });
+    const service = new RemoteBackupStorageService({
+      remoteBackup: { create, aggregate, findMany: vi.fn(), deleteMany: vi.fn(), delete: vi.fn() },
+    } as never);
+    const data = 'four';
+
+    await expect(
+      service.receive({
+        peerId: 'peer-1',
+        userId: 'household-1',
+        sourceBackupId: 'source-backup-1',
+        recoveryClass: RemoteBackupRecoveryClass.PORTABLE_MANUAL,
+        createdAt: new Date(),
+        expectedSize: Buffer.byteLength(data),
+        expectedChecksum: createHash('sha256').update(data).digest('hex'),
+        chunks: chunks(data),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(create).not.toHaveBeenCalled();
   });
 });

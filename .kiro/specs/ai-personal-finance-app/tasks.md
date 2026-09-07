@@ -734,22 +734,18 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - Relation: User hasMany RemoteBackupPeer, RemoteBackupPeer hasMany RemoteBackup
   - Migration adds indexes on [userId, status] and [peerId, createdAt]
 
-- [ ] 38.3 Implement remote backup sender service (push side)
+- [~] 38.3 Implement remote backup sender service (push side)
   - [x] Implement the versioned HMAC request payload, SHA-256 body binding, canonical timestamp check, nonce requirement, constant-time verification, and focused tampering tests. Replay persistence and network delivery remain pending.
   - [x] Implement and test DNS-aware peer URL validation that rejects non-HTTPS, credential-bearing, localhost, private, link-local, carrier-grade, and multicast destinations. Callers must validate again before every outbound connection.
-  - `RemoteBackupService.pushBackup(userId, peerId)`: creates encrypted backup (reuse existing createBackup logic), POSTs to peer's /api/remote-backup/push endpoint
-  - Retry with exponential backoff (3 attempts, 5s/30s/120s delays)
-  - Verify peer responds with matching checksum (SHA-256 of received blob)
-  - Update lastSyncAt on success, lastError on failure
-  - Emit audit log entry for every push attempt (success/failure)
-  - Queue-based: push jobs run via BullMQ worker (not blocking API thread)
+  - [x] `RemoteBackupService.pushBackup(userId, peerId)`: streams a selected encrypted archive to the paired receiver through authenticated transport.
+  - [x] Scheduled copies retry transient push failures with 5s, 30s, and 120s bounded backoff in the BullMQ worker path; interactive sends return their result directly.
+  - [x] Update lastSyncAt on success, lastError on failure, and emit an audit log entry for every push attempt.
+  - [x] Automatic push jobs run through the BullMQ worker; explicit user-initiated sends remain interactive.
 
-- [ ] 38.4 Implement remote backup receiver service (pull side)
-  - POST /api/remote-backup/push endpoint: validates HMAC signature, stores encrypted blob to disk/configured storage, records metadata in RemoteBackup table
-  - Enforce per-peer storage quota (configurable, default 500MB)
-  - Enforce max backup count per peer (configurable, default 10, FIFO eviction)
-  - GET /api/remote-backup/pull/:backupId endpoint: serves stored blob back to paired peer (HMAC-authenticated)
-  - GET /api/remote-backup/list endpoint: returns metadata of stored backups for a peer
+- [~] 38.4 Implement remote backup receiver service (pull side)
+  - [x] Authenticated blob upload validates HMAC, nonce, exact size, and digest; it stores only opaque encrypted bytes and records peer-scoped metadata.
+  - [x] Enforce a configurable per-peer storage quota (default 500 MB) and a maximum ten archives per peer, with verified-new-archive-first retention.
+  - [x] Authenticated blob download serves only the requesting peer's stored archive; authenticated listing returns only that peer's metadata.
 
 - [ ] 38.5 Implement pairing flow (trust establishment)
   - POST /api/remote-backup/pair/generate: creates one-time token (UUID + shared secret), valid 15 minutes

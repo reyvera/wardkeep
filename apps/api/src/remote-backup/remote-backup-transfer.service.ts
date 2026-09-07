@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import { BackupService } from '../backup/backup.service';
+import { AuditService } from '../common/services/audit.service';
 import { EncryptionService } from '../common/services/encryption.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -18,12 +19,15 @@ import {
   uploadRemoteBackupBlob,
 } from './remote-backup-transfer-client';
 
+const SCHEDULED_PUSH_RETRY_DELAYS_MS = [5_000, 30_000, 120_000] as const;
+
 @Injectable()
 export class RemoteBackupTransferService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
     private readonly backups: BackupService,
+    private readonly audit: AuditService,
   ) {}
 
   async push(userId: string, peerId: string, backupId: string) {
@@ -39,20 +43,39 @@ export class RemoteBackupTransferService {
       throw new BadRequestException('Remote backup peer is incomplete');
     }
     const archive = await this.backups.encryptedArchiveForRemote(userId, backupId);
-    const result = await uploadRemoteBackupBlob({
-      peerUrl: peer.peerUrl,
-      peerId: peer.id,
-      secret: this.encryption.decrypt(peer.sharedSecret),
-      sourceBackupId: archive.id,
-      recoveryClass: archive.recoveryClass,
-      createdAt: archive.createdAt,
-      path: archive.path,
-    });
-    await this.prisma.remoteBackupPeer.updateMany({
-      where: { id: peer.id, userId, status: RemoteBackupPeerStatus.PAIRED },
-      data: { lastSyncAt: new Date(), lastError: null },
-    });
-    return result;
+    try {
+      const result = await uploadRemoteBackupBlob({
+        peerUrl: peer.peerUrl,
+        peerId: peer.id,
+        secret: this.encryption.decrypt(peer.sharedSecret),
+        sourceBackupId: archive.id,
+        recoveryClass: archive.recoveryClass,
+        createdAt: archive.createdAt,
+        path: archive.path,
+      });
+      await this.prisma.remoteBackupPeer.updateMany({
+        where: { id: peer.id, userId, status: RemoteBackupPeerStatus.PAIRED },
+        data: { lastSyncAt: new Date(), lastError: null, consecutiveFailures: 0 },
+      });
+      await this.audit.log(userId, 'remote_backup.push_succeeded', {
+        peerId: peer.id,
+        backupId: archive.id,
+        recoveryClass: archive.recoveryClass,
+        size: result.size,
+      });
+      return result;
+    } catch (error) {
+      await this.prisma.remoteBackupPeer.updateMany({
+        where: { id: peer.id, userId, status: RemoteBackupPeerStatus.PAIRED },
+        data: { lastError: 'Encrypted copy did not complete' },
+      });
+      await this.audit.log(userId, 'remote_backup.push_failed', {
+        peerId: peer.id,
+        backupId: archive.id,
+        reason: error instanceof Error ? error.message.slice(0, 200) : 'unknown',
+      });
+      throw error;
+    }
   }
 
   /** Lists opaque backups that this paired destination holds for the household. */
@@ -153,7 +176,7 @@ export class RemoteBackupTransferService {
         continue;
       try {
         const backup = await this.backups.createScheduledBackup(peer.userId);
-        await this.push(peer.userId, peer.id, backup.id);
+        await this.pushScheduledBackupWithRetry(peer.userId, peer.id, backup.id);
         synced++;
       } catch {
         failed++;
@@ -205,5 +228,20 @@ export class RemoteBackupTransferService {
             : RemoteBackupPeerStatus.PAIRED,
       },
     });
+  }
+
+  private async pushScheduledBackupWithRetry(userId: string, peerId: string, backupId: string) {
+    let lastError: unknown;
+    for (const delay of [...SCHEDULED_PUSH_RETRY_DELAYS_MS, null]) {
+      try {
+        return await this.push(userId, peerId, backupId);
+      } catch (error) {
+        lastError = error;
+        if (delay !== null) await new Promise<void>((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('Scheduled encrypted copy did not complete');
   }
 }

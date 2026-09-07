@@ -16,7 +16,9 @@ export type AuditAction =
   | 'remote_backup.offer_redeemed'
   | 'remote_backup.pairing_started'
   | 'remote_backup.pairing_completed'
-  | 'remote_backup.peer_revoked';
+  | 'remote_backup.peer_revoked'
+  | 'remote_backup.push_succeeded'
+  | 'remote_backup.push_failed';
 
 @Injectable()
 export class AuditService {

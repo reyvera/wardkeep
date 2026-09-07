@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 const DEFAULT_REMOTE_BACKUP_MAX_BYTES = 1024 * 1024 * 1024;
 const DEFAULT_REMOTE_BACKUPS_PER_PEER = 10;
+const DEFAULT_REMOTE_BACKUP_STORAGE_BYTES = 500 * 1024 * 1024;
 
 function remoteBackupDirectory(): string {
   return process.env['WARDKEEP_REMOTE_BACKUP_DIR'] ?? '/data/remote-backups';
@@ -19,6 +20,13 @@ function remoteBackupMaxBytes(): number {
   return Number.isSafeInteger(configured) && configured > 0
     ? configured
     : DEFAULT_REMOTE_BACKUP_MAX_BYTES;
+}
+
+function remoteBackupStorageBytes(): number {
+  const configured = Number(process.env['WARDKEEP_REMOTE_BACKUP_STORAGE_BYTES']);
+  return Number.isSafeInteger(configured) && configured > 0
+    ? configured
+    : DEFAULT_REMOTE_BACKUP_STORAGE_BYTES;
 }
 
 @Injectable()
@@ -49,6 +57,15 @@ export class RemoteBackupStorageService {
       !/^[a-f0-9]{64}$/i.test(input.expectedChecksum)
     ) {
       throw new BadRequestException('Remote backup metadata is invalid');
+    }
+
+    const usage = await this.prisma.remoteBackup.aggregate({
+      where: { peerId: input.peerId },
+      _sum: { size: true },
+    });
+    const usedBytes = Number(usage._sum.size ?? 0n);
+    if (usedBytes + input.expectedSize > remoteBackupStorageBytes()) {
+      throw new BadRequestException('Remote backup peer storage quota is exceeded');
     }
 
     const id = randomUUID();
