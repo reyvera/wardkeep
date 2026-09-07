@@ -155,6 +155,28 @@ peer authentication.
 There is no in-place “remote import” and no automatic restore. Destructive
 replacement remains an explicit local confirmation after archive validation.
 
+### Fresh-instance recovery pairing (design required before implementation)
+
+A manual backup passphrase decrypts an archive but must not authenticate a new
+deployment to a peer. Existing peer IDs and HMAC secrets intentionally stay on
+the original deployment, so a replacement instance cannot list a departed
+peer's opaque blobs merely by knowing the passphrase.
+
+Fresh-instance recovery therefore requires a separate, receiver-created,
+single-use recovery offer. The operator selects one stored portable-manual
+archive on the receiver and transfers its opaque recovery offer to the new
+deployment through a secure channel. The offer contains a high-entropy secret,
+expires in 15 minutes, is hashed at rest, and is scoped to exactly one archive.
+Redeeming it creates a short-lived recovery session that may download that
+archive once over HTTPS after a signed request. It cannot list other blobs,
+upload data, pair a regular peer, or access source-tied automated archives.
+
+The new deployment verifies the download digest, asks for the manual recovery
+passphrase locally, validates the archive before any write, and invalidates the
+recovery session after the download attempt. The receiver audits offer creation,
+redemption, download, expiry, and revocation without recording the secret or
+the passphrase.
+
 ## Required implementation gates
 
 - HMAC, nonce replay, expiry, body-digest, SSRF, retention, and revocation unit

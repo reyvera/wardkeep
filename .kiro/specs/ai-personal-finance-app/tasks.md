@@ -766,7 +766,7 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
   - User initiates restore from remote peer: GET peer's /api/remote-backup/list, select backup, GET /api/remote-backup/pull/:id
   - [x] Download an authenticated opaque blob over the peer API, verify its declared size and SHA-256, and stage it in a 0600 temporary location.
   - [x] Reuse the local restore workflow only after checksum validation; portable manual copies require their passphrase and source-tied automatic copies require the original deployment's scheduled-backup key.
-  - Support "fresh instance" restore: new Wardkeep install can pair with friend's server and pull latest backup to bootstrap all data
+  - [ ] Design and implement a receiver-created, single-use recovery offer scoped to one portable-manual archive. A backup passphrase must never serve as peer authentication.
 
 - [~] 38.8 Implement remote backup management UI
   - Settings → Remote Backups page
@@ -778,7 +778,8 @@ See `/docs/philosophy.md` for principles. See `/docs/capability-architecture.md`
 
 - [~] 38.9 Write tests for remote backup system
   - [x] Unit tests cover HMAC signing/verification, replay rejection, pairing retry safety, blob integrity, quota enforcement, duplicate-ID protection, peer isolation, schedules, health state, and transfer audit/retry behavior.
-  - Test integration: full push/pull cycle with mocked HTTP (Supertest for receiver endpoints)
+  - [x] In-process peer-storage integration covers opaque upload, peer-scoped list, and pull with exact content/digest preservation.
+  - Test integration: full push/pull cycle with signed HTTP (Supertest for receiver endpoints)
   - Test restore from remote: push backup → pull on fresh instance → verify data integrity
 
 ---
