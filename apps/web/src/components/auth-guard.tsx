@@ -14,8 +14,15 @@ import { apiClient } from '@/lib/api-client';
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hydrate = useAuthStore((s) => s.hydrate);
   const storeLogout = useAuthStore((s) => s.logout);
   const isRedirecting = useRef(false);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     apiClient.setUnauthorizedHandler(() => {
@@ -30,6 +37,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // The AppShell only unmounts when navigating to auth pages,
     // at which point the handler is irrelevant.
   }, [storeLogout, router]);
+
+  useEffect(() => {
+    if (hydrated && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [hydrated, isAuthenticated, router]);
+
+  // Do not mount protected-page queries until the browser has restored the
+  // persisted bearer token. This also avoids a brief unauthenticated render.
+  if (!hydrated || !isAuthenticated) return null;
 
   return <>{children}</>;
 }
