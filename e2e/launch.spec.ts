@@ -90,10 +90,11 @@ test.describe.serial('launch smoke journey', () => {
     await transactionForm.locator('select').nth(1).selectOption({ label: accountName });
     await transactionForm.locator('select').nth(2).selectOption({ label: 'Food & Dining' });
     await page.getByRole('button', { name: 'Save Transaction' }).click();
-    await expect(page.getByText(merchant, { exact: true })).toBeVisible();
+    const visibleMerchant = page.locator('p:visible').filter({ hasText: merchant });
+    await expect(visibleMerchant).toHaveText(merchant);
 
     await page.reload();
-    await expect(page.getByText(merchant, { exact: true })).toBeVisible();
+    await expect(visibleMerchant).toHaveText(merchant);
     await page.goto('/accounts');
     await expect(page.getByText(accountName, { exact: true })).toBeVisible();
 
