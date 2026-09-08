@@ -74,7 +74,7 @@ export function MobileNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-edge bg-surface-primary/95 backdrop-blur-md"
+      className="relative z-50 shrink-0 border-t border-edge bg-surface-primary/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       aria-label="Mobile navigation"
     >
       <ul className="flex items-center justify-around px-2 py-2">

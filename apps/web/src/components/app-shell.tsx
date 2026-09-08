@@ -22,7 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
-      <div className="flex min-h-screen">
+      <div className="flex h-[100dvh] flex-col md:h-auto md:min-h-screen md:flex-row">
         {/* Demo banner */}
         <DemoBanner />
 
@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-content px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-6 md:px-8 md:py-8">
             {children}
           </div>
