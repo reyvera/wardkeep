@@ -5,10 +5,11 @@ import {
   HttpStatus,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { Request } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import {
   ForgotPasswordSchema,
   LoginSchema,
@@ -19,6 +20,28 @@ import {
 
 import { AuthGuard } from '../common/guards/auth.guard';
 import { AuthService } from './auth.service';
+
+const SESSION_COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Next.js middleware uses this cookie to allow a refreshed page to proceed.
+ * API requests remain authenticated by their bearer token.
+ */
+function sessionCookieOptions(request: Request): CookieOptions {
+  const forwardedProto = request.headers['x-forwarded-proto'];
+  const isHttps =
+    request.secure ||
+    (typeof forwardedProto === 'string' &&
+      forwardedProto.split(',').some((value) => value.trim() === 'https'));
+
+  return {
+    httpOnly: true,
+    maxAge: SESSION_COOKIE_MAX_AGE_MS,
+    path: '/',
+    sameSite: 'strict',
+    secure: isHttps,
+  };
+}
 
 @Controller('auth')
 @Throttle({ default: { ttl: 60000, limit: RATE_LIMIT_AUTH } })
@@ -33,6 +56,7 @@ export class AuthController {
   @Post('register')
   async register(
     @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<{ token: string; expiresAt: Date }> {
     const result = RegisterSchema.safeParse(req.body);
 
@@ -41,7 +65,9 @@ export class AuthController {
     }
 
     const { email, password } = result.data;
-    return this.authService.register(email, password, req.ip);
+    const session = await this.authService.register(email, password, req.ip);
+    response.cookie('token', session.token, sessionCookieOptions(req));
+    return session;
   }
 
   /**
@@ -52,6 +78,7 @@ export class AuthController {
   @Post('login')
   async login(
     @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<{ token: string; expiresAt: Date }> {
     const result = LoginSchema.safeParse(req.body);
 
@@ -60,7 +87,9 @@ export class AuthController {
     }
 
     const { email, password } = result.data;
-    return this.authService.login(email, password, req.ip);
+    const session = await this.authService.login(email, password, req.ip);
+    response.cookie('token', session.token, sessionCookieOptions(req));
+    return session;
   }
 
   /**
@@ -71,11 +100,15 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Req() req: Request): Promise<void> {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<void> {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '') ?? '';
     const user = (req as Request & { user: { id: string } }).user;
     await this.authService.logout(token, user?.id, req.ip);
+    response.clearCookie('token', sessionCookieOptions(req));
   }
 
   /**
