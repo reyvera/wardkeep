@@ -73,7 +73,7 @@ test.describe.serial('desktop launch smoke journey', () => {
   test('clears the desktop session on logout', async ({ page }) => {
     await login(page);
     await page.goto('/settings');
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.locator('aside').getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/login$/);
     await page.reload();
     await expect(page).toHaveURL(/\/login$/);

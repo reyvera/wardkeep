@@ -15,11 +15,11 @@ export default defineConfig({
   projects: [
     {
       name: 'mobile-chromium',
-      use: { ...devices['iPhone 14'] },
+      use: { ...devices['iPhone 14'], browserName: 'chromium' },
     },
     {
       name: 'desktop-chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], browserName: 'chromium' },
     },
   ],
 });
