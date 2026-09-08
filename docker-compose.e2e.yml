@@ -1,0 +1,58 @@
+# Ephemeral browser-test stack. It deliberately has no persistent volumes so a
+# CI run always starts with an empty household database.
+name: wardkeep-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: wardkeep
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wardkeep']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/wardkeep?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      PORT: '4000'
+      SESSION_TIMEOUT: '60'
+      ENCRYPTION_KEY: e2e-encryption-key-not-for-production
+      AI_PRIVACY_MODE: LOCAL
+      WARDKEEP_BACKUP_DIR: /tmp/wardkeep-e2e-backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:4000/api/health']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
