@@ -201,11 +201,19 @@ export default function TransactionsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      apiClient.post('/transactions', {
-        ...newTx,
-        amount: parseFloat(newTx.amount) || 0,
-      }),
+    mutationFn: () => {
+      const type =
+        newTx.type === 'income' ? 'CREDIT' : newTx.type === 'transfer' ? 'TRANSFER' : 'DEBIT';
+
+      return apiClient.post('/transactions', {
+        accountId: newTx.accountId,
+        amount: newTx.amount,
+        categoryId: newTx.category || null,
+        date: newTx.date,
+        merchant: newTx.merchant,
+        type,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       setShowForm(false);
