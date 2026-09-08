@@ -40,7 +40,18 @@ trap cleanup EXIT
 mkdir -p "$BACKUP_DIR"
 
 echo "[wardkeep] Checking that PostgreSQL is ready..."
-postgres_exec 'pg_isready -U "$POSTGRES_USER"' >/dev/null
+for ((attempt = 1; attempt <= 60; attempt++)); do
+  if postgres_exec 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT 1"' >/dev/null 2>&1; then
+    break
+  fi
+
+  if ((attempt == 60)); then
+    echo "[wardkeep] PostgreSQL did not make $POSTGRES_DB available within 60 seconds." >&2
+    exit 1
+  fi
+
+  sleep 1
+done
 
 echo "[wardkeep] Creating owner-only backup archive: $ARCHIVE_PATH"
 postgres_exec 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' >"$ARCHIVE_PATH"
