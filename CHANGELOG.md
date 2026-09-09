@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-09-09
+
+### Fixed
+
+- **Reliable browser sessions** — Login sessions now survive browser refreshes without exposing the session token to page JavaScript, and logout remains effective after refresh.
+- **Mobile application shell** — Bottom navigation stays anchored while page content scrolls; reviewed transaction cards no longer let actions cover merchant details on narrow screens.
+- **Manual transaction submission** — The web form now sends the API’s transaction type, category, and decimal amount contract correctly.
+
+### Infrastructure
+
+- **Launch E2E gate** — CI now exercises isolated mobile and desktop Chromium journeys, including authentication persistence, responsive navigation, saved financial records, and manual backup creation.
+- **Recovery-drill stability** — The recovery test waits for PostgreSQL initialization before using the disposable database.
+
 ### Changed
 
 - **Recurring workflow alignment** — Detected recurring patterns now load from their live API source and their confirm/dismiss actions use the correct endpoints.
