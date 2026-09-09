@@ -720,7 +720,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  className={`card flex items-center gap-3 py-3 px-4 hover:border-edge-hover transition-colors duration-150 ${isPending ? 'opacity-70' : ''}`}
+                  className={`card grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 px-4 transition-colors duration-150 hover:border-edge-hover md:grid-cols-[auto_minmax(0,1fr)_auto_auto] ${isPending ? 'opacity-70' : ''}`}
                 >
                   {/* Pending indicator */}
                   {isPending && (
@@ -834,7 +834,7 @@ export default function TransactionsPage() {
                   </span>
 
                   {/* Quick actions */}
-                  <div className="flex items-center gap-1 ml-1">
+                  <div className="col-span-3 flex flex-wrap items-center justify-end gap-1 border-t border-edge pt-2 md:col-span-1 md:ml-1 md:border-t-0 md:pt-0">
                     <select
                       value={tx.categoryId ?? ''}
                       onChange={(e) =>
